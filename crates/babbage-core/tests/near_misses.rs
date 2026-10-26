@@ -806,3 +806,26 @@ fn a_unit_with_no_count_is_not_one_of_them_before_after_or_before() {
     assert_eq!(answer("2 weeks after March 14"), "March 28");
     assert_eq!(answer("2 weeks before March 14"), "February 29");
 }
+
+#[test]
+fn a_zone_offset_is_hours_and_minutes_never_a_twelve_hour_clock() {
+    for line in [
+        "noon GMT+5pm in UTC",
+        "noon GMT-5pm in UTC",
+        "noon UTC+5:30pm in UTC",
+        "noon utc+5 pm in UTC",
+        "GMT+5pm",
+    ] {
+        assert!(
+            answer(line).starts_with("ERROR"),
+            "{line}: {}",
+            answer(line)
+        );
+    }
+    assert_eq!(answer("noon GMT+5 in UTC"), "7:00 am");
+    assert_eq!(answer("noon GMT+5:30 in UTC"), "6:30 am");
+    assert_eq!(answer("noon UTC-5:30 in UTC"), "5:30 pm");
+    // A time before the zone is still a time.
+    assert_eq!(answer("5pm GMT+2 in UTC"), "3:00 pm");
+    assert_eq!(answer("5:30pm GMT-5 in UTC"), "10:30 pm");
+}

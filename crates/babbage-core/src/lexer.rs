@@ -259,8 +259,9 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = next;
                 continue;
             }
-            '0'..='9' if clock_at(&chars, i).is_some() => {
-                let (v, next) = clock_at(&chars, i).expect("checked by the guard");
+            '0'..='9' if clock_at(&chars, i, !after_zone_sign(&out)).is_some() => {
+                let (v, next) =
+                    clock_at(&chars, i, !after_zone_sign(&out)).expect("checked by the guard");
                 out.push(Token {
                     tok: Tok::Value(v),
                     at,
@@ -770,9 +771,19 @@ fn resolve_timecodes(toks: Vec<Token>) -> Result<Vec<Token>, Error> {
     Ok(out)
 }
 
+/// True right after `GMT+` or `UTC-`: an offset there is hours and minutes (`GMT+5:30`), so `GMT+5pm` is not
+/// the clock time 17:00.
+fn after_zone_sign(out: &[Token]) -> bool {
+    matches!(
+        out,
+        [.., Token { tok: Tok::Word(w), .. }, Token { tok: Tok::Plus | Tok::Minus, .. }]
+            if w.eq_ignore_ascii_case("gmt") || w.eq_ignore_ascii_case("utc")
+    )
+}
+
 /// A time of day (`17:30`, `5:30 pm`, `5pm`) or a lap time (`03:04:05`, `00:00:01.5`) that starts at `i`.
 /// `am` and `pm` after a number of 1 to 12 mean a time of day, not attometres or picometres.
-fn clock_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
+fn clock_at(chars: &[(usize, char)], i: usize, allow_meridiem: bool) -> Option<(Value, usize)> {
     let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
     let digit_run = |from: usize| {
         (from..)
@@ -822,6 +833,7 @@ fn clock_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
     };
     let ends_word = |at: usize| !c(at).is_some_and(|ch| ch.is_alphanumeric());
     if let Some(pm) = meridiem
+        && allow_meridiem
         && ends_word(meridiem_at + 2)
         && hour_len <= 2
         && (1..=12).contains(&hour)
