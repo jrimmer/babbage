@@ -191,7 +191,8 @@ pub fn add_workdays(from: i64, n: i64) -> i64 {
         };
     }
     let steps = n.unsigned_abs();
-    let weeks = i64::try_from(steps / 5).unwrap_or(i64::MAX / 7);
+    // `steps` is at most 2^63, so a fifth of it always fits.
+    let weeks = (steps / 5) as i64;
     day = day.saturating_add(if forward { weeks } else { -weeks }.saturating_mul(7));
     let step = if forward { 1 } else { -1 };
     let mut left = steps % 5;

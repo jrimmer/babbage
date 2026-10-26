@@ -119,7 +119,7 @@ fn days_in(toks: &[Token]) -> Option<Result<Expr, Error>> {
             };
             Some(finish(vec![whole(q), whole(year)], DateFn::DaysInQuarter))
         }
-        [w, y] if year_of(Some(y)).is_some() => {
+        [w, y] => {
             let month = crate::dates::month_number(&word_of(w)?)?;
             let first = datefns::first_of(year_of(Some(y))?, month)?;
             Some(finish(vec![Node::Value(first)], DateFn::DaysInMonthOf))
@@ -237,10 +237,6 @@ fn through(toks: &[Token]) -> Option<Result<Expr, Error>> {
     }))
 }
 
-fn date_token(t: &Token) -> bool {
-    matches!(&t.tok, Tok::Value(v) if v.kind() == Kind::Date)
-}
-
 /// `3 weeks after March 14, 2019`, `2 days before Christmas`, `3 hours from now`, `5 days ago`.
 fn relative(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let n = toks.len();
@@ -261,16 +257,16 @@ fn relative(toks: &[Token]) -> Option<Result<Expr, Error>> {
             Expr::from_nodes(x)
         }));
     }
-    if n >= 3 && date_token(&toks[n - 1]) {
+    if n >= 3
+        && let Tok::Value(date) = &toks[n - 1].tok
+        && date.kind() == Kind::Date
+    {
         let connector = &toks[n - 2];
         let sign = if is_word(Some(connector), "from") || is_word(Some(connector), "after") {
             BinOp::Add
         } else if is_word(Some(connector), "before") {
             BinOp::Sub
         } else {
-            return None;
-        };
-        let Tok::Value(date) = &toks[n - 1].tok else {
             return None;
         };
         let date = date.clone();
@@ -386,8 +382,7 @@ fn timecodes(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .any(|w| is_word(toks.get(n - 2), w));
     let (plain, at_rate) = if is_word(toks.get(n - 1), "timecode") && connector {
         (DateFn::AsTimecode, DateFn::AsTimecodeAt)
-    } else if (is_word(toks.get(n - 1), "frames") || is_word(toks.get(n - 1), "frame")) && connector
-    {
+    } else if is_word(toks.get(n - 1), "frames") && connector {
         (DateFn::AsFrames, DateFn::AsFramesAt)
     } else {
         return None;
@@ -443,7 +438,7 @@ fn place_of(run: &[Token]) -> Option<Zone> {
         Tok::Num(n) if n.is_integer() => {
             zones::offset_zone(negative, i64::try_from(n.numer()).ok()?, 0)
         }
-        Tok::Value(v) if v.kind() == Kind::Clock && v.number().is_integer() => {
+        Tok::Value(v) if v.kind() == Kind::Clock => {
             let seconds = i64::try_from(v.number().numer()).ok()?;
             zones::offset_zone(negative, seconds / 3600, seconds % 3600 / 60)
         }

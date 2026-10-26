@@ -351,11 +351,6 @@ fn plain_rate(v: &Value) -> Result<Number, Error> {
 fn as_timecode(v: &Value, rate: Number) -> Result<Value, Error> {
     let frame = units::lookup("frame").expect("frames are defined");
     let seconds = unit("s");
-    if v.kind() != Kind::Plain || v.unit().is_empty() {
-        return Err(Error::UnsupportedOperation(
-            "this needs a length of time or a number of frames",
-        ));
-    }
     let length = if v.unit().dim() == frame.dim() {
         v.number().mul(&v.unit().factor()?)?.div(&rate)?
     } else if v.unit().dim() == seconds.dim() {
@@ -373,7 +368,7 @@ fn as_frames(v: &Value, rate: Option<Number>) -> Result<Value, Error> {
     if v.kind() == Kind::Plain && !v.unit().is_empty() && v.unit().dim() == frame.dim() {
         return v.clone().convert(&frame);
     }
-    if v.kind() != Kind::Plain || v.unit().is_empty() || v.unit().dim() != unit("s").dim() {
+    if v.unit().dim() != unit("s").dim() {
         return Err(Error::UnsupportedOperation("this needs a length of time"));
     }
     let rate = rate.ok_or(Error::UnsupportedOperation(
@@ -419,14 +414,10 @@ fn playback(length: &Value, speed: &Value, saved: bool) -> Result<Value, Error> 
     if speed.kind() != Kind::Multiplier {
         return Err(Error::UnsupportedOperation("a speed like 1.5x is needed"));
     }
-    let seconds = if length.kind() == Kind::Plain && !length.unit().is_empty() {
-        length.number().mul(&length.unit().factor()?)?
-    } else {
-        return Err(Error::UnsupportedOperation("this needs a length of time"));
-    };
-    if length.unit().dim() != units::lookup("s").expect("seconds are defined").dim() {
+    if length.unit().dim() != unit("s").dim() {
         return Err(Error::UnsupportedOperation("this needs a length of time"));
     }
+    let seconds = length.number().mul(&length.unit().factor()?)?;
     let at_speed = seconds.div(speed.number())?;
     let result = if saved {
         seconds.sub(&at_speed)?
