@@ -389,3 +389,22 @@ fn dates_move_by_workdays_in_both_directions_and_only_by_lengths_of_time() {
         );
     }
 }
+
+#[test]
+fn words_glued_to_numbers_in_a_sheet() {
+    // A time, timecode or date glued to a letter is not read as one; the letters are dropped as prose.
+    let r = sheet(&[
+        "lunch5pm",
+        "lunch 5pm",
+        "lunch2019-04-01",
+        "It's 5 + 5",
+        "Valentine' Day 2025",
+        "abc' 5",
+    ]);
+    assert_eq!(r[0], "5");
+    assert_eq!(r[1], "5:00 pm");
+    assert_eq!(r[2], "2,014");
+    assert_eq!(r[3], "10");
+    assert!(r[4].starts_with("ERROR"), "{}", r[4]);
+    assert!(r[5].starts_with("ERROR"), "{}", r[5]);
+}

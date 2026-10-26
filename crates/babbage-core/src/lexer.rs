@@ -221,9 +221,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 };
                 let mut end = digits_from;
                 while is_digit(end)
-                    || (chars.get(end).is_some_and(|(_, c)| *c == '_')
-                        && is_digit(end - 1)
-                        && is_digit(end + 1))
+                    || (chars.get(end).is_some_and(|(_, c)| *c == '_') && is_digit(end + 1))
                 {
                     end += 1;
                 }
@@ -592,13 +590,8 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
                 .map(|d| acc * 10 + i64::from(d))
         })
     };
-    if i > 0 && c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | '-' | ':')) {
-        return None;
-    }
+    // The caller has checked the shape (`iso_shape_at`): four digits, `-`, two, `-`, two, and what surrounds them.
     let (year, month, day) = (digits(i, 4)?, digits(i + 5, 2)?, digits(i + 8, 2)?);
-    if c(i + 4) != Some('-') || c(i + 7) != Some('-') {
-        return None;
-    }
     let civil = Civil {
         year,
         month: month as u32,
@@ -657,7 +650,8 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
                 if zh > 23 || zm > 59 {
                     return None;
                 }
-                zone = Some((zh * 3600 + zm * 60) * if sign == '-' { -1 } else { 1 });
+                let seconds = zh * 3600 + zm * 60;
+                zone = Some(if sign == '-' { -seconds } else { seconds });
                 pos += width;
             }
             _ => {}
@@ -971,11 +965,7 @@ fn take_digits(chars: &[(usize, char)], mut j: usize, out: &mut String) -> usize
     loop {
         if digit_at(chars, j) {
             out.push(chars[j].1);
-        } else if chars.get(j).is_some_and(|(_, c)| *c == '_')
-            && j > 0
-            && digit_at(chars, j - 1)
-            && digit_at(chars, j + 1)
-        {
+        } else if chars.get(j).is_some_and(|(_, c)| *c == '_') && digit_at(chars, j + 1) {
         } else {
             return j;
         }

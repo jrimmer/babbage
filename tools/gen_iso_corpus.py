@@ -43,7 +43,7 @@ for _ in range(6000):
             digits = f"{micro:06d}".rstrip("0")
             text += "." + digits
         style = rng.choice(["none", "Z", "colon", "compact"])
-        offset = rng.choice([0, 60, 330, 345, 570, 720, 840, -60, -300, -570, -720])
+        offset = rng.choice([0, 60, 330, 345, 570, 720, 840, 1380, 1439, 59, -59, -1380, -1439, -60, -300, -570, -720])
         ztext, off = zone_text(offset, style)
         text += ztext
         tz = timezone(timedelta(minutes=off))

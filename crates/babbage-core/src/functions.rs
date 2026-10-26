@@ -508,7 +508,7 @@ fn at_density(value: &Value, density: &Value, target: &Value) -> Result<Value, E
         ));
     }
     let to = target.unit();
-    if value.kind() != Kind::Plain || value.unit().is_empty() || value.unit().dim() != px.dim() {
+    if value.kind() != Kind::Plain || value.unit().dim() != px.dim() {
         return Err(Error::UnsupportedOperation(
             "this needs a length or a number of pixels",
         ));
