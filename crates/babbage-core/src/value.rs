@@ -4,6 +4,7 @@ use crate::functions::{Rounding, round_to_multiple};
 use crate::number::Number;
 use crate::parser::{BinOp, Phrase};
 use crate::units::UnitExpr;
+use num_traits::Signed;
 use num_traits::ToPrimitive;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -11,6 +12,8 @@ pub enum Kind {
     Plain,
     /// The stored number is the fraction: 10% is held as 1/10.
     Percent,
+    /// `true` or `false`, held as 1 or 0.
+    Bool,
 }
 
 /// A number with an optional unit. A percentage never has a unit.
@@ -22,6 +25,8 @@ pub struct Value {
     /// True when the number is a close rational stand-in for an irrational result (a square root, a sine,
     /// pi), or came from one. It is never silently treated as exact.
     approx: bool,
+    /// The base to show a whole number in: 10, or 2, 8, 16 and others after `as hex` or a literal like `0xFF`.
+    radix: u8,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -39,6 +44,7 @@ impl Value {
             kind: Kind::Plain,
             unit: UnitExpr::default(),
             approx: false,
+            radix: 10,
         }
     }
 
@@ -48,6 +54,7 @@ impl Value {
             kind: Kind::Percent,
             unit: UnitExpr::default(),
             approx: false,
+            radix: 10,
         }
     }
 
@@ -63,6 +70,7 @@ impl Value {
             kind: Kind::Plain,
             unit,
             approx: false,
+            radix: 10,
         })
     }
 
@@ -72,6 +80,40 @@ impl Value {
             return Ok(self.number);
         }
         self.convert(&like.unit).map(|v| v.number)
+    }
+
+    pub fn boolean(b: bool) -> Value {
+        Value {
+            number: Number::from_i64(i64::from(b)),
+            kind: Kind::Bool,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+        }
+    }
+
+    /// This whole number, to be shown in `radix` (2 to 36).
+    pub fn in_radix(mut self, radix: u8) -> Result<Value, Error> {
+        if self.kind != Kind::Plain
+            || !self.unit.is_empty()
+            || !self.number.is_integer()
+            || !(2..=36).contains(&radix)
+        {
+            return Err(Error::UnsupportedOperation(
+                "only a whole number without a unit can be shown in another base",
+            ));
+        }
+        self.radix = radix;
+        Ok(self)
+    }
+
+    pub fn radix(&self) -> u8 {
+        self.radix
+    }
+
+    /// The truth value, for a `true` or `false`.
+    pub fn as_bool(&self) -> Option<bool> {
+        (self.kind == Kind::Bool).then(|| !self.number.is_zero())
     }
 
     /// This value marked as approximate.
@@ -120,6 +162,7 @@ impl Value {
             kind: self.kind,
             unit: self.unit.clone(),
             approx: self.approx,
+            radix: 10,
         })
     }
 
@@ -142,6 +185,7 @@ impl Value {
             kind: self.kind,
             unit: self.unit.clone(),
             approx: self.approx,
+            radix: self.radix,
         }
     }
 
@@ -233,6 +277,21 @@ impl Value {
 
     fn binary_exact(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
         use Kind::{Percent, Plain};
+        match op {
+            BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Gt | BinOp::Le | BinOp::Ge => {
+                return comparison(op, l, r);
+            }
+            BinOp::And | BinOp::Or | BinOp::Xor | BinOp::LogicAnd | BinOp::LogicOr => {
+                return logic(op, l, r);
+            }
+            BinOp::BitAnd | BinOp::BitOr | BinOp::Shl | BinOp::Shr => return bitwise(op, l, r),
+            _ => {}
+        }
+        if l.kind == Kind::Bool || r.kind == Kind::Bool {
+            return Err(Error::UnsupportedOperation(
+                "true and false take part only in comparisons and logic",
+            ));
+        }
         if l.unit.has_offset() || r.unit.has_offset() {
             let shifts = matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
                 && l.kind == Plain
@@ -328,7 +387,7 @@ impl Value {
             (Phrase::AsPercent, [v]) => match v.kind {
                 Plain if v.unit.is_empty() => Ok(Value::percent(v.number.clone())),
                 Percent => Ok(v.clone()),
-                Plain => refuse(),
+                Plain | Kind::Bool => refuse(),
             },
             (
                 Phrase::IsPercentOfWhat | Phrase::IsPercentOnWhat | Phrase::IsPercentOffWhat,
@@ -386,6 +445,101 @@ fn reconciles_approximate_units(units: &[&UnitExpr]) -> bool {
             !a.is_empty() && !b.is_empty() && a != b && (a.is_approximate() || b.is_approximate())
         })
     })
+}
+
+fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    if l.kind == Kind::Bool || r.kind == Kind::Bool {
+        return match (l.as_bool(), r.as_bool(), op) {
+            (Some(a), Some(b), BinOp::Eq) => Ok(Value::boolean(a == b)),
+            (Some(a), Some(b), BinOp::Ne) => Ok(Value::boolean(a != b)),
+            (Some(_), Some(_), _) => Err(Error::UnsupportedOperation(
+                "true and false can only be compared for equality",
+            )),
+            _ => Err(Error::UnsupportedOperation(
+                "a true or false cannot be compared with a number",
+            )),
+        };
+    }
+    let order = Value::compare(l, r)?;
+    if l.approx || r.approx {
+        let gap = l.si()?.sub(&r.si()?)?.abs();
+        let scale = if r.si()?.abs() > Number::from_i64(1) {
+            r.si()?.abs()
+        } else {
+            Number::from_i64(1)
+        };
+        let tolerance = Number::from_decimal_str("1e-60")?.mul(&scale)?;
+        if gap <= tolerance {
+            return Err(Error::UnsupportedOperation(
+                "these approximate values are too close to tell apart",
+            ));
+        }
+    }
+    let result = match op {
+        BinOp::Eq => order == Equal,
+        BinOp::Ne => order != Equal,
+        BinOp::Lt => order == Less,
+        BinOp::Gt => order == Greater,
+        BinOp::Le => order != Greater,
+        _ => order != Less,
+    };
+    Ok(Value::boolean(result))
+}
+
+fn logic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+    if let (Some(a), Some(b)) = (l.as_bool(), r.as_bool()) {
+        return Ok(Value::boolean(match op {
+            BinOp::And | BinOp::LogicAnd => a && b,
+            BinOp::Or | BinOp::LogicOr => a || b,
+            _ => a != b,
+        }));
+    }
+    match op {
+        BinOp::LogicAnd | BinOp::LogicOr => Err(Error::UnsupportedOperation(
+            "&& and || work on true and false",
+        )),
+        BinOp::And => bitwise(BinOp::BitAnd, l, r),
+        BinOp::Or => bitwise(BinOp::BitOr, l, r),
+        _ => bitwise(BinOp::Xor, l, r),
+    }
+}
+
+const BITWISE_NEEDS_WHOLE: &str = "bitwise operators work on whole numbers of zero or more";
+
+fn whole_number(v: &Value) -> Result<num_bigint::BigInt, Error> {
+    if v.kind != Kind::Plain
+        || !v.unit.is_empty()
+        || !v.number.is_integer()
+        || v.number.is_negative()
+    {
+        return Err(Error::UnsupportedOperation(BITWISE_NEEDS_WHOLE));
+    }
+    Ok(v.number.numer().clone())
+}
+
+fn bitwise(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+    let (a, b) = (whole_number(l)?, whole_number(r)?);
+    let result = match op {
+        BinOp::BitAnd => a & b,
+        BinOp::BitOr => a | b,
+        BinOp::Xor => a ^ b,
+        BinOp::Shl | BinOp::Shr => {
+            let by = b
+                .to_usize()
+                .filter(|n| *n as u64 <= crate::number::MAX_BITS)
+                .ok_or(Error::Overflow)?;
+            if op == BinOp::Shl { a << by } else { a >> by }
+        }
+        _ => unreachable!("only bitwise operators reach here"),
+    };
+    let value = Value::plain(Number::from_ratio(result, num_bigint::BigInt::from(1))?);
+    // Two numbers written in the same base give an answer in that base: `0xFF & 0x0F` is `0xF`.
+    if l.radix == r.radix && !matches!(op, BinOp::Shl | BinOp::Shr) {
+        value.in_radix(l.radix)
+    } else {
+        Ok(value)
+    }
 }
 
 fn arith(op: BinOp, a: &Number, b: &Number) -> Result<Number, Error> {
@@ -483,6 +637,10 @@ pub fn format_value(v: &Value, opts: &FormatOptions) -> Formatted {
 
 fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
     match v.kind {
+        Kind::Plain if v.radix != 10 => Formatted {
+            text: radix_text(&v.number, v.radix),
+            exact: true,
+        },
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {
                 return f;
@@ -494,6 +652,10 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             }
             f
         }
+        Kind::Bool => Formatted {
+            text: if v.number.is_zero() { "false" } else { "true" }.to_string(),
+            exact: true,
+        },
         Kind::Percent => {
             let mut f = format_decimal(&v.number.times_hundred(), &opts.unabbreviated());
             f.text.push('%');
@@ -515,6 +677,12 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
             fixed.trim_trailing_zeros = false;
             format_decimal(&v.number, &fixed)
         }
+        (Some(minor), false, false) => {
+            // Unrounded, but never fewer digits than the currency shows: `$45,000.00`, `$1.005`.
+            let mut f = format_decimal(&v.number, opts);
+            f.text = pad_fraction(&f.text, minor);
+            f
+        }
         _ => format_decimal(&v.number, opts),
     };
     if currency.prefix_symbol {
@@ -532,4 +700,41 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
         f.text.push_str(&rest.recip().symbol());
     }
     Some(f)
+}
+
+/// Adds zeros so `text` has at least `places` digits after the point.
+fn pad_fraction(text: &str, places: u32) -> String {
+    let places = places as usize;
+    match text.split_once('.') {
+        Some((whole, frac)) if frac.len() >= places => format!("{whole}.{frac}"),
+        Some((whole, frac)) => format!("{whole}.{frac}{}", "0".repeat(places - frac.len())),
+        None if places == 0 => text.to_string(),
+        None => format!("{text}.{}", "0".repeat(places)),
+    }
+}
+
+/// `0xFF`, `0b101`, `0o17`, or digits with a subscript base for any other base.
+fn radix_text(n: &Number, radix: u8) -> String {
+    let digits = n
+        .numer()
+        .abs()
+        .to_str_radix(u32::from(radix))
+        .to_uppercase();
+    let sign = if n.is_negative() { "-" } else { "" };
+    match radix {
+        16 => format!("{sign}0x{digits}"),
+        2 => format!("{sign}0b{digits}"),
+        8 => format!("{sign}0o{digits}"),
+        _ => {
+            let subscript: String = radix
+                .to_string()
+                .chars()
+                .map(|c| {
+                    ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉']
+                        [c.to_digit(10).unwrap_or(0) as usize]
+                })
+                .collect();
+            format!("{sign}{digits}{subscript}")
+        }
+    }
 }

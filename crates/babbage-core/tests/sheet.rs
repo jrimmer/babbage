@@ -29,7 +29,7 @@ fn error_of(r: &LineResult) -> &Error {
 fn variables_are_declared_then_used() {
     assert_eq!(
         answers(&["discount = 10%", "cost = $200", "cost - discount"]),
-        ["10%", "$200", "$180.00"].map(String::from)
+        ["10%", "$200.00", "$180.00"].map(String::from)
     );
 }
 
@@ -40,7 +40,10 @@ fn multi_word_variable_names() {
         "monthly rent × 12",
         "monthly rent + 10%",
     ]);
-    assert_eq!(r, ["$1,200", "$14,400.00", "$1,320.00"].map(String::from));
+    assert_eq!(
+        r,
+        ["$1,200.00", "$14,400.00", "$1,320.00"].map(String::from)
+    );
 }
 
 #[test]

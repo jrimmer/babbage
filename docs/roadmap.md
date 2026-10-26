@@ -16,8 +16,8 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 10 | Large number symbols (k, M, B) and SI display | done (display threshold unverified, ticket 0028) |
 | 11 | Rounding, averages, median, stats, gcd/lcm, permutations, clamp, operator words, mod | done |
 | 12 | Roots, logs, trig, constants (115-digit, flagged approximate) | done |
-| 13 | Conditionals and comparisons | todo |
-| 14 | Bases and bitwise | todo |
+| 13 | Conditionals and comparisons | done |
+| 14 | Bases and bitwise | done (non-negative whole numbers) |
 | 15 | Rates, growth and change, cooking volumes | todo |
 | 16 | Dates and calendar math | todo |
 | 17 | Workdays and weekdays | todo |
@@ -29,7 +29,7 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 23 | Sheets, sheetbooks, reference-format-like file format | todo |
 | 24 | gpui front end | todo |
 
-12 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
+14 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
 
 Row 3 leftovers, each filed as a ticket: fraction display (`as fraction`), multipliers (`4x`), proportion forms (`20% is 500, what is 750`), and phrase forms inside parentheses.
 

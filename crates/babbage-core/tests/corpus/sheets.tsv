@@ -42,14 +42,14 @@ $86.49	$86.49
 SHEET 3
 $212	$212.00
 bonus = $75.29	$75.29
-rent = $114	$114
+rent = $114	$114.00
 subtotal	$401.29
 $216	$216.00
 bonus + 564%	$499.93
 591%	591%
 691 #food	691
 rent - 57.04	$56.96
-rent -= 238	-$124
+rent -= 238	-$124.00
 rent = $98.02	$98.02
 rent += 560	$658.02
 // a note 123	.comment
@@ -66,7 +66,7 @@ line1 × 556	4,870.56
 61.73%	61.73%
 line2 × 508	435.356k
 line7 + 857	436.213k
-bonus = $59.30	$59.3
+bonus = $59.30	$59.30
 $28.09	$28.09
 SHEET 5
 price = 379%	379%
@@ -74,7 +74,7 @@ line1 × 435	1,648.65
 # Heading	.heading
 // a note 123	.comment
 761%	761%
-rent = $205	$205
+rent = $205	$205.00
 price = 52.84	52.84
 tax rate = 84.70%	84.7%
 9.13	9.13
@@ -97,17 +97,17 @@ price = $6.39	$6.39
 341	341
 60.79	60.79
 80.77	80.77
-bonus = $761	$761
+bonus = $761	$761.00
 4.04	4.04
 line2 × 61.03	20,811.23
 subtotal	$22,065.22
 # Heading	.heading
 bonus × 43.73	$33,278.53
 SHEET 8
-monthly cost = $659	$659
-monthly cost -= 58.70	$600.3
+monthly cost = $659	$659.00
+monthly cost -= 58.70	$600.30
 subtotal	$1,259.30
-monthly cost += 271	$871.3
+monthly cost += 271	$871.30
 subtotal	$871.30
 tax rate = 900%	900%
 723	723
@@ -124,7 +124,7 @@ $390	$390.00
 salary = 454%	454%
 91.50%	91.5%
 rent = 474%	474%
-price = $403	$403
+price = $403	$403.00
 subtotal	$346.7273233752k
 salary = 55.84	55.84
 # Heading	.heading
@@ -137,7 +137,7 @@ SHEET 10
 ---	.divider
 line1 × 132	12,359.16
 ---	.divider
-salary = $549	$549
+salary = $549	$549.00
 $42.92	$42.92
 line1 + 346%	417.5898
 $588	$588.00
@@ -146,7 +146,7 @@ $55.29	$55.29
 $72.44	$72.44
 $539	$539.00
 224	224
-bonus = $729	$729
+bonus = $729	$729.00
 	.blank
 SHEET 11
 669	669
@@ -177,8 +177,8 @@ salary × 57.85	24.89864
 	.blank
 SHEET 13
 $40.45 #food	$40.45
-salary = $325	$325
-tax rate = $86	$86
+salary = $325	$325.00
+tax rate = $86	$86.00
 $491	$491.00
 line3 × 152	$13,072.00
 bonus = 15.23%	15.23%
@@ -230,7 +230,7 @@ subtotal	$5,666.83
 # Heading	.heading
 # Heading	.heading
 price += 329	$424.48
-rent = $394	$394
+rent = $394	$394.00
 price -= 68.04	$356.44
 fee = $12.21	$12.21
 rent = $62.97	$62.97
@@ -269,7 +269,7 @@ price = 251	251
 10.45 #food	10.45
 tax rate = 798	798
 SHEET 21
-monthly cost = $800	$800
+monthly cost = $800	$800.00
 line1 + 27.21	$827.21
 line1 × 696	$556.8k
 line1 + 67.61	$867.61
@@ -277,13 +277,13 @@ line2 + 705	$1,532.21
 $11.17	$11.17
 $187	$187.00
 61.76%	61.76%
-monthly cost += 149	$949
+monthly cost += 149	$949.00
 fee = 30	30
 63	63
 tax rate = 74.65	74.65
 // a note 123	.comment
 tax rate - 94.30	-19.65
-fee = $808	$808
+fee = $808	$808.00
 SHEET 22
 salary = 99	99
 # Heading	.heading
@@ -374,13 +374,13 @@ line1 × 9.53	8.239638
 bonus = 611%	611%
 465%	465%
 salary + 377	$380.05
-tax rate = $29.70	$29.7
+tax rate = $29.70	$29.70
 SHEET 30
 45.13	45.13
 line1 × 726	32,764.38
 line1 + 5.08%	47.422604
 line2 + 692	33,456.38
-salary = $501	$501
+salary = $501	$501.00
 623	623
 # Heading	.heading
 salary + 148%	$1,242.48
@@ -388,7 +388,7 @@ line2 + 26.07	32,790.45
 SHEET 31
 $74.25	$74.25
 line1 + 627%	$539.80
-monthly cost = $659	$659
+monthly cost = $659	$659.00
 $786	$786.00
 subtotal	$2,059.05
 // a note 123	.comment
@@ -423,7 +423,7 @@ fee = 22.33%	22.33%
 subtotal	$2,020.04
 $341	$341.00
 SHEET 34
-tax rate = $676	$676
+tax rate = $676	$676.00
 tax rate += 87.51	$763.51
 tax rate - 56.10	$707.41
 # Heading	.heading
@@ -443,7 +443,7 @@ $99.77	$99.77
 tax rate = 85.61%	85.61%
 857%	857%
 25.65	25.65
-rent = $881	$881
+rent = $881	$881.00
 line2 + 81.30%	75.94657
 85.27%	85.27%
 SHEET 36
@@ -485,7 +485,7 @@ SHEET 39
 813	813
 line1 × 730	5,978.7
 $67.97	$67.97
-monthly cost = $689	$689
+monthly cost = $689	$689.00
 $71.12	$71.12
 85.36	85.36
 ---	.divider
@@ -513,7 +513,7 @@ $39.13	$39.13
 $701	$701.00
 ---	.divider
 salary = 847%	847%
-bonus = $60	$60
+bonus = $60	$60.00
 $95.11	$95.11
 bonus + 813	$873.00
 salary = 813	813
@@ -567,7 +567,7 @@ line1 + 471%	303.9433
 salary = 274%	274%
 salary × 484	1,326.16
 monthly cost = $1.92	$1.92
-bonus = $777	$777
+bonus = $777	$777.00
 656%	656%
 55.65%	55.65%
 # Heading	.heading
@@ -604,10 +604,10 @@ line2 × 18.25	31,354.23
 line8 + 30.60	31,384.83
 line1 × 80.90	249.981
 # Heading	.heading
-rent = $212	$212
+rent = $212	$212.00
 rent + 272%	$788.64
 rent - 623	-$411.00
-price = $43.60	$43.6
+price = $43.60	$43.60
 SHEET 49
 # Heading	.heading
 $410	$410.00
@@ -615,7 +615,7 @@ $44.27	$44.27
 line2 × 11.81	$4,842.10
 $43.22	$43.22
 line4 + 80.99	$4,923.09
-bonus = $668	$668
+bonus = $668	$668.00
 bonus = $15.74	$15.74
 # Heading	.heading
 line4 + 668	$5,510.10
@@ -629,9 +629,9 @@ line2 + 99.38%	$817.46
 SHEET 50
 price = 18.66	18.66
 $317	$317.00
-salary = $806	$806
+salary = $806	$806.00
 salary × 143	$115.258k
-tax rate = $796	$796
+tax rate = $796	$796.00
 $231	$231.00
 price + 4.47	23.13
 SHEET 51
@@ -645,7 +645,7 @@ line6 + 464%	157.92
 line6 + 50%	42
 line7 × 79.36	12,532.5312
 salary = 900	900
-salary = $723	$723
+salary = $723	$723.00
 177%	177%
 salary × 80.77	$58,396.71
 $180 #travel	$180.00
@@ -676,12 +676,12 @@ line1 × 780	3,159
 $142 #food	$142.00
 550	550
 ---	.divider
-price = $653	$653
+price = $653	$653.00
 price + 69%	$1,103.57
 price + 29.02	$682.02
-price -= 299	$354
+price -= 299	$354.00
 3.67 #food	3.67
-price -= 456	-$102
+price -= 456	-$102.00
 monthly cost = 77.38	77.38
 price × 82.62	-$8,427.24
 SHEET 54
@@ -693,7 +693,7 @@ tax rate - 89.43	$9.16
 748	748
 SHEET 55
 $85.97	$85.97
-price = $433	$433
+price = $433	$433.00
 price × 477	$206.541k
 line1 + 883	$968.97
 subtotal	$208.02894k
@@ -705,8 +705,8 @@ price = 17.95%	17.95%
 769%	769%
 SHEET 56
 monthly cost = 52.84%	52.84%
-bonus = $351	$351
-tax rate = $391	$391
+bonus = $351	$351.00
+tax rate = $391	$391.00
 # Heading	.heading
 	.blank
 // a note 123	.comment
@@ -736,7 +736,7 @@ rent = 91.91%	91.91%
 line6 × 67	$6,834.49
 subtotal	$6,834.49
 SHEET 59
-tax rate = $760	$760
+tax rate = $760	$760.00
 tax rate × 861	$654.36k
 subtotal	$655.12k
 tax rate += 64.42	$824.42
@@ -769,11 +769,11 @@ line9 + 98%	3,252.4074
 SHEET 62
 $5.18	$5.18
 $42.22	$42.22
-monthly cost = $732	$732
+monthly cost = $732	$732.00
 monthly cost + 19.41%	$874.08
 monthly cost + 347%	$3,272.04
 line1 + 15.45	$20.63
-monthly cost -= 301	$431
+monthly cost -= 301	$431.00
 73	73
 87.01%	87.01%
 SHEET 63
@@ -812,7 +812,7 @@ salary = $19.08	$19.08
 line3 + 501%	3,413.68
 tax rate = 18.75	18.75
 $360	$360.00
-salary = $850	$850
+salary = $850	$850.00
 221	221
 subtotal	$82,886.63
 salary × 213	$181.05k
@@ -829,7 +829,7 @@ subtotal	$4,993.44
 rent = 54.82%	54.82%
 SHEET 68
 	.blank
-rent = $435	$435
+rent = $435	$435.00
 line2 + 203%	$1,318.05
 151%	151%
 line3 + 56.62%	$2,064.33
@@ -857,8 +857,8 @@ SHEET 70
 82.15%	82.15%
 line2 × 88.54	72.73561
 line3 + 721%	597.1593581
-fee = $371	$371
-fee += 552	$923
+fee = $371	$371.00
+fee += 552	$923.00
 fee -= 41.55	$881.45
 // a note 123	.comment
 fee × 2.20	$1,939.19
@@ -867,11 +867,11 @@ $697	$697.00
 fee -= 698	$183.45
 // a note 123	.comment
 $33.65	$33.65
-tax rate = $684	$684
+tax rate = $684	$684.00
 SHEET 71
-monthly cost = $172	$172
-monthly cost -= 42	$130
-fee = $742	$742
+monthly cost = $172	$172.00
+monthly cost -= 42	$130.00
+fee = $742	$742.00
 monthly cost = $10.56	$10.56
 25.90	25.9
 line5 + 92.30%	49.8057
@@ -901,7 +901,7 @@ tax rate = 91.79%	91.79%
 price = 73.23%	73.23%
 SHEET 73
 # Heading	.heading
-rent = $369	$369
+rent = $369	$369.00
 fee = 12.87%	12.87%
 tax rate = 861%	861%
 rent = $22.57	$22.57
@@ -927,7 +927,7 @@ $412	$412.00
 line3 × 18.34	$7,556.08
 434%	434%
 fee = 38.84%	38.84%
-rent = $359	$359
+rent = $359	$359.00
 // a note 123	.comment
 ---	.divider
 line5 × 284	1,232.56
@@ -950,7 +950,7 @@ $145	$145.00
 # Heading	.heading
 tax rate += 83.49	$95.11
 24.35%	24.35%
-monthly cost = $286	$286
+monthly cost = $286	$286.00
 729	729
 SHEET 78
 # Heading	.heading
@@ -969,12 +969,12 @@ SHEET 79
 75.75	75.75
 line1 × 84	6,363
 line2 × 18.78	119.49714k
-fee = $434	$434
+fee = $434	$434.00
 581%	581%
 fee - 87.65	$346.35
 fee = $32.62	$32.62
 ---	.divider
-salary = $217	$217
+salary = $217	$217.00
 307	307
 line1 × 19.78	1,498.335
 salary × 126	$27,342.00
@@ -1060,7 +1060,7 @@ fee = 567%	567%
 # Heading	.heading
 bonus += 37.22	$61.81
 # Heading	.heading
-monthly cost = $293	$293
+monthly cost = $293	$293.00
 bonus -= 492	-$430.19
 SHEET 87
 	.blank
@@ -1081,9 +1081,9 @@ SHEET 88
 // a note 123	.comment
 37.46%	37.46%
 # Heading	.heading
-salary = $451	$451
-salary += 132	$583
-salary += 783	$1,366
+salary = $451	$451.00
+salary += 132	$583.00
+salary += 783	$1,366.00
 436	436
 line3 × 557	208.6522
 line1 × 95.29	70.114382
@@ -1115,7 +1115,7 @@ SHEET 91
 fee = 1.01%	1.01%
 72.06%	72.06%
 $84.30	$84.30
-monthly cost = $550	$550
+monthly cost = $550	$550.00
 792%	792%
 $448	$448.00
 21	21
@@ -1134,7 +1134,7 @@ tax rate += 263	$358.23
 $77.38	$77.38
 $166 #food	$166.00
 SHEET 93
-tax rate = $250	$250
+tax rate = $250	$250.00
 subtotal	$250.00
 41	41
 bonus = 111	111
@@ -1175,21 +1175,21 @@ SHEET 96
 	.blank
 line1 × 395	305.335k
 line3 + 874	306.209k
-rent = $439	$439
+rent = $439	$439.00
 481	481
 monthly cost = 273%	273%
 line6 + 426	907
 rent -= 36.64	$402.36
 monthly cost × 37.38	102.0474
 line4 + 74.81	306.28381k
-price = $871	$871
+price = $871	$871.00
 bonus = 84.88%	84.88%
 rent = 862	862
 $70.17	$70.17
 SHEET 97
 $92.68	$92.68
 857	857
-monthly cost = $725	$725
+monthly cost = $725	$725.00
 $594	$594.00
 salary = 40%	40%
 $297	$297.00
@@ -1199,7 +1199,7 @@ SHEET 98
 ---	.divider
 252%	252%
 line2 × 97.93	246.7836
-monthly cost = $812	$812
+monthly cost = $812	$812.00
 salary = 5.23%	5.23%
 778%	778%
 line4 + 540%	$5,196.80
@@ -1216,7 +1216,7 @@ bonus = $48.08	$48.08
 bonus - 700	-$651.92
 bonus += 80.48	$128.56
 bonus × 73.96	$9,508.30
-fee = $324	$324
+fee = $324	$324.00
 subtotal	$9,974.91
 line7 + 93.70	$222.26
 $755	$755.00
@@ -1247,7 +1247,7 @@ monthly cost = $10.25	$10.25
 $248 #travel	$248.00
 151%	151%
 monthly cost += 824	$834.25
-fee = $827	$827
+fee = $827	$827.00
 bonus × 191	-$45,622.26
 bonus = 41.03	41.03
 SHEET 102
@@ -1282,9 +1282,9 @@ SHEET 104
 SHEET 105
 89.90%	89.9%
 $838 #travel	$838.00
-price = $12.70	$12.7
+price = $12.70	$12.70
 price × 207	$2,628.90
-price += 693	$705.7
+price += 693	$705.70
 # Heading	.heading
 rent = 151	151
 monthly cost = 627%	627%
@@ -1311,7 +1311,7 @@ tax rate = 868	868
 	.blank
 bonus = 61.59%	61.59%
 SHEET 107
-price = $368	$368
+price = $368	$368.00
 salary = 112%	112%
 fee = 47.90	47.9
 line1 × 580	$213.44k
@@ -1346,7 +1346,7 @@ SHEET 109
 rent = 82.30%	82.3%
 $330 #travel	$330.00
 $65.39 #food	$65.39
-monthly cost = $190	$190
+monthly cost = $190	$190.00
 435	435
 SHEET 110
 price = 40.53	40.53
@@ -1366,7 +1366,7 @@ salary = 402%	402%
 SHEET 112
 // a note 123	.comment
 	.blank
-tax rate = $574	$574
+tax rate = $574	$574.00
 $759 #travel	$759.00
 # Heading	.heading
 # Heading	.heading
@@ -1395,20 +1395,20 @@ line3 + 84.23%	104.74857225
 line1 + 25.82	60.82
 153%	153%
 line5 × 3.47	203.0297
-price = $338	$338
+price = $338	$338.00
 price + 895%	$3,363.10
 price + 83.65	$421.65
 30.94	30.94
 25.18%	25.18%
 monthly cost = 48.52	48.52
-price -= 22	$316
+price -= 22	$316.00
 SHEET 115
 $99.19	$99.19
 subtotal	$99.19
 23.58%	23.58%
-tax rate = $320	$320
+tax rate = $320	$320.00
 26.50	26.5
-tax rate -= 342	-$22
+tax rate -= 342	-$22.00
 tax rate - 147	-$169.00
 342	342
 // a note 123	.comment
@@ -1447,13 +1447,13 @@ SHEET 118
 	.blank
 $810	$810.00
 line2 × 752	$609.12k
-fee = $238	$238
-fee += 878	$1,116
+fee = $238	$238.00
+fee += 878	$1,116.00
 71.76	71.76
-fee += 575	$1,691
+fee += 575	$1,691.00
 fee + 129%	$3,872.39
 subtotal	$616.91915k
-rent = $551	$551
+rent = $551	$551.00
 SHEET 119
 706	706
 subtotal	706
@@ -1517,7 +1517,7 @@ line3 + 735%	2,745.3965
 salary = 231%	231%
 592%	592%
 SHEET 125
-price = $493	$493
+price = $493	$493.00
 price + 192	$685.00
 price + 224%	$1,597.32
 66.67	66.67
@@ -1551,14 +1551,14 @@ subtotal	1,112.324708
 line3 + 427%	4,384.64
 line5 × 4.45	19,511.648
 $532	$532.00
-rent = $850	$850
+rent = $850	$850.00
 $256	$256.00
 $8	$8.00
 salary + 488	549.29
 rent + 633%	$6,230.50
 527	527
 	.blank
-fee = $433	$433
+fee = $433	$433.00
 salary × 52.05	3,190.1445
 SHEET 128
 salary = 250%	250%
@@ -1608,8 +1608,8 @@ line3 × 56.83	45.947055
 178	178
 SHEET 132
 bonus = 14.44%	14.44%
-rent = $584	$584
-fee = $157	$157
+rent = $584	$584.00
+fee = $157	$157.00
 fee -= 65.22	$91.78
 149%	149%
 $495	$495.00
@@ -1617,15 +1617,15 @@ rent -= 26.17	$557.83
 $95.65	$95.65
 fee += 768	$859.78
 rent += 251	$808.83
-price = $300	$300
+price = $300	$300.00
 SHEET 133
-fee = $57	$57
+fee = $57	$57.00
 $23.06 #food	$23.06
 fee × 578	$32,946.00
-fee += 80	$137
+fee += 80	$137.00
 20.24%	20.24%
 SHEET 134
-rent = $572	$572
+rent = $572	$572.00
 rent += 82.17	$654.17
 rent × 197	$128.87149k
 line1 × 221	$126.412k
@@ -1657,9 +1657,9 @@ SHEET 136
 subtotal	63.32
 line1 + 16.39	79.71
 line1 × 54.51	3,451.5732
-fee = $810	$810
-fee -= 668	$142
-salary = $511	$511
+fee = $810	$810.00
+fee -= 668	$142.00
+salary = $511	$511.00
 SHEET 137
 price = 649%	649%
 $92.01	$92.01
@@ -1702,25 +1702,25 @@ salary × 785	250.415k
 // a note 123	.comment
 line1 + 74%	555.06
 ---	.divider
-salary = $604	$604
+salary = $604	$604.00
 831%	831%
 	.blank
 81.93	81.93
 SHEET 141
 # Heading	.heading
-tax rate = $90.70	$90.7
+tax rate = $90.70	$90.70
 tax rate - 93.08	-$2.38
 $42.18	$42.18
 line2 × 573	$51,971.10
 subtotal	$52,101.60
 line3 + 270	$267.62
 835%	835%
-tax rate -= 162	-$71.3
-tax rate -= 676	-$747.3
+tax rate -= 162	-$71.30
+tax rate -= 676	-$747.30
 ---	.divider
 SHEET 142
 	.blank
-fee = $325	$325
+fee = $325	$325.00
 price = 589	589
 79.51	79.51
 line4 + 259%	285.4409
@@ -1798,23 +1798,23 @@ $241	$241.00
 price × 42.31	171.3555
 line2 + 155%	$1,076.10
 94.27%	94.27%
-price = $693	$693
+price = $693	$693.00
 SHEET 149
 $97.74	$97.74
-price = $686	$686
+price = $686	$686.00
 line2 + 357	$1,043.00
 93.43%	93.43%
 	.blank
 line3 + 473	$1,516.00
-price = $642	$642
-price += 663	$1,305
+price = $642	$642.00
+price += 663	$1,305.00
 subtotal	$10,231.94
 # Heading	.heading
 fee = $82.45	$82.45
 430	430
 SHEET 150
 846	846
-salary = $821	$821
+salary = $821	$821.00
 // a note 123	.comment
 subtotal	$1,667.00
 ---	.divider
@@ -1892,7 +1892,7 @@ price = $80.55	$80.55
 price - 182	-$101.45
 rent = 81.96	81.96
 tax rate = 91.52%	91.52%
-monthly cost = $381	$381
+monthly cost = $381	$381.00
 tax rate = 19.50%	19.5%
 tax rate × 42.50	8.2875
 SHEET 156
@@ -1901,13 +1901,13 @@ line1 × 468	1,586.52
 26.53%	26.53%
 line2 + 54.90%	2,457.51948
 	.blank
-monthly cost = $96.80	$96.8
+monthly cost = $96.80	$96.80
 monthly cost × 834	$80,731.20
 monthly cost -= 13.24	$83.56
 $639 #travel	$639.00
 # Heading	.heading
 SHEET 157
-tax rate = $28.60	$28.6
+tax rate = $28.60	$28.60
 subtotal	$28.60
 824%	824%
 # Heading	.heading
@@ -1932,7 +1932,7 @@ fee = 501	501
 monthly cost × 821	-$32,224.25
 SHEET 159
 fee = $58.44	$58.44
-tax rate = $200	$200
+tax rate = $200	$200.00
 tax rate - 198	$2.00
 ---	.divider
 line2 + 50.45%	$300.90
@@ -1946,10 +1946,10 @@ line3 + 25%	$2.50
 line12 + 56%	$3.90
 SHEET 160
 $135 #travel	$135.00
-bonus = $687	$687
+bonus = $687	$687.00
 	.blank
 line2 + 4.87%	$720.46
-bonus += 245	$932
+bonus += 245	$932.00
 line1 + 895	$1,030.00
 bonus × 684	$637.488k
 53.04	53.04
@@ -1980,7 +1980,7 @@ line1 × 1.85	$73.43
 447	447
 line5 + 6%	$236.97557478k
 line6 + 499%	$439.82
-price = $286	$286
+price = $286	$286.00
 SHEET 163
 price = 325	325
 $31.41 #travel	$31.41
@@ -1996,7 +1996,7 @@ monthly cost = 1%	1%
 monthly cost × 33.95	0.3395
 bonus = 45.26%	45.26%
 price × 811	263.575k
-tax rate = $703	$703
+tax rate = $703	$703.00
 8.08%	8.08%
 SHEET 164
 89.42%	89.42%
@@ -2020,7 +2020,7 @@ SHEET 165
 	.blank
 monthly cost = $0.94	$0.94
 monthly cost += 29.70	$30.64
-price = $582	$582
+price = $582	$582.00
 47.80	47.8
 monthly cost + 97.83	$128.47
 fee = $98.06	$98.06
@@ -2101,12 +2101,12 @@ line5 + 81.81	5,927.49
 254	254
 price + 600	$636.24
 $515 #food	$515.00
-salary = $147	$147
+salary = $147	$147.00
 tax rate = 95	95
 subtotal	$7,610.97
 SHEET 172
 $65.66	$65.66
-rent = $546	$546
+rent = $546	$546.00
 line1 + 83.04	$148.70
 rent + 34.50%	$734.37
 subtotal	$1,494.73
@@ -2163,7 +2163,7 @@ SHEET 176
 line1 × 325	161.2975
 # Heading	.heading
 ---	.divider
-tax rate = $360	$360
+tax rate = $360	$360.00
 price = 840	840
 line5 + 758%	$3,088.80
 10.52%	10.52%
@@ -2188,7 +2188,7 @@ $540 #food	$540.00
 line1 + 52.84	$592.84
 line1 + 82.93	$622.93
 	.blank
-bonus = $246	$246
+bonus = $246	$246.00
 bonus + 882	$1,128.00
 $321	$321.00
 line2 × 85.17	$50,492.18
@@ -2200,7 +2200,7 @@ price = 19.59%	19.59%
 ---	.divider
 528%	528%
 line5 × 477	2,518.56
-salary = $165	$165
+salary = $165	$165.00
 salary + 2.59%	$169.27
 tax rate = 24.18	24.18
 salary -= 29.53	$135.47
@@ -2213,7 +2213,7 @@ line9 + 319%	101.3142
 # Heading	.heading
 line8 + 307%	$688.94
 SHEET 180
-salary = $144	$144
+salary = $144	$144.00
 $710	$710.00
 price = $79.11	$79.11
 line2 + 113%	$1,512.30
@@ -2229,7 +2229,7 @@ rent = 37%	37%
 line5 + 79.04	136.2
 line1 × 71.80	26.566
 subtotal	219.926
-salary = $389	$389
+salary = $389	$389.00
 // a note 123	.comment
 subtotal	$389.00
 salary + 40.58%	$546.86
@@ -2254,7 +2254,7 @@ rent = 54.20	54.2
 63.06	63.06
 rent - 50.38	3.82
 rent + 520	574.2
-rent = $42.40	$42.4
+rent = $42.40	$42.40
 # Heading	.heading
 860	860
 rent + 81.48	$123.88
@@ -2292,7 +2292,7 @@ line1 × 57	419.52
 line1 × 191	1,405.76
 line3 × 50	20,976
 line8 + 130	1,535.76
-tax rate = $146	$146
+tax rate = $146	$146.00
 tax rate × 50.63	$7,391.98
 SHEET 187
 	.blank
@@ -2301,7 +2301,7 @@ SHEET 187
 monthly cost = 80.12%	80.12%
 // a note 123	.comment
 SHEET 188
-price = $121	$121
+price = $121	$121.00
 line1 + 32.71%	$160.58
 591	591
 price + 186	$307.00
@@ -2318,9 +2318,9 @@ line10 + 23	$62,707.98
 SHEET 189
 ---	.divider
 	.blank
-bonus = $668	$668
+bonus = $668	$668.00
 subtotal	$668.00
-price = $82	$82
+price = $82	$82.00
 	.blank
 subtotal	$82.00
 SHEET 190
@@ -2339,7 +2339,7 @@ monthly cost - 871	-240.45
 monthly cost - 624	6.55
 line3 + 26.12	248.05812k
 SHEET 191
-rent = $713	$713
+rent = $713	$713.00
 rent + 879	$1,592.00
 # Heading	.heading
 salary = 23.74	23.74
@@ -2370,7 +2370,7 @@ bonus + 19.19%	92.88%
 rent = 98.99%	98.99%
 bonus × 215	158.4335
 subtotal	1,604.2994953033
-price = $726	$726
+price = $726	$726.00
 subtotal	$726.00
 # Heading	.heading
 monthly cost = 39.89	39.89
@@ -2378,12 +2378,12 @@ line6 + 406%	801.67351
 456%	456%
 548%	548%
 $589	$589.00
-rent = $806	$806
+rent = $806	$806.00
 SHEET 194
-salary = $651	$651
+salary = $651	$651.00
 line1 + 14.04	$665.04
 line2 + 48.71	$713.75
-salary += 221	$872
+salary += 221	$872.00
 subtotal	$2,901.79
 // a note 123	.comment
 line1 + 511	$1,162.00
@@ -2440,9 +2440,9 @@ monthly cost + 89.12%	131.551872
 monthly cost += 37.46	107.02
 monthly cost + 746%	905.3892
 subtotal	$1,495.99
-price = $666	$666
+price = $666	$666.00
 price - 608	$58.00
-price -= 484	$182
+price -= 484	$182.00
 monthly cost + 355	462.02
 line6 + 199	306.02
 line5 + 96.43	227.981872
@@ -2450,7 +2450,7 @@ subtotal	$1,902.02
 854	854
 SHEET 199
 $158	$158.00
-price = $412	$412
+price = $412	$412.00
 // a note 123	.comment
 subtotal	$570.00
 287	287
@@ -2484,7 +2484,7 @@ subtotal	$7,922.38
 line7 × 696	96,048
 721 #travel	721
 SHEET 202
-tax rate = $55	$55
+tax rate = $55	$55.00
 633	633
 line2 + 28.80%	815.304
 line3 + 71.87	887.174
@@ -2499,9 +2499,9 @@ line4 + 826%	8,215.23124
 	.blank
 // a note 123	.comment
 tax rate - 96.73	-$41.73
-tax rate += 247	$302
+tax rate += 247	$302.00
 SHEET 203
-rent = $592	$592
+rent = $592	$592.00
 rent + 626%	$4,297.92
 line1 + 93.84	$685.84
 489%	489%
@@ -2541,9 +2541,9 @@ SHEET 206
 40.85	40.85
 line3 + 37.18	708.18
 57%	57%
-salary = $163	$163
+salary = $163	$163.00
 salary + 851%	$1,550.13
-fee = $469	$469
+fee = $469	$469.00
 $69.49	$69.49
 rent = 434	434
 96.93	96.93
@@ -2559,7 +2559,7 @@ line4 + 34.47%	49.592536
 // a note 123	.comment
 line4 × 247	9,109.36
 SHEET 208
-bonus = $88	$88
+bonus = $88	$88.00
 ---	.divider
 line1 + 709%	$711.92
 line1 + 637%	$648.56
@@ -2588,7 +2588,7 @@ line8 + 440	545.17
 line12 + 321%	3,701.1794
 $228	$228.00
 SHEET 210
-rent = $429	$429
+rent = $429	$429.00
 135	135
 rent + 454%	$2,376.66
 rent + 52.81%	$655.55
@@ -2624,7 +2624,7 @@ monthly cost × 68.45	16.503295
 SHEET 213
 tax rate = $57.08	$57.08
 tax rate -= 883	-$825.92
-price = $473	$473
+price = $473	$473.00
 price × 29.32	$13,868.36
 # Heading	.heading
 671	671
@@ -2652,7 +2652,7 @@ line3 + 51.74%	$86.90
 SHEET 215
 $66	$66.00
 $836	$836.00
-monthly cost = $91	$91
+monthly cost = $91	$91.00
 874%	874%
 tax rate = 286	286
 monthly cost += 22.76	$113.76
@@ -2667,7 +2667,7 @@ subtotal	1,097.065002
 price × 309	1,758.21
 $218 #travel	$218.00
 line2 + 281	444.9858
-monthly cost = $45	$45
+monthly cost = $45	$45.00
 line3 × 78.65	86,284.1624073
 monthly cost + 514%	$276.30
 # Heading	.heading
@@ -2776,7 +2776,7 @@ subtotal	$230.159758k
 salary × 368	285.568k
 $501	$501.00
 	.blank
-fee = $719	$719
+fee = $719	$719.00
 	.blank
 $256	$256.00
 SHEET 225
@@ -2828,7 +2828,7 @@ subtotal	91.74
 $33.09	$33.09
 	.blank
 12.66 #travel	12.66
-fee = $492	$492
+fee = $492	$492.00
 fee -= 98.22	$393.78
 210%	210%
 fee + 463%	$2,216.98
@@ -2933,12 +2933,12 @@ bonus + 652%	-955.04
 subtotal	39.01
 33.30%	33.3%
 SHEET 238
-monthly cost = $2	$2
+monthly cost = $2	$2.00
 tax rate = 19%	19%
 monthly cost - 34.93	-$32.93
 $71.16	$71.16
 tax rate + 277%	296%
-monthly cost += 472	$474
+monthly cost += 472	$474.00
 subtotal	$2,423.26
 price = $0.97	$0.97
 	.blank
@@ -2949,7 +2949,7 @@ monthly cost = 27.44%	27.44%
 line1 × 37.14	10.191216
 ---	.divider
 41.64	41.64
-monthly cost = $434	$434
+monthly cost = $434	$434.00
 line2 × 8.38	85.40239008
 894	894
 # Heading	.heading
@@ -2968,7 +2968,7 @@ bonus + 96.59%	447.59%
 bonus × 49.95	175.3245
 515	515
 tax rate = $37.09	$37.09
-tax rate = $649	$649
+tax rate = $649	$649.00
 subtotal	$74,336.33
 SHEET 241
 tax rate = 495	495
@@ -2997,7 +2997,7 @@ fee = 49.67%	49.67%
 58.15%	58.15%
 66.84%	66.84%
 price -= 879	-816.52
-fee = $871	$871
+fee = $871	$871.00
 // a note 123	.comment
 $11	$11.00
 $78 #food	$78.00
@@ -3009,7 +3009,7 @@ salary = 327	327
 salary - 32	295
 line2 + 2.75%	335.9925
 // a note 123	.comment
-salary = $100	$100
+salary = $100	$100.00
 # Heading	.heading
 560	560
 # Heading	.heading
@@ -3042,14 +3042,14 @@ SHEET 246
 tax rate = 682	682
 tax rate + 829%	6,335.78
 $813	$813.00
-salary = $547	$547
+salary = $547	$547.00
 ---	.divider
 line3 + 46%	9,250.2388
 subtotal	9,250.2388
 SHEET 247
 rent = 798%	798%
 $101	$101.00
-bonus = $134	$134
+bonus = $134	$134.00
 55.16	55.16
 rent + 87.10%	885.1%
 11.14	11.14
@@ -3061,7 +3061,7 @@ bonus + 55.80%	$208.77
 	.blank
 monthly cost = 559	559
 subtotal	$767.77
-salary = $566	$566
+salary = $566	$566.00
 SHEET 248
 price = 47%	47%
 # Heading	.heading
@@ -3073,13 +3073,13 @@ tax rate = 366	366
 price + 896%	943%
 subtotal	$33,003.25
 SHEET 249
-salary = $215	$215
+salary = $215	$215.00
 tax rate = 702%	702%
 salary - 121	$94.00
 // a note 123	.comment
 line2 × 507	3,559.14
 $538	$538.00
-salary -= 153	$62
+salary -= 153	$62.00
 salary + 390%	$303.80
 // a note 123	.comment
 SHEET 250
@@ -3094,11 +3094,11 @@ $57	$57.00
 line5 + 85.29	95.96
 line2 + 683	$1,182.00
 175%	175%
-fee = $728	$728
+fee = $728	$728.00
 fee × 534	$388.752k
 SHEET 251
 162%	162%
-tax rate = $716	$716
+tax rate = $716	$716.00
 line2 + 35.98%	$973.62
 subtotal	$4,426.80
 699%	699%
@@ -3132,7 +3132,7 @@ line3 + 566	736
 ---	.divider
 price = $32.24	$32.24
 line5 + 74	810
-bonus = $380	$380
+bonus = $380	$380.00
 rent = 39.13	39.13
 line8 × 389	315.09k
 SHEET 254
@@ -3141,7 +3141,7 @@ SHEET 254
 tax rate = 819%	819%
 // a note 123	.comment
 SHEET 255
-tax rate = $493	$493
+tax rate = $493	$493.00
 tax rate += 70.94	$563.94
 salary = 271	271
 line3 × 751	203.521k
@@ -3161,12 +3161,12 @@ tax rate = 398%	398%
 line1 × 194	772.12
 line1 × 515	2,049.7
 $492 #food	$492.00
-salary = $380	$380
+salary = $380	$380.00
 line2 × 290	223.9148k
-salary += 841	$1,221
+salary += 841	$1,221.00
 SHEET 257
 464	464
-monthly cost = $855	$855
+monthly cost = $855	$855.00
 64.26	64.26
 monthly cost + 479	$1,334.00
 fee = 348%	348%
@@ -3198,7 +3198,7 @@ price = 176	176
 rent = 501%	501%
 price = 784	784
 subtotal	8,259.222066
-rent = $248	$248
+rent = $248	$248.00
 rent + 38.64%	$343.83
 line1 × 546	78.2418
 714	714
@@ -3225,8 +3225,8 @@ line2 + 161%	243.1215
 fee = 76.56	76.56
 SHEET 262
 105	105
-salary = $58	$58
-bonus = $796	$796
+salary = $58	$58.00
+bonus = $796	$796.00
 38	38
 bonus - 20.73	$775.27
 bonus × 87	$69,252.00
@@ -3244,7 +3244,7 @@ tax rate = 78.44	78.44
 tax rate + 25.44%	98.395136
 92.70%	92.7%
 // a note 123	.comment
-rent = $31.90	$31.9
+rent = $31.90	$31.90
 line3 + 70.44%	133.693136
 salary = 714	714
 	.blank
@@ -3265,7 +3265,7 @@ line8 + 91.97%	959.48621685
 SHEET 266
 $75.57	$75.57
 line1 × 35.12	$2,654.02
-bonus = $1	$1
+bonus = $1	$1.00
 line1 × 0.17	$12.85
 line2 + 368	$3,022.02
 bonus = 43.75	43.75
@@ -3277,7 +3277,7 @@ line3 + 82.61	$83.61
 236	236
 $356	$356.00
 fee = $1.57	$1.57
-bonus = $671	$671
+bonus = $671	$671.00
 SHEET 267
 176%	176%
 salary = 0.28%	0.28%
@@ -3312,7 +3312,7 @@ fee = 564	564
 subtotal	1,232.1328
 # Heading	.heading
 monthly cost += 636	848
-fee = $812	$812
+fee = $812	$812.00
 SHEET 270
 $667	$667.00
 rent = $49.35	$49.35
@@ -3321,7 +3321,7 @@ subtotal	$3,584.45
 16.10%	16.1%
 rent += 715	$764.35
 722	722
-fee = $290	$290
+fee = $290	$290.00
 rent -= 44.04	$720.31
 SHEET 271
 # Heading	.heading
@@ -3375,7 +3375,7 @@ line6 × 738	286.60968k
 subtotal	321.7834452k
 line2 + 21.48	55.48
 fee = 123%	123%
-fee = $13.20	$13.2
+fee = $13.20	$13.20
 696%	696%
 bonus = 179%	179%
 27.44	27.44
@@ -3418,7 +3418,7 @@ line9 × 31.22	2,765.4676
 SHEET 278
 851	851
 subtotal	851
-bonus = $253	$253
+bonus = $253	$253.00
 37	37
 tax rate = 24.34%	24.34%
 subtotal	$360.59
@@ -3439,7 +3439,7 @@ subtotal	$85.63
 SHEET 280
 30	30
 line1 + 150%	75
-fee = $611	$611
+fee = $611	$611.00
 subtotal	$716.00
 ---	.divider
 9.02%	9.02%
@@ -3482,10 +3482,10 @@ monthly cost = 347%	347%
 81.59	81.59
 line2 × 84.46	6,891.0914
 line3 × 98.84	681.115473976k
-fee = $842	$842
+fee = $842	$842.00
 ---	.divider
 line1 × 47.31	164.1657
-rent = $800	$800
+rent = $800	$800.00
 SHEET 284
 21.38%	21.38%
 rent = 66.32	66.32
@@ -3505,13 +3505,13 @@ price = 329	329
 	.blank
 line1 + 480%	1,908.2
 SHEET 286
-price = $318	$318
+price = $318	$318.00
 line1 + 115	$433.00
 salary = 38.67%	38.67%
 $754	$754.00
 subtotal	$2,086.98
 price - 605	-$287.00
-price -= 750	-$432
+price -= 750	-$432.00
 # Heading	.heading
 ---	.divider
 13.03	13.03
@@ -3534,7 +3534,7 @@ monthly cost = 85.15%	85.15%
 // a note 123	.comment
 SHEET 289
 // a note 123	.comment
-tax rate = $50	$50
+tax rate = $50	$50.00
 bonus = 836%	836%
 tax rate = 63.93%	63.93%
 tax rate × 54.09	34.579737
@@ -3568,11 +3568,11 @@ rent = 166	166
 rent + 62.16%	269.1856
 816%	816%
 540%	540%
-monthly cost = $259	$259
+monthly cost = $259	$259.00
 388%	388%
 # Heading	.heading
-tax rate = $216	$216
-salary = $25	$25
+tax rate = $216	$216.00
+salary = $25	$25.00
 	.blank
 26.75%	26.75%
 SHEET 293
@@ -3606,8 +3606,8 @@ $49.70	$49.70
 $642	$642.00
 SHEET 295
 $240	$240.00
-salary = $0.70	$0.7
-salary -= 463	-$462.3
+salary = $0.70	$0.70
+salary -= 463	-$462.30
 rent = 491%	491%
 # Heading	.heading
 line2 + 171%	$1.90
@@ -3625,7 +3625,7 @@ fee = 1.17%	1.17%
 monthly cost = 280%	280%
 fee + 451%	452.17%
 $605	$605.00
-fee = $77	$77
+fee = $77	$77.00
 fee -= 99.88	-$22.88
 line3 × 465	1,302
 monthly cost × 73	204.4
@@ -3687,11 +3687,11 @@ bonus = 414	414
 bonus += 797	1,211
 514%	514%
 subtotal	13,765.88
-tax rate = $738	$738
+tax rate = $738	$738.00
 835%	835%
 bonus -= 101	1,110
 line4 × 67.92	349.1088
-salary = $348	$348
+salary = $348	$348.00
 bonus + 578	1,688
 71.27	71.27
 subtotal	$40,245.94
@@ -3733,13 +3733,13 @@ tax rate + 99.48%	167.14%
 SHEET 306
 $60.01	$60.01
 392	392
-price = $439	$439
+price = $439	$439.00
 	.blank
 line2 × 12.07	4,731.44
 price - 251	$188.00
 line5 + 8.34%	5,126.042096
-price += 47	$486
-price -= 871	-$385
+price += 47	$486.00
+price -= 871	-$385.00
 554%	554%
 fee = 724%	724%
 monthly cost = $13.98	$13.98
@@ -3795,7 +3795,7 @@ line11 × 821	$1.4121149886M
 SHEET 310
 83.27%	83.27%
 salary = $30.96	$30.96
-bonus = $632	$632
+bonus = $632	$632.00
 subtotal	$1,215.01
 price = 40.34%	40.34%
 price = 689	689
@@ -3809,7 +3809,7 @@ bonus + 401	$1,033.00
 price × 319	219.791k
 $37.80 #food	$37.80
 SHEET 311
-monthly cost = $860	$860
+monthly cost = $860	$860.00
 price = 752	752
 891	891
 monthly cost - 502	$358.00
@@ -3820,7 +3820,7 @@ subtotal	$211.257k
 monthly cost += 13.55	$873.55
 384	384
 rent = 366%	366%
-tax rate = $354	$354
+tax rate = $354	$354.00
 price -= 40.86	711.14
 SHEET 312
 // a note 123	.comment
@@ -3828,7 +3828,7 @@ tax rate = 95.83	95.83
 rent = $41.75	$41.75
 ---	.divider
 line2 × 314	30,090.62
-tax rate = $493	$493
+tax rate = $493	$493.00
 740	740
 733%	733%
 bonus = $27.74	$27.74
@@ -3876,8 +3876,8 @@ $78.28	$78.28
 subtotal	$269.76
 9.98	9.98
 SHEET 316
-price = $841	$841
-price += 167	$1,008
+price = $841	$841.00
+price += 167	$1,008.00
 $868	$868.00
 line3 + 462	$1,330.00
 price × 57.64	$58,101.12
@@ -3907,7 +3907,7 @@ line3 + 8	$141.72737k
 line7 + 885%	$1.4969899202M
 $54.32	$54.32
 fee = $53.57	$53.57
-price = $367	$367
+price = $367	$367.00
 SHEET 318
 743%	743%
 // a note 123	.comment
@@ -3920,7 +3920,7 @@ SHEET 319
 # Heading	.heading
 # Heading	.heading
 $640	$640.00
-tax rate = $367	$367
+tax rate = $367	$367.00
 tax rate × 17.97	$6,594.99
 23.05	23.05
 $678	$678.00
@@ -3936,8 +3936,8 @@ $42.76	$42.76
 line3 × 892	$38,141.92
 line3 + 623	$665.76
 805	805
-rent = $8	$8
-salary = $565	$565
+rent = $8	$8.00
+salary = $565	$565.00
 718	718
 SHEET 321
 rent = $5.89	$5.89
@@ -3975,7 +3975,7 @@ line2 + 339%	406.4262
 line3 + 601	1,007.4262
 subtotal	1,506.4324
 monthly cost = $12.66	$12.66
-bonus = $705	$705
+bonus = $705	$705.00
 subtotal	$717.66
 line8 + 2.28	$719.94
 546	546
@@ -3990,9 +3990,9 @@ line2 × 75.85	631.072
 270%	270%
 monthly cost = 260%	260%
 1.56%	1.56%
-rent = $826	$826
+rent = $826	$826.00
 rent + 172	$998.00
-salary = $236	$236
+salary = $236	$236.00
 SHEET 326
 salary = $55.48	$55.48
 # Heading	.heading
@@ -4048,17 +4048,17 @@ SHEET 331
 # Heading	.heading
 486%	486%
 line3 × 50.46	245.2356
-rent = $659	$659
+rent = $659	$659.00
 # Heading	.heading
 rent + 796	$1,455.00
 monthly cost = 54.62	54.62
 692%	692%
 // a note 123	.comment
 498%	498%
-rent -= 324	$335
-rent -= 843	-$508
+rent -= 324	$335.00
+rent -= 843	-$508.00
 310	310
-price = $668	$668
+price = $668	$668.00
 885%	885%
 SHEET 332
 tax rate = 481	481
@@ -4078,7 +4078,7 @@ price × 591	507.669k
 line4 + 510	508.179k
 $7	$7.00
 subtotal	$1.4595946184M
-monthly cost = $885	$885
+monthly cost = $885	$885.00
 subtotal	$885.00
 monthly cost -= 25.54	$859.46
 $32.17	$32.17
@@ -4147,7 +4147,7 @@ monthly cost = 320%	320%
 subtotal	$9.9164847101M
 line4 + 229	23,877.38
 monthly cost + 44.38%	364.38%
-monthly cost = $458	$458
+monthly cost = $458	$458.00
 SHEET 339
 251%	251%
 bonus = 150%	150%
@@ -4183,7 +4183,7 @@ tax rate = $61.21	$61.21
 58.55%	58.55%
 line2 × 37.76	56,668.32
 SHEET 342
-price = $17.70	$17.7
+price = $17.70	$17.70
 // a note 123	.comment
 subtotal	$17.70
 price = 200	200
@@ -4202,7 +4202,7 @@ SHEET 343
 $14.11	$14.11
 bonus = 71.32	71.32
 	.blank
-tax rate = $894	$894
+tax rate = $894	$894.00
 line1 + 569%	$94.40
 subtotal	$1,073.83
 fee = 65.30	65.3
@@ -4235,7 +4235,7 @@ fee = $95.88	$95.88
 $61.55	$61.55
 SHEET 346
 61.97	61.97
-price = $571	$571
+price = $571	$571.00
 // a note 123	.comment
 price × 8.64	$4,933.44
 fee = $83.21	$83.21
@@ -4283,7 +4283,7 @@ $19.50 #travel	$19.50
 59.89	59.89
 # Heading	.heading
 SHEET 350
-tax rate = $287	$287
+tax rate = $287	$287.00
 tax rate -= 89.72	$197.28
 line1 × 297	$85,239.00
 ---	.divider
@@ -4333,7 +4333,7 @@ subtotal	$54,461.16
 price -= 38.62	$24.56
 117	117
 	.blank
-salary = $6.70	$6.7
+salary = $6.70	$6.70
 price -= 297	-$272.44
 line8 + 54.08%	-$419.78
 salary = 102	102
@@ -4348,7 +4348,7 @@ $60.29	$60.29
 # Heading	.heading
 30.95%	30.95%
 line5 × 78	24.141
-tax rate = $106	$106
+tax rate = $106	$106.00
 SHEET 356
 $77.28	$77.28
 	.blank
@@ -4362,7 +4362,7 @@ line1 + 269%	$285.16
 # Heading	.heading
 // a note 123	.comment
 697	697
-bonus = $76.60	$76.6
+bonus = $76.60	$76.60
 58.74	58.74
 subtotal	$832.34
 SHEET 357
@@ -4376,7 +4376,7 @@ line3 × 399	192.717k
 line4 × 97.66	34,488.629
 line8 + 870%	334.5397013k
 SHEET 358
-monthly cost = $490	$490
+monthly cost = $490	$490.00
 	.blank
 153	153
 	.blank
@@ -4387,14 +4387,14 @@ subtotal	$1,611.26
 SHEET 359
 rent = 477	477
 $209	$209.00
-monthly cost = $385	$385
+monthly cost = $385	$385.00
 monthly cost + 506%	$2,333.10
 subtotal	$3,404.10
 line2 + 36	$245.00
 subtotal	$245.00
 rent - 92.64	384.36
 rent = 151	151
-salary = $517	$517
+salary = $517	$517.00
 8%	8%
 60%	60%
 salary + 63.37	$580.37
@@ -4476,7 +4476,7 @@ fee = $11.69	$11.69
 SHEET 366
 25.24 #food	25.24
 line1 + 49.41	74.65
-price = $291	$291
+price = $291	$291.00
 711%	711%
 price -= 51.33	$239.67
 line1 + 208%	77.7392
@@ -4533,11 +4533,11 @@ $58.24	$58.24
 SHEET 371
 832%	832%
 50.15	50.15
-fee = $274	$274
+fee = $274	$274.00
 line3 × 555	$152.07k
 $191	$191.00
 rent = 35.33%	35.33%
-fee -= 732	-$458
+fee -= 732	-$458.00
 salary = 63.88%	63.88%
 fee + 10.50	-$447.50
 fee + 691	$233.00
@@ -4564,7 +4564,7 @@ fee = 51%	51%
 fee + 520%	571%
 	.blank
 price = 14.29	14.29
-salary = $793	$793
+salary = $793	$793.00
 line5 + 540	554.29
 193	193
 638	638
@@ -4607,7 +4607,7 @@ tax rate = 538	538
 292	292
 rent = 631%	631%
 tax rate += 361	899
-fee = $110	$110
+fee = $110	$110.00
 12%	12%
 50.74%	50.74%
 SHEET 377
@@ -4647,7 +4647,7 @@ bonus = 28.35%	28.35%
 fee -= 75.11	12.78
 monthly cost = 182	182
 fee = 176	176
-bonus = $61	$61
+bonus = $61	$61.00
 $74.39	$74.39
 bonus = $0.64	$0.64
 $17.14	$17.14
@@ -4662,20 +4662,20 @@ $516	$516.00
 rent = 13.90%	13.9%
 line1 × 658	112.189
 line3 × 97.58	1,953.63083496
-tax rate = $319	$319
+tax rate = $319	$319.00
 	.blank
 216%	216%
 SHEET 381
 salary = 14.68%	14.68%
 salary = 2.10%	2.1%
 salary + 521%	523.1%
-price = $126	$126
+price = $126	$126.00
 16.05	16.05
 // a note 123	.comment
 price - 81.86	$44.14
 subtotal	$1,358.40
 38.44%	38.44%
-fee = $455	$455
+fee = $455	$455.00
 price - 67.89	$58.11
 line4 × 729	$91,854.00
 salary + 857%	859.1%
@@ -4698,13 +4698,13 @@ $796	$796.00
 SHEET 383
 // a note 123	.comment
 740	740
-bonus = $506	$506
+bonus = $506	$506.00
 bonus + 378	$884.00
 rent = 108	108
 736%	736%
 line6 × 134	986.24
 $193	$193.00
-bonus = $361	$361
+bonus = $361	$361.00
 36.94%	36.94%
 subtotal	$43,253.99
 rent += 678	786
@@ -4764,7 +4764,7 @@ fee - 9.40	90.28
 line5 + 658%	4,555.58
 line3 + 617%	-5,035.6344
 subtotal	$145.59
-tax rate = $28	$28
+tax rate = $28	$28.00
 price = 45.74	45.74
 	.blank
 57.17%	57.17%
@@ -4782,14 +4782,14 @@ line3 + 0.80%	$273.17
 $173	$173.00
 # Heading	.heading
 128	128
-monthly cost = $683	$683
+monthly cost = $683	$683.00
 SHEET 390
 price = 217%	217%
 price × 27.40	59.458
 420 #food	420
 	.blank
 	.blank
-monthly cost = $224	$224
+monthly cost = $224	$224.00
 # Heading	.heading
 line3 + 91.39	511.39
 line8 + 21.14%	619.497846
@@ -4844,7 +4844,7 @@ price += 466	513.34
 97.23%	97.23%
 37%	37%
 146	146
-tax rate = $28	$28
+tax rate = $28	$28.00
 SHEET 395
 $41.14 #travel	$41.14
 salary = 66.09	66.09
@@ -4891,13 +4891,13 @@ SHEET 398
 ---	.divider
 81.37	81.37
 # Heading	.heading
-tax rate = $181	$181
+tax rate = $181	$181.00
 $619	$619.00
 line5 + 44.94%	$897.18
 192 #food	192
 subtotal	$1,889.18
 	.blank
-fee = $519	$519
+fee = $519	$519.00
 tax rate + 44.51	$225.51
 salary = 1.42%	1.42%
 # Heading	.heading
@@ -4910,7 +4910,7 @@ fee = 155	155
 line1 + 24%	47.554
 87.96 #food	87.96
 line1 × 16.11	617.8185
-fee = $872	$872
+fee = $872	$872.00
 	.blank
 # Heading	.heading
 fee = 856%	856%
@@ -4950,7 +4950,7 @@ monthly cost = 54.01	54.01
 subtotal	87.39
 3.30%	3.3%
 SHEET 402
-price = $404	$404
+price = $404	$404.00
 price + 79	$483.00
 salary = $77.41	$77.41
 fee = $67.74	$67.74
@@ -4982,7 +4982,7 @@ SHEET 404
 monthly cost = 180%	180%
 799%	799%
 rent = 88.23	88.23
-price = $333	$333
+price = $333	$333.00
 subtotal	$10,603.20
 SHEET 405
 199%	199%
@@ -5009,10 +5009,10 @@ line3 × 67.87	360.433659399k
 $800	$800.00
 line2 × 736	221.95552k
 777	777
-tax rate = $3	$3
+tax rate = $3	$3.00
 $860 #travel	$860.00
 $56.97	$56.97
-monthly cost = $78.70	$78.7
+monthly cost = $78.70	$78.70
 SHEET 407
 $30.44 #travel	$30.44
 // a note 123	.comment
@@ -5072,7 +5072,7 @@ line12 × 629	10,225.695772
 SHEET 412
 // a note 123	.comment
 rent = 495%	495%
-salary = $353	$353
+salary = $353	$353.00
 	.blank
 	.blank
 97.82	97.82
@@ -5086,7 +5086,7 @@ line11 + 851	$890.86
 price = $74.26	$74.26
 SHEET 413
 458	458
-tax rate = $853	$853
+tax rate = $853	$853.00
 line2 + 237	$1,090.00
 37.87	37.87
 subtotal	$2,438.87
@@ -5135,7 +5135,7 @@ rent -= 837	-796
 640	640
 rent += 24.59	-771.41
 ---	.divider
-fee = $404	$404
+fee = $404	$404.00
 fee + 586	$990.00
 608	608
 subtotal	$2,002.00
@@ -5150,14 +5150,14 @@ line1 × 672	4.0992
 ---	.divider
 5	5
 SHEET 418
-fee = $405	$405
+fee = $405	$405.00
 # Heading	.heading
 347%	347%
 3.33	3.33
 line4 + 29.07	32.4
 fee × 67.69	$27,414.45
 price = 25.92%	25.92%
-fee -= 687	-$282
+fee -= 687	-$282.00
 836	836
 subtotal	$157.6249996483k
 SHEET 419
@@ -5174,13 +5174,13 @@ tax rate = 12.23%	12.23%
 	.blank
 SHEET 420
 92.39	92.39
-salary = $7	$7
+salary = $7	$7.00
 salary += 1.59	$8.59
 $38	$38.00
 line1 + 32	124.39
 # Heading	.heading
 line2 × 35.10	$245.70
-tax rate = $353	$353
+tax rate = $353	$353.00
 fee = 15.98	15.98
 49.85%	49.85%
 $6.06	$6.06
@@ -5209,7 +5209,7 @@ SHEET 422
 533%	533%
 $40.15	$40.15
 line4 × 128	$5,139.20
-rent = $844	$844
+rent = $844	$844.00
 rent + 60.30%	$1,352.93
 651%	651%
 line8 × 670	4,361.7
@@ -5224,7 +5224,7 @@ $19	$19.00
 bonus × 55.45	313.2925
 $202	$202.00
 $119 #food	$119.00
-rent = $42	$42
+rent = $42	$42.00
 fee = $49.48	$49.48
 131%	131%
 subtotal	$741.0933931772k
@@ -5232,12 +5232,12 @@ tax rate = 20.50	20.5
 fee + 387%	$240.97
 SHEET 424
 	.blank
-tax rate = $192	$192
+tax rate = $192	$192.00
 673 #travel	673
 tax rate + 862	$1,054.00
 line2 + 68.01%	$322.58
 line5 × 92.47	$29,828.90
-monthly cost = $731	$731
+monthly cost = $731	$731.00
 	.blank
 SHEET 425
 33.46 #travel	33.46
@@ -5317,7 +5317,7 @@ SHEET 431
 rent = 743	743
 subtotal	743
 270	270
-monthly cost = $31	$31
+monthly cost = $31	$31.00
 subtotal	$301.00
 line4 × 37.51	$1,162.81
 // a note 123	.comment
@@ -5334,9 +5334,9 @@ price = $94.15	$94.15
 subtotal	$315.71
 $123 #food	$123.00
 // a note 123	.comment
-monthly cost = $375	$375
+monthly cost = $375	$375.00
 price += 73.08	$167.23
-fee = $136	$136
+fee = $136	$136.00
 	.blank
 line1 × 52.80	481.008
 SHEET 433
@@ -5349,7 +5349,7 @@ line3 × 55.50	4,097.232
 tax rate = 17	17
 SHEET 434
 658	658
-rent = $72	$72
+rent = $72	$72.00
 salary = 295%	295%
 line2 + 180	$252.00
 monthly cost = 567	567
@@ -5359,7 +5359,7 @@ monthly cost = 77.42	77.42
 SHEET 435
 41.52%	41.52%
 $175 #food	$175.00
-fee = $581	$581
+fee = $581	$581.00
 tax rate = 39.28%	39.28%
 price = 871%	871%
 738	738
@@ -5374,11 +5374,11 @@ $125	$125.00
 SHEET 436
 # Heading	.heading
 90.42%	90.42%
-salary = $29	$29
+salary = $29	$29.00
 # Heading	.heading
 salary -= 43.42	-$14.42
 salary + 100%	-$28.84
-bonus = $224	$224
+bonus = $224	$224.00
 90.44	90.44
 136%	136%
 fee = 515%	515%
@@ -5400,10 +5400,10 @@ $24.83	$24.83
 price × 676	598.6656
 $670	$670.00
 SHEET 438
-bonus = $163	$163
+bonus = $163	$163.00
 bonus += 10.24	$173.24
 $680	$680.00
-price = $71.60	$71.6
+price = $71.60	$71.60
 # Heading	.heading
 rent = 400	400
 rent += 725	1,125
@@ -5472,12 +5472,12 @@ rent = 418%	418%
 salary = 4.33	4.33
 rent × 601	2,512.18
 $829	$829.00
-bonus = $111	$111
-bonus += 489	$600
+bonus = $111	$111.00
+bonus += 489	$600.00
 	.blank
 fee = 17.34%	17.34%
 rent = 611	611
-rent = $110	$110
+rent = $110	$110.00
 bonus + 456%	$3,336.00
 rent + 438	$548.00
 SHEET 444
@@ -5485,12 +5485,12 @@ SHEET 444
 line1 × 643	32.7287
 220%	220%
 74.75 #food	74.75
-fee = $543	$543
-monthly cost = $846	$846
+fee = $543	$543.00
+monthly cost = $846	$846.00
 price = 37.14	37.14
 // a note 123	.comment
-monthly cost -= 897	-$51
-monthly cost -= 23	-$74
+monthly cost -= 897	-$51.00
+monthly cost -= 23	-$74.00
 monthly cost = 54.59%	54.59%
 $83.39	$83.39
 rent = 86.76	86.76
@@ -5539,7 +5539,7 @@ line2 + 622	$1,034.93
 monthly cost = 136%	136%
 subtotal	$4,407.86
 SHEET 449
-salary = $712	$712
+salary = $712	$712.00
 rent = 235	235
 ---	.divider
 6.04%	6.04%
@@ -5625,7 +5625,7 @@ SHEET 456
 tax rate = 855	855
 bonus = $52.39	$52.39
 $15.72	$15.72
-price = $832	$832
+price = $832	$832.00
 bonus + 190%	$151.93
 66.67	66.67
 tax rate = 98.05%	98.05%
@@ -5647,7 +5647,7 @@ $195	$195.00
 line1 + 750	1,157
 SHEET 458
 $187	$187.00
-fee = $30	$30
+fee = $30	$30.00
 fee × 11.97	$359.10
 line3 + 204%	$1,091.66
 bonus = 827	827
@@ -5679,7 +5679,7 @@ price = 690%	690%
 	.blank
 price + 71.20%	761.2%
 average of #food	604
-bonus = $260	$260
+bonus = $260	$260.00
 price + 10%	700%
 SHEET 462
 // a note 123	.comment
@@ -5700,11 +5700,11 @@ line1 × 691	$69,072.36
 price + 40.52%	$140.46
 price -= 564	-$464.04
 price += 58.36	-$405.68
-price = $875	$875
+price = $875	$875.00
 // a note 123	.comment
 fee = 14	14
 subtotal	$304.6887943483k
-price += 720	$1,595
+price += 720	$1,595.00
 217	217
 486	486
 SHEET 464
@@ -5740,7 +5740,7 @@ rent = 542%	542%
 line4 × 41.62	209.7648
 subtotal	1,266.979392
 72.52%	72.52%
-rent = $251	$251
+rent = $251	$251.00
 769	769
 SHEET 467
 rent = 832	832
@@ -5748,14 +5748,14 @@ rent = 832	832
 804%	804%
 rent + 189%	2,404.48
 $50.33	$50.33
-bonus = $85.90	$85.9
+bonus = $85.90	$85.90
 // a note 123	.comment
 rent + 540	1,372
 rent + 877%	8,128.64
 subtotal	$218.7153328696k
 rent + 389%	4,068.48
 SHEET 468
-salary = $499	$499
+salary = $499	$499.00
 salary + 121%	$1,102.79
 $73.28 #travel	$73.28
 salary = 10.53	10.53
@@ -5788,7 +5788,7 @@ bonus = 77.05	77.05
 subtotal	77.05
 # Heading	.heading
 415	415
-salary = $791	$791
+salary = $791	$791.00
 ---	.divider
 line5 + 92%	796.8
 50.69	50.69
@@ -5799,9 +5799,9 @@ line5 × 70.62	29,307.3
 price = 47.13%	47.13%
 ---	.divider
 SHEET 471
-monthly cost = $471	$471
+monthly cost = $471	$471.00
 line1 × 770	$362.67k
-rent = $314	$314
+rent = $314	$314.00
 # Heading	.heading
 $636 #travel	$636.00
 81.87	81.87
@@ -5868,7 +5868,7 @@ line3 × 30.66	2,871.6156
 line5 + 1.20	2,872.8156
 rent = 55.28%	55.28%
 subtotal	8,919.95276736
-fee = $487	$487
+fee = $487	$487.00
 $59.65	$59.65
 line7 + 8%	3,102.640848
 SHEET 477
@@ -5899,7 +5899,7 @@ SHEET 480
 monthly cost = 199%	199%
 monthly cost × 605	1,203.95
 # Heading	.heading
-tax rate = $275	$275
+tax rate = $275	$275.00
 monthly cost × 294	585.06
 line4 + 18.29%	$325.30
 subtotal	$1,185.36
@@ -5907,7 +5907,7 @@ $86.28	$86.28
 monthly cost × 36.50	72.635
 12.11%	12.11%
 // a note 123	.comment
-fee = $155	$155
+fee = $155	$155.00
 SHEET 481
 tax rate = 691%	691%
 $20.23	$20.23
@@ -5917,7 +5917,7 @@ fee = 81.31%	81.31%
 line2 + 116%	$43.70
 60.54%	60.54%
 line5 × 74.61	60.665391
-fee = $857	$857
+fee = $857	$857.00
 ---	.divider
 $236	$236.00
 309	309
@@ -5942,7 +5942,7 @@ SHEET 483
 bonus = 628	628
 # Heading	.heading
 $678	$678.00
-salary = $94.30	$94.3
+salary = $94.30	$94.30
 6.33%	6.33%
 bonus + 684	1,312
 bonus × 245	153.86k
@@ -6049,7 +6049,7 @@ $805 #travel	$805.00
 monthly cost = 91.94%	91.94%
 530%	530%
 $1.16	$1.16
-rent = $278	$278
+rent = $278	$278.00
 average of #travel	$805.00
 rent + 103	$381.00
 total of #travel	$805.00
@@ -6083,7 +6083,7 @@ bonus = 202%	202%
 rent = 35.28	35.28
 SHEET 497
 548%	548%
-monthly cost = $819	$819
+monthly cost = $819	$819.00
 ---	.divider
 line2 × 405	$331.695k
 line1 × 220	1,205.6
@@ -6146,25 +6146,25 @@ line1 + 21.15	$96.74
 monthly cost += 49.18	$124.77
 monthly cost += 281	$405.77
 monthly cost + 91.50	$497.27
-price = $160	$160
+price = $160	$160.00
 line6 + 27.27	$187.27
 $732	$732.00
 line5 + 7.71%	$535.61
-price -= 69	$91
+price -= 69	$91.00
 ---	.divider
 54.21%	54.21%
 price = 663%	663%
 $555	$555.00
 SHEET 503
 120	120
-bonus = $317	$317
+bonus = $317	$317.00
 // a note 123	.comment
 $698	$698.00
 bonus -= 0.97	$316.03
 61.70	61.7
 SHEET 504
 $74	$74.00
-salary = $758	$758
+salary = $758	$758.00
 $51.65 #food	$51.65
 $95.16	$95.16
 tax rate = 407	407
@@ -6175,7 +6175,7 @@ line6 + 24.54	$67.41
 monthly cost - 17.10	$25.77
 salary × 689	$522.262k
 SHEET 505
-monthly cost = $354	$354
+monthly cost = $354	$354.00
 subtotal	$354.00
 42.93%	42.93%
 468%	468%
@@ -6186,7 +6186,7 @@ monthly cost - 24.30	$329.70
 monthly cost - 290	$64.00
 17.30 #travel	17.3
 13.13 #food	13.13
-monthly cost += 259	$613
+monthly cost += 259	$613.00
 522%	522%
 457	457
 SHEET 506
@@ -6216,7 +6216,7 @@ line4 + 295	348.675
 0.78	0.78
 SHEET 508
 ---	.divider
-rent = $804	$804
+rent = $804	$804.00
 ---	.divider
 line2 + 28.95%	$1,036.76
 89.46%	89.46%
@@ -6241,7 +6241,7 @@ SHEET 510
 162	162
 line1 × 789	407.913
 subtotal	864.558021
-price = $214	$214
+price = $214	$214.00
 SHEET 511
 175	175
 # Heading	.heading
@@ -6279,7 +6279,7 @@ SHEET 514
 155	155
 // a note 123	.comment
 line3 + 68.21%	260.7255
-tax rate = $705	$705
+tax rate = $705	$705.00
 line3 × 79.22	12,279.1
 SHEET 515
 49.84	49.84
@@ -6302,7 +6302,7 @@ salary += 27	62.86
 	.blank
 // a note 123	.comment
 84.27%	84.27%
-fee = $58.40	$58.4
+fee = $58.40	$58.40
 $370	$370.00
 SHEET 517
 366	366
@@ -6345,9 +6345,9 @@ tax rate + 239	$268.85
 $828	$828.00
 monthly cost = 748	748
 $96.86	$96.86
-price = $16	$16
+price = $16	$16.00
 // a note 123	.comment
-price -= 540	-$524
+price -= 540	-$524.00
 44	44
 $41.61	$41.61
 subtotal	$1,519.32
@@ -6441,13 +6441,13 @@ salary = 53.01%	53.01%
 ---	.divider
 289	289
 line6 + 21.27	310.27
-price = $900	$900
+price = $900	$900.00
 price + 359%	$4,131.00
 line8 + 710%	$7,290.00
 line6 × 27.36	7,907.04
 price - 31.61	$868.39
 43.93	43.93
-price += 23.70	$923.7
+price += 23.70	$923.70
 line7 + 12.87%	350.201749
 SHEET 530
 # Heading	.heading
@@ -6510,7 +6510,7 @@ salary + 296%	250.7076
 # Heading	.heading
 $629	$629.00
 773	773
-tax rate = $167	$167
+tax rate = $167	$167.00
 528	528
 $57.49	$57.49
 # Heading	.heading
@@ -6576,9 +6576,9 @@ $309 #travel	$309.00
 subtotal	$1,969.02
 average of #travel	$309.00
 $223	$223.00
-monthly cost = $878	$878
+monthly cost = $878	$878.00
 line3 + 14.52%	145.4404
-monthly cost -= 278	$600
+monthly cost -= 278	$600.00
 SHEET 539
 7.88	7.88
 816	816
@@ -6586,10 +6586,10 @@ line2 + 4.12	820.12
 monthly cost = 577	577
 monthly cost × 25.77	14,869.29
 	.blank
-monthly cost = $844	$844
+monthly cost = $844	$844.00
 17.23	17.23
 720%	720%
-rent = $826	$826
+rent = $826	$826.00
 price = 873%	873%
 subtotal	$1.4981832107M
 monthly cost × 211	$178.084k
@@ -6597,7 +6597,7 @@ SHEET 540
 544%	544%
 bonus = 709	709
 	.blank
-rent = $352	$352
+rent = $352	$352.00
 line2 + 413	1,122
 fee = 324	324
 $197 #travel	$197.00
@@ -6663,7 +6663,7 @@ line7 + 46.85	1,008.87882552
 # Heading	.heading
 line4 + 86.71%	$52.39
 SHEET 545
-bonus = $275	$275
+bonus = $275	$275.00
 bonus × 59.94	$16,483.50
 44	44
 $858	$858.00
@@ -6685,9 +6685,9 @@ $11.07	$11.07
 SHEET 547
 29.42 #food	29.42
 ---	.divider
-tax rate = $29	$29
+tax rate = $29	$29.00
 tax rate + 23.25%	$35.74
-tax rate += 554	$583
+tax rate += 554	$583.00
 SHEET 548
 $196	$196.00
 subtotal	$196.00
@@ -6731,7 +6731,7 @@ SHEET 551
 72.89 #travel	72.89
 27%	27%
 rent = $45.49	$45.49
-monthly cost = $803	$803
+monthly cost = $803	$803.00
 rent += 12.22	$57.71
 monthly cost × 53.85	$43,241.55
 ---	.divider
@@ -6739,7 +6739,7 @@ line5 + 30%	$1,043.90
 line7 × 683	$29.53397865M
 SHEET 552
 $64.76	$64.76
-fee = $637	$637
+fee = $637	$637.00
 bonus = $7.46	$7.46
 719%	719%
 // a note 123	.comment
@@ -6749,7 +6749,7 @@ bonus = $7.46	$7.46
 rent = 20.82%	20.82%
 SHEET 553
 ---	.divider
-bonus = $535	$535
+bonus = $535	$535.00
 $591	$591.00
 $503	$503.00
 line2 + 408	$943.00
@@ -6779,7 +6779,7 @@ line1 × 18.58	248.7862
 tax rate = 3.88	3.88
 tax rate = 649%	649%
 SHEET 555
-price = $579	$579
+price = $579	$579.00
 59.89%	59.89%
 subtotal	$925.76
 // a note 123	.comment
@@ -6792,13 +6792,13 @@ SHEET 556
 530%	530%
 line1 × 488	2,586.4
 line2 + 45.07	2,631.47
-tax rate = $215	$215
+tax rate = $215	$215.00
 5.30	5.3
 tax rate + 14	$229.00
 # Heading	.heading
 SHEET 557
 tax rate = 28.76%	28.76%
-rent = $200	$200
+rent = $200	$200.00
 tax rate × 30.68	8.823568
 subtotal	$268.88
 // a note 123	.comment
@@ -6846,7 +6846,7 @@ SHEET 561
 67.85%	67.85%
 line1 × 71.89	48.777365
 line2 + 174%	133.6499801
-price = $836	$836
+price = $836	$836.00
 81.25	81.25
 price + 33	$869.00
 price + 9%	$911.24
@@ -6854,10 +6854,10 @@ price + 9%	$911.24
 line5 × 2.33	189.3125
 price - 18.30	$817.70
 $523	$523.00
-price += 639	$1,475
+price += 639	$1,475.00
 salary = 37.09%	37.09%
-fee = $271	$271
-price -= 4.90	$1,470.1
+fee = $271	$271.00
+price -= 4.90	$1,470.10
 SHEET 562
 $855	$855.00
 # Heading	.heading
@@ -6891,11 +6891,11 @@ line1 + 87.99	$590.99
 subtotal	$1,093.99
 $479	$479.00
 tax rate = 199%	199%
-rent = $726	$726
+rent = $726	$726.00
 26%	26%
 $615	$615.00
 SHEET 565
-tax rate = $768	$768
+tax rate = $768	$768.00
 tax rate + 71.37%	$1,316.12
 706	706
 8.01	8.01
@@ -6963,7 +6963,7 @@ fee = 333	333
 SHEET 571
 ---	.divider
 // a note 123	.comment
-rent = $724	$724
+rent = $724	$724.00
 subtotal	$724.00
 rent × 620	$448.88k
 subtotal	$448.88k
@@ -6972,7 +6972,7 @@ salary + 373%	3,273.16
 line4 × 809	$585.716k
 line5 × 82.89	$37.2076632M
 531	531
-rent -= 803	-$79
+rent -= 803	-$79.00
 salary - 33.05	658.95
 SHEET 572
 205%	205%
@@ -7008,7 +7008,7 @@ $293	$293.00
 fee = 18.67%	18.67%
 rent = 376%	376%
 // a note 123	.comment
-bonus = $436	$436
+bonus = $436	$436.00
 monthly cost = 4.58	4.58
 subtotal	$2,488.70
 ---	.divider
@@ -7050,7 +7050,7 @@ bonus + 716%	1,461%
 314%	314%
 SHEET 577
 bonus = 158%	158%
-rent = $640	$640
+rent = $640	$640.00
 $446	$446.00
 monthly cost = $27.26	$27.26
 subtotal	$2,872.21
@@ -7063,10 +7063,10 @@ SHEET 578
 $28.99	$28.99
 tax rate = 38.53%	38.53%
 subtotal	$40.16
-rent = $793	$793
+rent = $793	$793.00
 # Heading	.heading
 salary = 591%	591%
-tax rate = $272	$272
+tax rate = $272	$272.00
 $44.04	$44.04
 rent = $60.02	$60.02
 fee = 675	675
@@ -7076,12 +7076,12 @@ rent = $2.86	$2.86
 SHEET 579
 $57.80	$57.80
 line1 + 491%	$341.60
-rent = $736	$736
+rent = $736	$736.00
 ---	.divider
 tax rate = 87	87
 45.33	45.33
 tax rate += 37.02	124.02
-monthly cost = $324	$324
+monthly cost = $324	$324.00
 339	339
 SHEET 580
 	.blank
@@ -7115,13 +7115,13 @@ bonus = 50.96%	50.96%
 subtotal	$985.44
 line1 × 798	4,125.66
 SHEET 583
-rent = $707	$707
+rent = $707	$707.00
 price = 499	499
 line2 + 99.81%	997.0519
 price + 376%	2,375.24
 $117	$117.00
 rent -= 46.66	$660.34
-price = $738	$738
+price = $738	$738.00
 $53.51	$53.51
 subtotal	$6,147.14
 # Heading	.heading
@@ -7132,7 +7132,7 @@ tax rate = 786%	786%
 line2 × 42.90	337.194
 $13.05	$13.05
 # Heading	.heading
-fee = $777	$777
+fee = $777	$777.00
 	.blank
 salary = 35.52	35.52
 SHEET 585
@@ -7150,19 +7150,19 @@ rent = 59.33%	59.33%
 SHEET 586
 59.72%	59.72%
 line1 × 84.59	50.517148
-monthly cost = $141	$141
+monthly cost = $141	$141.00
 subtotal	$305.89
 tax rate = 3.11	3.11
 tax rate -= 725	-721.89
 # Heading	.heading
 monthly cost × 731	$103.071k
-price = $111	$111
+price = $111	$111.00
 tax rate -= 365	-1,086.89
 line10 + 12.02%	-1,217.534178
 subtotal	$100.877575822k
 	.blank
 $80.01	$80.01
-tax rate = $508	$508
+tax rate = $508	$508.00
 fee = 678	678
 	.blank
 SHEET 587
@@ -7198,7 +7198,7 @@ line1 + 74.25	158.73
 line1 × 56.65	4,785.792
 rent × 883	74,595.84
 rent -= 125	-40.52
-bonus = $627	$627
+bonus = $627	$627.00
 SHEET 590
 # Heading	.heading
 // a note 123	.comment
@@ -7220,7 +7220,7 @@ line12 + 246%	$394.44
 SHEET 591
 105%	105%
 54.86%	54.86%
-salary = $744	$744
+salary = $744	$744.00
 salary - 85	$659.00
 line1 × 105	110.25
 line3 + 689	$1,433.00
@@ -7275,7 +7275,7 @@ bonus = 82	82
 tax rate += 79	$120.07
 $15.45	$15.45
 tax rate + 218	$338.07
-tax rate += 94.73	$214.8
+tax rate += 94.73	$214.80
 # Heading	.heading
 $478	$478.00
 SHEET 597
@@ -7293,7 +7293,7 @@ SHEET 598
 rent = 516%	516%
 bonus = 662%	662%
 bonus + 35.46%	697.46%
-tax rate = $742	$742
+tax rate = $742	$742.00
 subtotal	$277.7464374854k
 line2 × 57	377.34
 $60.59	$60.59
@@ -7311,4 +7311,4 @@ price = 856%	856%
 $68.97	$68.97
 831	831
 34.36	34.36
-rent = $180	$180
+rent = $180	$180.00

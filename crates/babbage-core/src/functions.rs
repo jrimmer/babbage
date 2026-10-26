@@ -37,6 +37,11 @@ pub enum Func {
     PermutationsOf,
     CombinationsOf,
     AsNumber,
+    Hex,
+    Bin,
+    Oct,
+    /// `... as base 8`: the value, then the base.
+    ToBase,
     Sqrt,
     Cbrt,
     /// `root 5 of 100`: the degree, then the value.
@@ -110,7 +115,7 @@ impl Func {
             | Func::Midpoint
             | Func::Random => Arity::Exactly(2),
             Func::Clamp => Arity::Exactly(3),
-            Func::Root | Func::LogBase => Arity::Exactly(2),
+            Func::Root | Func::LogBase | Func::ToBase => Arity::Exactly(2),
             Func::StdDev => Arity::AtLeast(2),
             _ => Arity::Exactly(1),
         }
@@ -138,6 +143,10 @@ const NAMES: &[(&str, Func)] = &[
     ("lcm", Func::Lcm),
     ("clamp", Func::Clamp),
     ("midpoint", Func::Midpoint),
+    ("hex", Func::Hex),
+    ("bin", Func::Bin),
+    ("oct", Func::Oct),
+    ("int", Func::AsNumber),
     ("sqrt", Func::Sqrt),
     ("cbrt", Func::Cbrt),
     ("ln", Func::Ln),
@@ -325,6 +334,13 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         }
         Func::Random => random_between(&args[0], &args[1]),
         Func::AsNumber => Ok(Value::plain(args[0].number().clone())),
+        Func::Hex => args[0].clone().in_radix(16),
+        Func::Bin => args[0].clone().in_radix(2),
+        Func::Oct => args[0].clone().in_radix(8),
+        Func::ToBase => {
+            let base = plain_integer(&args[1])?.to_u8().ok_or(Error::OutOfDomain)?;
+            args[0].clone().in_radix(base)
+        }
         Func::StdDev => standard_deviation(args),
         Func::Root => {
             let k = plain_integer(&args[0])?;

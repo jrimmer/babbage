@@ -293,7 +293,140 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
     let text = blank_text(raw, &blanks);
     result.tags = tags;
 
-    let (target, op, rhs_text) = split_assignment(&text);
+    match split_conditional(&text) {
+        Some(c) => run_conditional(&c, index, st, opts, &mut result),
+        None => run_statement(&text, index, st, opts, &mut result),
+    }
+    result
+}
+
+/// `if C then A else B`, `A if C` and `A unless C`.
+struct Conditional {
+    condition: String,
+    then_branch: String,
+    else_branch: Option<String>,
+    /// `unless`: run the first branch when the condition is false.
+    negate: bool,
+    /// The prefix form must have a true or false condition; the suffix form falls back to plain evaluation.
+    strict: bool,
+}
+
+/// Byte offsets of the standalone, top-level words in `text` equal to `word` (any case).
+fn top_level_words(text: &str, word: &str) -> Vec<usize> {
+    let mut found = Vec::new();
+    let mut depth = 0i64;
+    let mut start: Option<usize> = None;
+    for (i, c) in text
+        .char_indices()
+        .chain(std::iter::once((text.len(), ' ')))
+    {
+        if c.is_alphabetic() {
+            start.get_or_insert(i);
+            continue;
+        }
+        if let Some(from) = start.take()
+            && depth == 0
+            && text[from..i].eq_ignore_ascii_case(word)
+        {
+            found.push(from);
+        }
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            _ => {}
+        }
+    }
+    found
+}
+
+fn split_conditional(text: &str) -> Option<Conditional> {
+    let trimmed_start = text.len() - text.trim_start().len();
+    if let Some(&0) = top_level_words(text.trim_start(), "if").first() {
+        let rest = &text[trimmed_start + 2..];
+        let then = *top_level_words(rest, "then").first()?;
+        let condition = rest[..then].to_string();
+        let after = &rest[then + 4..];
+        let (then_branch, else_branch) = match top_level_words(after, "else").first() {
+            Some(&e) => (after[..e].to_string(), Some(after[e + 4..].to_string())),
+            None => (after.to_string(), None),
+        };
+        return Some(Conditional {
+            condition,
+            then_branch,
+            else_branch,
+            negate: false,
+            strict: true,
+        });
+    }
+    let last = |word: &str| top_level_words(text, word).last().copied();
+    let (at, len, negate) = match (last("if"), last("unless")) {
+        (Some(i), Some(u)) if u > i => (u, 6, true),
+        (Some(i), _) => (i, 2, false),
+        (None, Some(u)) => (u, 6, true),
+        (None, None) => return None,
+    };
+    if text[..at].trim().is_empty() {
+        return None;
+    }
+    Some(Conditional {
+        condition: text[at + len..].to_string(),
+        then_branch: text[..at].to_string(),
+        else_branch: None,
+        negate,
+        strict: false,
+    })
+}
+
+fn run_conditional(
+    c: &Conditional,
+    index: usize,
+    st: &mut State,
+    opts: &SheetOptions,
+    result: &mut LineResult,
+) {
+    let condition = evaluate_expression(&c.condition, index, st, opts);
+    let truth = match &condition.outcome {
+        Ok(v) => v.as_bool(),
+        Err(_) => None,
+    };
+    let Some(truth) = truth else {
+        if c.strict {
+            result.kind = LineKind::Error(match condition.outcome {
+                Err(e) => e,
+                Ok(_) => Error::UnsupportedOperation("a condition must come out true or false"),
+            });
+        } else {
+            run_statement(
+                &format!("{} if {}", c.then_branch, c.condition),
+                index,
+                st,
+                opts,
+                result,
+            );
+        }
+        return;
+    };
+    let branch = if truth != c.negate {
+        Some(&c.then_branch)
+    } else {
+        c.else_branch.as_ref()
+    };
+    match branch {
+        Some(text) => run_statement(text, index, st, opts, result),
+        None => result.kind = LineKind::Text,
+    }
+}
+
+/// One statement: `name = value`, `name += value`, `name =` after a list of lines, or a plain expression.
+fn run_statement(
+    text: &str,
+    index: usize,
+    st: &mut State,
+    opts: &SheetOptions,
+    result: &mut LineResult,
+) {
+    let lowered = text.trim().to_lowercase();
+    let (target, op, rhs_text) = split_assignment(text);
     if lowered == "subtotal" || (target.is_some() && rhs_text.trim().is_empty() && op.is_none()) {
         result.subtotal = true;
         let range: Vec<&Value> = st.results[st.subtotal_start.min(index)..]
@@ -312,7 +445,7 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
             }
             Err(e) => LineKind::Error(e),
         };
-        return result;
+        return;
     }
 
     let evaluated = evaluate_expression(&rhs_text, index, st, opts);
@@ -331,14 +464,14 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
                             Ok(v) => v,
                             Err(e) => {
                                 result.kind = LineKind::Error(e);
-                                return result;
+                                return;
                             }
                         },
                         None => {
                             result.kind = LineKind::Error(Error::UnsupportedOperation(
                                 "this variable has no value yet",
                             ));
-                            return result;
+                            return;
                         }
                     };
                 }
@@ -348,7 +481,6 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
             result.kind = LineKind::Value(value);
         }
     }
-    result
 }
 
 #[derive(Clone, Copy)]
@@ -553,7 +685,7 @@ fn drop_unknown(
     ignored: &mut Vec<Ignored>,
     warnings: &mut Vec<Warning>,
 ) -> Result<Vec<Token>, Error> {
-    let unknown = |t: &Token| matches!(&t.tok, Tok::Word(w) if !phrase::is_vocabulary_word(w));
+    let unknown = |t: &Token| matches!(&t.tok, Tok::Word(w) if !phrase::is_vocabulary_word(w) && !phrase::is_infix_word(w));
     let mut drop = vec![false; toks.len()];
 
     // A parenthesised group holding a word is a remark: `$999 (for iPhone 16)`.

@@ -17,6 +17,24 @@ pub enum BinOp {
     Mod,
     On,
     Off,
+    Eq,
+    Ne,
+    Lt,
+    Gt,
+    Le,
+    Ge,
+    /// `&&` and `||`: logical, booleans only.
+    LogicAnd,
+    LogicOr,
+    /// `and`, `or`, `xor`: logical on booleans, bitwise on whole numbers.
+    And,
+    Or,
+    Xor,
+    /// `&` and `|`: bitwise, whole numbers only.
+    BitAnd,
+    BitOr,
+    Shl,
+    Shr,
     /// Adjacent quantities such as `1 h 30 min`: a sum that binds tighter than everything but a unit's own exponent.
     Join,
 }
@@ -24,10 +42,18 @@ pub enum BinOp {
 impl BinOp {
     fn precedence(self) -> u8 {
         match self {
-            BinOp::Add | BinOp::Sub => 1,
-            BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::On | BinOp::Off => 2,
-            BinOp::Pow => 4,
-            BinOp::Join => 5,
+            BinOp::Or | BinOp::LogicOr => 1,
+            BinOp::And | BinOp::LogicAnd => 2,
+            BinOp::BitOr => 3,
+            BinOp::Xor => 4,
+            BinOp::BitAnd => 5,
+            BinOp::Eq | BinOp::Ne => 6,
+            BinOp::Lt | BinOp::Gt | BinOp::Le | BinOp::Ge => 7,
+            BinOp::Shl | BinOp::Shr => 8,
+            BinOp::Add | BinOp::Sub => 9,
+            BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::On | BinOp::Off => 10,
+            BinOp::Pow => 12,
+            BinOp::Join => 13,
         }
     }
 
@@ -45,6 +71,21 @@ impl fmt::Display for BinOp {
             BinOp::Div => "/",
             BinOp::Pow => "^",
             BinOp::Mod => "mod",
+            BinOp::Eq => "==",
+            BinOp::Ne => "!=",
+            BinOp::Lt => "<",
+            BinOp::Gt => ">",
+            BinOp::Le => "<=",
+            BinOp::Ge => ">=",
+            BinOp::LogicAnd => "&&",
+            BinOp::LogicOr => "||",
+            BinOp::And => "and",
+            BinOp::Or => "or",
+            BinOp::Xor => "xor",
+            BinOp::BitAnd => "&",
+            BinOp::BitOr => "|",
+            BinOp::Shl => "<<",
+            BinOp::Shr => ">>",
             BinOp::On => "on",
             BinOp::Off => "off",
             BinOp::Join => "+",
@@ -182,8 +223,8 @@ enum Pending {
     CallPrefix(Func),
 }
 
-const NEG_PRECEDENCE: u8 = 3;
-const PREFIX_CALL_PRECEDENCE: u8 = 6;
+const NEG_PRECEDENCE: u8 = 11;
+const PREFIX_CALL_PRECEDENCE: u8 = 14;
 
 impl Pending {
     fn precedence(&self) -> u8 {
@@ -232,6 +273,9 @@ fn binary_word(w: &str) -> Option<BinOp> {
         "of" => Some(BinOp::Mul),
         "on" => Some(BinOp::On),
         "off" => Some(BinOp::Off),
+        "and" => Some(BinOp::And),
+        "or" => Some(BinOp::Or),
+        "xor" => Some(BinOp::Xor),
         _ => None,
     }
 }
@@ -303,9 +347,19 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 ops.push(Pending::Bin(BinOp::Join));
                 out.push(Node::Num(n.clone()));
             }
-            (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret | Tok::Mod, false)
+            (
+                Tok::Plus
+                | Tok::Minus
+                | Tok::Star
+                | Tok::Slash
+                | Tok::Caret
+                | Tok::Mod
+                | Tok::Op(_),
+                false,
+            )
             | (Tok::Word(_), false) => {
                 let op = match &t.tok {
+                    Tok::Op(op) => *op,
                     Tok::Plus => BinOp::Add,
                     Tok::Minus => BinOp::Sub,
                     Tok::Star => BinOp::Mul,

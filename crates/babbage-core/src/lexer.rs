@@ -3,6 +3,7 @@ use num_rational::BigRational;
 
 use crate::error::Error;
 use crate::number::Number;
+use crate::parser::BinOp;
 use crate::units::{UnitExpr, currency_prefix, lookup, superscript_digit};
 use crate::value::Value;
 
@@ -18,6 +19,8 @@ pub enum Tok {
     Slash,
     Caret,
     Comma,
+    /// A comparison, logical or bitwise operator spelled with symbols.
+    Op(BinOp),
     /// The word `mod`.
     Mod,
     LParen,
@@ -42,6 +45,7 @@ impl Tok {
             Tok::Slash => "'/'".into(),
             Tok::Caret => "'^'".into(),
             Tok::Comma => "','".into(),
+            Tok::Op(op) => format!("'{op}'"),
             Tok::Mod => "'mod'".into(),
             Tok::LParen => "'('".into(),
             Tok::RParen => "')'".into(),
@@ -144,6 +148,27 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             '@' => simple(Tok::Word("at".into()), &mut out),
+            '0' if radix_prefix(&chars, i).is_some() => {
+                let (radix, digits_from) = radix_prefix(&chars, i).expect("checked by the guard");
+                let mut end = digits_from;
+                while chars
+                    .get(end)
+                    .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
+                {
+                    end += 1;
+                }
+                let text: String = chars[digits_from..end].iter().map(|(_, d)| *d).collect();
+                let value = num_bigint::BigInt::parse_bytes(text.as_bytes(), u32::from(radix))
+                    .ok_or(Error::InvalidNumber { text, at })?;
+                let n = Number::from_ratio(value, num_bigint::BigInt::from(1))?;
+                let v = Value::plain(n).in_radix(radix)?;
+                out.push(Token {
+                    tok: Tok::Value(v),
+                    at,
+                });
+                i = end;
+                continue;
+            }
             '0'..='9' => {
                 let (n, next) = scan_number(src, &chars, i, false)?;
                 out.push(Token {
@@ -172,6 +197,45 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
             '*' | '\u{00D7}' | '\u{00B7}' | '\u{22C5}' => simple(Tok::Star, &mut out),
             'x' | 'X' if is_times_x(&chars, i) => simple(Tok::Star, &mut out),
             '/' | '\u{00F7}' | '\u{2215}' => simple(Tok::Slash, &mut out),
+            '=' if chars.get(i + 1).is_some_and(|(_, d)| *d == '=') => {
+                simple(Tok::Op(BinOp::Eq), &mut out);
+                i += 2;
+                continue;
+            }
+            '!' if chars.get(i + 1).is_some_and(|(_, d)| *d == '=') => {
+                simple(Tok::Op(BinOp::Ne), &mut out);
+                i += 2;
+                continue;
+            }
+            '<' | '>' => {
+                let next = chars.get(i + 1).map(|(_, d)| *d);
+                let (op, used) = match (c, next) {
+                    ('<', Some('<')) => (BinOp::Shl, 2),
+                    ('>', Some('>')) => (BinOp::Shr, 2),
+                    ('<', Some('=')) => (BinOp::Le, 2),
+                    ('>', Some('=')) => (BinOp::Ge, 2),
+                    ('<', _) => (BinOp::Lt, 1),
+                    _ => (BinOp::Gt, 1),
+                };
+                simple(Tok::Op(op), &mut out);
+                i += used;
+                continue;
+            }
+            '&' | '|' => {
+                let doubled = chars.get(i + 1).is_some_and(|(_, d)| *d == c);
+                let op = match (c, doubled) {
+                    ('&', true) => BinOp::LogicAnd,
+                    ('&', false) => BinOp::BitAnd,
+                    (_, true) => BinOp::LogicOr,
+                    (_, false) => BinOp::BitOr,
+                };
+                simple(Tok::Op(op), &mut out);
+                i += if doubled { 2 } else { 1 };
+                continue;
+            }
+            '≤' => simple(Tok::Op(BinOp::Le), &mut out),
+            '≥' => simple(Tok::Op(BinOp::Ge), &mut out),
+            '≠' => simple(Tok::Op(BinOp::Ne), &mut out),
             '^' => simple(Tok::Caret, &mut out),
             ',' => simple(Tok::Comma, &mut out),
             '√' => simple(Tok::Word("sqrt".into()), &mut out),
@@ -225,6 +289,19 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 }
                 let end = if is_call { name_end } else { letters_end };
                 let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
+                let truth = match word.to_lowercase().as_str() {
+                    "true" => Some(true),
+                    "false" => Some(false),
+                    _ => None,
+                };
+                if let Some(b) = truth {
+                    out.push(Token {
+                        tok: Tok::Value(Value::boolean(b)),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 let constant = match word.to_lowercase().as_str() {
                     "pi" | "π" => Some(crate::approx::pi()),
                     "tau" | "τ" => Some(crate::approx::tau()),
@@ -273,6 +350,20 @@ fn currency_amount_at(src: &str, chars: &[(usize, char)], i: usize) -> Option<(U
                 .get(i + symbol_chars + 1)
                 .is_some_and(|(_, c)| c.is_ascii_digit()));
     digit_after.then_some((unit, symbol_chars))
+}
+
+/// `0x`, `0b` or `0o` followed by at least one digit of that base: the base and where the digits start.
+fn radix_prefix(chars: &[(usize, char)], i: usize) -> Option<(u8, usize)> {
+    let radix = match chars.get(i + 1).map(|(_, c)| c.to_ascii_lowercase()) {
+        Some('x') => 16,
+        Some('b') => 2,
+        Some('o') => 8,
+        _ => return None,
+    };
+    chars
+        .get(i + 2)
+        .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
+        .then_some((radix, i + 2))
 }
 
 fn word_end(chars: &[(usize, char)], from: usize) -> usize {

@@ -167,6 +167,7 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| count_form(toks))
         .or_else(|| proportion(toks))
         .or_else(|| as_number(toks))
+        .or_else(|| to_radix(toks))
         .or_else(|| rounding(toks))
 }
 
@@ -343,6 +344,49 @@ fn as_number(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .iter()
         .any(|w| is_word(toks.get(n - 2), w));
     (target && joiner).then(|| call(&[&toks[..n - 2]], Func::AsNumber))
+}
+
+/// `256 as hex`, `99 in binary`, `0b1000101 to octal`, `0x2D as base 2`.
+fn to_radix(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    let joiner = |i: usize| {
+        ["as", "to", "in", "into"]
+            .iter()
+            .any(|w| is_word(toks.get(i), w))
+    };
+    let named = [
+        ("hex", 16),
+        ("hexadecimal", 16),
+        ("binary", 2),
+        ("bin", 2),
+        ("octal", 8),
+        ("oct", 8),
+    ];
+    if n >= 3
+        && joiner(n - 2)
+        && let Some((_, base)) = named.iter().find(|(w, _)| is_word(toks.get(n - 1), w))
+    {
+        return Some(rpn_of(&[&toks[..n - 2]]).map(|mut rpn| {
+            rpn.push(Node::Num(Number::from_i64(*base)));
+            rpn.push(Node::Call(Func::ToBase, 2));
+            Expr::from_nodes(rpn)
+        }));
+    }
+    if n >= 4
+        && joiner(n - 3)
+        && is_word(toks.get(n - 2), "base")
+        && let Some(Token {
+            tok: Tok::Num(base),
+            ..
+        }) = toks.get(n - 1)
+    {
+        return Some(rpn_of(&[&toks[..n - 3]]).map(|mut rpn| {
+            rpn.push(Node::Num(base.clone()));
+            rpn.push(Node::Call(Func::ToBase, 2));
+            Expr::from_nodes(rpn)
+        }));
+    }
+    None
 }
 
 fn step_word(w: &str) -> Option<i64> {

@@ -53,7 +53,12 @@ def show(v, exact_money=False):
     big = scaled(q)
     if money:
         if big is None:
-            body = digits(q, 10, True) if exact_money else digits(q, 2, False)
+            if exact_money:
+                body = digits(q, 10, True)
+                whole, _, frac = body.partition(".")
+                body = whole + "." + frac.ljust(2, "0")
+            else:
+                body = digits(q, 2, False)
         else:
             body = big
         sign = "-" if body.startswith("-") else ""

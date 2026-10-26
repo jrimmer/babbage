@@ -100,7 +100,7 @@ pub fn keywords_form_a_phrase(keywords: &[(usize, &str)]) -> bool {
 
 /// Words the arithmetic parser reads as operators when they stand alone.
 pub fn is_infix_word(word: &str) -> bool {
-    ["of", "on", "off"]
+    ["of", "on", "off", "and", "or", "xor"]
         .iter()
         .any(|k| word.eq_ignore_ascii_case(k))
 }
