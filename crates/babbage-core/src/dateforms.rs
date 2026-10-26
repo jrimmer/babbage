@@ -11,6 +11,7 @@ use crate::parser::{BinOp, Expr, Node, parse};
 use crate::settings;
 use crate::units;
 use crate::value::{Kind, Value};
+use crate::zones::{self, Zone};
 
 /// A word, or a unit written as that word: `week` and `days` lex as units.
 fn is_word(t: Option<&Token>, w: &str) -> bool {
@@ -75,6 +76,7 @@ pub fn parse_date_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| interval(toks))
         .or_else(|| playback(toks))
         .or_else(|| timecodes(toks))
+        .or_else(|| zone_forms(toks))
 }
 
 fn one_date(toks: &[Token]) -> Option<Result<Expr, Error>> {
@@ -384,4 +386,104 @@ fn timecodes(toks: &[Token]) -> Option<Result<Expr, Error>> {
         }
         None => rpn_of(head).and_then(|r| finish(r, plain)),
     })
+}
+
+/// The zone a run of tokens names: `Sydney`, `New York`, `PST`, `GMT+8`, `UTC-5:30`.
+fn place_of(run: &[Token]) -> Option<Zone> {
+    let words: Option<Vec<String>> = run
+        .iter()
+        .map(|t| match &t.tok {
+            Tok::Word(w) => Some(w.clone()),
+            Tok::Unit(u) => Some(u.symbol()),
+            _ => None,
+        })
+        .collect();
+    if let Some(words) = words {
+        let words: Vec<&str> = words.iter().map(String::as_str).collect();
+        return zones::place(&words);
+    }
+    let [base, sign, amount] = run else {
+        return None;
+    };
+    if !matches!(&base.tok, Tok::Word(w) if w.eq_ignore_ascii_case("gmt") || w.eq_ignore_ascii_case("utc"))
+    {
+        return None;
+    }
+    let negative = match sign.tok {
+        Tok::Plus => false,
+        Tok::Minus => true,
+        _ => return None,
+    };
+    match &amount.tok {
+        Tok::Num(n) if n.is_integer() => {
+            zones::offset_zone(negative, i64::try_from(n.numer()).ok()?, 0)
+        }
+        Tok::Value(v) if v.kind() == Kind::Clock && v.number().is_integer() => {
+            let seconds = i64::try_from(v.number().numer()).ok()?;
+            zones::offset_zone(negative, seconds / 3600, seconds % 3600 / 60)
+        }
+        _ => None,
+    }
+}
+
+fn zone_node(zone: Option<Zone>) -> Node {
+    Node::Value(Value::text(
+        &zone.map_or_else(|| "local".to_string(), Zone::to_spec),
+    ))
+}
+
+/// `6pm Sydney in Chicago`, `3pm EST to GMT`, `now in Tokyo`, `time in Paris`, `Tokyo time`,
+/// `date in Paris`, `time difference between Sydney and Chicago`.
+fn zone_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    let is_connector =
+        |t: &Token| is_word(Some(t), "and") || matches!(t.tok, Tok::Op(BinOp::BitAnd));
+    for lead in [
+        &["time", "difference", "between"][..],
+        &["difference", "between"],
+    ] {
+        if starts_with_words(toks, lead) {
+            let rest = &toks[lead.len()..];
+            let at = rest.iter().position(is_connector)?;
+            let (a, b) = (place_of(&rest[..at])?, place_of(&rest[at + 1..])?);
+            return Some(finish(
+                vec![zone_node(Some(a)), zone_node(Some(b))],
+                DateFn::ZoneDifference,
+            ));
+        }
+    }
+    for (lead, f) in [("time", DateFn::TimeIn), ("date", DateFn::DateIn)] {
+        if n >= 3
+            && is_word(toks.first(), lead)
+            && is_word(toks.get(1), "in")
+            && let Some(zone) = place_of(&toks[2..])
+        {
+            return Some(finish(vec![zone_node(Some(zone))], f));
+        }
+    }
+    if n >= 2
+        && is_word(toks.last(), "time")
+        && let Some(zone) = place_of(&toks[..n - 1])
+    {
+        return Some(finish(vec![zone_node(Some(zone))], DateFn::TimeIn));
+    }
+    let at = (1..n.saturating_sub(1)).rev().find(|k| {
+        (is_word(toks.get(*k), "in") || is_word(toks.get(*k), "to"))
+            && place_of(&toks[k + 1..]).is_some()
+    })?;
+    let to = place_of(&toks[at + 1..])?;
+    let when = single_value(&toks[0]).filter(|v| matches!(v.kind(), Kind::Clock | Kind::Date))?;
+    let from = if at == 1 {
+        None
+    } else {
+        Some(place_of(&toks[1..at])?)
+    };
+    Some(finish(
+        vec![
+            Node::Value(when.clone()),
+            zone_node(from),
+            zone_node(Some(to)),
+        ],
+        DateFn::ZoneConvert,
+    ))
 }

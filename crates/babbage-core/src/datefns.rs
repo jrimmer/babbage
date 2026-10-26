@@ -7,6 +7,7 @@ use crate::number::Number;
 use crate::settings;
 use crate::units;
 use crate::value::{Kind, Value};
+use crate::zones::Zone;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DateFn {
@@ -52,6 +53,14 @@ pub enum DateFn {
     AsFrames,
     /// (length of time, frames per second)
     AsFramesAt,
+    /// (time or date, zone it is written in, zone to show it in): zones travel as text.
+    ZoneConvert,
+    /// The current time of day in a zone.
+    TimeIn,
+    /// The current date in a zone.
+    DateIn,
+    /// (zone, zone): how far the first is ahead of the second right now.
+    ZoneDifference,
 }
 
 impl DateFn {
@@ -70,7 +79,9 @@ impl DateFn {
             | DateFn::ToTimestamp
             | DateFn::AsIso
             | DateFn::AsTimecode
-            | DateFn::AsFrames => 1,
+            | DateFn::AsFrames
+            | DateFn::TimeIn
+            | DateFn::DateIn => 1,
             DateFn::CurrentTimestamp => 0,
             DateFn::DaysInQuarter
             | DateFn::DaysBetween
@@ -83,7 +94,9 @@ impl DateFn {
             | DateFn::Playback
             | DateFn::TimeSaved
             | DateFn::AsTimecodeAt
-            | DateFn::AsFramesAt => 2,
+            | DateFn::AsFramesAt
+            | DateFn::ZoneDifference => 2,
+            DateFn::ZoneConvert => 3,
         }
     }
 }
@@ -214,6 +227,30 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         }
         DateFn::AsTimecodeAt => as_timecode(&args[0], plain_rate(&args[1])?),
         DateFn::AsFrames => as_frames(&args[0], args[0].timecode_rate().cloned()),
+        DateFn::ZoneConvert => zone_convert(&args[0], &args[1], &args[2]),
+        DateFn::TimeIn => {
+            let zone = zone_arg(&args[0])?;
+            let now = settings::now_utc_seconds();
+            Ok(Value::clock(Number::from_i64(
+                (now + zone.offset_at(now)).rem_euclid(86_400),
+            )))
+        }
+        DateFn::DateIn => {
+            let zone = zone_arg(&args[0])?;
+            let now = settings::now_utc_seconds();
+            Ok(Value::date(Number::from_i64(
+                (now + zone.offset_at(now)).div_euclid(86_400),
+            )))
+        }
+        DateFn::ZoneDifference => {
+            let (a, b) = (zone_arg(&args[0])?, zone_arg(&args[1])?);
+            let now = settings::now_utc_seconds();
+            Ok(Value::quantity(
+                Number::from_i64(a.offset_at(now) - b.offset_at(now)),
+                unit("s"),
+            )?
+            .as_timespan())
+        }
         DateFn::AsFramesAt => as_frames(&args[0], Some(plain_rate(&args[1])?)),
         DateFn::CurrentTimestamp => Ok(digits(Number::from_i64(settings::now_utc_seconds()))),
         DateFn::DateAt => {
@@ -247,6 +284,54 @@ pub fn first_of(year: i64, month: u32) -> Option<Value> {
         day: 1,
     };
     calendar::is_valid(c).then(|| Value::date(Number::from_i64(calendar::days_from_civil(c))))
+}
+
+/// The zone a text value names: `local`, or what `Zone::to_spec` wrote.
+fn zone_arg(v: &Value) -> Result<Zone, Error> {
+    match v.words() {
+        Some("local") => Ok(Zone::Fixed(settings::local_offset_seconds())),
+        Some(spec) => {
+            Zone::from_spec(spec).ok_or(Error::UnsupportedOperation("this time zone is not known"))
+        }
+        None => Err(Error::UnsupportedOperation("a time zone is needed")),
+    }
+}
+
+/// A time of day or a date written in one zone, shown in another. A time of day with no date means that
+/// time on today's date where it was written; it stays a time of day if it lands on the same date there.
+fn zone_convert(v: &Value, from: &Value, to: &Value) -> Result<Value, Error> {
+    let (from, to) = (zone_arg(from)?, zone_arg(to)?);
+    let now = settings::now_utc_seconds();
+    let day_seconds = Number::from_i64(86_400);
+    let (written_day, local) = match v.kind() {
+        Kind::Clock => {
+            let day = (now + from.offset_at(now)).div_euclid(86_400);
+            (
+                Some(day),
+                Number::from_i64(day).mul(&day_seconds)?.add(v.number())?,
+            )
+        }
+        Kind::Date => (None, v.number().mul(&day_seconds)?),
+        _ => {
+            return Err(Error::UnsupportedOperation(
+                "a time zone applies to a time of day or a date",
+            ));
+        }
+    };
+    let whole = local.floor();
+    let fraction = local.sub(&Number::from_ratio(
+        whole.clone(),
+        num_bigint::BigInt::from(1),
+    )?)?;
+    let whole = i64::try_from(&whole).map_err(|_| Error::Overflow)?;
+    let utc = from.local_to_utc(whole);
+    let there = Number::from_i64(utc + to.offset_at(utc)).add(&fraction)?;
+    let day = i64::try_from(&there.div(&day_seconds)?.floor()).map_err(|_| Error::Overflow)?;
+    if written_day == Some(day) {
+        let into_day = there.sub(&Number::from_i64(day).mul(&day_seconds)?)?;
+        return Ok(Value::clock(into_day));
+    }
+    Ok(Value::date(there.div(&day_seconds)?))
 }
 
 /// Frames per second when a timecode does not say.

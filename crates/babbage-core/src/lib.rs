@@ -17,6 +17,7 @@ pub mod sheet;
 pub mod units;
 pub mod value;
 pub mod words;
+pub mod zones;
 
 pub use error::Error;
 pub use format::{FormatOptions, Formatted, RoundingMode, format_decimal};
