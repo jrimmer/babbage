@@ -102,6 +102,7 @@ const BETWEEN_FORMS: &[(&[&str], Func)] = &[
 /// The expression a line written in words stands for, or None when it is not one of these forms.
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
+        .or_else(|| year_span(toks))
         .or_else(|| crate::dateforms::parse_date_forms(toks))
         .or_else(|| unit_in_quantity(toks))
         .or_else(|| proportion_what(toks))
@@ -118,6 +119,26 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| as_number(toks))
         .or_else(|| to_radix(toks))
         .or_else(|| rounding(toks))
+}
+
+/// `1978 to 2021`: two four-digit years are 43 apart, a plain number, as the reference app prints it.
+fn year_span(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let [a, to, b] = toks else {
+        return None;
+    };
+    let year = |t: &Token| match &t.tok {
+        Tok::Num(n)
+            if n.is_integer() && (1000..=9999).contains(&i64::try_from(n.numer()).ok()?) =>
+        {
+            Some(n.clone())
+        }
+        _ => None,
+    };
+    if !is_word(Some(to), "to") {
+        return None;
+    }
+    let (from, until) = (year(a)?, year(b)?);
+    Some(until.sub(&from).map(Expr::num))
 }
 
 fn list_form(toks: &[Token]) -> Option<Result<Expr, Error>> {

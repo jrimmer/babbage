@@ -116,7 +116,7 @@ fn playback_speed_needs_a_time_and_a_speed() {
 
 #[test]
 fn timestamps_are_written_in_full() {
-    assert_eq!(shown("June 15, 2024 to timestamp"), "1718409600");
+    assert_eq!(shown("June 15, 2024 to timestamp"), "1718452800");
     assert_eq!(shown("current timestamp"), "1718452800");
     assert_eq!(shown("1718452800 to date"), "June 15 at 12:00 PM");
     assert_eq!(shown("0 to date"), "January 1, 1970");
@@ -129,11 +129,12 @@ fn timestamps_are_written_in_full() {
 
 #[test]
 fn iso_dates_are_read_strictly() {
+    // A date that is not one is arithmetic (the reference app prints `2019-02-30` as 1,987).
+    assert_eq!(shown("2019-02-30"), "1,987");
+    assert_eq!(shown("2019-13-01"), "2,005");
+    assert_eq!(shown("2019-00-10"), "2,009");
+    assert_eq!(shown("2019-04-31"), "1,984");
     for line in [
-        "2019-02-30",
-        "2019-13-01",
-        "2019-00-10",
-        "2019-04-31",
         "2019-04-01T24:00:00",
         "2019-04-01T12:60:00",
         "2019-04-01T12:00:60",

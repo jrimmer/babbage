@@ -89,7 +89,7 @@ fn n_percent_is_b_in_what_needs_two_bare_numbers_that_are_not_zero() {
 fn pixel_density_needs_a_positive_bare_number_and_a_length_or_pixel_count() {
     let d =
         |v: Value, density: Value, to: &str| text(call(Func::AtDensity, &[v, density, q(1, to)]));
-    assert_eq!(d(q(1, "inch"), n(96), "px"), "96 px");
+    assert_eq!(d(q(1, "inch"), n(96), "px"), "96px");
     assert_eq!(d(q(96, "px"), n(96), "inch"), "1 in");
     // the density
     for bad in [

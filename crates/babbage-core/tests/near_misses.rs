@@ -81,14 +81,14 @@ const CASES: &[(&str, &str)] = &[
         "1 cm px at 326 ppi",
         "ERROR unexpected word \"ppi\" at byte 15",
     ),
-    ("1 cm in px at 326", "12,321.2598425197 px"),
+    ("1 cm in px at 326", "12,321.2598425197px"),
     (
         "1 cm in px 326 ppi",
         "ERROR unexpected word \"in\" at byte 5",
     ),
-    ("1 cm to px at 326 ppi", "128.3464566929 px"),
-    ("1 cm as px at 326 ppi", "128.3464566929 px"),
-    ("1 cm in px at 326 dpi", "128.3464566929 px"),
+    ("1 cm to px at 326 ppi", "128.3464566929px"),
+    ("1 cm as px at 326 ppi", "128.3464566929px"),
+    ("1 cm in px at 326 dpi", "128.3464566929px"),
     (
         "1 cm in km at 326 ppi",
         "ERROR unsupported: this needs pixels on one side and a length on the other",
@@ -623,7 +623,7 @@ fn the_remaining_near_misses_of_the_proportion_and_ratio_forms() {
             "1 cm in px at 326 km",
             "ERROR these units measure different things",
         ),
-        ("1 cm in px at 326", "12,321.2598425197 px"),
+        ("1 cm in px at 326", "12,321.2598425197px"),
         (
             "1 cm in px at 326 ppix",
             "ERROR unexpected word \"ppix\" at byte 18",

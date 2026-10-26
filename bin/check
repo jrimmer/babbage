@@ -13,6 +13,17 @@ step "clippy"
 cargo clippy --workspace --all-targets --locked -- -D warnings
 step "tests"
 cargo test --workspace --locked
+step "guard: every test file holds at least one test"
+# A test file that was truncated to nothing passes the gate without checking anything.
+empty=0
+for f in crates/*/tests/*.rs; do
+  if ! grep -qE '#\[test\]|proptest!' "$f"; then
+    echo "$f has no tests" >&2
+    empty=1
+  fi
+done
+[ "$empty" = 0 ]
+echo ok
 step "guard: the engine and the store stay free of any UI toolkit"
 for crate in babbage-core babbage-store; do
   if cargo tree --locked -p "$crate" -e normal,build --prefix none | grep -E '^(gpui|iced|egui|qt)' >/dev/null; then

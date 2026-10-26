@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Oracle for ISO 8601 literals: Python datetime does the calendar and zone arithmetic.
 
-Columns: expression <TAB> expected. Valid literals are written back in UTC with `as iso8601`; invalid ones expect ERR.
+Columns: expression <TAB> expected. Valid literals are written back in UTC with `as iso8601`; a date that is not one is the subtraction of its three numbers; other malformed tails expect ERR.
 """
 import random
 from datetime import datetime, timedelta, timezone
@@ -59,7 +59,9 @@ for _ in range(6000):
 
 BAD_DATES = ["2019-00-10", "2019-13-01", "2019-02-30", "2019-04-31", "2019-06-00", "2019-06-32", "2021-02-29", "1900-02-29"]
 for date in BAD_DATES:
-    rows.append((date, "ERR"))
+    # Text shaped like a date that is not one is arithmetic in the reference app: `2019-02-30` is 2019 - 02 - 30.
+    y, mo, d = (int(p) for p in date.split("-"))
+    rows.append((date, f"{y - mo - d:,}"))
     rows.append((f"{date}T10:00", "ERR"))
 for tail in ["T24:00", "T12:60", "T12:00:60", "T25:00", "T99:99", "T12:00+24:00", "T12:00+12:60", "T12:00+1260", "T12:00:00Zx", "T12:00:00.5Zx", "T12:00x", "T12:0", "T1200", "T12:00:", "x"]:
     rows.append((f"2019-04-01{tail}", "ERR"))

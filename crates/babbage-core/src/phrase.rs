@@ -136,6 +136,13 @@ pub fn is_infix_word(word: &str) -> bool {
         .any(|k| word.eq_ignore_ascii_case(k))
 }
 
+/// `in`, `to`, `as` and `into`: the words that start a conversion.
+pub fn is_conversion_word(word: &str) -> bool {
+    CONVERSION_WORDS
+        .iter()
+        .any(|k| word.eq_ignore_ascii_case(k))
+}
+
 pub fn is_vocabulary_word(word: &str) -> bool {
     VOCABULARY.iter().any(|k| word.eq_ignore_ascii_case(k))
 }

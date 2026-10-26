@@ -365,7 +365,7 @@ fn join_date_and_time(toks: Vec<Token>) -> Vec<Token> {
                     .and_then(|fraction| days.add(&fraction))
             {
                 out.push(Token {
-                    tok: Tok::Value(Value::date(moment)),
+                    tok: Tok::Value(Value::date_at(moment, true)),
                     at: toks[i].at,
                 });
                 i = clock_at + 1;

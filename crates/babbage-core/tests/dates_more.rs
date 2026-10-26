@@ -239,7 +239,7 @@ fn the_words_after_a_long_expression_still_find_their_place() {
             "(1_700_000_000 * 1_000) to date",
             "November 14, 2023 at 10:13:20 PM",
         ),
-        ("June 5, 2019 + 3 days to timestamp", "1559952000"),
+        ("June 5, 2019 + 3 days to timestamp", "1559995200"),
         ("June 5, 2019 + 3 days as iso8601", "2019-06-08T00:00:00Z"),
         ("June 5, 2019 + 3 days as EEEE", "Saturday"),
         (

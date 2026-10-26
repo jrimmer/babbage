@@ -61,6 +61,8 @@ pub enum Shown {
     Fraction,
     /// `1/20` for `5% is 1 in what`: this top number over the top number divided by the value.
     Ratio(Number),
+    /// A date written with a time that happens to be midnight (`April 1, 2019 12:00am`), so it is not a bare date.
+    Timed,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -120,6 +122,21 @@ impl Value {
             return Ok(self.number);
         }
         self.convert(&like.unit).map(|v| v.number)
+    }
+
+    /// A date and time. A date written with no time counts as midday when it is turned into a timestamp, so
+    /// a time that is exactly midnight is marked, to stay midnight.
+    pub fn date_at(days: Number, explicit_time: bool) -> Value {
+        let mut v = Value::date(days);
+        if explicit_time && v.number.is_integer() {
+            v.layout = Some(Shown::Timed);
+        }
+        v
+    }
+
+    /// True for a date written with no time of day.
+    pub fn is_bare_date(&self) -> bool {
+        self.kind == Kind::Date && self.number.is_integer() && self.layout != Some(Shown::Timed)
     }
 
     pub fn date(days: Number) -> Value {
@@ -1120,8 +1137,12 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             }
             let mut f = format_decimal(&v.number, opts);
             if !v.unit.is_empty() {
-                f.text.push(' ');
-                f.text.push_str(&v.unit.symbol());
+                let symbol = v.unit.symbol();
+                // the reference app writes pixels with no space: `128.3464566929px`.
+                if symbol != "px" {
+                    f.text.push(' ');
+                }
+                f.text.push_str(&symbol);
             }
             f
         }
@@ -1254,7 +1275,7 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
             let (text, exact) = crate::dates::format_timecode(&base, rate);
             Formatted { text, exact }
         }
-        Shown::Digits | Shown::Fraction | Shown::Ratio(_) => {
+        Shown::Digits | Shown::Fraction | Shown::Ratio(_) | Shown::Timed => {
             unreachable!("written out before this is called")
         }
     }

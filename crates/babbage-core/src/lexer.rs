@@ -243,11 +243,10 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = end;
                 continue;
             }
-            '0'..='9' if iso_shape_at(&chars, i) => {
-                let (v, next) = iso_at(&chars, i).ok_or_else(|| Error::InvalidNumber {
-                    text: chars[i..i + 10].iter().map(|(_, ch)| *ch).collect(),
-                    at,
-                })?;
+            // Text shaped like a date that is not one (`2019-02-30`) is plain arithmetic, as in the owner's
+            // the reference app, where it is `2019 - 02 - 30`.
+            '0'..='9' if iso_shape_at(&chars, i) && iso_at(&chars, i).is_some() => {
+                let (v, next) = iso_at(&chars, i).expect("checked by the guard");
                 out.push(Token {
                     tok: Tok::Value(v),
                     at,
@@ -673,7 +672,7 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
     local
         .div(&Number::from_i64(86_400))
         .ok()
-        .map(|days| (Value::date(days), pos))
+        .map(|days| (Value::date_at(days, pos - i > 10), pos))
 }
 
 /// A video timecode, `01:02:03:04`: hours, minutes, seconds and frames.

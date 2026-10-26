@@ -755,10 +755,11 @@ fn drop_unknown(
         }
     }
 
-    // An operator word with only prose after it is part of the prose: the `on` of `$45 on clothes`.
+    // An operator or conversion word with only prose after it is prose: the `on` of `$45 on clothes` and the
+    // `in` of `40 lb in watermelons`.
     if let Some(last_kept) = (0..toks.len()).rev().find(|i| !drop[*i])
         && last_kept + 1 < toks.len()
-        && matches!(&toks[last_kept].tok, Tok::Word(w) if phrase::is_infix_word(w))
+        && matches!(&toks[last_kept].tok, Tok::Word(w) if phrase::is_infix_word(w) || phrase::is_conversion_word(w))
         && last_kept > 0
     {
         drop[last_kept] = true;

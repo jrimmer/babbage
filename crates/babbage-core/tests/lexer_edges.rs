@@ -159,22 +159,13 @@ fn underscores_in_the_fraction_and_the_exponent() {
 }
 
 #[test]
-fn a_bad_iso_date_names_the_ten_characters_it_stopped_at() {
-    use babbage_core::Error;
-    assert_eq!(
-        evaluate("2019-02-30"),
-        Err(Error::InvalidNumber {
-            text: "2019-02-30".into(),
-            at: 0
-        })
-    );
-    assert_eq!(
-        evaluate("1 + 2019-13-45 + 2"),
-        Err(Error::InvalidNumber {
-            text: "2019-13-45".into(),
-            at: 4
-        })
-    );
+fn text_shaped_like_a_date_that_is_not_one_is_arithmetic() {
+    // the reference app prints `2019-02-30` as 1,987, which is 2019 - 02 - 30.
+    all(&[
+        ("2019-02-30", "1,987"),
+        ("1 + 2019-13-45 + 2", "1,964"),
+        ("2019-00-10", "2,009"),
+    ]);
 }
 
 #[test]

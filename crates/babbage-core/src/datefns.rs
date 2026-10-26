@@ -210,6 +210,12 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::ToDate => to_date(&args[0]),
         DateFn::ToTimestamp => {
             let (day, rest) = date_arg(&args[0])?;
+            // A date with no time is midday, as the reference app does (`April 1, 2019` is 12:00 local).
+            let rest = if args[0].is_bare_date() {
+                Number::from_ratio(num_bigint::BigInt::from(1), num_bigint::BigInt::from(2))?
+            } else {
+                rest
+            };
             let local = Number::from_i64(day)
                 .add(&rest)?
                 .mul(&Number::from_i64(86_400))?;
