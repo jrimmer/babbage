@@ -1,0 +1,13 @@
+[package]
+name = "babbage-accept"
+description = "Acceptance checks that drive the real babbage binary"
+version = "0.0.1"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+babbage-store.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true

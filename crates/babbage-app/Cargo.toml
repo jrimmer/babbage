@@ -1,0 +1,25 @@
+[package]
+name = "babbage-app"
+description = "Babbage, a precision-first notepad calculator"
+version = "0.0.1"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "babbage"
+path = "src/main.rs"
+
+[dependencies]
+babbage-core.workspace = true
+babbage-store.workspace = true
+anyhow.workspace = true
+futures.workspace = true
+gpui.workspace = true
+libc.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+unicode-segmentation.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
