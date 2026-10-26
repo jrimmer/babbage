@@ -35,6 +35,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("wheel-scroll", wheel_scroll),
     ("comment-toggle", comment_toggle),
     ("export", export_sheet),
+    ("resize", resize_window),
     ("clipboard-lines", clipboard_lines),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -1136,6 +1137,68 @@ fn comment_toggle(h: &mut Harness) -> anyhow::Result<()> {
     app.wait_for("one undo takes both back", T, |s| {
         s["lines"][0]["text"] == "1 + 1" && s["lines"][1]["text"] == "2 + 2"
     })?;
+    app.finish()
+}
+
+/// The window is made smaller and larger while it runs: the layout follows, the answer column stays inside the
+/// window and keeps showing its text, and the text column never runs under it.
+fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("resize", None, &[])?;
+    h.type_line("12 + 12 + 15")?;
+    h.type_text("lunch with the whole team 3 + 4 then some more words here")?;
+    app.wait_for("both answers", T, |s| {
+        answer(s, 0) == Some("39") && answer(s, 1) == Some("7")
+    })?;
+    for (w, hh) in [(900u32, 600u32), (620, 500), (1000, 700)] {
+        h.resize(&app, w, hh)?;
+        // The app reports the size it last painted: give it a few seconds, and say what it reported if it never
+        // takes the size.
+        let mut s = serde_json::Value::Null;
+        let mut fitted = false;
+        for _ in 0..40 {
+            s = app.state()?;
+            let near = |k: &str, want: u32| {
+                s["window"][k]
+                    .as_f64()
+                    .is_some_and(|x| (x - f64::from(want)).abs() <= 2.)
+            };
+            // The app's `window` is its editor pane: the right edge is the window's, the left edge is where the
+            // sidebar ends.
+            let right =
+                s["window"]["x"].as_f64().unwrap_or(0.) + s["window"]["w"].as_f64().unwrap_or(0.);
+            fitted = (right - f64::from(w)).abs() <= 2. && near("h", hh);
+            if fitted {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(250));
+        }
+        ensure!(
+            fitted,
+            "after resizing to {w}x{hh} the app reports its editor pane as {}, scale {}",
+            s["window"],
+            s["scale"]
+        );
+        settle();
+        let s = app.state().unwrap_or(s);
+        let (text_x, answer_x, answer_w) =
+            (f(&s["text_x"])?, f(&s["answer_x"])?, f(&s["answer_w"])?);
+        ensure!(
+            answer_x + answer_w <= f64::from(w) as f32 + 1.,
+            "the answer column leaves the {w} wide window: x {answer_x}, width {answer_w}, pane {}",
+            s["window"]
+        );
+        ensure!(
+            text_x < answer_x,
+            "the text column starts after the answers at {w}: {text_x} against {answer_x}"
+        );
+        row_visible(&s, 0)?;
+        let shot = h.shot()?;
+        let scr = Screen::of(h, &app, &s)?;
+        ensure!(
+            luminance(scr.answer_cell(&shot, &s, 0)?) > 150.,
+            "no answer text on screen for line 1 at {w} wide"
+        );
+    }
     app.finish()
 }
 

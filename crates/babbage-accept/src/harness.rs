@@ -439,6 +439,34 @@ impl Harness {
             .context("no window for the app yet")
     }
 
+    /// Floats the app's window and gives it an exact size in layout points (it is tiled to the whole output
+    /// otherwise, so it cannot be resized).
+    pub fn resize(&self, app: &App, width: u32, height: u32) -> anyhow::Result<()> {
+        let float = format!(
+            "hl.dsp.window.float({{ action = \"enable\", window = \"pid:{}\" }})",
+            app.pid
+        );
+        let said_float = self.hyprctl(&self.nested.sig, &["dispatch", &float])?;
+        let resize = format!(
+            "hl.dsp.window.resize({{ x = {width}, y = {height}, window = \"pid:{}\" }})",
+            app.pid
+        );
+        let said_resize = self.hyprctl(&self.nested.sig, &["dispatch", &resize])?;
+        let window = self.window_of(app.pid)?;
+        ensure!(
+            window["floating"] == true
+                && window["size"][0]
+                    .as_f64()
+                    .is_some_and(|w| (w - f64::from(width)).abs() <= 2.),
+            "the window did not take the size: float said {:?}, resize said {:?}, the window is floating {} at size {}",
+            String::from_utf8_lossy(&said_float),
+            String::from_utf8_lossy(&said_resize),
+            window["floating"],
+            window["size"]
+        );
+        Ok(())
+    }
+
     /// Gives the app's window the keyboard focus.
     pub fn focus(&self, app: &App) -> anyhow::Result<()> {
         let lua = format!("hl.dsp.focus({{ window = \"pid:{}\" }})", app.pid);

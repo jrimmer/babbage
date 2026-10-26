@@ -342,6 +342,28 @@ fn the_floating_total_adds_every_result_except_subtotal_lines() {
     assert!(floating_total(&run(&["hello"]), &SheetOptions::default()).is_none());
 }
 
+/// Lines that cannot all be added: the Total is the sum of the lines of the last line with a unit, plain numbers left
+/// out. This rests on one run of the owner's Sheet C (ticket 0050), so the rule is pinned here with its mirror image:
+/// if the owner's re-test says the first line decides instead, both of these lines change.
+#[test]
+fn a_total_of_clashing_kinds_follows_the_last_line_with_a_unit() {
+    let total = |lines: &[&str]| {
+        let results = run(lines);
+        let t = floating_total(&results, &SheetOptions::default())
+            .unwrap()
+            .unwrap();
+        format_value(&t, &FormatOptions::default()).text
+    };
+    assert_eq!(total(&["$10", "5", "3 gallons"]), "3 gal");
+    assert_eq!(total(&["3 gallons", "5", "$10"]), "$10.00");
+    assert_eq!(
+        total(&["5", "3 gallons"]),
+        "8 gal",
+        "no clash, so the plain number joins in"
+    );
+    assert_eq!(total(&["5", "$10", "$20", "7"]), "$42.00");
+}
+
 #[test]
 fn declarations_can_be_left_out_of_totals() {
     let lines = ["rate = $2", "$10", "subtotal"];
