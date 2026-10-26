@@ -499,10 +499,15 @@ fn compounding(toks: &[Token]) -> (&[Token], i64) {
     (toks, 1)
 }
 
+/// The three parts of `1,000 after 3 years at 7%` or `1,000 for 3 years at 7%`.
+fn after_or_for(body: &[Token]) -> Option<Vec<&[Token]>> {
+    between(body, &["after", "at"]).or_else(|| between(body, &["for", "at"]))
+}
+
 fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     if words_at(toks, 0, &["interest", "on"]) {
         let (body, per_year) = compounding(&toks[2..]);
-        let parts = between(body, &["after", "at"])?;
+        let parts = after_or_for(body)?;
         return Some(call_with(
             &parts,
             vec![number_node(per_year)],
@@ -511,7 +516,7 @@ fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     }
     if words_at(toks, 0, &["present", "value", "of"]) {
         let (body, per_year) = compounding(&toks[3..]);
-        let parts = between(body, &["after", "at"])?;
+        let parts = after_or_for(body)?;
         return Some(call_with(
             &parts,
             vec![number_node(per_year)],
@@ -576,7 +581,7 @@ fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     }
     // `20k after 6 months at 10% per month`, and `$1,000 after 3 years at 7% compounding monthly`.
     let (body, per_year) = compounding(toks);
-    let parts = between(body, &["after", "at"])?;
+    let parts = after_or_for(body)?;
     let (start, time, rate) = (parts[0], parts[1], parts[2]);
     if let Some(per) = depth_zero_word(rate, "per") {
         if per == 0 || per + 1 >= rate.len() {

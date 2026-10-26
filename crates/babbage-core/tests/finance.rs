@@ -23,10 +23,30 @@ fn the_reference_compound_interest_examples() {
         ),
         ("interest on $1,000 after 3 years @ 7%", "$225.04"),
         ("present value of $1,000 after 20 years at 10%", "$148.64"),
+        // `for` reads as `after`, as the reference note writes it.
+        ("$1,000 for 3 years at 7%", "$1,225.04"),
+        ("$1,000 for 3 years at 7% compounding monthly", "$1,232.93"),
+        (
+            "$1,000 for 3 years at 7% compounding quarterly",
+            "$1,231.44",
+        ),
+        (
+            "interest on $1,000 for 3 years at 7% compounding monthly",
+            "$232.93",
+        ),
+        (
+            "interest on $1,000 for 3 years at 7% compounding quarterly",
+            "$231.44",
+        ),
+        ("interest on $1,000 for 3 years @ 7%", "$225.04"),
+        ("present value of $1,000 for 20 years at 10%", "$148.64"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }
     assert!(!approx("$1,000 after 3 years at 7%"));
+    for line in ["$1,000 for", "$1,000 for 3 years", "$1,000 for at 7%"] {
+        assert!(evaluate(line).is_err(), "{line}");
+    }
 }
 
 #[test]
