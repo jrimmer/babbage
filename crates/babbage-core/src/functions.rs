@@ -40,6 +40,7 @@ pub enum Func {
     CombinationsOf,
     AsNumber,
     AsDms,
+    AsPitch,
     Hex,
     Bin,
     Oct,
@@ -144,7 +145,8 @@ impl Func {
             | Func::Half
             | Func::IsPrime
             | Func::AsNumber
-            | Func::AsDms => Arity::Exactly(1),
+            | Func::AsDms
+            | Func::AsPitch => Arity::Exactly(1),
             Func::Min
             | Func::Max
             | Func::Sum
@@ -300,6 +302,38 @@ fn as_dms(angle: &Value) -> Result<Value, Error> {
         plain(&d),
         plain(&m),
         seconds
+    )))
+}
+
+const NOTES: [&str; 12] = [
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+];
+
+/// `440 hz as pitch` is `A4`: the note nearest the frequency, named with sharps, middle C being C4 (MIDI 60) and A4
+/// 440 Hz (MIDI 69).
+fn as_pitch(frequency: &Value) -> Result<Value, Error> {
+    let hertz = units::lookup("Hz").ok_or(Error::IncompatibleUnits)?;
+    if frequency.kind() != Kind::Plain || frequency.unit().dim() != hertz.dim() {
+        return Err(Error::IncompatibleUnits);
+    }
+    let in_hertz = frequency.clone().convert(&hertz)?;
+    let f = in_hertz
+        .number()
+        .numer()
+        .to_f64()
+        .zip(in_hertz.number().denom().to_f64())
+        .map(|(n, d)| n / d)
+        .filter(|f| f.is_finite() && *f > 0.0)
+        .ok_or(Error::OutOfDomain)?;
+    let midi = (69.0 + 12.0 * (f / 440.0).log2()).round();
+    if !(0.0..=127.0).contains(&midi) {
+        return Err(Error::OutOfDomain);
+    }
+    let midi = midi as i64;
+    Ok(Value::text(&format!(
+        "{}{}",
+        NOTES[midi.rem_euclid(12) as usize],
+        midi.div_euclid(12) - 1
     )))
 }
 
@@ -486,6 +520,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         }
         Func::AsNumber => Ok(Value::plain(args[0].number().clone())),
         Func::AsDms => as_dms(&args[0]),
+        Func::AsPitch => as_pitch(&args[0]),
         Func::Hex => args[0].clone().in_radix(16),
         Func::Bin => args[0].clone().in_radix(2),
         Func::Oct => args[0].clone().in_radix(8),

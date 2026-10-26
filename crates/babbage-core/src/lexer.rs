@@ -515,6 +515,15 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             c if c.is_alphabetic() => {
+                // A note name (`C2`) before `to midi` or `to hz` is a word, not a unit with an exponent.
+                if let Some(end) = note_name_before_conversion(&chars, i) {
+                    out.push(Token {
+                        tok: Tok::Word(chars[i..end].iter().map(|(_, ch)| *ch).collect()),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 // A function name, with any digits it ends in (`log10`), wins over a unit of the same spelling (`min`).
                 let letters_end = word_end(&chars, i);
                 // `Valentine's` and `year's` are words with an apostrophe inside, not a unit and a stray mark.
@@ -875,6 +884,53 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .div(&Number::from_i64(86_400))
         .ok()
         .map(|days| (Value::date_at(days, pos - i > 10), pos))
+}
+
+/// Where a note name such as `C2`, `F#3` or `Bb4` ends, when `to midi`, `as hz` or the like follows it.
+fn note_name_before_conversion(chars: &[(usize, char)], i: usize) -> Option<usize> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    if !c(i).is_some_and(|ch| ('A'..='G').contains(&ch)) {
+        return None;
+    }
+    let mut j = i + 1;
+    // A sharp, or a flat when a digit or minus sign follows (`Bb2`).
+    let flat = c(j) == Some('b')
+        && (c(j + 1) == Some('-') || c(j + 1).is_some_and(|d| d.is_ascii_digit()));
+    if c(j) == Some('#') || flat {
+        j += 1;
+    }
+    if c(j) == Some('-') {
+        j += 1;
+    }
+    let digits = (j..)
+        .take_while(|k| c(*k).is_some_and(|d| d.is_ascii_digit()))
+        .count();
+    if !(1..=2).contains(&digits) {
+        return None;
+    }
+    let end = j + digits;
+    if c(end).is_some_and(|ch| ch.is_alphanumeric()) {
+        return None;
+    }
+    let word_after = |from: usize| -> (String, usize) {
+        let mut k = from;
+        while c(k) == Some(' ') {
+            k += 1;
+        }
+        let start = k;
+        while c(k).is_some_and(char::is_alphabetic) {
+            k += 1;
+        }
+        (
+            (start..k).filter_map(c).collect::<String>().to_lowercase(),
+            k,
+        )
+    };
+    let (joiner, after_joiner) = word_after(end);
+    let (target, _) = word_after(after_joiner);
+    (["to", "as", "in", "into"].contains(&joiner.as_str())
+        && ["midi", "hz", "hertz", "frequency"].contains(&target.as_str()))
+    .then_some(end)
 }
 
 /// `5'` and `5' 6"`: feet, with inches after them. The marks are feet (`'`, `’`) and inches (`"`, `”`); the primes

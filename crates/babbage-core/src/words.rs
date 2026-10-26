@@ -8,6 +8,7 @@ use crate::functions::Func;
 use crate::lexer::{Tok, Token};
 use crate::number::Number;
 use crate::parser::{Expr, Node, Phrase, parse};
+use crate::value::Value;
 
 fn is_word(t: Option<&Token>, w: &str) -> bool {
     matches!(t.map(|t| &t.tok), Some(Tok::Word(x)) if x.eq_ignore_ascii_case(w))
@@ -122,6 +123,7 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| remainder(toks))
         .or_else(|| count_form(toks))
         .or_else(|| proportion(toks))
+        .or_else(|| pitch_forms(toks))
         .or_else(|| as_dms(toks))
         .or_else(|| as_number(toks))
         .or_else(|| to_radix(toks))
@@ -373,6 +375,88 @@ fn proportion(toks: &[Token]) -> Option<Result<Expr, Error>> {
 
 fn den_len(den: &[Token]) -> usize {
     parse(den).map_or(0, |e| e.nodes().len())
+}
+
+/// `440 hz as pitch` is `A4`; `C2 to midi` is 36 and `A4 to hz` is 440 Hz.
+fn pitch_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    let joiner = n >= 3
+        && ["as", "to", "in", "into"]
+            .iter()
+            .any(|w| is_word(toks.get(n - 2), w));
+    if !joiner {
+        return None;
+    }
+    if is_word(toks.last(), "pitch") {
+        return Some(call(&[&toks[..n - 2]], Func::AsPitch));
+    }
+    let [
+        Token {
+            tok: Tok::Word(note),
+            ..
+        },
+        _,
+        target,
+    ] = toks
+    else {
+        return None;
+    };
+    let midi = note_to_midi(note)?;
+    // `hz` lexes as the unit of frequency; `midi`, `hertz` and `frequency` are words.
+    let target = match &target.tok {
+        Tok::Word(w) => w.to_lowercase(),
+        Tok::Unit(u) if crate::units::lookup("Hz").is_some_and(|hz| hz == *u) => "hz".to_string(),
+        _ => return None,
+    };
+    let value = match target.as_str() {
+        "midi" => Value::plain(Number::from_i64(midi)),
+        "hz" | "hertz" | "frequency" => {
+            let ratio = Number::from_ratio(midi.into(), 12.into()).ok()?;
+            let two_to = crate::approx::pow_rational(
+                &Number::from_i64(2),
+                &ratio
+                    .sub(&Number::from_ratio(69.into(), 12.into()).ok()?)
+                    .ok()?,
+            )
+            .ok()?;
+            let hertz = Value::quantity(
+                Number::from_i64(440).mul(&two_to.number).ok()?,
+                crate::units::lookup("Hz")?,
+            )
+            .ok()?;
+            if two_to.exact {
+                hertz
+            } else {
+                hertz.approximate()
+            }
+        }
+        _ => return None,
+    };
+    Some(Ok(Expr::from_nodes(vec![Node::Value(value)])))
+}
+
+/// MIDI note number of a name such as `C4` (60), `A4` (69), `F#3` or `Bb2`.
+fn note_to_midi(name: &str) -> Option<i64> {
+    let mut chars = name.chars();
+    let letter = chars.next()?;
+    let semitone = match letter {
+        'C' => 0,
+        'D' => 2,
+        'E' => 4,
+        'F' => 5,
+        'G' => 7,
+        'A' => 9,
+        'B' => 11,
+        _ => return None,
+    };
+    let rest: String = chars.collect();
+    let (accidental, octave) = match rest.chars().next()? {
+        '#' => (1, &rest[1..]),
+        'b' => (-1, &rest[1..]),
+        _ => (0, rest.as_str()),
+    };
+    let octave: i64 = octave.parse().ok()?;
+    Some(12 * (octave + 1) + semitone + accidental)
 }
 
 /// `156.742° as DMS`: degrees, minutes and seconds.
