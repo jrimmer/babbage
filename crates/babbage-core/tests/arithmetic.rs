@@ -32,7 +32,7 @@ fn exact_values() {
 }
 
 #[test]
-fn shown_values_match_the_reference_screenshot() {
+fn shown_values_for_the_screenshots_plain_arithmetic_lines() {
     let table = [
         ("19/29", "0.6551724138"),
         ("76 × 19/29", "49.7931034483"),
