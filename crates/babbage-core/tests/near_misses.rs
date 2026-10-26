@@ -122,7 +122,7 @@ const CASES: &[(&str, &str)] = &[
         "5 hours in hours and m",
         "ERROR these units measure different things",
     ),
-    ("5 hours in hours and minutes", "5 h"),
+    ("5 hours in hours and minutes", "5 hours"),
     (
         "5 km as fraction",
         "ERROR unsupported: a fraction needs a plain number or a percentage",

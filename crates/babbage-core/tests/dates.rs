@@ -24,14 +24,14 @@ fn the_reference_date_examples() {
         ("Easter 2027", "March 28, 2027"),
         ("week number on march 12, 2021", "10"),
         ("day number on March 15, 2024", "75"),
-        ("days in February 2020", "29 day"),
+        ("days in February 2020", "29 days"),
         ("midpoint between March 12 and April 5", "March 24"),
         (
             "March 12, 2023 as EEEE, MMM d, yyyy",
             "Sunday, Mar 12, 2023",
         ),
         ("day of the week on January 24, 1984", "Tuesday"),
-        ("workdays in 3 weeks", "15 workday"),
+        ("workdays in 3 weeks", "15 workdays"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }

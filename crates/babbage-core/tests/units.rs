@@ -115,7 +115,7 @@ fn exponent_spellings() {
     assert_eq!(shown("2 square feet"), "2 ft²");
     assert_eq!(shown("2 m/s²"), "2 m/s²");
     assert_eq!(shown("2 m/s^2"), "2 m/s²");
-    assert_eq!(shown("2 s^-1"), "2 s⁻¹");
+    assert_eq!(shown("2 s^-1"), "2/s");
 }
 
 #[test]
@@ -126,8 +126,8 @@ fn conversion_words_and_directions() {
     }
     assert_eq!(shown("1 mi to ft"), "5,280 ft");
     assert_eq!(shown("1 gal in L"), "3.785411784 L");
-    assert_eq!(shown("1 yr in days"), "365.2425 day");
-    assert_eq!(shown("1 mo in days"), "30.436875 day");
+    assert_eq!(shown("1 yr in days"), "365.2425 days");
+    assert_eq!(shown("1 mo in days"), "30.436875 days");
     assert_eq!(shown("60 mph in km/h"), "96.56064 km/h");
     assert_eq!(shown("1 GiB in MiB"), "1,024 MiB");
     assert_eq!(shown("1 GB in MB"), "1,000 MB");

@@ -18,7 +18,7 @@ fn several_quantities_in_a_row_are_a_sum() {
     assert_eq!(shown("1 lb 8 oz in oz"), "24 oz");
     assert_eq!(
         shown("2 × 1 h 30 min"),
-        "2 × 1 h 30 min".replace("2 × 1 h 30 min", "3 h")
+        "2 × 1 h 30 min".replace("2 × 1 h 30 min", "3 hours")
     );
 }
 

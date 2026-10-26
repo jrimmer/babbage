@@ -94,10 +94,10 @@ fn work_hours_set_the_workday() {
         work_hours_per_day: Some(7),
         ..Settings::default()
     };
-    assert_eq!(run(&seven, "21 h in workdays").as_deref(), Ok("3 workday"));
+    assert_eq!(run(&seven, "21 h in workdays").as_deref(), Ok("3 workdays"));
     assert_eq!(
         run(&Settings::default(), "24 h in workdays").as_deref(),
-        Ok("3 workday")
+        Ok("3 workdays")
     );
     assert_eq!(
         run(
@@ -105,6 +105,6 @@ fn work_hours_set_the_workday() {
             "work hours between March 4, 2024 and March 11, 2024"
         )
         .as_deref(),
-        Ok("35 h")
+        Ok("35 hours")
     );
 }

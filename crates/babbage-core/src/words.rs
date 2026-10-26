@@ -103,6 +103,8 @@ const BETWEEN_FORMS: &[(&[&str], Func)] = &[
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
         .or_else(|| year_span(toks))
+        .or_else(|| is_what_per(toks))
+        .or_else(|| pace(toks))
         .or_else(|| crate::dateforms::parse_date_forms(toks))
         .or_else(|| unit_in_quantity(toks))
         .or_else(|| proportion_what(toks))
@@ -119,6 +121,52 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| as_number(toks))
         .or_else(|| to_radix(toks))
         .or_else(|| rounding(toks))
+}
+
+/// `$30/day is what per year`: the rate on the left restated per the period on the right.
+fn is_what_per(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let at =
+        (1..toks.len().saturating_sub(3)).find(|i| words_at(toks, *i, &["is", "what", "per"]))?;
+    let period = crate::phrase::parse_unit_run(&toks[at + 3..]).ok()?;
+    Some(parse(&toks[..at]).map(|e| {
+        let mut rpn = e.nodes().to_vec();
+        rpn.push(Node::PerPeriod(period));
+        Expr::from_nodes(rpn)
+    }))
+}
+
+/// `5 km in 25 min`: a distance and the time it took, which is a pace (`05:00/km`).
+fn pace(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let at = depth_zero_word(toks, "in")?;
+    let (distance, time) = (&toks[..at], &toks[at + 1..]);
+    let seconds = crate::units::lookup("s")?;
+    let has_unit = |run: &[Token]| run.iter().any(|t| matches!(t.tok, Tok::Unit(_)));
+    // The right side is a length of time (`25 min`), which is what makes this a pace and not a conversion.
+    let is_time = |run: &[Token]| {
+        run.iter().all(|t| match &t.tok {
+            Tok::Unit(u) => u.dim() == seconds.dim(),
+            _ => true,
+        })
+    };
+    let starts_with_number = matches!(time.first().map(|t| &t.tok), Some(Tok::Num(_)));
+    // The distance is a quantity (`5 km`), not a bare unit as in `meters in 10 km`.
+    let has_number = |run: &[Token]| {
+        run.iter()
+            .any(|t| matches!(t.tok, Tok::Num(_) | Tok::Value(_)))
+    };
+    if at == 0
+        || !has_number(distance)
+        || !has_unit(distance)
+        || !has_unit(time)
+        || !is_time(time)
+        || !starts_with_number
+    {
+        return None;
+    }
+    Some(rpn_of(&[distance, time]).map(|mut rpn| {
+        rpn.push(Node::Phrase(Phrase::Pace));
+        Expr::from_nodes(rpn)
+    }))
 }
 
 /// `1978 to 2021`: two four-digit years are 43 apart, a plain number, as the reference app prints it.

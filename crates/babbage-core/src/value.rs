@@ -63,6 +63,8 @@ pub enum Shown {
     Ratio(Number),
     /// A date written with a time that happens to be midnight (`April 1, 2019 12:00am`), so it is not a bare date.
     Timed,
+    /// `5 km in 25 min`: minutes and seconds per this unit, written `05:00/km`.
+    Pace(String),
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -458,6 +460,18 @@ impl Value {
     }
 
     fn convert_exact(self, target: &UnitExpr) -> Result<Value, Error> {
+        // A plain number shown as a rate of time over time: `3 hours / 3 days as hour/day` is `1 hour/day`.
+        if self.kind == Kind::Plain && self.unit.is_empty() && target.is_time_over_time() {
+            return Ok(Value {
+                number: self.number.div(&target.factor()?)?,
+                kind: Kind::Plain,
+                unit: target.clone(),
+                approx: self.approx,
+                radix: 10,
+                text: None,
+                layout: None,
+            });
+        }
         if self.kind != Kind::Plain || self.unit.is_empty() {
             return Err(Error::IncompatibleUnits);
         }
@@ -471,6 +485,18 @@ impl Value {
             .number
             .mul(&self.unit.factor_against(target)?)?
             .div(&target.factor_against(&self.unit)?)?;
+        // A rate of one length of time over another (`hours/day`) stays a rate when it is converted.
+        if !target.is_empty() && target.dim().is_none() && is_time_rate(&self.unit) {
+            return Ok(Value {
+                number,
+                kind: Kind::Plain,
+                unit: target.clone(),
+                approx: self.approx,
+                radix: 10,
+                text: None,
+                layout: None,
+            });
+        }
         Value::quantity(number, target.clone())
     }
 
@@ -497,6 +523,38 @@ impl Value {
         } else {
             self.number.mul(&self.unit.factor_against(&other.unit)?)
         }
+    }
+
+    /// `$30/day is what per year`: this rate restated per another period.
+    pub fn per_period(self, period: &UnitExpr) -> Result<Value, Error> {
+        if self.kind != Kind::Plain {
+            return Err(Error::IncompatibleUnits);
+        }
+        let target = self
+            .unit
+            .with_period(period)
+            .ok_or(Error::UnsupportedOperation(
+                "this needs a rate with a period, such as $30/day",
+            ))?;
+        self.convert(&target)
+    }
+
+    /// `3 hours / day`, `$99 per week`, `30 / week`: the value over one of a unit. Over a different unit of time
+    /// this is a rate that keeps its units; anything else divides as usual.
+    pub fn per_unit(self, unit: &UnitExpr) -> Result<Value, Error> {
+        let unit_value = Value::quantity(Number::from_i64(1), unit.clone())?;
+        if is_length_of_time(&self) && is_length_of_time(&unit_value) && self.unit != *unit {
+            return Ok(Value {
+                number: self.number,
+                kind: Kind::Plain,
+                unit: self.unit.times(&unit.recip()),
+                approx: self.approx,
+                radix: 10,
+                text: None,
+                layout: None,
+            });
+        }
+        Value::binary(BinOp::Div, &self, &unit_value)
     }
 
     pub fn binary(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
@@ -639,6 +697,28 @@ impl Value {
                 };
                 v.map_number(|n| round_to_multiple(n, &step.number, mode))
             }
+            (Phrase::Pace, [distance, time])
+                if distance.kind == Plain
+                    && time.kind == Plain
+                    && is_length_of_distance(distance)
+                    && is_length_of_time(time) =>
+            {
+                // Seconds for one of the distance's unit, written as minutes and seconds per that unit.
+                let seconds = time
+                    .number
+                    .mul(&time.unit.factor()?)?
+                    .div(&distance.number)?;
+                let seconds_unit = crate::units::lookup("s").ok_or(Error::OutOfDomain)?;
+                Ok(Value {
+                    number: seconds,
+                    kind: Plain,
+                    unit: seconds_unit.times(&distance.unit.recip()),
+                    approx: distance.approx || time.approx,
+                    radix: 10,
+                    text: None,
+                    layout: Some(Shown::Pace(distance.unit.symbol())),
+                })
+            }
             (Phrase::AsMultiplier, [v]) if v.kind == Plain && v.unit.is_empty() => {
                 Ok(Value::multiplier(v.number.clone()))
             }
@@ -761,6 +841,17 @@ fn signed(n: i64, sign: i64) -> i64 {
 fn is_length_of_time(v: &Value) -> bool {
     let seconds = crate::units::lookup("s").expect("seconds are defined");
     v.kind == Kind::Plain && !v.unit.is_empty() && v.unit.dim() == seconds.dim()
+}
+
+/// True for a length such as `5 km` or `10 mi` (a quantity measured in a unit of distance).
+fn is_length_of_distance(v: &Value) -> bool {
+    let metre = crate::units::lookup("m").expect("metres are defined");
+    v.kind == Kind::Plain && !v.unit.is_empty() && v.unit.dim() == metre.dim()
+}
+
+/// True for a unit such as `hours/day`: time over time, which has no dimension left.
+fn is_time_rate(unit: &UnitExpr) -> bool {
+    unit.is_time_over_time()
 }
 
 fn seconds_of(v: &Value) -> Result<Number, Error> {
@@ -1019,8 +1110,12 @@ fn sum(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
                 l.unit.factor_against(&r.unit)?,
                 r.unit.factor_against(&l.unit)?,
             );
-            let target = if fr > fl { &r.unit } else { &l.unit };
-            let ft = if fr > fl { &fr } else { &fl };
+            // Two rates meet in the one with the longer period (`$20/day + $300/week` is per week); other
+            // units meet in the larger unit.
+            let rates = l.unit.has_denominator() && r.unit.has_denominator();
+            let right_wins = if rates { fr < fl } else { fr > fl };
+            let target = if right_wins { &r.unit } else { &l.unit };
+            let ft = if right_wins { &fr } else { &fl };
             let (a, b) = (l.number.mul(&fl)?.div(ft)?, r.number.mul(&fr)?.div(ft)?);
             Value::quantity(arith(op, &a, &b)?, target.clone())
         }
@@ -1137,9 +1232,11 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             }
             let mut f = format_decimal(&v.number, opts);
             if !v.unit.is_empty() {
-                let symbol = v.unit.symbol();
-                // the reference app writes pixels with no space: `128.3464566929px`.
-                if symbol != "px" {
+                let plural = v.number.abs() != Number::from_i64(1);
+                let symbol = v.unit.display(plural);
+                // the reference app writes pixels with no space (`128.3464566929px`) and a rate that has no
+                // numerator unit straight after the number (`30/week`).
+                if symbol != "px" && !symbol.starts_with('/') {
                     f.text.push(' ');
                 }
                 f.text.push_str(&symbol);
@@ -1213,7 +1310,7 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
     }
     if !rest.is_empty() {
         f.text.push('/');
-        f.text.push_str(&rest.recip().symbol());
+        f.text.push_str(&rest.recip().display(false));
     }
     Some(f)
 }
@@ -1257,6 +1354,14 @@ fn radix_text(n: &Number, radix: u8) -> String {
 
 /// A quantity written as `3 weeks 5 days`, `03:04:05` or `235 h 12 min`.
 fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
+    if let Some(Shown::Pace(per)) = &v.layout {
+        let (text, exact) = crate::dates::format_laptime(&v.number);
+        let text = text.strip_prefix("00:").unwrap_or(&text);
+        return Formatted {
+            text: format!("{text}/{per}"),
+            exact,
+        };
+    }
     let base = v
         .number
         .mul(&v.unit.factor().unwrap_or_else(|_| Number::from_i64(1)))
@@ -1275,7 +1380,7 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
             let (text, exact) = crate::dates::format_timecode(&base, rate);
             Formatted { text, exact }
         }
-        Shown::Digits | Shown::Fraction | Shown::Ratio(_) | Shown::Timed => {
+        Shown::Digits | Shown::Fraction | Shown::Ratio(_) | Shown::Timed | Shown::Pace(_) => {
             unreachable!("written out before this is called")
         }
     }
@@ -1308,7 +1413,11 @@ fn format_parts(base: &Number, units: &[UnitExpr], opts: &FormatOptions) -> Form
         if !shown.is_zero() || (i == last && parts.is_empty()) {
             let f = format_decimal(&shown, &opts.unabbreviated());
             exact &= f.exact;
-            parts.push(format!("{} {}", f.text, unit.symbol()));
+            parts.push(format!(
+                "{} {}",
+                f.text,
+                unit.display(shown != Number::from_i64(1))
+            ));
         }
         rest = left;
     }

@@ -14,7 +14,7 @@ fn exponent_suffixes_in_every_spelling() {
     assert_eq!(shown("2 m⁹"), "2 m⁹");
     assert_eq!(shown("2 m¹⁰"), "2 m¹⁰");
     assert_eq!(shown("2 m¹²"), "2 m¹²");
-    assert_eq!(shown("2 s⁻¹"), "2 s⁻¹");
+    assert_eq!(shown("2 s⁻¹"), "2/s");
     assert_eq!(shown("2 s⁻²"), "2 s⁻²");
     assert_eq!(shown("2 s⁻¹²"), "2 s⁻¹²");
     assert_eq!(shown("2 m^-2"), "2 m⁻²");
@@ -73,7 +73,7 @@ fn conversion_words_need_a_value_before_and_a_unit_after() {
     }
     assert_eq!(shown("km to m"), "1,000 m");
     assert_eq!(shown("5 of km"), "5 km");
-    assert_eq!(shown("5 a km"), "5 km⁻¹");
+    assert_eq!(shown("5 a km"), "5/km");
     assert_eq!(shown("5 on km"), "6 km");
     assert_eq!(shown("5 off km"), "-4 km");
     for word in ["is", "what", "percent"] {

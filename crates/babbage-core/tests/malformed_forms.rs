@@ -126,14 +126,14 @@ const CASES: &[(&str, &str)] = &[
         "5 as timecode",
         "ERROR unsupported: this needs a length of time or a number of frames",
     ),
-    ("5 frames", "5 frame"),
+    ("5 frames", "5 frames"),
     ("frames", "1 frame"),
     ("as frames", "ERROR unexpected word \"as\" at byte 0"),
     (
         "5 as frames",
         "ERROR unsupported: this needs a length of time",
     ),
-    ("10 seconds at 30 fps as frames", "300 frame"),
+    ("10 seconds at 30 fps as frames", "300 frames"),
     (
         "10 seconds at fps as frames",
         "ERROR unexpected word \"at\" at byte 11",
@@ -175,7 +175,7 @@ const CASES: &[(&str, &str)] = &[
         "days in Q2 2024 2025",
         "ERROR unexpected word \"Q\" at byte 8",
     ),
-    ("workdays in 1 week", "5 workday"),
+    ("workdays in 1 week", "5 workdays"),
 ];
 
 fn answer(line: &str) -> String {
@@ -201,10 +201,10 @@ fn near_misses_are_answered_or_refused_exactly_as_reviewed() {
 #[test]
 fn both_spellings_of_a_frame_count_and_a_non_clock_offset() {
     for (line, want) in [
-        ("10 seconds at 30 fps as frames", "300 frame"),
-        ("10 seconds at 30 fps as frame", "300 frame"),
-        ("10 seconds at 30 fps to frames", "300 frame"),
-        ("10 seconds at 30 fps in frames", "300 frame"),
+        ("10 seconds at 30 fps as frames", "300 frames"),
+        ("10 seconds at 30 fps as frame", "300 frames"),
+        ("10 seconds at 30 fps to frames", "300 frames"),
+        ("10 seconds at 30 fps in frames", "300 frames"),
         ("10 seconds at 30 fps as timecode", "00:00:10:00"),
         ("10 seconds at 24 fps as timecode", "00:00:10:00"),
     ] {

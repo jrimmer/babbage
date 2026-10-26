@@ -77,7 +77,7 @@ fn the_reference_growth_examples() {
     assert_eq!(shown("20k after 6 months at 10% per month"), "35,431.22");
     assert_eq!(
         shown("time from $20k to $40k at $2k every month in months"),
-        "10 mo"
+        "10 months"
     );
     assert!(shown("time from 20k to 100k at 10% growth per month").starts_with("16.88"));
     assert!(approx("time from 20k to 100k at 10% growth per month"));
@@ -127,13 +127,13 @@ fn the_reference_multiplier_examples() {
 
 #[test]
 fn the_reference_rate_examples() {
-    assert_eq!(shown("$99 per week"), "$99.00/wk");
+    assert_eq!(shown("$99 per week"), "$99.00/week");
     assert_eq!(shown("30 hours at $30/hour"), "$900.00");
-    assert_eq!(shown("$500 at $20/hour"), "25 h");
+    assert_eq!(shown("$500 at $20/hour"), "25 hours");
     assert_eq!(shown("90 km over 3 days"), "30 km/day");
     assert_eq!(shown("time to upload 3GB at 10 MB/s"), "300 s");
     assert_eq!(shown("$24 a day for a year"), "$8,765.82");
-    assert_eq!(shown("$10/day in $/month"), "$304.37/mo");
+    assert_eq!(shown("$10/day in $/month"), "$304.37/month");
     assert_eq!(shown("$30 per hour × 8 hours"), "$240.00");
 }
 

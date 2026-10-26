@@ -119,29 +119,29 @@ fn weekday_names_and_their_abbreviations() {
 #[test]
 fn until_looks_ahead_and_since_looks_back_and_today_counts_as_both() {
     all(&[
-        ("days until June 15", "0 day"),
-        ("days since June 15", "0 day"),
-        ("days until June 14", "364 day"),
+        ("days until June 15", "0 days"),
+        ("days since June 15", "0 days"),
+        ("days until June 14", "364 days"),
         ("days until June 16", "1 day"),
-        ("days since June 16", "365 day"),
+        ("days since June 16", "365 days"),
         ("days since June 14", "1 day"),
         ("days till June 16", "1 day"),
-        ("days until Christmas", "193 day"),
-        ("days since Christmas", "173 day"),
-        ("days until Easter", "309 day"),
-        ("days since Easter", "76 day"),
-        ("days until Thanksgiving", "166 day"),
-        ("days since Thanksgiving", "205 day"),
-        ("days until Black Friday", "167 day"),
-        ("days since Black Friday", "204 day"),
-        ("days until Halloween", "138 day"),
-        ("days since Halloween", "228 day"),
-        ("days until New Year", "200 day"),
-        ("days since New Year", "166 day"),
-        ("days until Valentine's Day", "244 day"),
-        ("days since Valentine's Day", "122 day"),
-        ("days until February 29", "1,354 day"),
-        ("days since February 29", "107 day"),
+        ("days until Christmas", "193 days"),
+        ("days since Christmas", "173 days"),
+        ("days until Easter", "309 days"),
+        ("days since Easter", "76 days"),
+        ("days until Thanksgiving", "166 days"),
+        ("days since Thanksgiving", "205 days"),
+        ("days until Black Friday", "167 days"),
+        ("days since Black Friday", "204 days"),
+        ("days until Halloween", "138 days"),
+        ("days since Halloween", "228 days"),
+        ("days until New Year", "200 days"),
+        ("days since New Year", "166 days"),
+        ("days until Valentine's Day", "244 days"),
+        ("days since Valentine's Day", "122 days"),
+        ("days until February 29", "1,354 days"),
+        ("days since February 29", "107 days"),
     ]);
 }
 
@@ -159,8 +159,8 @@ fn a_yearless_date_means_the_closest_one_unless_the_line_says_which() {
     // Early January: the last December is closer.
     assert_eq!(at(1_704_283_200, "December 28 as yyyy"), "2023");
     // A leap day is found in whichever year has one, up to four years either way.
-    assert_eq!(at(1_835_265_600, "days since February 29"), "1,459 day");
-    assert_eq!(at(1_709_294_400, "days until February 29"), "1,460 day");
+    assert_eq!(at(1_835_265_600, "days since February 29"), "1,459 days");
+    assert_eq!(at(1_709_294_400, "days until February 29"), "1,460 days");
     assert_eq!(at(1_709_294_400, "February 29 as yyyy"), "2024");
 }
 
@@ -262,8 +262,8 @@ fn the_words_after_a_long_expression_still_find_their_place() {
             "300 frames + 60 frames at 30 fps as timecode",
             "00:00:12:00",
         ),
-        ("00:00:01:00 + 00:00:01:00 at 30 fps as frames", "60 frame"),
-        ("10 seconds + 5 seconds at 30 fps as frames", "450 frame"),
+        ("00:00:01:00 + 00:00:01:00 at 30 fps as frames", "60 frames"),
+        ("10 seconds + 5 seconds at 30 fps as frames", "450 frames"),
         ("5 minutes + 5 minutes to laptime", "00:10:00"),
     ]);
 }
@@ -291,13 +291,13 @@ fn a_huge_number_of_workdays_answers_at_once_or_is_refused() {
 #[test]
 fn a_span_of_no_time_has_no_workdays_and_does_not_crash() {
     all(&[
-        ("workdays between June 5 and June 5", "0 workday"),
-        ("work hours between June 5 and June 5", "0 h"),
-        ("workdays from June 5 to June 5", "0 workday"),
-        ("workdays in 0 days", "0 workday"),
-        ("workdays in 2024", "0 workday"),
-        ("workdays in 1 day", "0 workday"),
-        ("workdays in 2 days", "0 workday"),
+        ("workdays between June 5 and June 5", "0 workdays"),
+        ("work hours between June 5 and June 5", "0 hours"),
+        ("workdays from June 5 to June 5", "0 workdays"),
+        ("workdays in 0 days", "0 workdays"),
+        ("workdays in 2024", "0 workdays"),
+        ("workdays in 1 day", "0 workdays"),
+        ("workdays in 2 days", "0 workdays"),
         ("workdays in 3 days", "1 workday"),
         ("workdays between June 17 and June 14", "-1 workday"),
     ]);
@@ -344,18 +344,18 @@ fn a_form_missing_a_side_is_an_error_not_a_guess() {
 #[test]
 fn days_in_a_period() {
     all(&[
-        ("days in Q1", "91 day"),
-        ("days in Q2", "91 day"),
-        ("days in Q3", "92 day"),
-        ("days in Q4", "92 day"),
-        ("days in Q2 2023", "91 day"),
-        ("days in Q1 2023", "90 day"),
-        ("days in February", "29 day"),
-        ("days in February 2023", "28 day"),
-        ("days in 2023", "365 day"),
-        ("days in 2024", "366 day"),
-        ("days in 1900", "365 day"),
-        ("days in 2000", "366 day"),
+        ("days in Q1", "91 days"),
+        ("days in Q2", "91 days"),
+        ("days in Q3", "92 days"),
+        ("days in Q4", "92 days"),
+        ("days in Q2 2023", "91 days"),
+        ("days in Q1 2023", "90 days"),
+        ("days in February", "29 days"),
+        ("days in February 2023", "28 days"),
+        ("days in 2023", "365 days"),
+        ("days in 2024", "366 days"),
+        ("days in 1900", "365 days"),
+        ("days in 2000", "366 days"),
     ]);
     for line in [
         "days in Q5 2024",
@@ -376,10 +376,10 @@ fn offsets_and_months_written_with_a_number() {
         ("noon GMT+5:30 in UTC", "6:30 AM"),
         ("noon GMT+ 5 in UTC", "7:00 AM"),
         ("noon UTC-3 in UTC", "3:00 PM"),
-        ("workdays in June 2024", "20 workday"),
-        ("workdays in June", "20 workday"),
-        ("work hours in June", "160 h"),
-        ("work hours in February 2023", "160 h"),
+        ("workdays in June 2024", "20 workdays"),
+        ("workdays in June", "20 workdays"),
+        ("work hours in June", "160 hours"),
+        ("work hours in February 2023", "160 hours"),
     ]);
     for line in [
         "noon GMT+8.5 in UTC",

@@ -7,6 +7,9 @@ Columns: expression <TAB> expected text (10 places, trailing zeros trimmed, grou
 import random
 from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import suffix
 
 getcontext().prec = 200
 rng = random.Random(0xF04A)
@@ -89,8 +92,8 @@ for _ in range(4000):
     result = n * f_b / f_a
     if result >= 100000:
         continue
-    rows.append((f"{name_a} in {num(n)} {name_b}", f"{dec(result)} {sym_a}"))
-    rows.append((f"{sym_a} in {num(n)} {sym_b}", f"{dec(result)} {sym_a}"))
+    rows.append((f"{name_a} in {num(n)} {name_b}", f"{dec(result)}{suffix(sym_a, result)}"))
+    rows.append((f"{sym_a} in {num(n)} {sym_b}", f"{dec(result)}{suffix(sym_a, result)}"))
     rows.append((f"{name_a} in a {name_b[:-1]}" if name_b.endswith("s") and name_b not in ("feet",) else f"{name_a} in a {name_b}",
                  None))
 
@@ -105,7 +108,7 @@ for kind, table in UNITS.items():
                 continue
             result = f_b / f_a
             if result < 100000:
-                rows.append((f"{name_a} in a {SINGULAR[name_b]}", f"{dec(result)} {sym_a}"))
+                rows.append((f"{name_a} in a {SINGULAR[name_b]}", f"{dec(result)}{suffix(sym_a, result)}"))
 
 INCH = Fraction(254, 10000)
 for _ in range(1500):

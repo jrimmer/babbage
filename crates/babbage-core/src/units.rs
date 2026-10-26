@@ -917,6 +917,53 @@ impl UnitExpr {
         })
     }
 
+    /// This rate with its period (the one time unit in the denominator) replaced by `period`.
+    pub fn with_period(&self, period: &UnitExpr) -> Option<UnitExpr> {
+        let time = lookup("s")?.dim();
+        let reg = registry();
+        let [(new, 1)] = period.0.as_slice() else {
+            return None;
+        };
+        if reg.defs[*new as usize].dim != time {
+            return None;
+        }
+        let mut changed = false;
+        let mut parts: Vec<(UnitId, i8)> = Vec::new();
+        for (u, e) in &self.0 {
+            if *e == -1 && reg.defs[*u as usize].dim == time && !changed {
+                parts.push((*new, -1));
+                changed = true;
+            } else {
+                parts.push((*u, *e));
+            }
+        }
+        changed.then(|| {
+            parts.sort_by_key(|(u, _)| *u);
+            UnitExpr(parts)
+        })
+    }
+
+    /// True when some unit is divided by another, as in `$/day` or `km/h`.
+    pub fn has_denominator(&self) -> bool {
+        self.0.iter().any(|(_, e)| e.is_negative())
+    }
+
+    /// True for one unit of time over another, such as `hours/day`.
+    pub fn is_time_over_time(&self) -> bool {
+        let Some(seconds) = lookup("s") else {
+            return false;
+        };
+        let (time, reg) = (seconds.dim(), registry());
+        match self.0.as_slice() {
+            [(a, ea), (b, eb)] => {
+                reg.defs[*a as usize].dim == time
+                    && reg.defs[*b as usize].dim == time
+                    && ea + eb == 0
+            }
+            _ => false,
+        }
+    }
+
     /// True when a workday is part of this expression.
     pub fn contains_workday(&self) -> bool {
         self.0
@@ -979,6 +1026,87 @@ impl UnitExpr {
                 .join("·"),
             (false, 1) => format!("{}/{}", up.join("·"), down[0]),
             (false, _) => format!("{}/({})", up.join("·"), down.join("·")),
+        }
+    }
+}
+
+/// Units an answer writes as words, as the reference app does: `3 hours/day`, `$99.00/week`, `5,400 frames`.
+/// A word is plural when the amount is not one and singular after a slash. Minutes and seconds stay `min` and `s`.
+const WORD_UNITS: &[(&str, &str)] = &[
+    ("h", "hour"),
+    ("day", "day"),
+    ("wk", "week"),
+    ("mo", "month"),
+    ("yr", "year"),
+    ("workday", "workday"),
+    ("frame", "frame"),
+];
+
+impl UnitExpr {
+    /// How this unit reads in an answer. `plural` is whether the amount in front of it is not one.
+    pub fn display(&self, plural: bool) -> String {
+        let reg = registry();
+        let name = |u: UnitId| -> (String, bool) {
+            let symbol = reg.defs[u as usize].symbol;
+            match WORD_UNITS.iter().find(|(s, _)| *s == symbol) {
+                Some((_, word)) => ((*word).to_string(), true),
+                None => (symbol.to_string(), false),
+            }
+        };
+        let part = |u: UnitId, e: i8, may_pluralise: bool| {
+            let (text, is_word) = name(u);
+            if e == 1 {
+                if is_word && may_pluralise && plural {
+                    format!("{text}s")
+                } else {
+                    text
+                }
+            } else {
+                format!("{text}{}", superscript(e))
+            }
+        };
+        let up: Vec<String> = self
+            .0
+            .iter()
+            .filter(|(_, e)| e.is_positive())
+            .enumerate()
+            .map(|(i, (u, e))| part(*u, *e, i == 0))
+            .collect();
+        let down: Vec<(UnitId, i8)> = self
+            .0
+            .iter()
+            .filter(|(_, e)| e.is_negative())
+            .map(|(u, e)| (*u, -*e))
+            .collect();
+        // A speed such as `km/h` keeps its symbols: words are for rates of money, counts and times.
+        let speed_like = !self.0.iter().any(|(u, e)| {
+            e.is_positive() && {
+                let def = &reg.defs[*u as usize];
+                def.currency.is_some() || WORD_UNITS.iter().any(|(s, _)| *s == def.symbol)
+            }
+        }) && !up.is_empty();
+        let down_text: Vec<String> = down
+            .iter()
+            .map(|(u, e)| {
+                if speed_like {
+                    let s = reg.defs[*u as usize].symbol;
+                    if *e == 1 {
+                        s.to_string()
+                    } else {
+                        format!("{s}{}", superscript(*e))
+                    }
+                } else {
+                    part(*u, *e, false)
+                }
+            })
+            .collect();
+        match (up.is_empty(), down.len()) {
+            (_, 0) => up.join("·"),
+            // Only a denominator (`30/week`): written after a slash when each is to the first power.
+            (true, 1) if down[0].1 == 1 => format!("/{}", down_text[0]),
+            (true, _) => self.symbol(),
+            (false, 1) => format!("{}/{}", up.join("·"), down_text[0]),
+            (false, _) => format!("{}/({})", up.join("·"), down_text.join("·")),
         }
     }
 }

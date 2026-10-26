@@ -7,6 +7,9 @@ Columns: work hours per day <TAB> expression <TAB> expected text (10 places, tra
 import random
 from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import suffix
 
 getcontext().prec = 100
 rng = random.Random(0x5EEC)
@@ -63,10 +66,12 @@ for hours in (8, 8, 6, 7, 10, 12):
         q = amount()
         word_in = f"{text_of(q)} {plural(unit, q)}"
         work = seconds_in("workday", hours, True)
-        rows.append((hours, f"{word_in} in workdays", digits(q * seconds_in(unit, hours, True) / work) + " workday"))
+        ans = q * seconds_in(unit, hours, True) / work
+        rows.append((hours, f"{word_in} in workdays", digits(ans) + suffix("workday", ans)))
         w = amount()
         sym = {"second": "s", "minute": "min", "hour": "h", "day": "day", "week": "wk", "month": "mo", "year": "yr"}[unit]
-        rows.append((hours, f"{text_of(w)} {plural('workday', w)} in {unit}s", digits(w * work / seconds_in(unit, hours, True)) + " " + sym))
+        ans2 = w * work / seconds_in(unit, hours, True)
+        rows.append((hours, f"{text_of(w)} {plural('workday', w)} in {unit}s", digits(ans2) + suffix(sym, ans2)))
         rate = rng.randint(1, 900)
         rows.append((hours, f"${rate}/workday * {word_in}", money(rate * q * seconds_in(unit, hours, True) / work)))
 

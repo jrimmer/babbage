@@ -9,6 +9,9 @@ import random
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from fractions import Fraction
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import suffix as unit_suffix
 
 rng = random.Random(0x71E5)
 TODAY = date(2024, 6, 15)
@@ -95,7 +98,7 @@ def parts(total, units):
         n = q if last else Fraction(q.numerator // q.denominator)
         rest -= n * factor
         if n or (last and not out):
-            out.append(f"{grouped(n)} {name}")
+            out.append(f"{grouped(n)}{unit_suffix(name, n)}")
     return ("-" if neg else "") + " ".join(out)
 
 
@@ -221,11 +224,11 @@ for _ in range(3000):
     add(f"{ta} + {secs} seconds{suffix}", timecode(a + secs * rate, rate))
     small = rng.randint(0, 30 * 60 * rate)
     if small < 100_000:
-        add(f"{tc_literal(small, rate)}{suffix} as frames" if suffix else f"{tc_literal(small, 24)} as frames", f"{small:,} frame" if suffix else f"{small:,} frame")
+        add(f"{tc_literal(small, rate)}{suffix} as frames" if suffix else f"{tc_literal(small, 24)} as frames", f"{small:,}{unit_suffix('frame', small)}" if suffix else f"{small:,}{unit_suffix('frame', small)}")
         add(f"{small} frames at {rate} fps as timecode", timecode(small, rate))
     d = rng.randint(1, 600)
     if rate * d < 100_000:
-        add(f"{rate} fps * {d} seconds", f"{rate * d:,} frame")
+        add(f"{rate} fps * {d} seconds", f"{rate * d:,}{unit_suffix('frame', rate * d)}")
 
 EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 for offset in OFFSETS:

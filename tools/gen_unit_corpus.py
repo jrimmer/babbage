@@ -11,6 +11,9 @@ from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
 
 import pint
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import suffix
 
 getcontext().prec = 4000
 ureg = pint.UnitRegistry(non_int_type=Fraction)

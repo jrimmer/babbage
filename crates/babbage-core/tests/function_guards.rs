@@ -44,7 +44,7 @@ fn a_proportion_with_a_unit_anywhere_is_worked_out_with_the_units() {
     // one quantity among bare numbers keeps its unit
     assert_eq!(prop(q(2, "km"), n(4), n(10)), "5 km");
     assert_eq!(prop(n(2), n(4), q(10, "km")), "5 km");
-    assert_eq!(prop(n(2), q(4, "m"), n(10)), "5 m\u{207b}\u{b9}");
+    assert_eq!(prop(n(2), q(4, "m"), n(10)), "5/m");
 }
 
 #[test]

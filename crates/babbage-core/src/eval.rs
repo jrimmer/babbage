@@ -25,6 +25,14 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.convert(u)?);
             }
+            Node::PerUnit(u) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.per_unit(u)?);
+            }
+            Node::PerPeriod(u) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.per_period(u)?);
+            }
             Node::ConvertAt(u) => {
                 let rate = stack.pop().expect("well-formed expression");
                 let x = stack.pop().expect("well-formed expression");

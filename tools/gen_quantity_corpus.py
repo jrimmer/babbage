@@ -11,6 +11,9 @@ from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
 
 import pint
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import suffix
 
 getcontext().prec = 4000
 rng = random.Random(0x51A7E)
@@ -66,7 +69,7 @@ def emit(text, kind, q=None, unit=""):
         print(f"{text}\t{kind}\t-\t-")
         return
     shown = fixed10(q * (100 if kind == "percent" else 1))
-    shown += "%" if kind == "percent" else (" " + unit if unit else "")
+    shown += "%" if kind == "percent" else suffix(unit, q)
     print(f"{text}\t{kind}\t{q.numerator}/{q.denominator}\t{shown}")
 
 

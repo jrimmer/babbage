@@ -121,6 +121,8 @@ pub enum Phrase {
     MultiplierOn,
     MultiplierOff,
     MultiplierChange,
+    /// `5 km in 25 min`: distance, time. A pace, written `05:00/km`.
+    Pace,
 }
 
 impl Phrase {
@@ -146,6 +148,10 @@ pub enum Node {
     Unit(UnitExpr),
     /// `... in m`: restate the value in another unit of the same kind.
     Convert(UnitExpr),
+    /// `... / day`, `... per week`: the top value over one of this unit.
+    PerUnit(UnitExpr),
+    /// `$30/day is what per year`: the same rate with its period swapped for this one.
+    PerPeriod(UnitExpr),
     /// A function call with this many values taken from the stack.
     Call(Func, usize),
     /// `... cast m`: relabel the number with another unit without converting.
@@ -220,6 +226,8 @@ fn is_balanced(rpn: &[Node]) -> bool {
             | Node::Percent
             | Node::Unit(_)
             | Node::Convert(_)
+            | Node::PerUnit(_)
+            | Node::PerPeriod(_)
             | Node::Cast(_)
             | Node::Show(_) => (1, 1),
             Node::Bin(_) | Node::ConvertAt(_) => (2, 1),
@@ -353,6 +361,12 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 want_operand = false;
             }
             (Tok::Unit(u), false) => out.push(Node::Unit(u.clone())),
+            // A unit straight after `/` or `per` is "per one of it": `3 hours / day`, `$99 per week`.
+            (Tok::Unit(u), true) if matches!(ops.last(), Some(Pending::Bin(BinOp::Div))) => {
+                ops.pop();
+                out.push(Node::PerUnit(u.clone()));
+                want_operand = false;
+            }
             (Tok::Unit(u), true) => {
                 out.push(Node::Num(Number::from_i64(1)));
                 out.push(Node::Unit(u.clone()));
@@ -510,6 +524,14 @@ impl fmt::Display for Expr {
                 Node::Convert(u) => {
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("({x} in {})", u.symbol()));
+                }
+                Node::PerUnit(u) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} / {})", u.symbol()));
+                }
+                Node::PerPeriod(u) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} is what per {})", u.symbol()));
                 }
                 Node::Call(f, n) => {
                     let args = stack.split_off(stack.len() - n);

@@ -165,8 +165,8 @@ fn a_multiplier_literal_needs_nothing_after_it() {
 
 #[test]
 fn frame_words_are_units_first() {
-    assert_eq!(shown("1.5 frame in frames"), "1.5 frame");
-    assert_eq!(shown("30 fps * 10 seconds"), "300 frame");
+    assert_eq!(shown("1.5 frame in frames"), "1.5 frames");
+    assert_eq!(shown("30 fps * 10 seconds"), "300 frames");
     assert_eq!(shown("300 frames / 30 fps"), "10 s");
     fails("10 seconds as frames");
     fails("01:00:00:24");

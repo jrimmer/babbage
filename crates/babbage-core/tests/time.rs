@@ -67,7 +67,7 @@ fn the_reference_time_examples() {
         ("03:04:05 as timespan", "3 hours 4 min 5 s"),
         ("3 hours 4 minutes 5 seconds as laptime", "03:04:05"),
         ("12.5 minutes in minutes and seconds", "12 min 30 s"),
-        ("1.4 weeks in hours and minutes", "235 h 12 min"),
+        ("1.4 weeks in hours and minutes", "235 hours 12 min"),
         ("1 hour 30 minutes at 1.5x", "1 hour"),
         ("16:00 + 3 hours 12 minutes", "7:12 PM"),
         ("7:30am to 8:45pm", "13 hours 15 min"),
