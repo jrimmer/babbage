@@ -265,8 +265,8 @@ mod tests {
         assert_eq!(tax("tax = VAT 15%\n"), Some(("VAT".into(), rate("0.15"))));
         assert_eq!(tax("tax = GST 10\n"), Some(("GST".into(), rate("0.1"))));
         assert_eq!(
-            tax("tax = Sales Tax 8.25%\n"),
-            Some(("Sales Tax".into(), rate("0.0825")))
+            tax("tax = Sales 8.25%\n"),
+            Some(("Sales".into(), rate("0.0825")))
         );
         assert_eq!(tax("tax = VAT 0%\n"), Some(("VAT".into(), rate("0"))));
         for bad in [
@@ -278,6 +278,7 @@ mod tests {
             "tax = V4T 15%\n",
             "tax =\n",
             "tax = VAT 15% 20%\n",
+            "tax = Sales Tax 8%\n",
         ] {
             assert_eq!(tax(bad), None, "{bad:?}");
         }

@@ -12,3 +12,4 @@ Rules while away: nothing is pushed (there is no remote), nothing outside this r
 Waiting on the owner (does not block the plan): the reference checks listed in tickets 0018, 0030, 0043, 0045, 0046, 0055.
 
 ## Log
+- 02:30 The gate at 7c19ae1 failed: a tax-parser test I committed never passed, because a text replace did not apply after `cargo fmt` reflowed the file. Fixed; the lesson is that every scripted edit now asserts that its target text was found.
