@@ -21,6 +21,10 @@ fn main() -> anyhow::Result<()> {
             "no check named {w}; try --list"
         );
     }
+    let host = std::fs::read_to_string("/etc/hostname")
+        .map(|h| h.trim().to_string())
+        .unwrap_or_else(|_| "unknown".into());
+    println!("host: {host}");
     let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
