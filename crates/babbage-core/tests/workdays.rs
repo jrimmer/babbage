@@ -62,6 +62,10 @@ fn a_week_is_five_workdays_as_in_the_reference() {
         ("1 week > 4 workdays", "true"),
         ("1 week < 6 workdays", "true"),
         ("$500/workday in $/week", "$2,500.00/wk"),
+        // Checked on a real reference app by the owner.
+        ("1 day in workdays", "0.7142857143 workday"),
+        ("1 month in workdays", "21.740625 workday"),
+        ("1 year in workdays", "260.8875 workday"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }
