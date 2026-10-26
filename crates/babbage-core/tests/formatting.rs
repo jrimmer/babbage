@@ -1,4 +1,4 @@
-use babbage_core::{Error, FormatOptions, Formatted, Number, RoundingMode, evaluate, format_decimal};
+use babbage_core::{Error, FormatOptions, Formatted, Number, RoundingMode, evaluate_plain as evaluate, format_decimal};
 
 fn fmt(expr: &str, dp: u32, mode: RoundingMode, group: bool, trim: bool) -> Formatted {
     let mut o = FormatOptions::new(dp).unwrap();

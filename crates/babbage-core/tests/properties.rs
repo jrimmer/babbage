@@ -1,5 +1,5 @@
 use babbage_core::parser::{BinOp, Expr};
-use babbage_core::{Error, FormatOptions, Number, RoundingMode, evaluate, eval::eval, format_decimal, parse_expression};
+use babbage_core::{Error, FormatOptions, Number, RoundingMode, evaluate_plain as evaluate, eval::eval, format_decimal, parse_expression};
 use num_bigint::BigInt;
 use num_traits::{One, Signed};
 use proptest::prelude::*;
@@ -176,7 +176,7 @@ proptest! {
 
     #[test]
     fn printing_then_evaluating_equals_evaluating_the_tree(e in expr()) {
-        prop_assert_eq!(evaluate(&e.to_string()), eval(&e));
+        prop_assert_eq!(evaluate(&e.to_string()), eval(&e).and_then(|v| v.into_plain()));
     }
 
     #[test]
@@ -221,7 +221,7 @@ proptest! {
     #[test]
     fn errors_always_name_a_position_inside_the_input(s in "[0-9.,+*/^()xXeE×÷–−· -]{0,60}") {
         match evaluate(&s) {
-            Err(Error::UnexpectedChar { at, .. } | Error::UnexpectedToken { at, .. } | Error::InvalidNumber { at, .. }) => {
+            Err(Error::UnexpectedChar { at, .. } | Error::UnexpectedToken { at, .. } | Error::InvalidNumber { at, .. } | Error::UnexpectedWord { at, .. }) => {
                 prop_assert!(at < s.len());
                 prop_assert!(s.is_char_boundary(at));
             }

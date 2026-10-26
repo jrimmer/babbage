@@ -17,6 +17,9 @@ pub enum Tok {
     Caret,
     LParen,
     RParen,
+    Word(String),
+    /// `attached` is true when `%` directly follows a number or `)`, as in `10%`.
+    Percent { attached: bool },
 }
 
 impl Tok {
@@ -30,6 +33,8 @@ impl Tok {
             Tok::Caret => "'^'".into(),
             Tok::LParen => "'('".into(),
             Tok::RParen => "')'".into(),
+            Tok::Word(w) => format!("word {w:?}"),
+            Tok::Percent { .. } => "'%'".into(),
         }
     }
 }
@@ -75,6 +80,20 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             'x' | 'X' if is_times_x(&chars, i) => simple(Tok::Star, &mut out),
             '/' | '\u{00F7}' | '\u{2215}' => simple(Tok::Slash, &mut out),
             '^' => simple(Tok::Caret, &mut out),
+            '%' => {
+                let attached = i > 0 && (chars[i - 1].1.is_ascii_digit() || matches!(chars[i - 1].1, ')' | '%'));
+                simple(Tok::Percent { attached }, &mut out)
+            }
+            c if c.is_alphabetic() => {
+                let mut end = i;
+                while chars.get(end).is_some_and(|(_, ch)| ch.is_alphabetic()) {
+                    end += 1;
+                }
+                let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
+                out.push(Token { tok: Tok::Word(word.to_lowercase()), at });
+                i = end;
+                continue;
+            }
             '(' => simple(Tok::LParen, &mut out),
             ')' => simple(Tok::RParen, &mut out),
             ch => return Err(Error::UnexpectedChar { ch, at }),

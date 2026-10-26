@@ -1,5 +1,5 @@
 use babbage_core::lexer::{MAX_INPUT_BYTES, lex};
-use babbage_core::{Error, Number, evaluate};
+use babbage_core::{Error, Number, evaluate_plain as evaluate};
 
 fn tok(found: &str, at: usize) -> Error {
     Error::UnexpectedToken { found: found.into(), at }
@@ -40,15 +40,16 @@ fn stray_tokens_report_their_byte_offset() {
 fn bad_characters_report_offsets_in_bytes_not_chars() {
     assert_eq!(evaluate("1 @ 2"), Err(Error::UnexpectedChar { ch: '@', at: 2 }));
     assert_eq!(evaluate("1 × @"), Err(Error::UnexpectedChar { ch: '@', at: 5 }));
-    assert_eq!(evaluate("é"), Err(Error::UnexpectedChar { ch: 'é', at: 0 }));
+    assert_eq!(evaluate("é"), Err(Error::UnexpectedWord { word: "é".into(), at: 0 }));
     assert_eq!(evaluate("１"), Err(Error::UnexpectedChar { ch: '１', at: 0 }));
     assert_eq!(evaluate("٣"), Err(Error::UnexpectedChar { ch: '٣', at: 0 }));
-    assert_eq!(evaluate("2xy"), Err(Error::UnexpectedChar { ch: 'x', at: 1 }));
-    assert_eq!(evaluate("2 xy"), Err(Error::UnexpectedChar { ch: 'x', at: 2 }));
-    assert_eq!(evaluate("1 + abc"), Err(Error::UnexpectedChar { ch: 'a', at: 4 }));
+    assert_eq!(evaluate("2xy"), Err(Error::UnexpectedWord { word: "xy".into(), at: 1 }));
+    assert_eq!(evaluate("2 xy"), Err(Error::UnexpectedWord { word: "xy".into(), at: 2 }));
+    assert_eq!(evaluate("1 + abc"), Err(Error::UnexpectedWord { word: "abc".into(), at: 4 }));
+    assert_eq!(evaluate("ABC"), Err(Error::UnexpectedWord { word: "abc".into(), at: 0 }));
     assert_eq!(evaluate("1; 2"), Err(Error::UnexpectedChar { ch: ';', at: 1 }));
     assert_eq!(evaluate("1 — 2"), Err(Error::UnexpectedChar { ch: '—', at: 2 }));
-    assert_eq!(evaluate("3 %"), Err(Error::UnexpectedChar { ch: '%', at: 2 }));
+    assert_eq!(evaluate("3 % 2"), Err(tok("'%'", 2)));
 }
 
 #[test]
@@ -81,9 +82,9 @@ fn exponent_notation_boundaries() {
     assert!(evaluate("1e100000").is_ok());
     assert!(evaluate("1e-100000").is_ok());
     assert_eq!(evaluate("1e999999999999999999999"), Err(Error::Overflow));
-    assert_eq!(evaluate("1e"), Err(Error::UnexpectedChar { ch: 'e', at: 1 }));
-    assert_eq!(evaluate("1e+"), Err(Error::UnexpectedChar { ch: 'e', at: 1 }));
-    assert_eq!(evaluate("1ex"), Err(Error::UnexpectedChar { ch: 'e', at: 1 }));
+    assert_eq!(evaluate("1e"), Err(Error::UnexpectedWord { word: "e".into(), at: 1 }));
+    assert_eq!(evaluate("1e+"), Err(Error::UnexpectedWord { word: "e".into(), at: 1 }));
+    assert_eq!(evaluate("1ex"), Err(Error::UnexpectedWord { word: "ex".into(), at: 1 }));
 }
 
 #[test]

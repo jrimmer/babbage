@@ -6,7 +6,7 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 |---|---|---|
 | 1 | Arithmetic core: + - × ÷ ^, parentheses, literals, aliases | done |
 | 2 | Display: rounding modes, grouping, exact/rounded flag | done |
-| 3 | Percentages (`of`, `+ 10%`, `as %`, `on what`) | todo |
+| 3 | Percentages: of, +/-, on/off, reverse forms, ratios, as % | done (sub-forms below are todo) |
 | 4 | Units and exact conversion factors (200+) | todo |
 | 5 | Currency symbols and money display (no rates) | todo |
 | 6 | Variables | todo |
@@ -29,7 +29,9 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 23 | Sheets, sheetbooks, reference-format-like file format | todo |
 | 24 | gpui front end | todo |
 
-2 of 24 done. The hardest precision areas are 3, 4, 16 and 21, and none of them has started.
+3 of 24 done. The hardest remaining precision areas are 4, 16 and 21.
+
+Row 3 leftovers, each filed as a ticket: fraction display (`as fraction`), multipliers (`4x`), proportion forms (`20% is 500, what is 750`), and phrase forms inside parentheses.
 
 Open scope question: PDF and HTML export, Alfred/Raycast, URL schemes and its Studio edition are not in the list. The first two need no outside data, so by your rule they would be v1. I assumed they are not wanted on Linux.
 

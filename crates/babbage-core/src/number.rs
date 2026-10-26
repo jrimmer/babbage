@@ -56,6 +56,12 @@ impl Number {
         self.0.is_integer()
     }
 
+    /// The value times 100, for display as a percentage. Skips the size cap on
+    /// purpose: it adds 7 bits and must not make a displayable value unprintable.
+    pub fn times_hundred(&self) -> Number {
+        Number(&self.0 * BigRational::from_integer(BigInt::from(100)))
+    }
+
     pub fn neg(&self) -> Number {
         Number(-&self.0)
     }

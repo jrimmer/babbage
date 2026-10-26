@@ -13,3 +13,9 @@
 | 2026-10-25 | A value that rounds to zero prints `0`, never `-0`, and is flagged inexact. | Avoids a misleading sign. |
 | 2026-10-25 | Thousands separators are strict: `1,024` is a number, `1,2` and `1234,567` are errors. | A comma that is not a valid group is never silently merged into a number. |
 | 2026-10-25 | No trailing-dot numbers: `5.` is an error. | Strictness over guessing. |
+| 2026-10-26 | A percentage is stored as its fraction (10% is 1/10) and carries a `Kind`. Display multiplies by 100. | Keeps every percent operation exact rational arithmetic. |
+| 2026-10-26 | Attached `%` (`10%`, `(1/2)%`, `10%%`) is a postfix on the value before it. A detached trailing `%` (`20/200 %`) means "as percent". | Both forms appear in the reference docs and mean different things. |
+| 2026-10-26 | Where the percentage docs are silent, the engine returns `UnsupportedOperation` instead of guessing: `10% x 10%`, any division involving a percentage, `10%^2`, `2^10%`. | A guess would be an unverifiable precision claim. Verify against the real app, then relax (ticket 0012). |
+| 2026-10-26 | Fractions and decimals work wherever a percentage rate is expected in `of`, `on`, `off` and the `is ... of what` forms. | The reference notes say a decimal or fraction can replace a percentage. |
+| 2026-10-26 | Multi-word phrase forms apply to a whole line only, matched from a table (`phrase.rs`). `of`, `on`, `off` alone are infix operators; `of` equals `x`. | Keeps parsing iterative and the phrase list data-driven. Nested phrases are ticket 0013. |
+| 2026-10-26 | Unknown words are an error (`UnexpectedWord`), not ignored. | The reference app ignores free text as labels; that is row 9 and must be deliberate, not an accident of the parser. |

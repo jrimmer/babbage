@@ -1,4 +1,4 @@
-use babbage_core::{Error, evaluate};
+use babbage_core::{Error, evaluate_plain as evaluate};
 
 #[test]
 fn daily_compounding_for_thirty_years_is_exact() {

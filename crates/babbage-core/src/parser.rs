@@ -11,13 +11,15 @@ pub enum BinOp {
     Mul,
     Div,
     Pow,
+    On,
+    Off,
 }
 
 impl BinOp {
     fn precedence(self) -> u8 {
         match self {
             BinOp::Add | BinOp::Sub => 1,
-            BinOp::Mul | BinOp::Div => 2,
+            BinOp::Mul | BinOp::Div | BinOp::On | BinOp::Off => 2,
             BinOp::Pow => 4,
         }
     }
@@ -35,7 +37,29 @@ impl fmt::Display for BinOp {
             BinOp::Mul => "*",
             BinOp::Div => "/",
             BinOp::Pow => "^",
+            BinOp::On => "on",
+            BinOp::Off => "off",
         })
+    }
+}
+
+/// Multi-word forms such as `20 is 10% of what`. Each pops its operands
+/// (first-written operand deepest) and pushes one value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Phrase {
+    IsPercentOfWhat,
+    IsPercentOnWhat,
+    IsPercentOffWhat,
+    WhatPercentOf,
+    WhatPercentOn,
+    WhatPercentOff,
+    PercentChange,
+    AsPercent,
+}
+
+impl Phrase {
+    pub fn arity(self) -> usize {
+        if self == Phrase::AsPercent { 1 } else { 2 }
     }
 }
 
@@ -44,6 +68,9 @@ pub enum Node {
     Num(Number),
     Neg,
     Bin(BinOp),
+    /// Postfix `%`: the top value becomes a percentage of itself divided by 100.
+    Percent,
+    Phrase(Phrase),
 }
 
 /// A well-formed expression in reverse Polish order. Parsing, evaluation and
@@ -69,9 +96,37 @@ impl Expr {
         lhs
     }
 
+    pub fn percent(mut self) -> Expr {
+        self.rpn.push(Node::Percent);
+        self
+    }
+
+    pub(crate) fn from_nodes(rpn: Vec<Node>) -> Expr {
+        assert!(is_balanced(&rpn), "internal error: expression does not reduce to exactly one value");
+        Expr { rpn }
+    }
+
     pub fn nodes(&self) -> &[Node] {
         &self.rpn
     }
+}
+
+/// True when evaluating `rpn` never underflows and leaves exactly one value.
+fn is_balanced(rpn: &[Node]) -> bool {
+    let mut depth: usize = 0;
+    for node in rpn {
+        let (needs, leaves) = match node {
+            Node::Num(_) => (0, 1),
+            Node::Neg | Node::Percent => (1, 1),
+            Node::Bin(_) => (2, 1),
+            Node::Phrase(p) => (p.arity(), 1),
+        };
+        if depth < needs {
+            return false;
+        }
+        depth = depth - needs + leaves;
+    }
+    depth == 1
 }
 
 enum Pending {
@@ -117,13 +172,20 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
             (Tok::LParen, true) => ops.push(Pending::LParen),
             (Tok::Minus, true) => ops.push(Pending::Neg),
             (Tok::Plus, true) => {}
-            (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret, false) => {
-                let op = match t.tok {
+            (Tok::Percent { attached: true }, false) => out.push(Node::Percent),
+            (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret, false)
+            | (Tok::Word(_), false) => {
+                let op = match &t.tok {
                     Tok::Plus => BinOp::Add,
                     Tok::Minus => BinOp::Sub,
                     Tok::Star => BinOp::Mul,
                     Tok::Slash => BinOp::Div,
-                    _ => BinOp::Pow,
+                    Tok::Caret => BinOp::Pow,
+                    Tok::Word(w) if w == "of" => BinOp::Mul,
+                    Tok::Word(w) if w == "on" => BinOp::On,
+                    Tok::Word(w) if w == "off" => BinOp::Off,
+                    Tok::Word(w) => return Err(Error::UnexpectedWord { word: w.clone(), at: t.at }),
+                    _ => unreachable!("outer pattern admits only operators and words"),
                 };
                 while let Some(top) = ops.last() {
                     let (tp, p) = (top.precedence(), op.precedence());
@@ -143,6 +205,7 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     None => return Err(Error::UnexpectedToken { found: t.tok.describe(), at: t.at }),
                 }
             },
+            (Tok::Word(w), true) => return Err(Error::UnexpectedWord { word: w.clone(), at: t.at }),
             (tok, _) => return Err(Error::UnexpectedToken { found: tok.describe(), at: t.at }),
         }
     }
@@ -171,6 +234,14 @@ impl fmt::Display for Expr {
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("(-{x})"));
                 }
+                Node::Percent => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x}%)"));
+                }
+                Node::Phrase(p) => {
+                    let args = stack.split_off(stack.len() - p.arity());
+                    stack.push(format!("{p:?}({})", args.join(", ")));
+                }
                 Node::Bin(op) => {
                     let r = stack.pop().expect("well-formed");
                     let l = stack.pop().expect("well-formed");
@@ -179,5 +250,39 @@ impl fmt::Display for Expr {
             }
         }
         f.write_str(&stack.pop().expect("well-formed"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn n(v: i64) -> Node {
+        Node::Num(Number::from_i64(v))
+    }
+
+    #[test]
+    fn balance_check_accepts_only_expressions_that_reduce_to_one_value() {
+        assert!(is_balanced(&[n(1)]));
+        assert!(is_balanced(&[n(1), Node::Neg]));
+        assert!(is_balanced(&[n(1), Node::Percent]));
+        assert!(is_balanced(&[n(1), n(2), Node::Bin(BinOp::Add)]));
+        assert!(is_balanced(&[n(1), n(2), n(3), Node::Bin(BinOp::Add), Node::Bin(BinOp::Mul)]));
+        assert!(is_balanced(&[n(1), Node::Phrase(Phrase::AsPercent)]));
+        assert!(is_balanced(&[n(1), n(2), Node::Phrase(Phrase::PercentChange)]));
+        assert!(!is_balanced(&[]));
+        assert!(!is_balanced(&[Node::Neg]));
+        assert!(!is_balanced(&[Node::Bin(BinOp::Add)]));
+        assert!(!is_balanced(&[n(1), Node::Bin(BinOp::Add)]));
+        assert!(!is_balanced(&[n(1), n(2)]));
+        assert!(!is_balanced(&[n(1), n(2), n(3), Node::Bin(BinOp::Add)]));
+        assert!(!is_balanced(&[n(1), Node::Phrase(Phrase::PercentChange)]));
+        assert!(!is_balanced(&[n(1), n(2), Node::Phrase(Phrase::AsPercent)]));
+    }
+
+    #[test]
+    #[should_panic(expected = "does not reduce to exactly one value")]
+    fn constructing_an_unbalanced_expression_panics() {
+        let _ = Expr::from_nodes(vec![n(1), n(2)]);
     }
 }

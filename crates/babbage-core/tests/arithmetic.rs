@@ -1,4 +1,4 @@
-use babbage_core::{Error, FormatOptions, Number, evaluate, format_decimal};
+use babbage_core::{Error, FormatOptions, Number, evaluate_plain as evaluate, format_decimal};
 
 fn exact(expr: &str) -> String {
     let n = evaluate(expr).unwrap_or_else(|e| panic!("{expr:?} failed: {e}"));

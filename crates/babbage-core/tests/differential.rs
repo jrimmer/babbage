@@ -1,4 +1,4 @@
-use babbage_core::{Error, FormatOptions, evaluate, format_decimal};
+use babbage_core::{Error, FormatOptions, evaluate_plain as evaluate, format_decimal};
 
 const CORPUS: &str = include_str!("corpus/arith.tsv");
 

@@ -1,26 +1,28 @@
 use crate::error::Error;
-use crate::number::Number;
-use crate::parser::{BinOp, Expr, Node};
+use crate::parser::{Expr, Node};
+use crate::value::Value;
 
-pub fn eval(expr: &Expr) -> Result<Number, Error> {
-    let mut stack: Vec<Number> = Vec::new();
+pub fn eval(expr: &Expr) -> Result<Value, Error> {
+    let mut stack: Vec<Value> = Vec::new();
     for node in expr.nodes() {
         match node {
-            Node::Num(n) => stack.push(n.clone()),
+            Node::Num(n) => stack.push(Value::plain(n.clone())),
             Node::Neg => {
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.neg());
             }
+            Node::Percent => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.into_percent_literal()?);
+            }
             Node::Bin(op) => {
                 let r = stack.pop().expect("well-formed expression");
                 let l = stack.pop().expect("well-formed expression");
-                stack.push(match op {
-                    BinOp::Add => l.add(&r)?,
-                    BinOp::Sub => l.sub(&r)?,
-                    BinOp::Mul => l.mul(&r)?,
-                    BinOp::Div => l.div(&r)?,
-                    BinOp::Pow => l.pow(&r)?,
-                });
+                stack.push(Value::binary(*op, &l, &r)?);
+            }
+            Node::Phrase(p) => {
+                let args = stack.split_off(stack.len() - p.arity());
+                stack.push(Value::phrase(*p, &args)?);
             }
         }
     }
