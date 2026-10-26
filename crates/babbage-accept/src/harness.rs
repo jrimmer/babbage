@@ -19,7 +19,8 @@ pub struct Harness {
     pub repo: PathBuf,
     bin: PathBuf,
     nested: Nested,
-    pointer: Pointer,
+    pointer: Helper,
+    ime: Option<Helper>,
     work: tempfile::TempDir,
     pub logs: PathBuf,
     launches: usize,
@@ -92,38 +93,42 @@ impl Drop for Nested {
 
 /// A virtual mouse (`tools/pointer.py`) that lives as long as the nested compositor, so its seat always
 /// reports a pointer and the app listens for the mouse from its first frame.
-struct Pointer {
+/// A helper process that drives the nested compositor over its own protocol (the virtual pointer, the input
+/// method): one command per line on its stdin, `ok` back on its stdout.
+struct Helper {
+    name: &'static str,
     child: Child,
     stdin: ChildStdin,
     stdout: BufReader<ChildStdout>,
 }
 
-impl Pointer {
-    fn start(script: &Path, wayland: &str, extent: (u32, u32)) -> anyhow::Result<Pointer> {
+impl Helper {
+    fn start(name: &'static str, script: &Path, args: &[String]) -> anyhow::Result<Helper> {
         let mut child = Process::new("python3")
             .arg("-I")
             .arg(script)
-            .args([wayland, &extent.0.to_string(), &extent.1.to_string()])
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .context("python3 tools/pointer.py")?;
+            .with_context(|| format!("python3 {}", script.display()))?;
         let stdin = child.stdin.take().context("no stdin")?;
         let stdout = BufReader::new(child.stdout.take().context("no stdout")?);
-        let mut pointer = Pointer {
+        let mut helper = Helper {
+            name,
             child,
             stdin,
             stdout,
         };
-        let first = pointer.read_line()?;
-        ensure!(first == "ready", "pointer.py said {first:?}");
-        Ok(pointer)
+        let first = helper.read_line()?;
+        ensure!(first == "ready", "{name} said {first:?}");
+        Ok(helper)
     }
 
     fn read_line(&mut self) -> anyhow::Result<String> {
         let mut line = String::new();
         let n = self.stdout.read_line(&mut line)?;
-        ensure!(n > 0, "pointer.py exited");
+        ensure!(n > 0, "{} exited", self.name);
         Ok(line.trim().to_owned())
     }
 
@@ -131,12 +136,12 @@ impl Pointer {
         writeln!(self.stdin, "{command}")?;
         self.stdin.flush()?;
         let answer = self.read_line()?;
-        ensure!(answer == "ok", "pointer.py: {command:?} gave {answer:?}");
+        ensure!(answer == "ok", "{}: {command:?} gave {answer:?}", self.name);
         Ok(())
     }
 }
 
-impl Drop for Pointer {
+impl Drop for Helper {
     fn drop(&mut self) {
         // Only the helper this harness started.
         let _ = self.child.kill();
@@ -304,10 +309,14 @@ impl Harness {
                     m["y"].as_f64().unwrap_or(0.) + m["height"].as_f64().unwrap_or(0.) / scale,
                 );
             }
-            Pointer::start(
+            Helper::start(
+                "pointer.py",
                 &repo.join("tools/pointer.py"),
-                &nested.wayland,
-                (right.ceil() as u32, bottom.ceil() as u32),
+                &[
+                    nested.wayland.clone(),
+                    (right.ceil() as u32).to_string(),
+                    (bottom.ceil() as u32).to_string(),
+                ],
             )?
         };
         Ok(Harness {
@@ -315,6 +324,7 @@ impl Harness {
             bin,
             nested,
             pointer,
+            ime: None,
             work,
             logs,
             launches: 0,
@@ -437,6 +447,36 @@ impl Harness {
             .and_then(|c| c.iter().find(|c| c["pid"].as_u64() == Some(u64::from(pid))))
             .cloned()
             .context("no window for the app yet")
+    }
+
+    /// Starts the scripted input method (once). It owns the seat's input method until the run ends, so only the
+    /// checks that compose text start it.
+    fn ime(&mut self) -> anyhow::Result<&mut Helper> {
+        if self.ime.is_none() {
+            self.ime = Some(Helper::start(
+                "ime.py",
+                &self.repo.join("tools/ime.py"),
+                std::slice::from_ref(&self.nested.wayland),
+            )?);
+        }
+        Ok(self.ime.as_mut().expect("just started"))
+    }
+
+    /// Waits until a text field has enabled text input, then shows `text` as the composition.
+    pub fn compose(&mut self, text: &str) -> anyhow::Result<()> {
+        let ime = self.ime()?;
+        ime.send("wait")?;
+        ime.send(&format!("preedit {text}"))
+    }
+
+    /// Ends the composition by committing `text`.
+    pub fn commit_composition(&mut self, text: &str) -> anyhow::Result<()> {
+        self.ime()?.send(&format!("commit {text}"))
+    }
+
+    /// Takes the composition away without committing anything.
+    pub fn clear_composition(&mut self) -> anyhow::Result<()> {
+        self.ime()?.send("clear")
     }
 
     /// Floats the app's window and gives it an exact size in layout points (it is tiled to the whole output

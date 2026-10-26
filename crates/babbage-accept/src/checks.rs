@@ -36,6 +36,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("comment-toggle", comment_toggle),
     ("export", export_sheet),
     ("resize", resize_window),
+    ("ime-composition", ime_composition),
     ("clipboard-lines", clipboard_lines),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -1199,6 +1200,55 @@ fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
             "no answer text on screen for line 1 at {w} wide"
         );
     }
+    app.finish()
+}
+
+/// A scripted input method composes text in the real window through the Wayland input-method protocol, the way
+/// fcitx or ibus would: the composition shows in the line but is not the sheet's text until it is committed,
+/// Return does not end a composition, and a commit puts the text in and clears the mark.
+fn ime_composition(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("ime-composition", None, &[])?;
+    h.type_text("2 + 2 = ")?;
+    app.wait_for("the typed text", T, |s| s["lines"][0]["text"] == "2 + 2 = ")?;
+    ensure!(
+        app.state()?["composition"].is_null(),
+        "a composition at the start"
+    );
+
+    h.compose("ni")?;
+    let s = app.wait_for("the composition shown", T, |s| s["composition"] == "ni")?;
+    ensure!(
+        s["lines"][0]["text"] == "2 + 2 = ni",
+        "the composition is in the line while it is composed: {}",
+        s["lines"][0]
+    );
+    // A longer composition replaces the first, still one mark.
+    h.compose("nihao")?;
+    app.wait_for("the composition replaced", T, |s| {
+        s["composition"] == "nihao" && s["lines"][0]["text"] == "2 + 2 = nihao"
+    })?;
+    // Taking it away leaves the text as it was.
+    h.clear_composition()?;
+    app.wait_for("the composition cleared", T, |s| {
+        s["composition"].is_null() && s["lines"][0]["text"] == "2 + 2 = "
+    })?;
+    // A commit makes it text.
+    h.compose("ni")?;
+    app.wait_for("a new composition", T, |s| s["composition"] == "ni")?;
+    h.commit_composition("你好")?;
+    let s = app.wait_for("the committed text", T, |s| {
+        s["composition"].is_null() && s["lines"][0]["text"] == "2 + 2 = 你好"
+    })?;
+    ensure!(
+        s["cursor"]["col"].as_u64() == Some("2 + 2 = 你好".len() as u64),
+        "the caret is after the committed text: {}",
+        s["cursor"]
+    );
+    // Typing on the keyboard carries on after it, and the line still works out.
+    h.type_text("x")?;
+    app.wait_for("keyboard text after a commit", T, |s| {
+        s["lines"][0]["text"] == "2 + 2 = 你好x"
+    })?;
     app.finish()
 }
 

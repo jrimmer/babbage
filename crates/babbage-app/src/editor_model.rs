@@ -525,6 +525,15 @@ impl Editor {
         self.set_caret(head, true);
     }
 
+    /// The text being composed by an input method, if one is composing.
+    pub fn marked_text(&self) -> Option<String> {
+        let m = self.marked?;
+        self.lines
+            .get(m.line)?
+            .get(m.start..m.end)
+            .map(str::to_owned)
+    }
+
     /// Selects the run of letters and digits (or of spaces, or of marks) under `p`: a double click.
     pub fn select_word_at(&mut self, p: Pos) {
         let p = self.clamp(p);

@@ -173,6 +173,7 @@ pub fn report(v: &SheetView) -> Value {
         "lines": lines,
         "cursor": {"line": head.line, "col": head.col},
         "selection": sel,
+        "composition": v.ed.marked_text(),
         "total": v.computed.total.as_ref().map(|t| json!({"text": t.text, "exact": t.exact, "error": t.error})),
         "tzdb": babbage_core::settings::scoped(crate::prefs::current(), babbage_core::zones::current_release),
         "scroll": v.scroll(),
