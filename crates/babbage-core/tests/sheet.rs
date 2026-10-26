@@ -443,7 +443,7 @@ fn a_function_name_is_never_dropped_as_prose() {
         ("ln(1)", "0"),
         ("sqrt 16", "4"),
         ("3 + sqrt(16) + 1", "8"),
-        ("the total is sqrt(16) dollars", "4"),
+        ("the total is sqrt(16) items", "4"),
     ] {
         let r = run(&[line]);
         assert_eq!(shown(&r[0]), want, "{line}");
