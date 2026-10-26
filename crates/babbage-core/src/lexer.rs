@@ -835,8 +835,8 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .map(|days| (Value::date_at(days, pos - i > 10), pos))
 }
 
-/// `5'` and `5' 6"`: feet, with inches after them. The marks are feet (`'`, `’`) and inches (`"`, `″`); the prime
-/// `′` is the arcminute.
+/// `5'` and `5' 6"`: feet, with inches after them. The marks are feet (`'`, `’`) and inches (`"`, `”`); the primes
+/// `′` and `″` are the arcminute and arcsecond.
 fn feet_inches_at(
     src: &str,
     chars: &[(usize, char)],
@@ -844,6 +844,11 @@ fn feet_inches_at(
     next: usize,
 ) -> Result<Option<(Value, usize)>, Error> {
     let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    // `6"` on its own is six inches.
+    if matches!(c(next), Some('"' | '”')) {
+        let inch = crate::units::lookup("inch").ok_or(Error::IncompatibleUnits)?;
+        return Ok(Some((Value::quantity(feet.clone(), inch)?, next + 1)));
+    }
     if !matches!(c(next), Some('\'' | '’')) {
         return Ok(None);
     }
@@ -853,7 +858,7 @@ fn feet_inches_at(
     }
     if c(j).is_some_and(|d| d.is_ascii_digit()) {
         let (inches, after) = scan_number(src, chars, j, false)?;
-        if matches!(c(after), Some('"' | '″')) {
+        if matches!(c(after), Some('"' | '”')) {
             return Ok(Some((Value::feet_inches(feet.clone(), inches)?, after + 1)));
         }
     }
