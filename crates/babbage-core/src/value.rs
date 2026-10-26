@@ -351,7 +351,7 @@ impl Value {
         if a.unit.dim() != b.unit.dim() {
             return Err(mismatch(&a.unit, &b.unit));
         }
-        Ok(a.si()?.cmp(&b.si()?))
+        Ok(a.si_against(b)?.cmp(&b.si_against(a)?))
     }
 
     pub fn neg(&self) -> Value {
@@ -418,8 +418,8 @@ impl Value {
         }
         let number = self
             .number
-            .mul(&self.unit.factor()?)?
-            .div(&target.factor()?)?;
+            .mul(&self.unit.factor_against(target)?)?
+            .div(&target.factor_against(&self.unit)?)?;
         Value::quantity(number, target.clone())
     }
 
@@ -435,15 +435,16 @@ impl Value {
         Ok(Value::percent(self.number.div(&Number::from_i64(100))?))
     }
 
-    /// The value in SI base units, for comparing quantities in different units.
-    fn si(&self) -> Result<Number, Error> {
+    /// The value in SI base units, for comparing quantities in different units. Set against `other`, calendar
+    /// units are counted in working time when either side holds a workday.
+    fn si_against(&self, other: &Value) -> Result<Number, Error> {
         if self.unit.has_offset() {
             return Err(Error::UnsupportedOperation(TEMPERATURE));
         }
         if self.unit.is_empty() {
             Ok(self.number.clone())
         } else {
-            self.number.mul(&self.unit.factor()?)
+            self.number.mul(&self.unit.factor_against(&other.unit)?)
         }
     }
 
@@ -597,7 +598,7 @@ impl Value {
                 | Phrase::MultiplierChange,
                 [a, b],
             ) if a.kind == Plain && b.kind == Plain && a.unit.dim() == b.unit.dim() => {
-                let (x, y) = (a.si()?, b.si()?);
+                let (x, y) = (a.si_against(b)?, b.si_against(a)?);
                 Ok(Value::multiplier(match phrase {
                     Phrase::MultiplierOf => x.div(&y)?,
                     Phrase::MultiplierOn => x.sub(&y)?.div(&y)?,
@@ -634,7 +635,7 @@ impl Value {
                 | Phrase::PercentChange,
                 [a, b],
             ) if a.kind == Plain && b.kind == Plain && a.unit.dim() == b.unit.dim() => {
-                let (x, y) = (a.si()?, b.si()?);
+                let (x, y) = (a.si_against(b)?, b.si_against(a)?);
                 let fraction = match phrase {
                     Phrase::WhatPercentOf => x.div(&y)?,
                     Phrase::WhatPercentOn => x.sub(&y)?.div(&y)?,
@@ -850,9 +851,9 @@ fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     }
     let order = Value::compare(l, r)?;
     if l.approx || r.approx {
-        let gap = l.si()?.sub(&r.si()?)?.abs();
-        let scale = if r.si()?.abs() > Number::from_i64(1) {
-            r.si()?.abs()
+        let gap = l.si_against(r)?.sub(&r.si_against(l)?)?.abs();
+        let scale = if r.si_against(l)?.abs() > Number::from_i64(1) {
+            r.si_against(l)?.abs()
         } else {
             Number::from_i64(1)
         };
@@ -952,7 +953,10 @@ fn sum(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
             if l.unit.dim() != r.unit.dim() {
                 return Err(mismatch(&l.unit, &r.unit));
             }
-            let (fl, fr) = (l.unit.factor()?, r.unit.factor()?);
+            let (fl, fr) = (
+                l.unit.factor_against(&r.unit)?,
+                r.unit.factor_against(&l.unit)?,
+            );
             let target = if fr > fl { &r.unit } else { &l.unit };
             let ft = if fr > fl { &fr } else { &fl };
             let (a, b) = (l.number.mul(&fl)?.div(ft)?, r.number.mul(&fr)?.div(ft)?);
@@ -974,7 +978,9 @@ fn product(l: &Value, r: &Value) -> Result<Value, Error> {
     }
     let same_kind_different_unit = l.unit != r.unit && l.unit.dim() == r.unit.dim();
     let right = if same_kind_different_unit {
-        r.number.mul(&r.unit.factor()?)?.div(&l.unit.factor()?)?
+        r.number
+            .mul(&r.unit.factor_against(&l.unit)?)?
+            .div(&l.unit.factor_against(&r.unit)?)?
     } else {
         r.number.clone()
     };
@@ -990,7 +996,9 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
     let right = if l.unit == r.unit {
         r.number.clone()
     } else if !l.unit.is_empty() && l.unit.dim() == r.unit.dim() {
-        r.number.mul(&r.unit.factor()?)?.div(&l.unit.factor()?)?
+        r.number
+            .mul(&r.unit.factor_against(&l.unit)?)?
+            .div(&l.unit.factor_against(&r.unit)?)?
     } else {
         return Err(Error::IncompatibleUnits);
     };

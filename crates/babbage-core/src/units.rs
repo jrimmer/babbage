@@ -697,6 +697,27 @@ pub fn lookup(name: &str) -> Option<UnitExpr> {
     None
 }
 
+/// Calendar units that count in working time when a workday is involved: a week is five workdays, so a day is
+/// five sevenths of one.
+fn is_calendar_unit(symbol: &str) -> bool {
+    matches!(symbol, "day" | "wk" | "mo" | "yr")
+}
+
+/// The factor of a unit to SI when `workday_context` says a workday is on the other side or in the same
+/// expression: calendar units are scaled to working time so that a week is exactly five workdays.
+fn factor_in_context(def: &UnitDef, workday_context: bool) -> Number {
+    let base = factor_now(def);
+    if workday_context && is_calendar_unit(def.symbol) {
+        let hours = i64::from(crate::settings::work_hours_per_day());
+        let scale = Number::from_i64(5 * hours)
+            .div(&Number::from_i64(7 * 24))
+            .expect("seven days of 24 hours is not zero");
+        base.mul(&scale).unwrap_or(base)
+    } else {
+        base
+    }
+}
+
 /// A unit's factor to SI under the current settings: a workday is the work-hours setting, and the larger
 /// US volume units become the imperial ones when the volume system says so.
 fn factor_now(def: &UnitDef) -> Number {
@@ -795,6 +816,7 @@ impl UnitExpr {
     pub fn reduce(&self) -> Result<(Number, UnitExpr), Error> {
         let mut parts = self.0.clone();
         let mut scale = Number::from_i64(1);
+        let workday_context = self.contains_workday();
         'again: loop {
             for i in 0..parts.len() {
                 for j in 0..parts.len() {
@@ -808,9 +830,8 @@ impl UnitExpr {
                         && dv.offset.is_zero()
                     {
                         let k = e.min(-f);
-                        let ratio = du
-                            .factor
-                            .div(&dv.factor)?
+                        let ratio = factor_in_context(du, workday_context)
+                            .div(&factor_in_context(dv, workday_context))?
                             .pow(&Number::from_i64(i64::from(k)))?;
                         scale = scale.mul(&ratio)?;
                         parts[i].1 -= k;
@@ -891,12 +912,29 @@ impl UnitExpr {
         })
     }
 
+    /// True when a workday is part of this expression.
+    pub fn contains_workday(&self) -> bool {
+        self.0
+            .iter()
+            .any(|(u, _)| registry().defs[*u as usize].symbol == "workday")
+    }
+
     /// Exact factor from this unit to SI base units.
     pub fn factor(&self) -> Result<Number, Error> {
+        self.factor_in(false)
+    }
+
+    /// The factor to use when this unit is set against `other`: where either holds a workday, calendar
+    /// units are counted in working time (a week is five workdays).
+    pub fn factor_against(&self, other: &UnitExpr) -> Result<Number, Error> {
+        self.factor_in(self.contains_workday() || other.contains_workday())
+    }
+
+    fn factor_in(&self, workday_context: bool) -> Result<Number, Error> {
         let mut f = Number::from_i64(1);
         for (u, e) in &self.0 {
             let def = &registry().defs[*u as usize];
-            let base = factor_now(def);
+            let base = factor_in_context(def, workday_context);
             let powered = base.pow(&Number::from_i64(i64::from(*e)))?;
             f = f.mul(&powered)?;
         }
