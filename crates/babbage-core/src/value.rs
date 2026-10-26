@@ -39,8 +39,24 @@ pub struct Value {
     radix: u8,
     /// The words of a `Text` value.
     text: Option<std::rc::Rc<str>>,
-    /// Show a length of time as `3 weeks 5 days` instead of a single unit.
-    timespan: bool,
+    /// How to write a quantity when it is not a single number and unit: `3 weeks 5 days`, `03:04:05`.
+    layout: Option<Shown>,
+}
+
+/// A way of writing a length (usually of time) as several parts, chosen with `as timespan`,
+/// `as laptime` or `in hours and minutes`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Shown {
+    /// `3 weeks 5 days`
+    Timespan,
+    /// `03:04:05` and `00:00:01.5`
+    Laptime,
+    /// `235 h 12 min`: whole amounts of the larger units, then the rest in the last.
+    Parts(Vec<UnitExpr>),
+    /// Every digit, with no separators and no k, M or G: a Unix timestamp.
+    Digits,
+    /// `01:02:03:04` at this many whole frames per second.
+    Timecode(Number),
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -60,7 +76,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -72,7 +88,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -90,7 +106,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         })
     }
 
@@ -110,7 +126,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -122,7 +138,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -134,18 +150,79 @@ impl Value {
             approx: false,
             radix: 10,
             text: Some(words.into()),
-            timespan: false,
+            layout: None,
         }
     }
 
     /// This length of time, to be shown as a timespan.
     pub fn as_timespan(mut self) -> Value {
-        self.timespan = true;
+        self.layout = Some(Shown::Timespan);
+        self
+    }
+
+    pub fn as_laptime(mut self) -> Value {
+        self.layout = Some(Shown::Laptime);
         self
     }
 
     pub fn is_timespan(&self) -> bool {
-        self.timespan
+        self.layout == Some(Shown::Timespan)
+    }
+
+    /// A length of time shown as hours, minutes, seconds and frames at a whole number of frames per second.
+    pub fn as_timecode(mut self, frames_per_second: Number) -> Value {
+        self.layout = Some(Shown::Timecode(frames_per_second));
+        self
+    }
+
+    /// The frame rate this value is written at, when it is a timecode.
+    pub fn timecode_rate(&self) -> Option<&Number> {
+        match &self.layout {
+            Some(Shown::Timecode(rate)) => Some(rate),
+            _ => None,
+        }
+    }
+
+    /// A whole number shown with every digit, like a Unix timestamp.
+    pub fn written_in_full(mut self) -> Value {
+        self.layout = Some(Shown::Digits);
+        self
+    }
+
+    pub fn is_laptime(&self) -> bool {
+        self.layout == Some(Shown::Laptime)
+    }
+
+    /// Chooses how a quantity is written, refusing a layout its dimension cannot have.
+    pub fn show(self, shown: Shown) -> Result<Value, Error> {
+        if self.kind != Kind::Plain || self.unit.is_empty() {
+            return Err(Error::IncompatibleUnits);
+        }
+        match &shown {
+            Shown::Timespan | Shown::Laptime if !is_length_of_time(&self) => {
+                return Err(Error::UnsupportedOperation("this needs a length of time"));
+            }
+            Shown::Digits => {}
+            Shown::Timecode(rate) => {
+                if !is_length_of_time(&self) || !rate.is_integer() || !rate.is_positive() {
+                    return Err(Error::UnsupportedOperation(
+                        "a timecode needs a length of time and a whole number of frames per second",
+                    ));
+                }
+            }
+            Shown::Parts(units) => {
+                for u in units {
+                    if u.dim() != self.unit.dim() {
+                        return Err(mismatch(&self.unit, u));
+                    }
+                }
+            }
+            _ => {}
+        }
+        Ok(Value {
+            layout: Some(shown),
+            ..self
+        })
     }
 
     pub fn words(&self) -> Option<&str> {
@@ -160,7 +237,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -172,7 +249,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -184,7 +261,7 @@ impl Value {
             approx: false,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         }
     }
 
@@ -260,7 +337,7 @@ impl Value {
             approx: self.approx,
             radix: 10,
             text: None,
-            timespan: false,
+            layout: None,
         })
     }
 
@@ -285,7 +362,7 @@ impl Value {
             approx: self.approx,
             radix: self.radix,
             text: self.text.clone(),
-            timespan: self.timespan,
+            layout: self.layout.clone(),
         }
     }
 
@@ -372,7 +449,7 @@ impl Value {
 
     pub fn binary(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
         let approx = l.approx || r.approx || reconciles_approximate_units(&[&l.unit, &r.unit]);
-        Value::binary_exact(op, l, r).map(|v| v.tainted(approx))
+        Value::binary_exact(op, l, r).map(|v| inherit_layout(op, l, r, v.tainted(approx)))
     }
 
     fn binary_exact(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
@@ -692,6 +769,32 @@ fn shift_clock(clock: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
     Ok(Value::clock(wrapped))
 }
 
+/// A sum or difference of two lengths of time is written the way its operands were: a timespan stays a
+/// timespan and a lap time stays a lap time.
+fn inherit_layout(op: BinOp, l: &Value, r: &Value, v: Value) -> Value {
+    let wanted = |x: &Value| {
+        matches!(
+            x.layout,
+            Some(Shown::Timespan | Shown::Laptime | Shown::Timecode(_))
+        )
+    };
+    if !matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
+        || v.kind != Kind::Plain
+        || v.unit.is_empty()
+        || !is_length_of_time(&v)
+    {
+        return v;
+    }
+    let layout = if wanted(l) {
+        l.layout.clone()
+    } else if wanted(r) {
+        r.layout.clone()
+    } else {
+        return v;
+    };
+    Value { layout, ..v }
+}
+
 fn temporal_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     let seconds = || crate::units::lookup("s").expect("seconds are defined");
     match (op, l.kind, r.kind) {
@@ -714,7 +817,7 @@ fn temporal_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> 
             shift_clock(r, l, 1)
         }
         (BinOp::Sub, Kind::Clock, Kind::Clock) => {
-            Ok(Value::quantity(l.number.sub(&r.number)?, seconds())?.as_timespan())
+            Ok(Value::quantity(l.number.sub(&r.number)?.abs(), seconds())?.as_timespan())
         }
         _ => Err(Error::UnsupportedOperation(
             "a date or time can be shifted by a length of time, and two of them can be subtracted",
@@ -925,14 +1028,10 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             text: radix_text(&v.number, v.radix),
             exact: true,
         },
-        Kind::Plain if v.timespan && is_length_of_time(v) => Formatted {
-            text: crate::dates::format_timespan(
-                &v.number
-                    .mul(&v.unit.factor().unwrap_or_else(|_| Number::from_i64(1)))
-                    .unwrap_or_else(|_| v.number.clone()),
-            ),
-            exact: true,
-        },
+        Kind::Plain if v.layout == Some(Shown::Digits) => {
+            format_decimal(&v.number, &opts.every_digit())
+        }
+        Kind::Plain if v.layout.is_some() && !v.unit.is_empty() => format_layout(v, opts),
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {
                 return f;
@@ -1050,5 +1149,66 @@ fn radix_text(n: &Number, radix: u8) -> String {
                 .collect();
             format!("{sign}{digits}{subscript}")
         }
+    }
+}
+
+/// A quantity written as `3 weeks 5 days`, `03:04:05` or `235 h 12 min`.
+fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
+    let base = v
+        .number
+        .mul(&v.unit.factor().unwrap_or_else(|_| Number::from_i64(1)))
+        .unwrap_or_else(|_| v.number.clone());
+    match v.layout.as_ref().expect("checked by the caller") {
+        Shown::Timespan => {
+            let (text, exact) = crate::dates::format_timespan(&base);
+            Formatted { text, exact }
+        }
+        Shown::Laptime => {
+            let (text, exact) = crate::dates::format_laptime(&base);
+            Formatted { text, exact }
+        }
+        Shown::Parts(units) => format_parts(&base, units, opts),
+        Shown::Timecode(rate) => {
+            let (text, exact) = crate::dates::format_timecode(&base, rate);
+            Formatted { text, exact }
+        }
+        Shown::Digits => unreachable!("written out before this is called"),
+    }
+}
+
+/// Whole amounts of each larger unit in turn, then what is left in the last unit.
+fn format_parts(base: &Number, units: &[UnitExpr], opts: &FormatOptions) -> Formatted {
+    let mut sized: Vec<(Number, &UnitExpr)> = units
+        .iter()
+        .filter_map(|u| u.factor().ok().map(|f| (f, u)))
+        .collect();
+    sized.sort_by(|a, b| b.0.cmp(&a.0));
+    let negative = base.is_negative();
+    let mut rest = base.abs();
+    let mut parts: Vec<String> = Vec::new();
+    let mut exact = true;
+    let last = sized.len().saturating_sub(1);
+    for (i, (factor, unit)) in sized.iter().enumerate() {
+        let amount = rest.div(factor).unwrap_or_else(|_| Number::from_i64(0));
+        let (shown, left) = if i == last {
+            (amount, Number::from_i64(0))
+        } else {
+            let whole = Number::from_ratio(amount.floor(), num_bigint::BigInt::from(1))
+                .unwrap_or_else(|_| Number::from_i64(0));
+            let left = rest
+                .sub(&whole.mul(factor).unwrap_or_else(|_| Number::from_i64(0)))
+                .unwrap_or_else(|_| Number::from_i64(0));
+            (whole, left)
+        };
+        if !shown.is_zero() || (i == last && parts.is_empty()) {
+            let f = format_decimal(&shown, &opts.unabbreviated());
+            exact &= f.exact;
+            parts.push(format!("{} {}", f.text, unit.symbol()));
+        }
+        rest = left;
+    }
+    Formatted {
+        text: format!("{}{}", if negative { "-" } else { "" }, parts.join(" ")),
+        exact,
     }
 }

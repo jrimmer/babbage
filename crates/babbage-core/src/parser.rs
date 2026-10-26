@@ -152,6 +152,8 @@ pub enum Node {
     Cast(UnitExpr),
     /// `... in USD at 1.05 USD/EUR`: pops a rate, then the value, converts using the rate.
     ConvertAt(UnitExpr),
+    /// `... as timespan`, `... as laptime`, `... in hours and minutes`: the same quantity, written differently.
+    Show(crate::value::Shown),
     Phrase(Phrase),
 }
 
@@ -214,7 +216,12 @@ fn is_balanced(rpn: &[Node]) -> bool {
     for node in rpn {
         let (needs, leaves) = match node {
             Node::Num(_) | Node::Value(_) => (0, 1),
-            Node::Neg | Node::Percent | Node::Unit(_) | Node::Convert(_) | Node::Cast(_) => (1, 1),
+            Node::Neg
+            | Node::Percent
+            | Node::Unit(_)
+            | Node::Convert(_)
+            | Node::Cast(_)
+            | Node::Show(_) => (1, 1),
             Node::Bin(_) | Node::ConvertAt(_) => (2, 1),
             Node::Call(_, n) => (*n, 1),
             Node::Phrase(p) => (p.arity(), 1),
@@ -512,6 +519,10 @@ impl fmt::Display for Expr {
                     let rate = stack.pop().expect("well-formed");
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("({x} in {} at {rate})", u.symbol()));
+                }
+                Node::Show(shown) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} shown as {shown:?})"));
                 }
                 Node::Phrase(p) => {
                     let args = stack.split_off(stack.len() - p.arity());

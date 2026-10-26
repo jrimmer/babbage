@@ -21,8 +21,8 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 15 | Rates, growth and change, multipliers (cooking is post-v1, ticket 0035) | done |
 | 16 | Dates and calendar math | built, oracle-tested (23k lines); mutation run pending |
 | 17 | Workdays and weekdays | built, oracle-tested; mutation run pending |
-| 18 | Timestamps and ISO 8601 | todo |
-| 19 | Clock time, timespans, lap times, video timecode | todo |
+| 18 | Timestamps and ISO 8601 | built, oracle-tested; mutation run pending |
+| 19 | Clock time, timespans, lap times, video timecode | built, oracle-tested (82k lines); mutation run pending; timecode syntax is ticket 0044 |
 | 20 | Time zones and cities (bundled tzdb) | todo |
 | 21 | Finance formulas: compound interest, present value, returns, loans, sales tax (CPI, income tax tables: post-v1) | done |
 | 22 | Number locale settings | todo |

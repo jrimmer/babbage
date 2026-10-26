@@ -19,6 +19,8 @@ pub enum Tok {
     Slash,
     Caret,
     Comma,
+    /// `01:02:03:04`, which only becomes a length of time once the line's frame rate is known.
+    Timecode(i64, i64, i64, i64),
     /// The rest of a line after `as` when it is written like a date format: `EEEE, MMM d, yyyy`.
     Format(String),
     /// A comparison, logical or bitwise operator spelled with symbols.
@@ -48,6 +50,7 @@ impl Tok {
             Tok::Caret => "'^'".into(),
             Tok::Comma => "','".into(),
             Tok::Format(_) => "date format".into(),
+            Tok::Timecode(..) => "timecode".into(),
             Tok::Op(op) => format!("'{op}'"),
             Tok::Mod => "'mod'".into(),
             Tok::LParen => "'('".into(),
@@ -136,7 +139,39 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
 }
 
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
-    lex_raw(src).map(operator_words).map(crate::dates::rewrite)
+    lex_raw(src)
+        .and_then(resolve_timecodes)
+        .map(minutes_beside_time)
+        .map(operator_words)
+        .map(crate::dates::rewrite)
+}
+
+/// In a run of quantities written one after another (`3h 5m 10s`), `m` next to a unit of time is minutes.
+fn minutes_beside_time(mut toks: Vec<Token>) -> Vec<Token> {
+    let (metre, minute, second) = (
+        crate::units::lookup("m"),
+        crate::units::lookup("min"),
+        crate::units::lookup("s"),
+    );
+    let (Some(metre), Some(minute), Some(second)) = (metre, minute, second) else {
+        return toks;
+    };
+    let time = second.dim();
+    let is_time =
+        |t: Option<&Token>| matches!(t.map(|t| &t.tok), Some(Tok::Unit(u)) if u.dim() == time);
+    let is_num = |t: Option<&Token>| matches!(t.map(|t| &t.tok), Some(Tok::Num(_)));
+    for i in 1..toks.len() {
+        let is_metre = matches!(&toks[i].tok, Tok::Unit(u) if *u == metre);
+        if !is_metre || !is_num(toks.get(i - 1)) {
+            continue;
+        }
+        let after_time = i >= 3 && is_time(toks.get(i - 2)) && is_num(toks.get(i - 3));
+        let before_time = is_num(toks.get(i + 1)) && is_time(toks.get(i + 2));
+        if after_time || before_time {
+            toks[i].tok = Tok::Unit(minute.clone());
+        }
+    }
+    toks
 }
 
 fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
@@ -198,8 +233,43 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = end;
                 continue;
             }
+            '0'..='9' if iso_shape_at(&chars, i) => {
+                let (v, next) = iso_at(&chars, i).ok_or_else(|| Error::InvalidNumber {
+                    text: chars[i..i + 10].iter().map(|(_, ch)| *ch).collect(),
+                    at,
+                })?;
+                out.push(Token {
+                    tok: Tok::Value(v),
+                    at,
+                });
+                i = next;
+                continue;
+            }
+            '0'..='9' if timecode_at(&chars, i).is_some() => {
+                let (tok, next) = timecode_at(&chars, i).expect("checked by the guard");
+                out.push(Token { tok, at });
+                i = next;
+                continue;
+            }
+            '0'..='9' if clock_at(&chars, i).is_some() => {
+                let (v, next) = clock_at(&chars, i).expect("checked by the guard");
+                out.push(Token {
+                    tok: Tok::Value(v),
+                    at,
+                });
+                i = next;
+                continue;
+            }
             '0'..='9' => {
                 let (n, next) = scan_number(src, &chars, i, false)?;
+                if multiplier_x_at(&chars, next) {
+                    out.push(Token {
+                        tok: Tok::Value(Value::multiplier(n)),
+                        at,
+                    });
+                    i = next + 1;
+                    continue;
+                }
                 out.push(Token {
                     tok: Tok::Num(n),
                     at,
@@ -432,6 +502,336 @@ fn radix_prefix(chars: &[(usize, char)], i: usize) -> Option<(u8, usize)> {
         .get(i + 2)
         .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
         .then_some((radix, i + 2))
+}
+
+/// An `x` right after a number that makes it a multiplier (`1.5x`) and not a times sign: nothing that
+/// starts an operand comes after it.
+fn multiplier_x_at(chars: &[(usize, char)], x: usize) -> bool {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    if !matches!(c(x), Some('x' | 'X')) || c(x + 1).is_some_and(char::is_alphanumeric) {
+        return false;
+    }
+    let lone_zero = x >= 1
+        && c(x - 1) == Some('0')
+        && (x < 2 || !c(x - 2).is_some_and(|d| d.is_ascii_digit() || d == '.'));
+    if lone_zero {
+        return false;
+    }
+    let rest: Vec<char> = chars[x + 1..].iter().map(|(_, ch)| *ch).collect();
+    match rest.iter().find(|ch| !ch.is_whitespace()) {
+        None => true,
+        Some(ch) => {
+            matches!(ch, ')' | ',' | '+' | '-' | '\u{2212}' | '/' | '*' | '%')
+                || rest
+                    .iter()
+                    .collect::<String>()
+                    .trim_start()
+                    .to_lowercase()
+                    .starts_with("at ")
+        }
+    }
+}
+
+/// Ten characters written like `2019-04-01`: a date to read as one, so a bad day or month is an error
+/// and not a subtraction.
+fn iso_shape_at(chars: &[(usize, char)], i: usize) -> bool {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    let digit = |k: usize| c(k).is_some_and(|d| d.is_ascii_digit());
+    let after_ok = !c(i + 10).is_some_and(|d| d.is_ascii_digit() || d == '.');
+    let before_ok =
+        i == 0 || !c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | '-' | ':'));
+    before_ok
+        && after_ok
+        && (0..4).all(digit)
+        && c(i + 4) == Some('-')
+        && digit(i + 5)
+        && digit(i + 6)
+        && c(i + 7) == Some('-')
+        && digit(i + 8)
+        && digit(i + 9)
+}
+
+/// An ISO 8601 date or date and time that starts at `i`: `2019-04-01`, `2019-04-01T15:30:00`,
+/// `2019-04-01T15:30:00+11:00`, `2019-04-01T04:30:00Z`.
+fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
+    use crate::calendar::{self, Civil};
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    let digits = |from: usize, len: usize| -> Option<i64> {
+        (from..from + len).try_fold(0i64, |acc, k| {
+            c(k).and_then(|d| d.to_digit(10))
+                .map(|d| acc * 10 + i64::from(d))
+        })
+    };
+    if i > 0 && c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | '-' | ':')) {
+        return None;
+    }
+    let (year, month, day) = (digits(i, 4)?, digits(i + 5, 2)?, digits(i + 8, 2)?);
+    if c(i + 4) != Some('-') || c(i + 7) != Some('-') {
+        return None;
+    }
+    let civil = Civil {
+        year,
+        month: month as u32,
+        day: day as u32,
+    };
+    if !calendar::is_valid(civil) {
+        return None;
+    }
+    let mut pos = i + 10;
+    let mut seconds = Number::from_i64(0);
+    let mut zone = None;
+    if matches!(c(pos), Some('T' | 't')) {
+        let (h, m) = (digits(pos + 1, 2)?, digits(pos + 4, 2)?);
+        if c(pos + 3) != Some(':') || h > 23 || m > 59 {
+            return None;
+        }
+        pos += 6;
+        let mut s = 0;
+        let mut fraction = None;
+        if c(pos) == Some(':') {
+            s = digits(pos + 1, 2)?;
+            if s > 59 {
+                return None;
+            }
+            pos += 3;
+            if c(pos) == Some('.') {
+                let len = (pos + 1..)
+                    .take_while(|k| c(*k).is_some_and(|d| d.is_ascii_digit()))
+                    .count();
+                if len > 0 {
+                    let text: String = (pos + 1..pos + 1 + len).filter_map(c).collect();
+                    fraction = Number::from_decimal_str(&format!("0.{text}")).ok();
+                    pos += 1 + len;
+                }
+            }
+        }
+        seconds = Number::from_i64(h * 3600 + m * 60 + s);
+        if let Some(f) = fraction {
+            seconds = seconds.add(&f).ok()?;
+        }
+        match c(pos) {
+            Some('Z' | 'z') => {
+                zone = Some(0);
+                pos += 1;
+            }
+            Some(sign @ ('+' | '-')) => {
+                let (zh, zm) = (
+                    digits(pos + 1, 2)?,
+                    if c(pos + 3) == Some(':') {
+                        digits(pos + 4, 2)?
+                    } else {
+                        digits(pos + 3, 2)?
+                    },
+                );
+                let width = if c(pos + 3) == Some(':') { 6 } else { 5 };
+                if zh > 23 || zm > 59 {
+                    return None;
+                }
+                zone = Some((zh * 3600 + zm * 60) * if sign == '-' { -1 } else { 1 });
+                pos += width;
+            }
+            _ => {}
+        }
+    }
+    if c(pos).is_some_and(|ch| ch.is_alphanumeric()) {
+        return None;
+    }
+    let mut local = Number::from_i64(calendar::days_from_civil(civil) * 86_400)
+        .add(&seconds)
+        .ok()?;
+    if let Some(offset) = zone {
+        local = local
+            .sub(&Number::from_i64(offset))
+            .ok()?
+            .add(&Number::from_i64(crate::settings::local_offset_seconds()))
+            .ok()?;
+    }
+    local
+        .div(&Number::from_i64(86_400))
+        .ok()
+        .map(|days| (Value::date(days), pos))
+}
+
+/// A video timecode, `01:02:03:04`: hours, minutes, seconds and frames.
+fn timecode_at(chars: &[(usize, char)], i: usize) -> Option<(Tok, usize)> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    let digit_run = |from: usize| {
+        (from..)
+            .take_while(|k| c(*k).is_some_and(|d| d.is_ascii_digit()))
+            .count()
+    };
+    let number = |from: usize, len: usize| -> i64 {
+        (from..from + len)
+            .filter_map(|k| c(k).and_then(|d| d.to_digit(10)))
+            .fold(0i64, |acc, d| acc * 10 + i64::from(d))
+    };
+    if i > 0 && c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | ':' | ',')) {
+        return None;
+    }
+    let hour_len = digit_run(i);
+    if !(1..=3).contains(&hour_len) {
+        return None;
+    }
+    let mut pos = i + hour_len;
+    let mut fields = vec![number(i, hour_len)];
+    for _ in 0..3 {
+        if c(pos) != Some(':') || digit_run(pos + 1) != 2 {
+            return None;
+        }
+        fields.push(number(pos + 1, 2));
+        pos += 3;
+    }
+    if c(pos).is_some_and(|ch| ch.is_alphanumeric() || ch == '.' || ch == ':')
+        || fields[1] > 59
+        || fields[2] > 59
+    {
+        return None;
+    }
+    Some((
+        Tok::Timecode(fields[0], fields[1], fields[2], fields[3]),
+        pos,
+    ))
+}
+
+/// Gives every timecode on the line its frame rate: the `at 30 fps` written anywhere on it, else 24.
+fn resolve_timecodes(toks: Vec<Token>) -> Result<Vec<Token>, Error> {
+    if !toks.iter().any(|t| matches!(t.tok, Tok::Timecode(..))) {
+        return Ok(toks);
+    }
+    let fps = crate::units::lookup("fps");
+    let is_at = |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("at"));
+    let mut rate = Number::from_i64(24);
+    let mut skip: Option<usize> = None;
+    for k in 0..toks.len().saturating_sub(2) {
+        if is_at(&toks[k])
+            && let Tok::Num(n) = &toks[k + 1].tok
+            && matches!((&toks[k + 2].tok, &fps), (Tok::Unit(u), Some(f)) if u == f)
+        {
+            rate = n.clone();
+            skip = Some(k);
+            break;
+        }
+    }
+    if !rate.is_integer() || !rate.is_positive() {
+        return Err(Error::UnsupportedOperation(
+            "a timecode needs a whole number of frames per second",
+        ));
+    }
+    let seconds =
+        crate::units::lookup("s").ok_or(Error::UnsupportedOperation("seconds are missing"))?;
+    let mut out = Vec::with_capacity(toks.len());
+    for (k, t) in toks.into_iter().enumerate() {
+        if let Some(a) = skip
+            && (a..a + 3).contains(&k)
+        {
+            continue;
+        }
+        match t.tok {
+            Tok::Timecode(h, m, s, f) => {
+                if Number::from_i64(f).cmp(&rate) != std::cmp::Ordering::Less {
+                    return Err(Error::InvalidNumber {
+                        text: format!("frame {f} at {} frames per second", rate.numer()),
+                        at: t.at,
+                    });
+                }
+                let total = Number::from_i64(h * 3600 + m * 60 + s)
+                    .add(&Number::from_i64(f).div(&rate)?)?;
+                out.push(Token {
+                    tok: Tok::Value(
+                        Value::quantity(total, seconds.clone())?.as_timecode(rate.clone()),
+                    ),
+                    at: t.at,
+                });
+            }
+            _ => out.push(t),
+        }
+    }
+    Ok(out)
+}
+
+/// A time of day (`17:30`, `5:30 pm`, `5pm`) or a lap time (`03:04:05`, `00:00:01.5`) that starts at `i`.
+/// `am` and `pm` after a number of 1 to 12 mean a time of day, not attometres or picometres.
+fn clock_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    let digit_run = |from: usize| {
+        (from..)
+            .take_while(|k| c(*k).is_some_and(|d| d.is_ascii_digit()))
+            .count()
+    };
+    let number = |from: usize, len: usize| -> i64 {
+        (from..from + len)
+            .filter_map(|k| c(k).and_then(|d| d.to_digit(10)))
+            .fold(0i64, |acc, d| acc * 10 + i64::from(d))
+    };
+    if i > 0 && c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | ':' | ',')) {
+        return None;
+    }
+    let hour_len = digit_run(i);
+    if hour_len == 0 || hour_len > 6 {
+        return None;
+    }
+    let hour = number(i, hour_len);
+    let mut pos = i + hour_len;
+    let two_digits_below_60 = |at: usize| digit_run(at) == 2 && number(at, 2) < 60;
+    let mut minute = None;
+    let mut second = None;
+    let mut fraction = None;
+    if c(pos) == Some(':') && two_digits_below_60(pos + 1) {
+        minute = Some(number(pos + 1, 2));
+        pos += 3;
+        if c(pos) == Some(':') && two_digits_below_60(pos + 1) {
+            second = Some(number(pos + 1, 2));
+            pos += 3;
+            if c(pos) == Some('.') && digit_run(pos + 1) > 0 {
+                let len = digit_run(pos + 1);
+                fraction = Some((pos + 1, len));
+                pos += 1 + len;
+            }
+        }
+    }
+    let meridiem_at = if c(pos) == Some(' ') { pos + 1 } else { pos };
+    let meridiem = match (c(meridiem_at), c(meridiem_at + 1)) {
+        (Some(a), Some(m)) if m.eq_ignore_ascii_case(&'m') && a.eq_ignore_ascii_case(&'a') => {
+            Some(false)
+        }
+        (Some(p), Some(m)) if m.eq_ignore_ascii_case(&'m') && p.eq_ignore_ascii_case(&'p') => {
+            Some(true)
+        }
+        _ => None,
+    };
+    let ends_word = |at: usize| !c(at).is_some_and(|ch| ch.is_alphanumeric());
+    if let Some(pm) = meridiem
+        && ends_word(meridiem_at + 2)
+        && hour_len <= 2
+        && (1..=12).contains(&hour)
+        && fraction.is_none()
+    {
+        let seconds = (hour % 12 + if pm { 12 } else { 0 }) * 3600
+            + minute.unwrap_or(0) * 60
+            + second.unwrap_or(0);
+        return Some((Value::clock(Number::from_i64(seconds)), meridiem_at + 2));
+    }
+    if !ends_word(pos) || minute.is_none() {
+        return None;
+    }
+    if second.is_none() {
+        return (hour_len <= 2 && hour < 24).then(|| {
+            (
+                Value::clock(Number::from_i64(hour * 3600 + minute.unwrap_or(0) * 60)),
+                pos,
+            )
+        });
+    }
+    let mut total = Number::from_i64(hour * 3600 + minute.unwrap_or(0) * 60 + second.unwrap_or(0));
+    if let Some((from, len)) = fraction {
+        let digits: String = (from..from + len).filter_map(c).collect();
+        let part = Number::from_decimal_str(&format!("0.{digits}")).ok()?;
+        total = total.add(&part).ok()?;
+    }
+    let seconds = crate::units::lookup("s")?;
+    Value::quantity(total, seconds)
+        .ok()
+        .map(|v| (v.as_laptime(), pos))
 }
 
 /// True for text such as `EEEE, MMM d, yyyy` or `yyyy-MM-dd HH:mm`.

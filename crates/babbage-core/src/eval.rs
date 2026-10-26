@@ -34,6 +34,10 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
                 let args = stack.split_off(stack.len() - n);
                 stack.push(functions::call(*f, &args)?);
             }
+            Node::Show(shown) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.show(shown.clone())?);
+            }
             Node::Cast(u) => {
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.cast(u)?);

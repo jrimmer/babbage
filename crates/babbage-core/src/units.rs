@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 use crate::error::Error;
 use crate::number::Number;
 
-const BASES: usize = 8;
+const BASES: usize = 9;
 
 /// Exponents of the base dimensions: length, mass, time, temperature, current, amount, data (bit), angle.
 /// Money is separate: each currency family (USD, EUR, BTC...) is its own dimension, so two currencies
@@ -27,7 +27,7 @@ impl Dim {
         let mut d = Dim::none();
         for part in spec.split_whitespace() {
             let (letter, exp) = part.split_at(1);
-            let slot = "LMTKINBA"
+            let slot = "LMTKINBAF"
                 .find(letter)
                 .unwrap_or_else(|| panic!("bad dimension letter in {spec:?}"));
             d.exps[slot] = if exp.is_empty() {
@@ -122,6 +122,8 @@ wk | wk,wks,week,weeks | T | 604800
 workday | workday,workdays,work day,work days | T | 86400
 mo | mo,month,months | T | 30.436875*86400
 yr | yr,yrs,year,years | T | 365.2425*86400
+# video
+frame | frame,frames | F | 1
 # length
 m | m,meter,meters,metre,metres | L | 1
 +n,µ,m,c,d,k
@@ -253,6 +255,7 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 @ mph = mi/h
 @ kph,kmh = km/h
 @ kn,knot,knots = NM/h
+@ fps = frame/s
 @ rpm = rev/min
 @ rps = rev/s
 @ mpg,MPG = mi/gal

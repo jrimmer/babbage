@@ -14,3 +14,7 @@ cc 37efb03ef735dd639875a4a451c1a8dfdfff7db05778880f338387040581e239 # shrinks to
 cc 2a60227efaed82a32e2ef16c0470027534c373305e5f938a2bf0d2d40b5f31e8 # shrinks to (a, _b) = ("radians", "′"), x = "1.0000", k = "1.0000"
 cc 55ba9f95b3874773175757c8a4c51278630f2319962bf1989c805fd1a892b38a # shrinks to (a, _b) = ("rad", "rad"), x = "1.0000", k = "1.0000"
 cc 048c48381080be21083a0ae68c3eb9235cde00828b451629fb7035a149906928 # shrinks to (a, _b) = ("radian", "radian"), x = "1.0000", k = "1.0000"
+cc 197ea0c46375413a277219302c37d3bb5fc96e118c9c4886c13025a1ad05869f # shrinks to (a, b) = ("frames", "frames"), x = "1.0000"
+cc 6908ea982680fc6484f94a7426c23e3ed69da95c54ebff117fea4adcb113e49e # shrinks to (a, b) = ("frames", "frames"), x = "1.0000", y = "1.0000"
+cc 0fa7e9b6e2f6d8d5f25177f62220c988a3bebe9fca38150fd7216d0b02df3cb3 # shrinks to (a, b) = ("frames", "frames"), x = "1.0000"
+cc 37093087d56be733f9d77d1a416e2abdea0cd9d3cce279758ccc48a42f99d365 # shrinks to (a, b) = ("frames", "frames"), x = "1.0000"

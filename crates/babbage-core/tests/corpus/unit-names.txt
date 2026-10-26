@@ -453,6 +453,9 @@ floz	floz
 fluid ounce	floz
 fluid ounces	floz
 foot	ft
+fps	frame/s
+frame	frame
+frames	frame
 ft	ft
 ftm	ftm
 fur	fur

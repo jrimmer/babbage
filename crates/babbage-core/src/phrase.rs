@@ -2,6 +2,7 @@ use crate::error::Error;
 use crate::lexer::{Tok, Token};
 use crate::parser::{Expr, Node, Phrase, parse};
 use crate::units::UnitExpr;
+use crate::value::Shown;
 
 struct Form {
     keywords: &'static [&'static str],
@@ -62,6 +63,33 @@ pub(crate) fn parse_unit_run(run: &[Token]) -> Result<UnitExpr, Error> {
         }
     }
     Ok(unit)
+}
+
+/// What follows `as` or `in` when it names a layout (`timespan`, `laptime`) or several units (`hours and minutes`).
+fn parse_shown(run: &[Token]) -> Option<Shown> {
+    if let [
+        Token {
+            tok: Tok::Word(w), ..
+        },
+    ] = run
+    {
+        if w.eq_ignore_ascii_case("timespan") {
+            return Some(Shown::Timespan);
+        }
+        if w.eq_ignore_ascii_case("laptime") {
+            return Some(Shown::Laptime);
+        }
+    }
+    let joined = |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("and"));
+    let parts: Vec<&[Token]> = run.split(joined).collect();
+    if parts.len() < 2 {
+        return None;
+    }
+    parts
+        .iter()
+        .map(|p| parse_unit_run(p).ok())
+        .collect::<Option<Vec<_>>>()
+        .map(Shown::Parts)
 }
 
 /// The phrase keywords at the top level of a line, as (token index, keyword), with `percent` and a loose `%` as "%".
@@ -138,6 +166,14 @@ pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
     if let [(at, word)] = keywords.as_slice() {
         let converts = CONVERSION_WORDS.contains(word);
         let has_both_sides = *at > 0 && *at + 1 < toks.len();
+        if converts
+            && has_both_sides
+            && let Some(shown) = parse_shown(&toks[at + 1..])
+        {
+            let mut rpn: Vec<Node> = parse(&toks[..*at])?.nodes().to_vec();
+            rpn.push(Node::Show(shown));
+            return Ok(Expr::from_nodes(rpn));
+        }
         let target = if (converts || *word == "cast") && has_both_sides {
             parse_unit_run(&toks[at + 1..]).ok()
         } else {

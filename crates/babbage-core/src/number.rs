@@ -78,6 +78,10 @@ impl Number {
         self.0.is_zero()
     }
 
+    pub fn is_positive(&self) -> bool {
+        !self.is_zero() && !self.is_negative()
+    }
+
     pub fn is_negative(&self) -> bool {
         self.0.is_negative()
     }

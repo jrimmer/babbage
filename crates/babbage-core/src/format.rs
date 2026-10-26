@@ -61,6 +61,15 @@ impl FormatOptions {
         }
     }
 
+    /// The same options with no thousands separators and no abbreviation: every digit, as in a timestamp.
+    pub fn every_digit(&self) -> FormatOptions {
+        FormatOptions {
+            group_thousands: false,
+            abbreviate_large: false,
+            ..self.clone()
+        }
+    }
+
     /// The same options with a different number of places, which also stops abbreviation.
     pub fn with_places(&self, places: u32) -> Result<FormatOptions, Error> {
         Ok(FormatOptions {

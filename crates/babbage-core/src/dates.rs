@@ -306,6 +306,43 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
         out.push(toks[i].clone());
         i += 1;
     }
+    join_date_and_time(out)
+}
+
+/// A date followed by a time of day, with or without `at`, is one moment: `April 1, 2019 3:30pm`.
+fn join_date_and_time(toks: Vec<Token>) -> Vec<Token> {
+    let date_of = |t: Option<&Token>| match t.map(|t| &t.tok) {
+        Some(Tok::Value(v)) if v.kind() == crate::value::Kind::Date && v.number().is_integer() => {
+            Some(v.number().clone())
+        }
+        _ => None,
+    };
+    let clock_of = |t: Option<&Token>| match t.map(|t| &t.tok) {
+        Some(Tok::Value(v)) if v.kind() == crate::value::Kind::Clock => Some(v.number().clone()),
+        _ => None,
+    };
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        if let Some(days) = date_of(toks.get(i)) {
+            let has_at = word_of(toks.get(i + 1)).as_deref() == Some("at");
+            let clock_at = i + 1 + usize::from(has_at);
+            if let Some(seconds) = clock_of(toks.get(clock_at))
+                && let Ok(moment) = seconds
+                    .div(&Number::from_i64(86_400))
+                    .and_then(|fraction| days.add(&fraction))
+            {
+                out.push(Token {
+                    tok: Tok::Value(Value::date(moment)),
+                    at: toks[i].at,
+                });
+                i = clock_at + 1;
+                continue;
+            }
+        }
+        out.push(toks[i].clone());
+        i += 1;
+    }
     out
 }
 
@@ -369,15 +406,40 @@ pub fn format_date(days: &Number) -> String {
     text
 }
 
-/// A length of time as `3 weeks 5 days` or `4 hours 32 minutes 24 seconds`.
-pub fn format_timespan(seconds: &Number) -> String {
+/// The seconds of a length of time as text, and whether that text is exact: a fraction of a second that
+/// does not end (a third of a second) is cut at three places and reported as inexact.
+pub(crate) fn seconds_text(whole_seconds: i64, fraction: &Number) -> (String, bool) {
+    if fraction.is_zero() {
+        return (whole_seconds.to_string(), true);
+    }
+    match fraction.to_exact_decimal() {
+        Some(d) => (
+            format!("{whole_seconds}{}", d.trim_start_matches('0')),
+            true,
+        ),
+        None => {
+            let three = fraction
+                .mul(&Number::from_i64(1000))
+                .map(|n| n.floor())
+                .unwrap_or_default();
+            (format!("{whole_seconds}.{three:03}"), false)
+        }
+    }
+}
+
+pub(crate) fn split_seconds(seconds: &Number) -> (bool, i64, Number) {
     let negative = seconds.is_negative();
     let whole = BigInt::div_floor(&seconds.abs().numer().clone(), seconds.denom());
     let fraction = seconds
         .abs()
         .sub(&Number::from_ratio(whole.clone(), BigInt::from(1)).expect("integer"))
         .expect("small");
-    let total = whole.to_i64().unwrap_or(i64::MAX);
+    (negative, whole.to_i64().unwrap_or(i64::MAX), fraction)
+}
+
+/// A length of time as `3 weeks 5 days` or `4 hours 32 minutes 24 seconds`.
+pub fn format_timespan(seconds: &Number) -> (String, bool) {
+    let (negative, total, fraction) = split_seconds(seconds);
     let parts = [
         (total / 604_800, "week"),
         (total % 604_800 / 86_400, "day"),
@@ -389,18 +451,65 @@ pub fn format_timespan(seconds: &Number) -> String {
         .filter(|(n, _)| *n != 0)
         .map(|(n, name)| format!("{n} {name}{}", if *n == 1 { "" } else { "s" }))
         .collect();
-    let secs = total % 60;
-    let secs_text = match fraction.to_exact_decimal() {
-        Some(d) if !fraction.is_zero() => format!("{secs}{}", d.trim_start_matches('0')),
-        _ => secs.to_string(),
-    };
-    if secs != 0 || !fraction.is_zero() || text.is_empty() {
+    let (secs_text, exact) = seconds_text(total % 60, &fraction);
+    if total % 60 != 0 || !fraction.is_zero() || text.is_empty() {
         text.push(format!(
             "{secs_text} second{}",
             if secs_text == "1" { "" } else { "s" }
         ));
     }
-    format!("{}{}", if negative { "-" } else { "" }, text.join(" "))
+    (
+        format!("{}{}", if negative { "-" } else { "" }, text.join(" ")),
+        exact,
+    )
+}
+
+/// A length of time as `03:04:05`, with a fraction of a second after a point: `00:00:01.5`.
+pub fn format_laptime(seconds: &Number) -> (String, bool) {
+    let (negative, total, fraction) = split_seconds(seconds);
+    let (secs, exact) = seconds_text(total % 60, &fraction);
+    let secs = if secs.split('.').next().is_some_and(|w| w.len() < 2) {
+        format!("0{secs}")
+    } else {
+        secs
+    };
+    (
+        format!(
+            "{}{:02}:{:02}:{secs}",
+            if negative { "-" } else { "" },
+            total / 3600,
+            total % 3600 / 60
+        ),
+        exact,
+    )
+}
+
+/// A length of time as `01:02:03:04`: hours, minutes, seconds and the frame within the second. A time that
+/// falls between two frames is cut to the frame before it and reported as inexact.
+pub fn format_timecode(seconds: &Number, frames_per_second: &Number) -> (String, bool) {
+    let negative = seconds.is_negative();
+    let frames = seconds
+        .abs()
+        .mul(frames_per_second)
+        .unwrap_or_else(|_| Number::from_i64(0));
+    let whole = frames.floor();
+    let exact = frames
+        .sub(&Number::from_ratio(whole.clone(), BigInt::from(1)).expect("integer"))
+        .is_ok_and(|rest| rest.is_zero());
+    let rate = frames_per_second.floor();
+    let (total_seconds, frame) = BigInt::div_rem(&whole, &rate);
+    let total = total_seconds.to_i64().unwrap_or(i64::MAX);
+    (
+        format!(
+            "{}{:02}:{:02}:{:02}:{:02}",
+            if negative { "-" } else { "" },
+            total / 3600,
+            total % 3600 / 60,
+            total % 60,
+            frame
+        ),
+        exact,
+    )
 }
 
 /// Writes a date with an `NSDateFormatter`-style pattern: `EEEE, MMM d, yyyy`.

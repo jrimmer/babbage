@@ -71,6 +71,10 @@ pub fn parse_date_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| through(toks))
         .or_else(|| relative(toks))
         .or_else(|| formatted(toks))
+        .or_else(|| timestamps(toks))
+        .or_else(|| interval(toks))
+        .or_else(|| playback(toks))
+        .or_else(|| timecodes(toks))
 }
 
 fn one_date(toks: &[Token]) -> Option<Result<Expr, Error>> {
@@ -269,4 +273,115 @@ fn formatted(toks: &[Token]) -> Option<Result<Expr, Error>> {
         x.push(Node::Value(Value::text(pattern)));
         finish(x, DateFn::Format)
     }))
+}
+
+/// `current timestamp`, `X to timestamp`, `X to date`, `X as iso8601`.
+fn timestamps(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    if toks.len() == 2 && is_word(toks.first(), "current") && is_word(toks.get(1), "timestamp") {
+        return Some(finish(vec![], DateFn::CurrentTimestamp));
+    }
+    let n = toks.len();
+    let connector = |at: usize| {
+        ["to", "as", "in", "into"]
+            .iter()
+            .any(|w| is_word(toks.get(at), w))
+    };
+    let (cut, func) = if n >= 3 && connector(n - 2) && is_word(toks.get(n - 1), "timestamp") {
+        (n - 2, DateFn::ToTimestamp)
+    } else if n >= 3 && connector(n - 2) && is_word(toks.get(n - 1), "date") {
+        (n - 2, DateFn::ToDate)
+    } else if n >= 4
+        && connector(n - 3)
+        && is_word(toks.get(n - 2), "iso")
+        && matches!(&toks[n - 1].tok, Tok::Num(v) if v.numer().to_string() == "8601" && v.is_integer())
+    {
+        (n - 3, DateFn::AsIso)
+    } else {
+        return None;
+    };
+    Some(rpn_of(&toks[..cut]).and_then(|r| finish(r, func)))
+}
+
+fn single_value(t: &Token) -> Option<&Value> {
+    match &t.tok {
+        Tok::Value(v) => Some(v),
+        _ => None,
+    }
+}
+
+/// `7:30am to 8:45pm`, `March 1 to March 5`.
+fn interval(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let [a, to, b] = toks else {
+        return None;
+    };
+    let (x, y) = (single_value(a)?, single_value(b)?);
+    let same = matches!(
+        (x.kind(), y.kind()),
+        (Kind::Clock, Kind::Clock) | (Kind::Date, Kind::Date)
+    );
+    (is_word(Some(to), "to") && same).then(|| {
+        finish(
+            vec![Node::Value(x.clone()), Node::Value(y.clone())],
+            DateFn::Interval,
+        )
+    })
+}
+
+/// `1 hour 30 minutes at 1.5x` and `time saved 5 min at 1.5x`.
+fn playback(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    if n < 3 || !is_word(toks.get(n - 2), "at") {
+        return None;
+    }
+    let speed = single_value(&toks[n - 1]).filter(|v| v.kind() == Kind::Multiplier)?;
+    let (func, from) = if starts_with_words(toks, &["time", "saved"]) {
+        (DateFn::TimeSaved, 2)
+    } else {
+        (DateFn::Playback, 0)
+    };
+    if from >= n - 2 {
+        return None;
+    }
+    Some(rpn_of(&toks[from..n - 2]).and_then(|mut r| {
+        r.push(Node::Value(speed.clone()));
+        finish(r, func)
+    }))
+}
+
+/// `X as timecode`, `X as frames`, each with an optional `at 30 fps` before the connector.
+fn timecodes(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    if n < 3 {
+        return None;
+    }
+    let connector = ["to", "as", "in", "into"]
+        .iter()
+        .any(|w| is_word(toks.get(n - 2), w));
+    let (plain, at_rate) = if is_word(toks.get(n - 1), "timecode") && connector {
+        (DateFn::AsTimecode, DateFn::AsTimecodeAt)
+    } else if (is_word(toks.get(n - 1), "frames") || is_word(toks.get(n - 1), "frame")) && connector
+    {
+        (DateFn::AsFrames, DateFn::AsFramesAt)
+    } else {
+        return None;
+    };
+    let head = &toks[..n - 2];
+    let fps = units::lookup("fps");
+    let rate_at = head.len().checked_sub(3).filter(|k| {
+        is_word(head.get(*k), "at")
+            && matches!(&head[k + 1].tok, Tok::Num(_))
+            && matches!((&head[k + 2].tok, &fps), (Tok::Unit(u), Some(f)) if u == f)
+    });
+    Some(match rate_at {
+        Some(k) => {
+            let Tok::Num(rate) = &head[k + 1].tok else {
+                return None;
+            };
+            rpn_of(&head[..k]).and_then(|mut r| {
+                r.push(Node::Value(Value::plain(rate.clone())));
+                finish(r, at_rate)
+            })
+        }
+        None => rpn_of(head).and_then(|r| finish(r, plain)),
+    })
 }
