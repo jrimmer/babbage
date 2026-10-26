@@ -2,4 +2,7 @@
 # Runs a command so it cannot flood this shared workstation: lowest CPU priority, idle I/O, four cores
 # (override with BABBAGE_CPUS="0-5") and two build jobs. rustc and the linker start many threads, so
 # `nice` alone is not enough.
+# An address-space cap stops one runaway process (a mutant's test that allocates without end) from filling
+# memory and swap: 16 GiB by default, BABBAGE_AS_KB overrides it (bin/mutate uses 6 GiB).
+ulimit -v "${BABBAGE_AS_KB:-16777216}"
 exec nice -n 19 ionice -c3 taskset -c "${BABBAGE_CPUS:-0-3}" env CARGO_BUILD_JOBS=2 BABBAGE_LOWPRIO=1 "$@"
