@@ -25,6 +25,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("tz-database", tz_database),
     ("sales-tax", sales_tax),
     ("sheet-functions", sheet_functions),
+    ("everyday-lines", everyday_lines),
     ("number-format", number_format),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -312,6 +313,40 @@ fn sheet_functions(h: &mut Harness) -> anyhow::Result<()> {
             ("5.5 minutes as laptime", "00:05:30"),
         ],
     );
+    app.finish()?;
+    s.map(|_| ())
+}
+
+/// Dates, times, zones, forms and money typed into the real app on a fixed clock (Saturday 2024-06-15 12:00 UTC).
+fn everyday_lines(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = tzdir(h);
+    let mut app = h.launch(
+        "everyday",
+        None,
+        &[
+            ("TZ", "UTC"),
+            ("BABBAGE_NOW", FIXED_NOW),
+            ("BABBAGE_TZDIR", &dir),
+        ],
+    )?;
+    let lines = [
+        ("10 June + 3 weeks", "July 1"),
+        ("days until Christmas", "193 day"),
+        ("Easter 2027", "March 28, 2027"),
+        ("workdays in 3 weeks", "15 workday"),
+        ("January 10 - February 5", "-3 weeks 5 days"),
+        ("7:30am to 8:45pm", "13 hours 15 minutes"),
+        ("01:02:03:04 + 00:00:01:00", "01:02:04:04"),
+        ("20% is 500, what is 750", "30%"),
+        ("2/10 as fraction", "1/5"),
+        ("meters in 10 km", "10,000 m"),
+        ("6pm Sydney in Chicago", "3:00 am"),
+        ("$500/workday * 4 weeks", "$10,000.00"),
+        ("day of the week on January 24, 1984", "Tuesday"),
+        ("New Year 2025", "January 1, 2025"),
+        ("June 1st 2024", "June 1"),
+    ];
+    let s = answers_for(h, &mut app, &lines);
     app.finish()?;
     s.map(|_| ())
 }
