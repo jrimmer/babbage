@@ -36,7 +36,7 @@ const FORMS: &[Form] = &[
 ];
 
 const VOCABULARY: &[&str] = &[
-    "is", "what", "as", "a", "to", "in", "into", "cast", "of", "on", "off", "percent",
+    "is", "what", "as", "a", "to", "in", "into", "cast", "at", "of", "on", "off", "percent",
 ];
 
 /// Words that turn `<value> <word> <unit>` into a conversion.
@@ -104,6 +104,19 @@ pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
             });
             return Ok(Expr::from_nodes(rpn));
         }
+    }
+    if let [(c, word), (r, at_word)] = keywords.as_slice()
+        && CONVERSION_WORDS.contains(word)
+        && *at_word == "at"
+        && *c > 0
+        && *r > c + 1
+        && *r + 1 < toks.len()
+    {
+        let target = parse_unit_run(&toks[c + 1..*r])?;
+        let mut rpn: Vec<Node> = parse(&toks[..*c])?.nodes().to_vec();
+        rpn.extend(parse(&toks[r + 1..])?.nodes().iter().cloned());
+        rpn.push(Node::ConvertAt(target));
+        return Ok(Expr::from_nodes(rpn));
     }
     let Some(form) = FORMS.iter().find(|f| f.keywords == names.as_slice()) else {
         return parse(toks);

@@ -6,3 +6,8 @@
 # everyone who runs the test benefits from these saved cases.
 cc 0641680e6980a8da4804b201b0aa55d4747633bad2d1bce79cd7de530ee99114 # shrinks to (a, b) = ("mcg", "µg"), x = "1.0000", y = "1.0000"
 cc 1aead695c4bb7afd4d04b0d512bcdd9dcf1635d7073fb4662ca57a112526174d # shrinks to (a, b) = ("KV", "kilovolts"), x = "1.0000", y = "1.0000"
+cc 24fc2e64e649151e08da200a4746eb51d670acb307c34ba5a1513415408c7e98 # shrinks to (a, b) = ("₺", "₺"), x = "1.0000"
+cc a7890656db285011b4f313e71859493d5505088fc7374306dd7c00c36e148e07 # shrinks to (a, b) = ("₺", "₺"), x = "1.0000"
+cc ee3cfa81e67116d4bb8f9e742277e8cf66e1703e2fe6aa4e091bc37b5f1ef7dd # shrinks to (a, _b) = ("₴", "₴"), x = "1.0000", k = "1.0000"
+cc 5f85078dccdd9440b1bf64c959cbc3f10fb5e1b073ba11e70d56fd7b001f4b62 # shrinks to (a, b) = ("₱", "₱"), x = "1.0000", y = "1.0000"
+cc 37efb03ef735dd639875a4a451c1a8dfdfff7db05778880f338387040581e239 # shrinks to (a, b) = ("₽", "₽"), x = "1.0000", y = "1.0000"

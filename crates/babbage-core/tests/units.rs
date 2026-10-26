@@ -65,8 +65,8 @@ fn the_example_lines_for_conversion() {
 
 #[test]
 fn the_screenshot_volume_lines() {
-    assert_eq!(shown("(800mm × 800mm × 1,000mm) / 10"), "64,000,000 mm³");
-    assert_eq!(shown("256mm x 256mm x 256mm"), "16,777,216 mm³");
+    assert_eq!(shown("(800mm × 800mm × 1,000mm) / 10"), "64M mm³");
+    assert_eq!(shown("256mm x 256mm x 256mm"), "16.777216M mm³");
     assert_eq!(
         shown("(800mm × 800mm × 1,000mm) / 10 / (256mm x 256mm x 256mm)"),
         "3.8146972656"

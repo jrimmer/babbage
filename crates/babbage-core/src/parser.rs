@@ -81,6 +81,8 @@ pub enum Node {
     Convert(UnitExpr),
     /// `... cast m`: relabel the number with another unit without converting.
     Cast(UnitExpr),
+    /// `... in USD at 1.05 USD/EUR`: pops a rate, then the value, converts using the rate.
+    ConvertAt(UnitExpr),
     Phrase(Phrase),
 }
 
@@ -144,7 +146,7 @@ fn is_balanced(rpn: &[Node]) -> bool {
         let (needs, leaves) = match node {
             Node::Num(_) => (0, 1),
             Node::Neg | Node::Percent | Node::Unit(_) | Node::Convert(_) | Node::Cast(_) => (1, 1),
-            Node::Bin(_) => (2, 1),
+            Node::Bin(_) | Node::ConvertAt(_) => (2, 1),
             Node::Phrase(p) => (p.arity(), 1),
         };
         if depth < needs {
@@ -321,6 +323,11 @@ impl fmt::Display for Expr {
                 Node::Cast(u) => {
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("({x} cast {})", u.symbol()));
+                }
+                Node::ConvertAt(u) => {
+                    let rate = stack.pop().expect("well-formed");
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} in {} at {rate})", u.symbol()));
                 }
                 Node::Phrase(p) => {
                     let args = stack.split_off(stack.len() - p.arity());

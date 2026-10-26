@@ -46,6 +46,8 @@ impl Value {
 
     /// A number in a unit. Units that cancel to nothing measurable (km/m) become a plain number.
     pub fn quantity(number: Number, unit: UnitExpr) -> Result<Value, Error> {
+        let (scale, unit) = unit.reduce()?;
+        let number = number.mul(&scale)?;
         if !unit.is_empty() && unit.dim().is_none() {
             return Ok(Value::plain(number.mul(&unit.factor()?)?));
         }
@@ -94,16 +96,27 @@ impl Value {
         Value::quantity(self.number, unit.clone())
     }
 
+    /// Converts with a rate the user wrote: `50 EUR in USD at 1.05 USD/EUR`.
+    pub fn convert_at(self, rate: &Value, target: &UnitExpr) -> Result<Value, Error> {
+        Value::binary(BinOp::Mul, &self, rate)?.convert(target)
+    }
+
     pub fn cast(self, target: &UnitExpr) -> Result<Value, Error> {
-        if self.kind != Kind::Plain || self.unit.is_empty() {
+        if self.kind != Kind::Plain {
+            return Err(Error::IncompatibleUnits);
+        }
+        if self.unit.is_empty() {
             return Err(Error::IncompatibleUnits);
         }
         Value::quantity(self.number, target.clone())
     }
 
     pub fn convert(self, target: &UnitExpr) -> Result<Value, Error> {
-        if self.kind != Kind::Plain || self.unit.is_empty() || self.unit.dim() != target.dim() {
+        if self.kind != Kind::Plain || self.unit.is_empty() {
             return Err(Error::IncompatibleUnits);
+        }
+        if self.unit.dim() != target.dim() {
+            return Err(mismatch(&self.unit, target));
         }
         if self.unit.has_offset() || target.has_offset() {
             return convert_scale(self, target);
@@ -182,6 +195,21 @@ impl Value {
     pub fn phrase(phrase: Phrase, args: &[Value]) -> Result<Value, Error> {
         use Kind::{Percent, Plain};
         let refuse = || Err(Error::UnsupportedOperation(PHRASE_NEEDS_PLAIN));
+        if let (
+            Phrase::WhatPercentOf
+            | Phrase::WhatPercentOn
+            | Phrase::WhatPercentOff
+            | Phrase::PercentChange,
+            [a, b],
+        ) = (phrase, args)
+            && a.kind == Plain
+            && b.kind == Plain
+            && a.unit.dim() != b.unit.dim()
+            && a.unit.dim().has_money()
+            && b.unit.dim().has_money()
+        {
+            return Err(Error::CurrencyRateNeeded);
+        }
         match (phrase, args) {
             (Phrase::AsPercent, [v]) => match v.kind {
                 Plain if v.unit.is_empty() => Ok(Value::percent(v.number.clone())),
@@ -228,6 +256,15 @@ fn convert_scale(v: Value, target: &UnitExpr) -> Result<Value, Error> {
     Value::quantity(target.from_kelvin(&kelvin)?, target.clone())
 }
 
+/// Different currencies need a rate; anything else that does not match is simply incompatible.
+fn mismatch(a: &UnitExpr, b: &UnitExpr) -> Error {
+    if a.dim().has_money() && b.dim().has_money() {
+        Error::CurrencyRateNeeded
+    } else {
+        Error::IncompatibleUnits
+    }
+}
+
 fn arith(op: BinOp, a: &Number, b: &Number) -> Result<Number, Error> {
     if matches!(op, BinOp::Add | BinOp::Join) {
         a.add(b)
@@ -249,7 +286,7 @@ fn sum(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
         (false, true) => Value::quantity(arith(op, &l.number, &r.number)?, l.unit.clone()),
         (false, false) => {
             if l.unit.dim() != r.unit.dim() {
-                return Err(Error::IncompatibleUnits);
+                return Err(mismatch(&l.unit, &r.unit));
             }
             let (fl, fr) = (l.unit.factor()?, r.unit.factor()?);
             let target = if fr > fl { &r.unit } else { &l.unit };
@@ -262,6 +299,15 @@ fn sum(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
 
 /// Two quantities of one kind in different units multiply in the left one's unit.
 fn product(l: &Value, r: &Value) -> Result<Value, Error> {
+    // `$30 x 4 days`: a price times a count of something is that price per thing.
+    for (price, other) in [(l, r), (r, l)] {
+        if price.unit.single_currency().is_some()
+            && !other.unit.is_empty()
+            && !other.unit.dim().has_money()
+        {
+            return Value::quantity(l.number.mul(&r.number)?, price.unit.clone());
+        }
+    }
     let same_kind_different_unit =
         !l.unit.is_empty() && l.unit != r.unit && l.unit.dim() == r.unit.dim();
     let right = if same_kind_different_unit {
@@ -303,6 +349,9 @@ fn power(l: &Value, r: &Value) -> Result<Value, Error> {
 pub fn format_value(v: &Value, opts: &FormatOptions) -> Formatted {
     match v.kind {
         Kind::Plain => {
+            if let Some(f) = format_money(v, opts) {
+                return f;
+            }
             let mut f = format_decimal(&v.number, opts);
             if !v.unit.is_empty() {
                 f.text.push(' ');
@@ -311,9 +360,41 @@ pub fn format_value(v: &Value, opts: &FormatOptions) -> Formatted {
             f
         }
         Kind::Percent => {
-            let mut f = format_decimal(&v.number.times_hundred(), opts);
+            let mut f = format_decimal(&v.number.times_hundred(), &opts.unabbreviated());
             f.text.push('%');
             f
         }
     }
+}
+
+/// `$2,985.00`, `-$5.00`, `$386.8M`, `5.00 CHF`, `$30.00/day`; None when the value is not money.
+fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
+    let (currency, rest) = v.unit.currency_split()?;
+    if rest.symbol().contains('·') || rest.dim().has_money() {
+        return None;
+    }
+    let abbreviated = opts.abbreviate_large && v.number.abs() >= Number::from_i64(100_000);
+    let mut f = match (currency.minor_digits, abbreviated, opts.fixed_money_digits) {
+        (Some(minor), false, true) => {
+            let mut fixed = opts.with_places(minor.min(opts.decimal_places())).ok()?;
+            fixed.trim_trailing_zeros = false;
+            format_decimal(&v.number, &fixed)
+        }
+        _ => format_decimal(&v.number, opts),
+    };
+    if currency.prefix_symbol {
+        let symbol = v.unit.currency_symbol()?;
+        let (sign, digits) = match f.text.strip_prefix('-') {
+            Some(d) => ("-", d.to_string()),
+            None => ("", f.text.clone()),
+        };
+        f.text = format!("{sign}{symbol}{digits}");
+    } else {
+        f.text = format!("{} {}", f.text, currency.code);
+    }
+    if !rest.is_empty() {
+        f.text.push('/');
+        f.text.push_str(&rest.recip().symbol());
+    }
+    Some(f)
 }

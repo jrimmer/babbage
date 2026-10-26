@@ -75,7 +75,11 @@ fn linear_units() -> Vec<(String, babbage_core::units::UnitExpr)> {
     let mut seen = std::collections::BTreeSet::new();
     let mut out = Vec::new();
     for (name, unit) in registry().names() {
-        if unit.is_single() && !unit.has_offset() && seen.insert(unit.clone()) {
+        if unit.is_single()
+            && !unit.has_offset()
+            && !unit.dim().has_money()
+            && seen.insert(unit.clone())
+        {
             out.push((name.clone(), unit.clone()));
         }
     }

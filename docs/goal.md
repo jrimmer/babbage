@@ -19,6 +19,7 @@ including UI/UX tests: start the app on buildhost and automate its testing. Work
 - Never weaken a check to make it pass. If a check is wrong, say so and why.
 - Where the reference notes are silent on semantics, refuse (`UnsupportedOperation`) and file a ticket. Never guess a value.
 - Where the reference notes give a rounded constant and a standard exact definition exists, use the exact one and log it in `docs/units.md`.
+- Heavy runs (mutation testing, big test sweeps) are throttled: `nice`, `-j 2`. This is the owner's workstation and a past review swamped it.
 - `/tmp` is a shared 16 GB tmpfs. Mutation runs use `TMPDIR` on /home (`bin/mutate` does this).
 
 ## Stop-and-ask list

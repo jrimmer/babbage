@@ -7,46 +7,72 @@ use crate::number::Number;
 const BASES: usize = 8;
 
 /// Exponents of the base dimensions: length, mass, time, temperature, current, amount, data (bit), angle.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Dim([i8; BASES]);
+/// Money is separate: each currency family (USD, EUR, BTC...) is its own dimension, so two currencies
+/// never convert into each other without an exchange rate.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Dim {
+    exps: [i8; BASES],
+    money: Vec<(u16, i8)>,
+}
 
 impl Dim {
-    pub const NONE: Dim = Dim([0; BASES]);
+    pub fn none() -> Dim {
+        Dim {
+            exps: [0; BASES],
+            money: Vec::new(),
+        }
+    }
 
     fn parse(spec: &str) -> Dim {
-        let mut d = [0i8; BASES];
+        let mut d = Dim::none();
         for part in spec.split_whitespace() {
             let (letter, exp) = part.split_at(1);
             let slot = "LMTKINBA"
                 .find(letter)
                 .unwrap_or_else(|| panic!("bad dimension letter in {spec:?}"));
-            d[slot] = if exp.is_empty() {
+            d.exps[slot] = if exp.is_empty() {
                 1
             } else {
                 exp.parse().expect("dimension exponent")
             };
         }
-        Dim(d)
+        d
     }
 
-    pub fn is_none(self) -> bool {
-        self == Dim::NONE
+    pub fn is_none(&self) -> bool {
+        self.exps == [0; BASES] && self.money.is_empty()
     }
 
-    fn scaled(self, by: i8) -> Dim {
-        let mut d = self.0;
-        for e in &mut d {
+    pub fn has_money(&self) -> bool {
+        !self.money.is_empty()
+    }
+
+    fn scaled(&self, by: i8) -> Dim {
+        let mut d = self.clone();
+        for e in &mut d.exps {
             *e = e.saturating_mul(by);
         }
-        Dim(d)
+        for (_, e) in &mut d.money {
+            *e = e.saturating_mul(by);
+        }
+        d.money.retain(|(_, e)| *e != 0);
+        d
     }
 
-    fn plus(self, other: Dim) -> Dim {
-        let mut d = self.0;
-        for (e, o) in d.iter_mut().zip(other.0) {
+    fn plus(&self, other: &Dim) -> Dim {
+        let mut d = self.clone();
+        for (e, o) in d.exps.iter_mut().zip(other.exps) {
             *e = e.saturating_add(o);
         }
-        Dim(d)
+        for (family, exp) in &other.money {
+            match d.money.iter_mut().find(|(f, _)| f == family) {
+                Some((_, e)) => *e = e.saturating_add(*exp),
+                None => d.money.push((*family, *exp)),
+            }
+        }
+        d.money.retain(|(_, e)| *e != 0);
+        d.money.sort_unstable();
+        d
     }
 }
 
@@ -58,6 +84,17 @@ struct UnitDef {
     factor: Number,
     /// Kelvin at zero of this unit, for scales that do not start at absolute zero.
     offset: Number,
+    currency: Option<Currency>,
+}
+
+/// How a currency is written and shown.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Currency {
+    pub code: &'static str,
+    /// True when the symbol goes before the number (`$5.00`); otherwise the code follows it (`5.00 CHF`).
+    pub prefix_symbol: bool,
+    /// Digits after the point; None for crypto and commodities, which show every digit.
+    pub minor_digits: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -222,15 +259,74 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 
 /// Words the phrase layer owns. A unit can show one as its symbol but is never found by it.
 pub const RESERVED_WORDS: &[&str] = &[
-    "in", "a", "as", "to", "is", "of", "on", "off", "what", "percent", "into",
+    "in", "a", "as", "to", "is", "of", "on", "off", "what", "percent", "into", "cast", "at",
+];
+
+/// ISO 4217 codes from the reference, with the digits after the point where they are not 2.
+const FIAT: &str = "AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD:3 BIF:0 BMD BND BOB BRL BSD BTN BWP BYN BZD \
+CAD CDF CHF CLF:4 CLP:0 CNY COP CRC CUC CVE CZK DJF:0 DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GGP GHS GIP GMD GNF:0 \
+GTQ GYD HKD HNL HRK HTG HUF IDR ILS IMP INR IQD:3 IRR ISK:0 JEP JMD JOD:3 JPY:0 KES KGS KHR KMF:0 KPW KRW:0 KWD:3 KYD KZT \
+LAK LBP LKR LRD LSL LTL LVL LYD:3 MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MYR MZN NAD NGN NIO NOK NPR NZD OMR:3 \
+PAB PEN PGK PHP PKR PLN PYG:0 QAR RON RSD RUB RWF:0 SAR SBD SCR SDG SEK SGD SHP SLL SOS SRD STD SVC SYP SZL THB TJS TMT \
+TND:3 TOP TRY TTD TWD TZS UAH UGX:0 USD UYU UZS VEF VND:0 VUV:0 WST XAF:0 XCD XDR XOF:0 XPF:0 YER ZAR ZMW ZWL";
+
+/// Crypto-currencies and commodities show every digit instead of a fixed number of places.
+const FREE: &str = "BTC ETH ADA AVAX BCH BNB BSV DASH DOGE DOT EOS ETC LTC LUNA POL MATIC NEO SHIB SOL TRX USDT XLM XMR XRP XAG XAU";
+
+/// (code, symbol written before the amount).
+const CURRENCY_SYMBOLS: &[(&str, &str)] = &[
+    ("USD", "$"),
+    ("EUR", "€"),
+    ("GBP", "£"),
+    ("JPY", "¥"),
+    ("INR", "₹"),
+    ("KRW", "₩"),
+    ("RUB", "₽"),
+    ("TRY", "₺"),
+    ("ILS", "₪"),
+    ("VND", "₫"),
+    ("THB", "฿"),
+    ("PHP", "₱"),
+    ("UAH", "₴"),
+    ("NGN", "₦"),
+    ("AUD", "A$"),
+    ("CAD", "C$"),
+    ("NZD", "NZ$"),
+    ("SGD", "S$"),
+    ("HKD", "HK$"),
+    ("TWD", "NT$"),
+    ("BRL", "R$"),
+];
+
+/// Ways to write a currency symbol in front of a number, longest first.
+const SYMBOL_INPUTS: &[(&str, &str)] = &[
+    ("US$", "USD"),
+    ("NZ$", "NZD"),
+    ("CA$", "CAD"),
+    ("AU$", "AUD"),
+    ("HK$", "HKD"),
+    ("NT$", "TWD"),
+    ("C$", "CAD"),
+    ("A$", "AUD"),
+    ("S$", "SGD"),
+    ("R$", "BRL"),
+    ("$", "USD"),
+    ("€", "EUR"),
+    ("£", "GBP"),
+    ("¥", "JPY"),
+    ("₹", "INR"),
+    ("₩", "KRW"),
+    ("₽", "RUB"),
+    ("₺", "TRY"),
+    ("₪", "ILS"),
+    ("₫", "VND"),
+    ("฿", "THB"),
+    ("₱", "PHP"),
+    ("₴", "UAH"),
+    ("₦", "NGN"),
 ];
 
 const PREFIXES: &[(&str, &str, i32)] = &[
-    ("y", "yocto", -24),
-    ("z", "zepto", -21),
-    ("a", "atto", -18),
-    ("f", "femto", -15),
-    ("p", "pico", -12),
     ("n", "nano", -9),
     ("µ", "micro", -6),
     ("m", "milli", -3),
@@ -335,7 +431,7 @@ impl Registry {
                     reg.add(
                         &format!("{psym}{symbol}"),
                         &spellings.iter().map(String::as_str).collect::<Vec<_>>(),
-                        dim,
+                        dim.clone(),
                         f,
                         true,
                     );
@@ -348,11 +444,12 @@ impl Registry {
                 let offset = cols
                     .get(4)
                     .map_or_else(|| Number::from_i64(0), |o| exact_factor(o));
-                reg.add(cols[0], &names, dim, factor.clone(), false);
+                reg.add(cols[0], &names, dim.clone(), factor.clone(), false);
                 reg.defs.last_mut().expect("just added").offset = offset;
                 last = Some((cols[0], names, dim, factor));
             }
         }
+        reg.add_currencies();
         for (names, expr) in aliases {
             let unit = reg.parse_symbols(expr);
             for n in names {
@@ -399,6 +496,95 @@ impl Registry {
         reg
     }
 
+    fn add_currencies(&mut self) {
+        let mut family_of: HashMap<&str, u16> = HashMap::new();
+        let mut next_family = 0u16;
+        let define = |reg: &mut Registry,
+                      code: &'static str,
+                      minor: Option<u32>,
+                      family: u16,
+                      factor: &str,
+                      names: &[&str]| {
+            let symbol = CURRENCY_SYMBOLS
+                .iter()
+                .find(|(c, _)| *c == code)
+                .map(|(_, s)| *s);
+            let dim = Dim {
+                exps: [0; BASES],
+                money: vec![(family, 1)],
+            };
+            reg.add(
+                symbol.unwrap_or(code),
+                &[],
+                dim,
+                exact_factor(factor),
+                false,
+            );
+            let id = (reg.defs.len() - 1) as UnitId;
+            reg.defs[id as usize].currency = Some(Currency {
+                code,
+                prefix_symbol: symbol.is_some(),
+                minor_digits: minor,
+            });
+            let unit = UnitExpr(vec![(id, 1)]);
+            reg.insert_name(code, unit.clone(), false);
+            for n in names {
+                reg.insert_name(n, unit.clone(), false);
+            }
+        };
+        for entry in FIAT.split_whitespace() {
+            let (code, minor) = match entry.split_once(':') {
+                Some((c, d)) => (c, Some(d.parse().expect("minor digits"))),
+                None => (entry, Some(2)),
+            };
+            let family = next_family;
+            next_family += 1;
+            family_of.insert(code, family);
+            let names: &[&str] = match code {
+                "USD" => &["dollar", "dollars"],
+                "EUR" => &["euro", "euros"],
+                "JPY" => &["yen"],
+                _ => &[],
+            };
+            define(self, code, minor, family, "1", names);
+        }
+        for code in FREE.split_whitespace() {
+            let family = next_family;
+            next_family += 1;
+            family_of.insert(code, family);
+            let names: &[&str] = match code {
+                "BTC" => &["bitcoin", "bitcoins"],
+                "ETH" => &["ether"],
+                _ => &[],
+            };
+            define(self, code, None, family, "1", names);
+        }
+        define(
+            self,
+            "SAT",
+            None,
+            family_of["BTC"],
+            "0.00000001",
+            &["Satoshi", "satoshi", "satoshis"],
+        );
+        define(
+            self,
+            "WEI",
+            None,
+            family_of["ETH"],
+            "0.000000000000000001",
+            &["Wei", "wei"],
+        );
+        define(
+            self,
+            "GWEI",
+            None,
+            family_of["ETH"],
+            "0.000000001",
+            &["Gwei", "gwei"],
+        );
+    }
+
     fn add(&mut self, symbol: &str, names: &[&str], dim: Dim, factor: Number, generated: bool) {
         let id = self.defs.len() as UnitId;
         self.defs.push(UnitDef {
@@ -406,6 +592,7 @@ impl Registry {
             dim,
             factor,
             offset: Number::from_i64(0),
+            currency: None,
         });
         let unit = UnitExpr(vec![(id, 1)]);
         self.insert_name(symbol, unit.clone(), generated);
@@ -468,6 +655,14 @@ pub fn registry() -> &'static Registry {
     REGISTRY.get_or_init(Registry::build)
 }
 
+/// A currency symbol at the start of `text` (`$`, `US$`, `€`...), with its byte length.
+pub fn currency_prefix(text: &str) -> Option<(usize, UnitExpr)> {
+    SYMBOL_INPUTS
+        .iter()
+        .find(|(symbol, _)| text.starts_with(symbol))
+        .and_then(|(symbol, code)| lookup(code).map(|u| (symbol.len(), u)))
+}
+
 /// Finds a unit by its spelling. Case matters for symbols (`Mb` is not `MB`); long names also match any case.
 pub fn lookup(name: &str) -> Option<UnitExpr> {
     let reg = registry();
@@ -487,10 +682,6 @@ impl UnitExpr {
 
     pub fn with_exponent(&self, exp: i8) -> UnitExpr {
         self.pow(exp)
-    }
-
-    pub fn unit_count(&self) -> usize {
-        self.0.len()
     }
 
     fn pow(&self, n: i8) -> UnitExpr {
@@ -514,6 +705,80 @@ impl UnitExpr {
         parts.retain(|(_, e)| *e != 0);
         parts.sort_by_key(|(u, _)| *u);
         UnitExpr(parts)
+    }
+
+    /// The currency when this is exactly one currency unit, as in `$` or `CHF`.
+    pub fn single_currency(&self) -> Option<Currency> {
+        match self.0.as_slice() {
+            [(u, 1)] => registry().defs[*u as usize].currency,
+            _ => None,
+        }
+    }
+
+    /// For a rate such as `$/day`: the currency and the remaining units, when the money has exponent 1.
+    pub fn currency_split(&self) -> Option<(Currency, UnitExpr)> {
+        let (money, rest): (Vec<_>, Vec<_>) = self
+            .0
+            .iter()
+            .copied()
+            .partition(|(u, _)| registry().defs[*u as usize].currency.is_some());
+        match money.as_slice() {
+            [(u, 1)] => Some((registry().defs[*u as usize].currency?, UnitExpr(rest))),
+            _ => None,
+        }
+    }
+
+    /// The symbol of the single currency in this expression, as written before an amount.
+    pub fn currency_symbol(&self) -> Option<&'static str> {
+        self.0.iter().find_map(|(u, _)| {
+            let d = &registry().defs[*u as usize];
+            d.currency.filter(|c| c.prefix_symbol).map(|_| d.symbol)
+        })
+    }
+
+    /// True when every unit in this expression is a currency.
+    pub fn is_only_money(&self) -> bool {
+        !self.0.is_empty()
+            && self
+                .0
+                .iter()
+                .all(|(u, _)| registry().defs[*u as usize].currency.is_some())
+    }
+
+    /// Cancels pairs such as `week/day` or `km/m` by converting the number. Returns the scale to apply to
+    /// the number and the smaller expression.
+    pub fn reduce(&self) -> Result<(Number, UnitExpr), Error> {
+        let mut parts = self.0.clone();
+        let mut scale = Number::from_i64(1);
+        'again: loop {
+            for i in 0..parts.len() {
+                for j in 0..parts.len() {
+                    let (u, e) = parts[i];
+                    let (v, f) = parts[j];
+                    let (du, dv) = (&registry().defs[u as usize], &registry().defs[v as usize]);
+                    if e > 0
+                        && f < 0
+                        && du.dim == dv.dim
+                        && du.offset.is_zero()
+                        && dv.offset.is_zero()
+                    {
+                        let k = e.min(-f);
+                        let ratio = du
+                            .factor
+                            .div(&dv.factor)?
+                            .pow(&Number::from_i64(i64::from(k)))?;
+                        scale = scale.mul(&ratio)?;
+                        parts[i].1 -= k;
+                        parts[j].1 += k;
+                        parts.retain(|(_, x)| *x != 0);
+                        continue 'again;
+                    }
+                }
+            }
+            break;
+        }
+        parts.sort_by_key(|(u, _)| *u);
+        Ok((scale, UnitExpr(parts)))
     }
 
     /// True for a scale like °C whose zero is not absolute zero.
@@ -546,8 +811,8 @@ impl UnitExpr {
     }
 
     pub fn dim(&self) -> Dim {
-        self.0.iter().fold(Dim::NONE, |d, (u, e)| {
-            d.plus(registry().defs[*u as usize].dim.scaled(*e))
+        self.0.iter().fold(Dim::none(), |d, (u, e)| {
+            d.plus(&registry().defs[*u as usize].dim.scaled(*e))
         })
     }
 
@@ -630,6 +895,110 @@ mod tests {
         }
         assert_eq!(lookup("inch").unwrap().symbol(), "in");
         assert_eq!(lookup("sqin").unwrap().symbol(), "in²");
+    }
+
+    fn empty_registry() -> Registry {
+        Registry {
+            defs: Vec::new(),
+            by_name: HashMap::new(),
+        }
+    }
+
+    fn one(id: UnitId) -> UnitExpr {
+        UnitExpr(vec![(id, 1)])
+    }
+
+    #[test]
+    fn registering_the_same_name_for_the_same_unit_is_a_no_op() {
+        let mut reg = empty_registry();
+        reg.insert_name("m", one(1), false);
+        reg.insert_name("m", one(1), false);
+        reg.insert_name("m", one(1), true);
+        assert_eq!(reg.by_name["m"], one(1));
+    }
+
+    #[test]
+    fn a_generated_name_never_replaces_an_explicit_one() {
+        let mut reg = empty_registry();
+        reg.insert_name("min", one(1), false);
+        reg.insert_name("min", one(2), true);
+        assert_eq!(reg.by_name["min"], one(1));
+        reg.insert_name("fresh", one(3), true);
+        assert_eq!(reg.by_name["fresh"], one(3));
+    }
+
+    #[test]
+    #[should_panic(expected = "defined twice")]
+    fn two_explicit_units_cannot_share_a_name() {
+        let mut reg = empty_registry();
+        reg.insert_name("min", one(1), false);
+        reg.insert_name("min", one(2), false);
+    }
+
+    #[test]
+    fn reserved_words_are_skipped_silently() {
+        let mut reg = empty_registry();
+        reg.insert_name("in", one(1), false);
+        assert!(reg.by_name.is_empty());
+    }
+
+    #[test]
+    fn single_units_are_told_apart_from_compound_ones() {
+        assert!(lookup("km").unwrap().is_single());
+        assert!(!lookup("mph").unwrap().is_single());
+        assert!(!lookup("sqft").unwrap().is_single());
+        assert!(
+            !lookup("m")
+                .unwrap()
+                .times(&lookup("s").unwrap())
+                .is_single()
+        );
+        assert!(!UnitExpr::default().is_single());
+    }
+
+    #[test]
+    fn long_names_match_in_any_case_but_symbols_do_not() {
+        assert_eq!(lookup("Meters"), lookup("meters"));
+        assert_eq!(lookup("KILOMETERS"), lookup("km"));
+        assert!(lookup("KM").is_none());
+        assert!(lookup("Km").is_none());
+        assert!(lookup("MB").is_some() && lookup("MB") != lookup("Mb"));
+        assert!(lookup("mB").is_none());
+        assert!(lookup("Day1").is_none());
+        assert!(lookup("abc").is_none());
+        assert!(lookup("DAY").is_none());
+        assert!(lookup("DAYS").is_some());
+        assert!(lookup("Hrs").is_none());
+    }
+
+    #[test]
+    fn symbols_read_like_the_reference() {
+        let sym = |a: &str| lookup(a).unwrap().symbol();
+        assert_eq!(sym("km"), "km");
+        assert_eq!(sym("sqft"), "ft²");
+        assert_eq!(sym("cuft"), "ft³");
+        assert_eq!(sym("mph"), "mi/h");
+        assert_eq!(sym("rpm"), "rev/min");
+        let m = lookup("m").unwrap();
+        let s = lookup("s").unwrap();
+        let kg = lookup("kg").unwrap();
+        assert_eq!(m.times(&s.recip()).symbol(), "m/s");
+        assert_eq!(m.times(&s.with_exponent(-2)).symbol(), "m/s²");
+        assert_eq!(kg.times(&m).times(&s.with_exponent(-2)).symbol(), "m·kg/s²");
+        assert_eq!(s.recip().symbol(), "s⁻¹");
+        assert_eq!(m.with_exponent(-1).times(&s.recip()).symbol(), "s⁻¹·m⁻¹");
+        assert_eq!(m.times(&s.recip()).times(&kg.recip()).symbol(), "m/(s·kg)");
+        assert_eq!(m.with_exponent(10).symbol(), "m¹⁰");
+        assert_eq!(UnitExpr::default().symbol(), "");
+    }
+
+    #[test]
+    fn superscript_digits_cover_zero_to_nine() {
+        for (i, c) in "⁰¹²³⁴⁵⁶⁷⁸⁹".chars().enumerate() {
+            assert_eq!(superscript_digit(c), Some(i as i8));
+        }
+        assert_eq!(superscript_digit('9'), None);
+        assert_eq!(superscript_digit('a'), None);
     }
 
     #[test]

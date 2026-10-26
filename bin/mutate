@@ -9,7 +9,8 @@ args=()
 for f in "$@"; do args+=(-f "$f"); done
 rm -rf mutants.out
 status=0
-TMPDIR=$tmp cargo mutants -p babbage-core -j 4 --timeout 30 --no-shuffle "${args[@]}" || status=$?
+# Throttled on purpose: this is the owner's workstation, and heavy runs must not swamp it.
+TMPDIR=$tmp nice -n 19 ionice -c3 cargo mutants -p babbage-core -j 2 --timeout 30 --no-shuffle "${args[@]}" || status=$?
 rm -rf "$tmp"
 echo "--- missed"; cat mutants.out/missed.txt
 echo "--- timeout (loop mutants are detected by hanging)"; cat mutants.out/timeout.txt

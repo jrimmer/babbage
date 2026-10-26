@@ -44,12 +44,12 @@ fn stray_tokens_report_their_byte_offset() {
 #[test]
 fn bad_characters_report_offsets_in_bytes_not_chars() {
     assert_eq!(
-        evaluate("1 @ 2"),
-        Err(Error::UnexpectedChar { ch: '@', at: 2 })
+        evaluate("1 # 2"),
+        Err(Error::UnexpectedChar { ch: '#', at: 2 })
     );
     assert_eq!(
-        evaluate("1 × @"),
-        Err(Error::UnexpectedChar { ch: '@', at: 5 })
+        evaluate("1 × #"),
+        Err(Error::UnexpectedChar { ch: '#', at: 5 })
     );
     assert_eq!(
         evaluate("é"),

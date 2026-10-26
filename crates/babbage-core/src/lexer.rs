@@ -3,7 +3,7 @@ use num_rational::BigRational;
 
 use crate::error::Error;
 use crate::number::Number;
-use crate::units::{UnitExpr, lookup, superscript_digit};
+use crate::units::{UnitExpr, currency_prefix, lookup, superscript_digit};
 
 pub const MAX_INPUT_BYTES: usize = 65_536;
 pub const MAX_EXPONENT: i64 = 100_000;
@@ -62,8 +62,24 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         let simple = |tok: Tok, out: &mut Vec<Token>| out.push(Token { tok, at });
         match c {
             c if c.is_whitespace() => {}
+            _ if currency_amount_at(src, &chars, i).is_some() => {
+                let (unit, symbol_chars) =
+                    currency_amount_at(src, &chars, i).expect("checked by the guard");
+                let (n, next) = scan_number(src, &chars, i + symbol_chars, true)?;
+                out.push(Token {
+                    tok: Tok::Num(n),
+                    at,
+                });
+                out.push(Token {
+                    tok: Tok::Unit(unit),
+                    at,
+                });
+                i = next;
+                continue;
+            }
+            '@' => simple(Tok::Word("at".into()), &mut out),
             '0'..='9' => {
-                let (n, next) = scan_number(src, &chars, i)?;
+                let (n, next) = scan_number(src, &chars, i, false)?;
                 out.push(Token {
                     tok: Tok::Num(n),
                     at,
@@ -72,7 +88,7 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             '.' if chars.get(i + 1).is_some_and(|(_, d)| d.is_ascii_digit()) => {
-                let (n, next) = scan_number(src, &chars, i)?;
+                let (n, next) = scan_number(src, &chars, i, false)?;
                 out.push(Token {
                     tok: Tok::Num(n),
                     at,
@@ -100,8 +116,8 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                 let word = word_end(&chars, i + 1);
                 let joined: String = chars[i..word].iter().map(|(_, ch)| *ch).collect();
                 let (unit, end) = match lookup(&joined) {
-                    Some(unit) if word > i + 1 => (unit, word),
-                    _ => (
+                    Some(unit) => (unit, word),
+                    None => (
                         lookup(&c.to_string()).ok_or(Error::UnexpectedChar { ch: c, at })?,
                         i + 1,
                     ),
@@ -141,6 +157,27 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
     Ok(out)
 }
 
+/// A currency symbol at `i` that is directly followed by a number, as in `$55`, `US$7` or `€.5`.
+fn currency_amount_at(src: &str, chars: &[(usize, char)], i: usize) -> Option<(UnitExpr, usize)> {
+    let (at, first) = chars[i];
+    if first.is_ascii_digit() || first.is_whitespace() {
+        return None;
+    }
+    let (bytes, unit) = currency_prefix(&src[at..])?;
+    let symbol_chars = src[at..at + bytes].chars().count();
+    let letters_first = first.is_alphabetic();
+    if letters_first && i > 0 && chars[i - 1].1.is_alphanumeric() {
+        return None;
+    }
+    let after = chars.get(i + symbol_chars).map(|(_, c)| *c)?;
+    let digit_after = after.is_ascii_digit()
+        || (after == '.'
+            && chars
+                .get(i + symbol_chars + 1)
+                .is_some_and(|(_, c)| c.is_ascii_digit()));
+    digit_after.then_some((unit, symbol_chars))
+}
+
 fn word_end(chars: &[(usize, char)], from: usize) -> usize {
     let mut end = from;
     while chars.get(end).is_some_and(|(_, ch)| ch.is_alphabetic()) {
@@ -149,21 +186,17 @@ fn word_end(chars: &[(usize, char)], from: usize) -> usize {
     end
 }
 
-/// The longest run of up to three words, joined by single spaces or hyphens, that names a unit.
+/// A unit name of one word, or of two words joined by a space or hyphen (`fl oz`, `acre-foot`).
 fn scan_unit(chars: &[(usize, char)], start: usize) -> Option<(UnitExpr, usize)> {
-    let mut ends = vec![word_end(chars, start)];
-    while ends.len() < 3 {
-        let last = *ends.last()?;
-        let joiner = chars.get(last).map(|(_, c)| *c);
-        if matches!(joiner, Some(' ' | '-'))
-            && chars.get(last + 1).is_some_and(|(_, c)| c.is_alphabetic())
-        {
-            ends.push(word_end(chars, last + 1));
-        } else {
-            break;
-        }
-    }
-    for end in ends.into_iter().rev() {
+    let first = word_end(chars, start);
+    let joined = matches!(chars.get(first).map(|(_, c)| *c), Some(' ' | '-'))
+        && chars.get(first + 1).is_some_and(|(_, c)| c.is_alphabetic());
+    let second = if joined {
+        Some(word_end(chars, first + 1))
+    } else {
+        None
+    };
+    for end in second.into_iter().chain([first]) {
         let name: String = chars[start..end].iter().map(|(_, c)| *c).collect();
         if let Some(unit) = lookup(&name) {
             return Some(with_exponent_suffix(chars, end, unit));
@@ -236,7 +269,12 @@ fn digit_at(chars: &[(usize, char)], i: usize) -> bool {
     chars.get(i).is_some_and(|(_, c)| c.is_ascii_digit())
 }
 
-fn scan_number(src: &str, chars: &[(usize, char)], start: usize) -> Result<(Number, usize), Error> {
+fn scan_number(
+    src: &str,
+    chars: &[(usize, char)],
+    start: usize,
+    currency: bool,
+) -> Result<(Number, usize), Error> {
     let at = chars[start].0;
     let bad = |end: usize| Error::InvalidNumber {
         text: src[at..chars.get(end).map_or(src.len(), |c| c.0)].to_string(),
@@ -307,6 +345,62 @@ fn scan_number(src: &str, chars: &[(usize, char)], start: usize) -> Result<(Numb
         }
     }
 
+    let mut magnitude: i64 = 0;
+    let suffix = |c: char, next: Option<char>, after_next: Option<char>| -> Option<(i64, usize)> {
+        let ends = |x: Option<char>| !x.is_some_and(char::is_alphanumeric);
+        match c {
+            'k' | 'K' if currency || c == 'k' => ends(next).then_some((3, 1)),
+            'M' => ends(next).then_some((6, 1)),
+            'm' if currency => ends(next).then_some((6, 1)),
+            'G' if !currency => ends(next).then_some((9, 1)),
+            'B' | 'b' if currency => {
+                if next == Some('n') && ends(after_next) {
+                    Some((9, 2))
+                } else {
+                    ends(next).then_some((9, 1))
+                }
+            }
+            'T' if !currency => ends(next).then_some((12, 1)),
+            'T' | 't' if currency => {
+                if next == Some('n') && ends(after_next) {
+                    Some((12, 2))
+                } else {
+                    ends(next).then_some((12, 1))
+                }
+            }
+            _ => None,
+        }
+    };
+    let here = chars.get(j).map(|(_, c)| *c);
+    if let Some((m, used)) = here.and_then(|c| {
+        suffix(
+            c,
+            chars.get(j + 1).map(|(_, c)| *c),
+            chars.get(j + 2).map(|(_, c)| *c),
+        )
+    }) {
+        magnitude = m;
+        j += used;
+    } else {
+        let mut k = j;
+        while chars.get(k).is_some_and(|(_, c)| *c == ' ') {
+            k += 1;
+        }
+        let end = word_end(chars, k);
+        let word: String = chars[k..end].iter().map(|(_, c)| *c).collect();
+        let found = match word.to_lowercase().as_str() {
+            "thousand" => Some(3),
+            "million" => Some(6),
+            "billion" => Some(9),
+            "trillion" => Some(12),
+            _ => None,
+        };
+        if let Some(m) = found {
+            magnitude = m;
+            j = end;
+        }
+    }
+    let exp = exp + magnitude;
     let scale = exp - frac_len;
     let int: BigInt = mantissa.parse().map_err(|_| bad(j))?;
     let ten_pow = BigInt::from(10).pow(scale.unsigned_abs() as u32);
