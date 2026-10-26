@@ -173,7 +173,9 @@ fn sum_in_order(values: &[&Value]) -> Result<Option<Value>, Error> {
 
 /// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to each
 /// other (`$10`, `5` and `3 gallons`) do not make the Total an error: as the reference app shows, it is then
-/// the sum of the lines of the last line's kind (`3 gal`), and the plain numbers are left out.
+/// the sum of the money lines, and the plain numbers are left out (`$10.00`, whichever order the lines come in).
+/// With no money among them it is the lines of the last line's kind. The reference app gave `3 gal` once for
+/// `$10`, `5`, `3 gallons` and `$10.00` twice; this follows the two.
 fn add_up(values: &[&Value]) -> Result<Value, Error> {
     let plain: Vec<&Value> = values
         .iter()
@@ -182,7 +184,11 @@ fn add_up(values: &[&Value]) -> Result<Value, Error> {
         .collect();
     let total = match sum_in_order(&plain) {
         Err(Error::IncompatibleUnits | Error::CurrencyRateNeeded) => {
-            let last_with_unit = plain.iter().rev().find(|v| !v.unit().is_empty());
+            let last_with_unit = plain
+                .iter()
+                .rev()
+                .find(|v| v.unit().currency_symbol().is_some())
+                .or_else(|| plain.iter().rev().find(|v| !v.unit().is_empty()));
             let same_kind: Vec<&Value> = plain
                 .iter()
                 .copied()
@@ -629,7 +635,8 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
     let mut ignored = Vec::new();
     let mut warnings = Vec::new();
     let outcome = (|| {
-        let (toks, ends) = lex_with_ends(text)?;
+        let masked = opts.natural.then(|| mask_dotted_numbers(text));
+        let (toks, ends) = lex_with_ends(masked.as_deref().unwrap_or(text))?;
         let toks = substitute(text, toks, &ends, index, st)?;
         let is_word_form = crate::words::parse_words(&toks).is_some();
         let toks = if opts.natural && !is_word_form {
@@ -644,6 +651,41 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
         ignored,
         warnings,
     }
+}
+
+/// `01.05.2005` is not a date and not a number: The reference app gives `1 day` for `01.05.2005 + 1 day`, as if
+/// the dotted run were not there. This blanks each run of digits joined by two or more dots, keeping the offsets.
+fn mask_dotted_numbers(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut masked = bytes.to_vec();
+    let digit = |i: usize| bytes.get(i).is_some_and(u8::is_ascii_digit);
+    let mut i = 0;
+    while i < bytes.len() {
+        let starts =
+            digit(i) && (i == 0 || !(bytes[i - 1].is_ascii_alphanumeric() || bytes[i - 1] == b'.'));
+        if !starts {
+            i += 1;
+            continue;
+        }
+        let mut end = i;
+        let mut dots = 0;
+        loop {
+            while digit(end) {
+                end += 1;
+            }
+            if bytes.get(end) == Some(&b'.') && digit(end + 1) {
+                dots += 1;
+                end += 1;
+            } else {
+                break;
+            }
+        }
+        if dots >= 2 {
+            masked[i..end].fill(b' ');
+        }
+        i = end;
+    }
+    String::from_utf8(masked).expect("only ASCII digits and dots were replaced")
 }
 
 fn is_operand_start(t: &Tok) -> bool {
@@ -770,6 +812,16 @@ fn drop_unknown(
             && i > 0
             && matches!(&toks[i - 1].tok, Tok::Word(p) if ["as", "in", "to", "into"].iter().any(|k| p.eq_ignore_ascii_case(k)));
         if unknown(t) && !layout_word {
+            drop[i] = true;
+        }
+    }
+
+    // A comma straight after a stray word is part of the remark: `hotel, 3 nights × $120` is `3 nights × $120`.
+    for i in 1..toks.len() {
+        if matches!(toks[i].tok, Tok::Comma)
+            && drop[i - 1]
+            && matches!(toks[i - 1].tok, Tok::Word(_))
+        {
             drop[i] = true;
         }
     }

@@ -93,7 +93,8 @@ fn unit_arithmetic_rules() {
     assert_eq!(shown("2 m × 3 m × 4 m"), "24 m³");
     assert_eq!(shown("(5 m)^2"), "25 m²");
     assert_eq!(shown("3 m^2 × 2"), "6 m²");
-    assert_eq!(shown("10 km / 2 h"), "5 km/hour");
+    assert_eq!(shown("10 km / 2 hours"), "5 km/hour");
+    assert_eq!(shown("10 km / 2 h"), "5 km/h");
     assert_eq!(shown("10 km/h × 3 h"), "30 km");
     assert_eq!(shown("-5 km"), "-5 km");
 }
@@ -128,7 +129,7 @@ fn conversion_words_and_directions() {
     assert_eq!(shown("1 gal in L"), "3.785411784 L");
     assert_eq!(shown("1 yr in days"), "365.2425 days");
     assert_eq!(shown("1 mo in days"), "30.436875 days");
-    assert_eq!(shown("60 mph in km/h"), "96.56064 km/hour");
+    assert_eq!(shown("60 mph in km/h"), "96.56064 km/h");
     assert_eq!(shown("1 GiB in MiB"), "1,024 MiB");
     assert_eq!(shown("1 GB in MB"), "1,000 MB");
     assert_eq!(shown("1 B in bits"), "8 bit");

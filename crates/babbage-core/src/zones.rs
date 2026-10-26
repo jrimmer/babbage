@@ -126,6 +126,8 @@ const US_REGIONS: &[(&str, &str)] = &[
     ("akst", "America/Anchorage"),
     ("akdt", "America/Anchorage"),
     ("hst", "Pacific/Honolulu"),
+    // British Summer Time names London: on 26 October, after the clocks went back, `noon BST` is 12:00 UTC.
+    ("bst", "Europe/London"),
     // Western European Time never changes in winter; Reykjavik is on it all year.
     ("wet", "Atlantic/Reykjavik"),
 ];

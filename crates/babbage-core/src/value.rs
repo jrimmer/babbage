@@ -180,6 +180,14 @@ impl Value {
         Ok(v)
     }
 
+    /// A length written `6"`, in inches and shown as feet and inches.
+    pub fn inches_shown(inches: Number) -> Result<Value, Error> {
+        let inch = crate::units::lookup("inch").ok_or(Error::IncompatibleUnits)?;
+        let mut v = Value::quantity(inches, inch)?;
+        v.layout = Some(Shown::FeetInches);
+        Ok(v)
+    }
+
     /// A time of day read on the 24-hour clock.
     pub fn clock_24(seconds: Number) -> Value {
         let mut v = Value::clock(seconds);
@@ -981,9 +989,29 @@ fn shift_clock(clock: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
     )?))
 }
 
+/// Feet and inches written one after the other (`5 feet 6 inches`), or added to a length already shown that way
+/// (`5' 6" + 2 inches`), print as feet and inches.
+fn compound_layout(op: BinOp, l: &Value, r: &Value, v: &Value) -> Option<Shown> {
+    if !matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
+        || v.kind != Kind::Plain
+        || v.unit.symbol() != "ft" && v.unit.symbol() != "in"
+    {
+        return None;
+    }
+    let shown = |x: &Value| x.layout == Some(Shown::FeetInches);
+    let feet_then_inches = op == BinOp::Join && l.unit.symbol() == "ft" && r.unit.symbol() == "in";
+    (shown(l) || shown(r) || feet_then_inches).then_some(Shown::FeetInches)
+}
+
 /// A sum or difference of two lengths of time is written the way its operands were: a timespan stays a
 /// timespan and a lap time stays a lap time.
 fn inherit_layout(op: BinOp, l: &Value, r: &Value, v: Value) -> Value {
+    if let Some(layout) = compound_layout(op, l, r, &v) {
+        return Value {
+            layout: Some(layout),
+            ..v
+        };
+    }
     let wanted = |x: &Value| {
         matches!(
             x.layout,
@@ -1239,6 +1267,13 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
+    // `$500/month / 30 days` is `$16.67/day`: a money rate over a length of time takes that time as its period.
+    if l.unit.currency_split().is_some()
+        && is_length_of_time(r)
+        && let Some(per) = l.unit.with_period(&r.unit)
+    {
+        return Value::quantity(l.number.div(&r.number)?, per);
+    }
     // Pairs such as km over m cancel inside `quantity`, which scales the number.
     Value::quantity(l.number.div(&r.number)?, l.unit.times(&r.unit.recip()))
 }
@@ -1305,11 +1340,15 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             }
         }
         Kind::Plain if v.layout.is_some() && !v.unit.is_empty() => format_layout(v, opts),
+        Kind::Plain if opts.compound_units && pounds_and_ounces(v).is_some() => {
+            let (base, units) = pounds_and_ounces(v).expect("checked by the guard");
+            format_parts(&base, &units, opts)
+        }
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {
                 return f;
             }
-            let mut f = if v.unit.is_empty() || v.unit.currency_symbol().is_some() {
+            let mut f = if v.unit.currency_symbol().is_some() {
                 format_decimal(&v.number, opts)
             } else {
                 crate::format::format_amount(&v.number, opts)
@@ -1333,9 +1372,9 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
         },
         Kind::Clock => Formatted {
             text: if v.layout == Some(Shown::Clock24) {
-                crate::dates::format_clock_24(&v.number)
+                crate::dates::format_clock_24_minutes(&v.number)
             } else {
-                crate::dates::format_clock(&v.number)
+                crate::dates::format_clock_minutes(&v.number)
             },
             exact: true,
         },
@@ -1438,6 +1477,18 @@ fn radix_text(n: &Number, radix: u8) -> String {
             format!("{sign}{digits}{subscript}")
         }
     }
+}
+
+/// A part of a pound reads in ounces: `13.5 lb` is `13 lb 8 oz`. The weight in kilograms and the units to show it in.
+fn pounds_and_ounces(v: &Value) -> Option<(Number, Vec<UnitExpr>)> {
+    if v.layout.is_some() || v.number.is_integer() || v.unit.symbol() != "lb" {
+        return None;
+    }
+    let base = v.number.mul(&v.unit.factor().ok()?).ok()?;
+    Some((
+        base,
+        vec![crate::units::lookup("lb")?, crate::units::lookup("oz")?],
+    ))
 }
 
 /// A quantity written as `3 weeks 5 days`, `03:04:05` or `235 h 12 min`.

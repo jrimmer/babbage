@@ -100,7 +100,34 @@ pub struct Currency {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct UnitExpr(Vec<(UnitId, i8)>);
+pub struct UnitExpr(Vec<(UnitId, i8)>, Spelling);
+
+/// How an hour was typed. It changes only how a speed is written back (`100 km/h`, but `10 km / 2 hours` is
+/// `5 km/hour`), so it takes no part in equality or ordering.
+#[derive(Clone, Copy, Debug, Default)]
+struct Spelling {
+    short_hour: bool,
+}
+
+impl PartialEq for Spelling {
+    fn eq(&self, _: &Spelling) -> bool {
+        true
+    }
+}
+impl Eq for Spelling {}
+impl PartialOrd for Spelling {
+    fn partial_cmp(&self, other: &Spelling) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for Spelling {
+    fn cmp(&self, _: &Spelling) -> std::cmp::Ordering {
+        std::cmp::Ordering::Equal
+    }
+}
+impl std::hash::Hash for Spelling {
+    fn hash<H: std::hash::Hasher>(&self, _: &mut H) {}
+}
 
 pub struct Registry {
     defs: Vec<UnitDef>,
@@ -154,7 +181,7 @@ floz | fl oz,floz,fluid ounce,fluid ounces | L3 | 0.003785411784/128
 tbsp | tbsp,tablespoon,tablespoons | L3 | 0.003785411784/256
 tsp | tsp,teaspoon,teaspoons | L3 | 0.003785411784/768
 bsh | bsh,bushel,bushels | L3 | 0.03523907016688
-imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 0.568261*8/1000
+imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 4.54609/1000
 imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 0.568261*2/1000
 imp pt | imperial pint,imperial pints,imp pt,imp pint,imp pints,uk pint,uk pints | L3 | 0.568261/1000
 imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 0.568261/20/1000
@@ -537,7 +564,7 @@ impl Registry {
                 .position(|d| d.symbol == symbol)
                 .expect("unit exists") as UnitId;
             for (prefix, word, exp) in [("sq", "square", 2), ("cu", "cubic", 3)] {
-                let unit = UnitExpr(vec![(id, exp)]);
+                let unit = UnitExpr::from_parts(vec![(id, exp)]);
                 if symbol.chars().all(|c| c.is_ascii_alphabetic()) {
                     reg.insert_name(&format!("{prefix}{symbol}"), unit.clone(), false);
                     // `sq ft`, `sq yd`, `cu ft`: the short word, then the symbol.
@@ -587,7 +614,7 @@ impl Registry {
                 prefix_symbol: symbol.is_some(),
                 minor_digits: minor,
             });
-            let unit = UnitExpr(vec![(id, 1)]);
+            let unit = UnitExpr::from_parts(vec![(id, 1)]);
             reg.insert_name(code, unit.clone(), false);
             for n in names {
                 reg.insert_name(n, unit.clone(), false);
@@ -656,7 +683,7 @@ impl Registry {
             currency: None,
             approximate: false,
         });
-        let unit = UnitExpr(vec![(id, 1)]);
+        let unit = UnitExpr::from_parts(vec![(id, 1)]);
         self.insert_name(symbol, unit.clone(), generated);
         for n in names {
             self.insert_name(n, unit.clone(), generated);
@@ -736,7 +763,9 @@ pub fn currency_prefix(text: &str) -> Option<(usize, UnitExpr)> {
 pub fn lookup(name: &str) -> Option<UnitExpr> {
     let reg = registry();
     if let Some(u) = reg.by_name.get(name) {
-        return Some(u.clone());
+        let mut u = u.clone();
+        u.1.short_hour = matches!(name, "h" | "hr");
+        return Some(u);
     }
     if name.len() >= 4 && name.chars().all(char::is_alphabetic) {
         return reg.by_name.get(&name.to_lowercase()).cloned();
@@ -775,6 +804,10 @@ fn factor_now(def: &UnitDef) -> Number {
 }
 
 impl UnitExpr {
+    fn from_parts(parts: Vec<(UnitId, i8)>) -> UnitExpr {
+        UnitExpr(parts, Spelling::default())
+    }
+
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -790,6 +823,7 @@ impl UnitExpr {
                 .map(|(u, e)| (*u, e * n))
                 .filter(|(_, e)| *e != 0)
                 .collect(),
+            self.1,
         )
     }
 
@@ -803,7 +837,8 @@ impl UnitExpr {
         }
         parts.retain(|(_, e)| *e != 0);
         parts.sort_by_key(|(u, _)| *u);
-        UnitExpr(parts)
+        let short_hour = self.1.short_hour || other.1.short_hour;
+        UnitExpr(parts, Spelling { short_hour })
     }
 
     /// The currency when this is exactly one currency unit, as in `$` or `CHF`.
@@ -822,7 +857,10 @@ impl UnitExpr {
             .copied()
             .partition(|(u, _)| registry().defs[*u as usize].currency.is_some());
         match money.as_slice() {
-            [(u, 1)] => Some((registry().defs[*u as usize].currency?, UnitExpr(rest))),
+            [(u, 1)] => Some((
+                registry().defs[*u as usize].currency?,
+                UnitExpr::from_parts(rest),
+            )),
             _ => None,
         }
     }
@@ -877,7 +915,7 @@ impl UnitExpr {
             break;
         }
         parts.sort_by_key(|(u, _)| *u);
-        Ok((scale, UnitExpr(parts)))
+        Ok((scale, UnitExpr(parts, self.1)))
     }
 
     /// True when a conversion through this expression uses an approximate factor.
@@ -914,7 +952,7 @@ impl UnitExpr {
 
     /// The units with positive exponents, as in `$` of `$/hour`.
     pub fn numerator(&self) -> UnitExpr {
-        UnitExpr(
+        UnitExpr::from_parts(
             self.0
                 .iter()
                 .copied()
@@ -925,7 +963,7 @@ impl UnitExpr {
 
     /// The units with negative exponents, turned positive, as in `hour` of `$/hour`.
     pub fn denominator(&self) -> UnitExpr {
-        UnitExpr(
+        UnitExpr::from_parts(
             self.0
                 .iter()
                 .copied()
@@ -937,6 +975,13 @@ impl UnitExpr {
 
     pub fn recip(&self) -> UnitExpr {
         self.pow(-1)
+    }
+
+    /// Whether some unit of the table measures what this expression does. A product of units that measures
+    /// nothing (`kg m`) is not a unit.
+    pub fn is_named_kind(&self) -> bool {
+        let dim = self.dim();
+        registry().defs.iter().any(|def| def.dim == dim)
     }
 
     pub fn dim(&self) -> Dim {
@@ -967,14 +1012,14 @@ impl UnitExpr {
         }
         changed.then(|| {
             parts.sort_by_key(|(u, _)| *u);
-            UnitExpr(parts)
+            UnitExpr::from_parts(parts)
         })
     }
 
     /// The one unit and its exponent when this is a single unit (`ft`, `ft²`), as (that unit to the first power, exponent).
     pub fn single_power(&self) -> Option<(UnitExpr, i8)> {
         match self.0.as_slice() {
-            [(u, e)] => Some((UnitExpr(vec![(*u, 1)]), *e)),
+            [(u, e)] => Some((UnitExpr::from_parts(vec![(*u, 1)]), *e)),
             _ => None,
         }
     }
@@ -1009,7 +1054,7 @@ impl UnitExpr {
                 .map(|(u, e)| if u == d { (*new, -1) } else { (*u, *e) })
                 .collect();
             parts.sort_by_key(|(u, _)| *u);
-            return Some(UnitExpr(parts));
+            return Some(UnitExpr::from_parts(parts));
         }
         // Only a length to a power (`cm³`, `ft²`), not a named volume such as a litre or a product of lengths.
         let [(_, k)] = self.0.as_slice() else {
@@ -1135,13 +1180,23 @@ impl UnitExpr {
         {
             return "mph".to_string();
         }
+        // A newton metre is the torque unit, with the dot operator between the two.
+        if let (Some(newton), Some(metre)) = (lookup("N"), lookup("m"))
+            && self.0.len() == 2
+            && self.0.iter().all(|(_, e)| *e == 1)
+            && *self == newton.times(&metre)
+        {
+            return "N⋅m".to_string();
+        }
         let reg = registry();
         let name = |u: UnitId| -> (String, bool) {
             let symbol = reg.defs[u as usize].symbol;
             match WORD_UNITS.iter().find(|(s, _)| *s == symbol) {
                 Some((_, word)) => ((*word).to_string(), true),
-                // The imperial pint is written `pt`; its table symbol cannot be, for the typographic point has it.
+                // The imperial pint is written `pt` and the gallon `gal`; the table symbols cannot be, for the typographic
+                // point has the first and the US gallon the second.
                 None if symbol == "imp pt" => ("pt".to_string(), false),
+                None if symbol == "imp gal" => ("gal".to_string(), false),
                 None if symbol == "deg" => ("°".to_string(), false),
                 None => (symbol.to_string(), false),
             }
@@ -1175,7 +1230,17 @@ impl UnitExpr {
             .collect();
         // A speed made by division reads `10 km / 2 hours` as `5 km/hour`, as the reference app prints it;
         // `mph` is a unit of its own and keeps its name.
-        let down_text: Vec<String> = down.iter().map(|(u, e)| part(*u, *e, false)).collect();
+        let hour = lookup("h").and_then(|h| h.0.first().map(|(id, _)| *id));
+        let down_text: Vec<String> = down
+            .iter()
+            .map(|(u, e)| {
+                if self.1.short_hour && Some(*u) == hour && *e == 1 {
+                    "h".to_string()
+                } else {
+                    part(*u, *e, false)
+                }
+            })
+            .collect();
         match (up.is_empty(), down.len()) {
             (_, 0) => up.join(" "),
             // Only a denominator (`30/week`): written after a slash when each is to the first power.
@@ -1228,7 +1293,7 @@ mod tests {
     }
 
     fn one(id: UnitId) -> UnitExpr {
-        UnitExpr(vec![(id, 1)])
+        UnitExpr::from_parts(vec![(id, 1)])
     }
 
     #[test]

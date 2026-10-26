@@ -125,10 +125,15 @@ mod tests {
     }
 
     #[test]
+    fn the_owners_chinese_new_year_2100_comes_from_the_sky_not_the_table() {
+        assert_eq!(civil(chinese_new_year(2100).unwrap()), (2100, 2, 9));
+    }
+
+    #[test]
     fn the_chinese_table_ends_with_its_years() {
         assert!(chinese_new_year(1899).is_none());
         assert!(chinese_new_year(1900).is_some());
-        assert!(chinese_new_year(2099).is_some());
-        assert!(chinese_new_year(2100).is_none());
+        assert!(chinese_new_year(2299).is_some());
+        assert!(chinese_new_year(2300).is_none());
     }
 }

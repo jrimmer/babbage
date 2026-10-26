@@ -7,12 +7,19 @@ import random
 from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
 
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import tiny
+
 getcontext().prec = 4000
 rng = random.Random(0xD15F1A)
 STEPS = [("k", 3, Fraction(10**5)), ("M", 6, Fraction(10**6)), ("G", 9, Fraction(10**9)), ("T", 12, Fraction(10**12))]
 
 
 def plain(q):
+    t = tiny(q)
+    if t:
+        return t
     d = Decimal(q.numerator) / Decimal(q.denominator)
     out = format(d.quantize(Decimal("1e-10"), rounding=ROUND_HALF_UP), "f")
     neg = out.startswith("-")

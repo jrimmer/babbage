@@ -146,17 +146,18 @@ fn until_looks_ahead_and_since_looks_back_and_today_counts_as_both() {
 }
 
 #[test]
-fn a_yearless_date_is_this_year_or_next_unless_the_line_says_which() {
+fn a_yearless_date_is_this_year_unless_the_line_says_until_or_since() {
     let at = |now, line: &str| run_at(now, line).unwrap_or_else(|e| panic!("{line}: {e}"));
     all(&[
         ("December 25 as yyyy", "2024"),
         ("December 1 as yyyy", "2024"),
         ("January 5 as yyyy", "2024"),
     ]);
-    // Late December: the next January is closer than the last one.
-    assert_eq!(at(1_734_696_000, "January 5 as yyyy"), "2025");
+    // A date with no year is this year's whatever the month, as the reference app reads it (Sheet D, lines 21, 22):
+    // late in December, `January 5` is still this January.
+    assert_eq!(at(1_734_696_000, "January 5 as yyyy"), "2024");
     assert_eq!(at(1_734_696_000, "December 25 as yyyy"), "2024");
-    // Early January: still this year's December, as the reference says "the current year or the following one".
+    // Early January: this year's December.
     assert_eq!(at(1_704_283_200, "December 28 as yyyy"), "2024");
     // A leap day is found in whichever year has one, up to four years either way.
     assert_eq!(at(1_835_265_600, "days since February 29"), "1,459 days");
@@ -544,11 +545,12 @@ fn a_year_after_a_day_and_month_has_four_digits() {
 }
 
 #[test]
-fn a_time_of_day_keeps_its_fraction_of_a_second() {
+fn a_time_of_day_shows_no_seconds_but_a_day_with_a_time_keeps_them() {
+    // the reference app prints `3:45:30 pm` as `3:45 PM` (Sheet D, line 9).
     all(&[
-        ("5pm + 0.5 seconds", "5:00:00.5 PM"),
-        ("5pm + 90.25 seconds", "5:01:30.25 PM"),
-        ("5pm + 1 second", "5:00:01 PM"),
+        ("5pm + 0.5 seconds", "5:00 PM"),
+        ("5pm + 90.25 seconds", "5:01 PM"),
+        ("5pm + 1 second", "5:00 PM"),
         ("5pm + 60 seconds", "5:01 PM"),
         ("11:59:59pm + 1.5 seconds", "Tomorrow at 12:00:00.5 AM"),
     ]);

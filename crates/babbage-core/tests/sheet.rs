@@ -342,11 +342,11 @@ fn the_floating_total_adds_every_result_except_subtotal_lines() {
     assert!(floating_total(&run(&["hello"]), &SheetOptions::default()).is_none());
 }
 
-/// Lines that cannot all be added: the Total is the sum of the lines of the last line with a unit, plain numbers left
-/// out. This rests on one run of the owner's Sheet C (ticket 0050), so the rule is pinned here with its mirror image:
-/// if the owner's re-test says the first line decides instead, both of these lines change.
+/// Lines that cannot all be added: the Total is the sum of the money lines, plain numbers left out, whatever the
+/// order (ticket 0050, Sheet D lines 59 and 60: `$10.00` both ways). With no money it follows the last line with a
+/// unit. The reference app once gave `3 gal` for the first set of lines and `$10.00` twice, so this follows the two.
 #[test]
-fn a_total_of_clashing_kinds_follows_the_last_line_with_a_unit() {
+fn a_total_of_clashing_kinds_is_the_money() {
     let total = |lines: &[&str]| {
         let results = run(lines);
         let t = floating_total(&results, &SheetOptions::default())
@@ -354,8 +354,9 @@ fn a_total_of_clashing_kinds_follows_the_last_line_with_a_unit() {
             .unwrap();
         format_value(&t, &FormatOptions::default()).text
     };
-    assert_eq!(total(&["$10", "5", "3 gallons"]), "3 gal");
+    assert_eq!(total(&["$10", "5", "3 gallons"]), "$10.00");
     assert_eq!(total(&["3 gallons", "5", "$10"]), "$10.00");
+    assert_eq!(total(&["3 gallons", "5", "2 km", "4 kg"]), "4 kg");
     assert_eq!(
         total(&["5", "3 gallons"]),
         "8 gal",

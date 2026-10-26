@@ -204,8 +204,11 @@ fn unit_products(toks: Vec<Token>) -> Vec<Token> {
             && a.dim() != b.dim()
         {
             let product = a.times(b);
-            let last = out.len() - 1;
-            out[last].tok = Tok::Unit(product);
+            // `3 kg m` measures nothing: the second unit is ignored, as a stray word is.
+            if product.is_named_kind() {
+                let last = out.len() - 1;
+                out[last].tok = Tok::Unit(product);
+            }
             continue;
         }
         out.push(t);
@@ -1020,8 +1023,7 @@ fn feet_inches_at(
     let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
     // `6"` on its own is six inches.
     if matches!(c(next), Some('"' | '”')) {
-        let inch = crate::units::lookup("inch").ok_or(Error::IncompatibleUnits)?;
-        return Ok(Some((Value::quantity(feet.clone(), inch)?, next + 1)));
+        return Ok(Some((Value::inches_shown(feet.clone())?, next + 1)));
     }
     if !matches!(c(next), Some('\'' | '’')) {
         return Ok(None);

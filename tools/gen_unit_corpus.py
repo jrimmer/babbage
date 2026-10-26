@@ -13,7 +13,7 @@ from fractions import Fraction
 import pint
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from unitwords import suffix
+from unitwords import suffix, tiny
 
 getcontext().prec = 4000
 ureg = pint.UnitRegistry(non_int_type=Fraction)
@@ -84,6 +84,9 @@ HAND = {
 
 
 def fixed10(q):
+    t = tiny(q)
+    if t:
+        return t
     d = Decimal(q.numerator) / Decimal(q.denominator)
     out = format(d.quantize(Decimal("1e-10"), rounding=ROUND_HALF_UP), "f")
     return out[1:] if out.startswith("-") and set(out[1:]) <= {"0", "."} else out

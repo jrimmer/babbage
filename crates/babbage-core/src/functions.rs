@@ -332,7 +332,7 @@ fn screen_ppi(diagonal: &Value, width: &Value, height: &Value) -> Result<Value, 
     let text =
         crate::format::format_decimal(density.number(), &crate::format::FormatOptions::default())
             .text;
-    Ok(Value::text(&format!("{text} ppi")))
+    Ok(Value::text(&format!("{text} PPI")))
 }
 
 const NOTES: [&str; 12] = [

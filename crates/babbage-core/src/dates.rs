@@ -50,13 +50,13 @@ fn int(n: &Number) -> Option<i64> {
     n.is_integer().then(|| n.numer().to_i64()).flatten()
 }
 
-/// Which occurrence of a yearless date a line means: the closest, the next, or the last.
+/// Which occurrence of a yearless date a line means: this year's, the next, or the last.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Bias {
-    Nearest,
     Next,
     Last,
-    /// This year's, whatever the month: `halfway between January 1 and March 1` is `January 31` in October.
+    /// This year's, whatever the month, as the reference app reads it: `January 1` in October is `January 1` of
+    /// this year, and `halfway between January 1 and March 1` is `January 31`.
     ThisYear,
 }
 
@@ -72,34 +72,12 @@ impl Bias {
             {
                 Bias::Next
             }
-            _ if out
-                .iter()
-                .any(|t| matches!(word_of(Some(t)).as_deref(), Some("midpoint" | "halfway"))) =>
-            {
-                Bias::ThisYear
-            }
-            _ => Bias::Nearest,
+            _ => Bias::ThisYear,
         }
     }
 
     fn pick(self, today: i64, candidates: impl Iterator<Item = i64>) -> Option<i64> {
         match self {
-            // A date with no year is this year's or next year's, whichever is closer, as the reference says.
-            // A date that has no occurrence in either (a leap day) is the closest one in any year.
-            Bias::Nearest => {
-                let all: Vec<i64> = candidates.collect();
-                let this_year = calendar::civil_from_days(today).year;
-                let near: Vec<i64> = all
-                    .iter()
-                    .copied()
-                    .filter(|d| {
-                        let y = calendar::civil_from_days(*d).year;
-                        y == this_year || y == this_year + 1
-                    })
-                    .collect();
-                let pool = if near.is_empty() { all } else { near };
-                pool.into_iter().min_by_key(|d| (d - today).abs())
-            }
             Bias::ThisYear => {
                 let all: Vec<i64> = candidates.collect();
                 let this_year = calendar::civil_from_days(today).year;
@@ -273,19 +251,12 @@ fn year_after(toks: &[Token], mut i: usize) -> (Option<i64>, usize) {
 
 /// Replaces date words and patterns with date values.
 pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
-    // `3 March to 30 May`: the two ends of a range are in the same year, this one.
-    let range = toks
-        .iter()
-        .any(|t| matches!(word_of(Some(t)).as_deref(), Some("to" | "through")));
     let (today, seconds) = settings::local_now();
     let mut out: Vec<Token> = Vec::with_capacity(toks.len());
     let mut i = 0;
     while i < toks.len() {
         let at = toks[i].at;
-        let bias = match Bias::before(&out) {
-            Bias::Nearest if range => Bias::ThisYear,
-            other => other,
-        };
+        let bias = Bias::before(&out);
         let push = |out: &mut Vec<Token>, v: Value| {
             out.push(Token {
                 tok: Tok::Value(v),
@@ -528,6 +499,21 @@ pub fn format_clock_24(seconds: &Number) -> String {
     } else {
         format!("{h:02}:{m:02}:{s:02}")
     }
+}
+
+/// A time of day on its own never shows seconds, as the reference app prints it: `3:45:30 pm` reads `3:45 PM`.
+/// A date with a time keeps them (`December 10, 2024 at 9:31:23 AM`).
+pub fn format_clock_minutes(seconds: &Number) -> String {
+    let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
+    let total = whole.mod_floor(&BigInt::from(86_400)).to_i64().unwrap_or(0);
+    format_clock(&Number::from_i64(total - total % 60))
+}
+
+/// The same on the 24-hour clock: `19:00`.
+pub fn format_clock_24_minutes(seconds: &Number) -> String {
+    let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
+    let total = whole.mod_floor(&BigInt::from(86_400)).to_i64().unwrap_or(0);
+    format_clock_24(&Number::from_i64(total - total % 60))
 }
 
 fn split_days(value: &Number) -> (i64, Number) {

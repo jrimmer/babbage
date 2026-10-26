@@ -74,6 +74,8 @@ pub struct FormatOptions {
     pub abbreviate_large: bool,
     /// Show money with its currency's fixed digits (`$5.00`). Off shows every digit, as for a declared variable.
     pub fixed_money_digits: bool,
+    /// Show a part of a pound in ounces, `13.5 lb` as `13 lb 8 oz`, as the app does.
+    pub compound_units: bool,
     pub number_format: NumberFormat,
 }
 
@@ -89,6 +91,7 @@ impl FormatOptions {
             trim_trailing_zeros: true,
             abbreviate_large: false,
             fixed_money_digits: true,
+            compound_units: false,
             number_format: NumberFormat::NorthAmerica,
         })
     }
@@ -101,6 +104,7 @@ impl FormatOptions {
             trim_trailing_zeros: false,
             abbreviate_large: false,
             fixed_money_digits: true,
+            compound_units: false,
             number_format: NumberFormat::NorthAmerica,
         }
     }
@@ -148,6 +152,7 @@ impl Default for FormatOptions {
     fn default() -> Self {
         FormatOptions {
             abbreviate_large: true,
+            compound_units: true,
             ..FormatOptions::new(10).expect("10 is within range")
         }
     }
@@ -163,14 +168,13 @@ pub struct Formatted {
 /// Symbols from the reference, smallest first: `k` thousand, `M` million, `G` billion, `T` trillion.
 const LARGE: [(&str, u32, u32); 4] = [("k", 3, 5), ("M", 6, 6), ("G", 9, 9), ("T", 12, 12)];
 
-/// An amount with a unit: one too small for ten decimal places would print as 0, so it is written in scientific
-/// form instead, `1e-12`, as the reference app does for `1 ng in kg`.
+/// An amount below a hundred-millionth is written in scientific form, `1e-12`, as the reference app does for
+/// `1 ng in kg`, `0.000000001` (`1e-9`) and `0.00000000004` (`4e-11`).
 pub fn format_amount(n: &Number, opts: &FormatOptions) -> Formatted {
-    let half = Number::from_ratio(BigInt::from(1), BigInt::from(2)).expect("a half");
     if !n.is_zero()
         && n.abs()
-            .mul(&power_of_ten(10))
-            .is_ok_and(|scaled| scaled < half)
+            .mul(&power_of_ten(8))
+            .is_ok_and(|scaled| scaled < Number::from_i64(1))
     {
         return scientific(n, opts);
     }

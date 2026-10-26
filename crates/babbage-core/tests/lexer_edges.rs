@@ -127,7 +127,7 @@ fn a_timecode_has_one_to_three_hour_digits_and_stands_alone() {
 #[test]
 fn a_time_of_day_needs_one_to_six_hour_digits_and_stands_alone() {
     all(&[
-        ("5:30:15pm", "5:30:15 PM"),
+        ("5:30:15pm", "5:30 PM"),
         ("05:30pm", "5:30 PM"),
         ("12:30:45", "12:30:45"),
         ("123456:30:15", "123456:30:15"),
