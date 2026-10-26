@@ -1,6 +1,7 @@
 use crate::error::Error;
 use crate::lexer::{Tok, Token};
 use crate::parser::{Expr, Node, Phrase, parse};
+use crate::units::UnitExpr;
 
 struct Form {
     keywords: &'static [&'static str],
@@ -35,8 +36,33 @@ const FORMS: &[Form] = &[
 ];
 
 const VOCABULARY: &[&str] = &[
-    "is", "what", "as", "a", "to", "in", "of", "on", "off", "percent",
+    "is", "what", "as", "a", "to", "in", "into", "cast", "of", "on", "off", "percent",
 ];
+
+/// Words that turn `<value> <word> <unit>` into a conversion.
+const CONVERSION_WORDS: &[&str] = &["to", "in", "as", "into"];
+
+fn parse_unit_run(run: &[Token]) -> Result<UnitExpr, Error> {
+    if run.is_empty() {
+        return Err(Error::UnexpectedEnd);
+    }
+    let mut unit = UnitExpr::default();
+    let mut dividing = false;
+    for t in run {
+        match &t.tok {
+            Tok::Unit(u) => unit = unit.times(&if dividing { u.recip() } else { u.clone() }),
+            Tok::Star => {}
+            Tok::Slash => dividing = true,
+            other => {
+                return Err(Error::UnexpectedToken {
+                    found: other.describe(),
+                    at: t.at,
+                });
+            }
+        }
+    }
+    Ok(unit)
+}
 
 /// Parses one line, recognising the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
@@ -46,14 +72,39 @@ pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
         match &t.tok {
             Tok::LParen => depth += 1,
             Tok::RParen => depth -= 1,
-            Tok::Word(w) if depth == 0 && VOCABULARY.contains(&w.as_str()) => {
-                keywords.push((i, if w == "percent" { "%" } else { w.as_str() }));
+            Tok::Word(w) if depth == 0 && VOCABULARY.contains(&w.to_lowercase().as_str()) => {
+                keywords.push((
+                    i,
+                    VOCABULARY
+                        .iter()
+                        .copied()
+                        .find(|k| w.eq_ignore_ascii_case(k))
+                        .map_or("", |k| if k == "percent" { "%" } else { k }),
+                ));
             }
             Tok::Percent { attached: false } if depth == 0 => keywords.push((i, "%")),
             _ => {}
         }
     }
     let names: Vec<&str> = keywords.iter().map(|(_, k)| *k).collect();
+    if let [(at, word)] = keywords.as_slice() {
+        let converts = CONVERSION_WORDS.contains(word);
+        let has_both_sides = *at > 0 && *at + 1 < toks.len();
+        let target = if (converts || *word == "cast") && has_both_sides {
+            parse_unit_run(&toks[at + 1..]).ok()
+        } else {
+            None
+        };
+        if let Some(target) = target {
+            let mut rpn: Vec<Node> = parse(&toks[..*at])?.nodes().to_vec();
+            rpn.push(if converts {
+                Node::Convert(target)
+            } else {
+                Node::Cast(target)
+            });
+            return Ok(Expr::from_nodes(rpn));
+        }
+    }
     let Some(form) = FORMS.iter().find(|f| f.keywords == names.as_slice()) else {
         return parse(toks);
     };

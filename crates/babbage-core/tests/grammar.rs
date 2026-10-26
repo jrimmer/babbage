@@ -87,7 +87,7 @@ fn bad_characters_report_offsets_in_bytes_not_chars() {
     assert_eq!(
         evaluate("ABC"),
         Err(Error::UnexpectedWord {
-            word: "abc".into(),
+            word: "ABC".into(),
             at: 0
         })
     );

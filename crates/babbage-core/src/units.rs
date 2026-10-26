@@ -56,9 +56,11 @@ struct UnitDef {
     symbol: &'static str,
     dim: Dim,
     factor: Number,
+    /// Kelvin at zero of this unit, for scales that do not start at absolute zero.
+    offset: Number,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct UnitExpr(Vec<(UnitId, i8)>);
 
 pub struct Registry {
@@ -83,8 +85,8 @@ yr | yr,yrs,year,years | T | 365.2425*86400
 # length
 m | m,meter,meters,metre,metres | L | 1
 +n,µ,m,c,d,k
-in | inch,inches," | L | 0.0254
-ft | ft,foot,feet,' | L | 0.3048
+in | inch,inches | L | 0.0254
+ft | ft,foot,feet | L | 0.3048
 yd | yd,yds,yard,yards | L | 0.9144
 mi | mi,mile,miles | L | 1609.344
 fur | fur,furlong,furlongs | L | 201.168
@@ -125,6 +127,10 @@ deg | °,deg,degree,degrees | A | 1
 arcmin | ′,arcmin,arcminute,arcminutes | A | 1/60
 arcsec | ″,arcsec,arcsecond,arcseconds | A | 1/3600
 rev | rev,revolution,revolutions | A | 360
+# temperature (affine: the fifth column is the offset to kelvin)
+K | K,kelvin | K | 1
+°C | °C,ºC,degC,celsius,C | K | 1 | 273.15
+°F | °F,ºF,degF,fahrenheit,F | K | 5/9 | 459.67*5/9
 # frequency
 Hz | Hz,hertz | T-1 | 1
 +n,µ,m,k,M,G,T
@@ -213,6 +219,11 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 @ Bps = B/s
 @ bps = bit/s
 "#;
+
+/// Words the phrase layer owns. A unit can show one as its symbol but is never found by it.
+pub const RESERVED_WORDS: &[&str] = &[
+    "in", "a", "as", "to", "is", "of", "on", "off", "what", "percent", "into",
+];
 
 const PREFIXES: &[(&str, &str, i32)] = &[
     ("y", "yocto", -24),
@@ -331,10 +342,14 @@ impl Registry {
                 }
             } else {
                 let cols: Vec<&str> = line.split('|').map(str::trim).collect();
-                assert_eq!(cols.len(), 4, "bad unit line {line:?}");
+                assert!(cols.len() == 4 || cols.len() == 5, "bad unit line {line:?}");
                 let names: Vec<&str> = cols[1].split(',').collect();
                 let (dim, factor) = (Dim::parse(cols[2]), exact_factor(cols[3]));
+                let offset = cols
+                    .get(4)
+                    .map_or_else(|| Number::from_i64(0), |o| exact_factor(o));
                 reg.add(cols[0], &names, dim, factor.clone(), false);
+                reg.defs.last_mut().expect("just added").offset = offset;
                 last = Some((cols[0], names, dim, factor));
             }
         }
@@ -376,6 +391,9 @@ impl Registry {
                 {
                     reg.insert_name(&format!("{word} {n}"), unit.clone(), false);
                 }
+                if symbol.chars().all(|c| c.is_ascii_alphabetic()) {
+                    reg.insert_name(&format!("{word} {symbol}"), unit.clone(), false);
+                }
             }
         }
         reg
@@ -387,6 +405,7 @@ impl Registry {
             symbol: Box::leak(symbol.to_string().into_boxed_str()),
             dim,
             factor,
+            offset: Number::from_i64(0),
         });
         let unit = UnitExpr(vec![(id, 1)]);
         self.insert_name(symbol, unit.clone(), generated);
@@ -396,6 +415,9 @@ impl Registry {
     }
 
     fn insert_name(&mut self, name: &str, unit: UnitExpr, generated: bool) {
+        if RESERVED_WORDS.contains(&name) {
+            return;
+        }
         match self.by_name.get(name) {
             None => {
                 self.by_name.insert(name.to_string(), unit);
@@ -467,6 +489,10 @@ impl UnitExpr {
         self.pow(exp)
     }
 
+    pub fn unit_count(&self) -> usize {
+        self.0.len()
+    }
+
     fn pow(&self, n: i8) -> UnitExpr {
         UnitExpr(
             self.0
@@ -488,6 +514,31 @@ impl UnitExpr {
         parts.retain(|(_, e)| *e != 0);
         parts.sort_by_key(|(u, _)| *u);
         UnitExpr(parts)
+    }
+
+    /// True for a scale like °C whose zero is not absolute zero.
+    pub fn has_offset(&self) -> bool {
+        self.0
+            .iter()
+            .any(|(u, _)| !registry().defs[*u as usize].offset.is_zero())
+    }
+
+    /// True when this is exactly one unit to the first power, the only shape an offset scale can take.
+    pub fn is_single(&self) -> bool {
+        matches!(self.0.as_slice(), [(_, 1)])
+    }
+
+    /// Kelvin value of `n` of this offset unit.
+    pub fn to_kelvin(&self, n: &Number) -> Result<Number, Error> {
+        let (u, _) = self.0[0];
+        let d = &registry().defs[u as usize];
+        n.mul(&d.factor)?.add(&d.offset)
+    }
+
+    pub fn from_kelvin(&self, k: &Number) -> Result<Number, Error> {
+        let (u, _) = self.0[0];
+        let d = &registry().defs[u as usize];
+        k.sub(&d.offset)?.div(&d.factor)
     }
 
     pub fn recip(&self) -> UnitExpr {
@@ -571,6 +622,15 @@ pub fn superscript_digit(c: char) -> Option<i8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn phrase_words_are_never_units() {
+        for w in RESERVED_WORDS {
+            assert!(lookup(w).is_none(), "{w} must stay a phrase word");
+        }
+        assert_eq!(lookup("inch").unwrap().symbol(), "in");
+        assert_eq!(lookup("sqin").unwrap().symbol(), "in²");
+    }
 
     #[test]
     fn table_builds_without_duplicate_names() {

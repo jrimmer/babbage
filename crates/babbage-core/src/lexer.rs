@@ -3,6 +3,7 @@ use num_rational::BigRational;
 
 use crate::error::Error;
 use crate::number::Number;
+use crate::units::{UnitExpr, lookup, superscript_digit};
 
 pub const MAX_INPUT_BYTES: usize = 65_536;
 pub const MAX_EXPONENT: i64 = 100_000;
@@ -18,6 +19,7 @@ pub enum Tok {
     LParen,
     RParen,
     Word(String),
+    Unit(UnitExpr),
     /// `attached` is true when `%` directly follows a number or `)`, as in `10%`.
     Percent {
         attached: bool,
@@ -36,6 +38,7 @@ impl Tok {
             Tok::LParen => "'('".into(),
             Tok::RParen => "')'".into(),
             Tok::Word(w) => format!("word {w:?}"),
+            Tok::Unit(u) => format!("unit {:?}", u.symbol()),
             Tok::Percent { .. } => "'%'".into(),
         }
     }
@@ -93,14 +96,37 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                     && (chars[i - 1].1.is_ascii_digit() || matches!(chars[i - 1].1, ')' | '%'));
                 simple(Tok::Percent { attached }, &mut out)
             }
+            '°' | '′' | '″' => {
+                let word = word_end(&chars, i + 1);
+                let joined: String = chars[i..word].iter().map(|(_, ch)| *ch).collect();
+                let (unit, end) = match lookup(&joined) {
+                    Some(unit) if word > i + 1 => (unit, word),
+                    _ => (
+                        lookup(&c.to_string()).ok_or(Error::UnexpectedChar { ch: c, at })?,
+                        i + 1,
+                    ),
+                };
+                let (unit, end) = with_exponent_suffix(&chars, end, unit);
+                out.push(Token {
+                    tok: Tok::Unit(unit),
+                    at,
+                });
+                i = end;
+                continue;
+            }
             c if c.is_alphabetic() => {
-                let mut end = i;
-                while chars.get(end).is_some_and(|(_, ch)| ch.is_alphabetic()) {
-                    end += 1;
+                if let Some((unit, end)) = scan_unit(&chars, i) {
+                    out.push(Token {
+                        tok: Tok::Unit(unit),
+                        at,
+                    });
+                    i = end;
+                    continue;
                 }
+                let end = word_end(&chars, i);
                 let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
                 out.push(Token {
-                    tok: Tok::Word(word.to_lowercase()),
+                    tok: Tok::Word(word),
                     at,
                 });
                 i = end;
@@ -113,6 +139,91 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         i += 1;
     }
     Ok(out)
+}
+
+fn word_end(chars: &[(usize, char)], from: usize) -> usize {
+    let mut end = from;
+    while chars.get(end).is_some_and(|(_, ch)| ch.is_alphabetic()) {
+        end += 1;
+    }
+    end
+}
+
+/// The longest run of up to three words, joined by single spaces or hyphens, that names a unit.
+fn scan_unit(chars: &[(usize, char)], start: usize) -> Option<(UnitExpr, usize)> {
+    let mut ends = vec![word_end(chars, start)];
+    while ends.len() < 3 {
+        let last = *ends.last()?;
+        let joiner = chars.get(last).map(|(_, c)| *c);
+        if matches!(joiner, Some(' ' | '-'))
+            && chars.get(last + 1).is_some_and(|(_, c)| c.is_alphabetic())
+        {
+            ends.push(word_end(chars, last + 1));
+        } else {
+            break;
+        }
+    }
+    for end in ends.into_iter().rev() {
+        let name: String = chars[start..end].iter().map(|(_, c)| *c).collect();
+        if let Some(unit) = lookup(&name) {
+            return Some(with_exponent_suffix(chars, end, unit));
+        }
+    }
+    None
+}
+
+/// Reads an exponent written straight after a unit: `mm³`, `mm^3`, `mm3`, `s^-1`, `s⁻¹`.
+fn with_exponent_suffix(chars: &[(usize, char)], at: usize, unit: UnitExpr) -> (UnitExpr, usize) {
+    let c = |i: usize| chars.get(i).map(|(_, ch)| *ch);
+    let mut i = at;
+    let negative_caret = c(i) == Some('^') && c(i + 1) == Some('-');
+    if c(i) == Some('^') {
+        i += if negative_caret { 2 } else { 1 };
+        let start = i;
+        while c(i).is_some_and(|d| d.is_ascii_digit()) {
+            i += 1;
+        }
+        if i == start {
+            return (unit, at);
+        }
+        let n: i8 = chars[start..i]
+            .iter()
+            .map(|(_, d)| *d)
+            .collect::<String>()
+            .parse()
+            .unwrap_or(i8::MAX);
+        return (unit.with_exponent(if negative_caret { -n } else { n }), i);
+    }
+    if c(i) == Some('⁻') || c(i).and_then(superscript_digit).is_some() {
+        let negative = c(i) == Some('⁻');
+        if negative {
+            i += 1;
+        }
+        let mut n: i8 = 0;
+        let start = i;
+        while let Some(d) = c(i).and_then(superscript_digit) {
+            n = n.saturating_mul(10).saturating_add(d);
+            i += 1;
+        }
+        if i == start {
+            return (unit, at);
+        }
+        return (unit.with_exponent(if negative { -n } else { n }), i);
+    }
+    if c(i).is_some_and(|d| d.is_ascii_digit()) {
+        let start = i;
+        while c(i).is_some_and(|d| d.is_ascii_digit()) {
+            i += 1;
+        }
+        let n: i8 = chars[start..i]
+            .iter()
+            .map(|(_, d)| *d)
+            .collect::<String>()
+            .parse()
+            .unwrap_or(i8::MAX);
+        return (unit.with_exponent(n), i);
+    }
+    (unit, at)
 }
 
 fn is_times_x(chars: &[(usize, char)], i: usize) -> bool {

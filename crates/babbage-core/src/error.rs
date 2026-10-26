@@ -11,6 +11,7 @@ pub enum Error {
     UnexpectedWord { word: String, at: usize },
     UnsupportedOperation(&'static str),
     NotAPlainNumber,
+    IncompatibleUnits,
     DivisionByZero,
     ZeroToTheZero,
     NonIntegerExponent,
@@ -34,6 +35,7 @@ impl fmt::Display for Error {
             }
             Error::UnsupportedOperation(what) => write!(f, "unsupported: {what}"),
             Error::NotAPlainNumber => write!(f, "result is not a plain number"),
+            Error::IncompatibleUnits => write!(f, "these units measure different things"),
             Error::DivisionByZero => write!(f, "division by zero"),
             Error::ZeroToTheZero => write!(f, "0 to the power 0 is undefined"),
             Error::NonIntegerExponent => write!(f, "exponent must be a whole number"),

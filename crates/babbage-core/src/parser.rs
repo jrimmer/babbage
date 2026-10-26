@@ -3,6 +3,7 @@ use std::fmt;
 use crate::error::Error;
 use crate::lexer::{Tok, Token};
 use crate::number::Number;
+use crate::units::UnitExpr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinOp {
@@ -13,6 +14,8 @@ pub enum BinOp {
     Pow,
     On,
     Off,
+    /// Adjacent quantities such as `1 h 30 min`: a sum that binds tighter than everything but a unit's own exponent.
+    Join,
 }
 
 impl BinOp {
@@ -21,6 +24,7 @@ impl BinOp {
             BinOp::Add | BinOp::Sub => 1,
             BinOp::Mul | BinOp::Div | BinOp::On | BinOp::Off => 2,
             BinOp::Pow => 4,
+            BinOp::Join => 5,
         }
     }
 
@@ -39,6 +43,7 @@ impl fmt::Display for BinOp {
             BinOp::Pow => "^",
             BinOp::On => "on",
             BinOp::Off => "off",
+            BinOp::Join => "+",
         })
     }
 }
@@ -70,6 +75,12 @@ pub enum Node {
     Bin(BinOp),
     /// Postfix `%`: the top value becomes a percentage of itself divided by 100.
     Percent,
+    /// Postfix unit: `5 km` is the number 5 followed by this.
+    Unit(UnitExpr),
+    /// `... in m`: restate the value in another unit of the same kind.
+    Convert(UnitExpr),
+    /// `... cast m`: relabel the number with another unit without converting.
+    Cast(UnitExpr),
     Phrase(Phrase),
 }
 
@@ -98,6 +109,16 @@ impl Expr {
         lhs
     }
 
+    pub fn with_unit(mut self, unit: UnitExpr) -> Expr {
+        self.rpn.push(Node::Unit(unit));
+        self
+    }
+
+    pub fn converted_to(mut self, unit: UnitExpr) -> Expr {
+        self.rpn.push(Node::Convert(unit));
+        self
+    }
+
     pub fn percent(mut self) -> Expr {
         self.rpn.push(Node::Percent);
         self
@@ -122,7 +143,7 @@ fn is_balanced(rpn: &[Node]) -> bool {
     for node in rpn {
         let (needs, leaves) = match node {
             Node::Num(_) => (0, 1),
-            Node::Neg | Node::Percent => (1, 1),
+            Node::Neg | Node::Percent | Node::Unit(_) | Node::Convert(_) | Node::Cast(_) => (1, 1),
             Node::Bin(_) => (2, 1),
             Node::Phrase(p) => (p.arity(), 1),
         };
@@ -160,6 +181,18 @@ impl Pending {
     }
 }
 
+/// Emits every pending operator that binds at least as tightly as `op`.
+fn pop_for(op: BinOp, ops: &mut Vec<Pending>, out: &mut Vec<Node>) {
+    while let Some(top) = ops.last() {
+        let (tp, p) = (top.precedence(), op.precedence());
+        if tp > p || (tp == p && !op.right_associative()) {
+            ops.pop().expect("last() was Some").emit(out);
+        } else {
+            break;
+        }
+    }
+}
+
 pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
     if toks.is_empty() {
         return Err(Error::Empty);
@@ -168,7 +201,7 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
     let mut ops: Vec<Pending> = Vec::new();
     let mut want_operand = true;
 
-    for t in toks {
+    for (index, t) in toks.iter().enumerate() {
         match (&t.tok, want_operand) {
             (Tok::Num(n), true) => {
                 out.push(Node::Num(n.clone()));
@@ -178,6 +211,27 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
             (Tok::Minus, true) => ops.push(Pending::Neg),
             (Tok::Plus, true) => {}
             (Tok::Percent { attached: true }, false) => out.push(Node::Percent),
+            (Tok::Unit(u), false) => out.push(Node::Unit(u.clone())),
+            (Tok::Unit(u), true) => {
+                out.push(Node::Num(Number::from_i64(1)));
+                out.push(Node::Unit(u.clone()));
+                want_operand = false;
+            }
+            (Tok::Num(n), false)
+                if matches!(out.last(), Some(Node::Unit(_)))
+                    && matches!(
+                        toks.get(index + 1),
+                        Some(Token {
+                            tok: Tok::Unit(_),
+                            ..
+                        })
+                    ) =>
+            {
+                // `5 hours 30 minutes` means 5 hours + 30 minutes.
+                pop_for(BinOp::Join, &mut ops, &mut out);
+                ops.push(Pending::Bin(BinOp::Join));
+                out.push(Node::Num(n.clone()));
+            }
             (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret, false)
             | (Tok::Word(_), false) => {
                 let op = match &t.tok {
@@ -186,9 +240,9 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     Tok::Star => BinOp::Mul,
                     Tok::Slash => BinOp::Div,
                     Tok::Caret => BinOp::Pow,
-                    Tok::Word(w) if w == "of" => BinOp::Mul,
-                    Tok::Word(w) if w == "on" => BinOp::On,
-                    Tok::Word(w) if w == "off" => BinOp::Off,
+                    Tok::Word(w) if w.eq_ignore_ascii_case("of") => BinOp::Mul,
+                    Tok::Word(w) if w.eq_ignore_ascii_case("on") => BinOp::On,
+                    Tok::Word(w) if w.eq_ignore_ascii_case("off") => BinOp::Off,
                     Tok::Word(w) => {
                         return Err(Error::UnexpectedWord {
                             word: w.clone(),
@@ -197,14 +251,7 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     }
                     _ => unreachable!("outer pattern admits only operators and words"),
                 };
-                while let Some(top) = ops.last() {
-                    let (tp, p) = (top.precedence(), op.precedence());
-                    if tp > p || (tp == p && !op.right_associative()) {
-                        ops.pop().expect("last() was Some").emit(&mut out);
-                    } else {
-                        break;
-                    }
-                }
+                pop_for(op, &mut ops, &mut out);
                 ops.push(Pending::Bin(op));
                 want_operand = true;
             }
@@ -262,6 +309,18 @@ impl fmt::Display for Expr {
                 Node::Percent => {
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("({x}%)"));
+                }
+                Node::Unit(u) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} {})", u.symbol()));
+                }
+                Node::Convert(u) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} in {})", u.symbol()));
+                }
+                Node::Cast(u) => {
+                    let x = stack.pop().expect("well-formed");
+                    stack.push(format!("({x} cast {})", u.symbol()));
                 }
                 Node::Phrase(p) => {
                     let args = stack.split_off(stack.len() - p.arity());

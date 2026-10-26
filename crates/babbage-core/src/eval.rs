@@ -15,6 +15,18 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.into_percent_literal()?);
             }
+            Node::Unit(u) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.apply_unit(u)?);
+            }
+            Node::Convert(u) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.convert(u)?);
+            }
+            Node::Cast(u) => {
+                let x = stack.pop().expect("well-formed expression");
+                stack.push(x.cast(u)?);
+            }
             Node::Bin(op) => {
                 let r = stack.pop().expect("well-formed expression");
                 let l = stack.pop().expect("well-formed expression");
