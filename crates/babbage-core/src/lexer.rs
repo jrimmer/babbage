@@ -17,6 +17,9 @@ pub enum Tok {
     Star,
     Slash,
     Caret,
+    Comma,
+    /// The word `mod`.
+    Mod,
     LParen,
     RParen,
     Word(String),
@@ -38,6 +41,8 @@ impl Tok {
             Tok::Star => "'*'".into(),
             Tok::Slash => "'/'".into(),
             Tok::Caret => "'^'".into(),
+            Tok::Comma => "','".into(),
+            Tok::Mod => "'mod'".into(),
             Tok::LParen => "'('".into(),
             Tok::RParen => "')'".into(),
             Tok::Word(w) => format!("word {w:?}"),
@@ -74,7 +79,44 @@ pub fn lex_with_ends(src: &str) -> Result<(Vec<Token>, Vec<usize>), Error> {
     Ok((toks, ends))
 }
 
+/// `plus`, `minus`, `times`, `multiplied by`, `divided by`, `to the power of` and `mod` are operators.
+fn operator_words(toks: Vec<Token>) -> Vec<Token> {
+    let word = |i: usize, w: &str| matches!(toks.get(i).map(|t| &t.tok), Some(Tok::Word(x)) if x.eq_ignore_ascii_case(w));
+    let mut out = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        let at = toks[i].at;
+        let (tok, used) = if word(i, "plus") {
+            (Some(Tok::Plus), 1)
+        } else if word(i, "minus") {
+            (Some(Tok::Minus), 1)
+        } else if word(i, "times") {
+            (Some(Tok::Star), 1)
+        } else if word(i, "mod") {
+            (Some(Tok::Mod), 1)
+        } else if word(i, "multiplied") && word(i + 1, "by") {
+            (Some(Tok::Star), 2)
+        } else if word(i, "divided") && word(i + 1, "by") {
+            (Some(Tok::Slash), 2)
+        } else if word(i, "to") && word(i + 1, "the") && word(i + 2, "power") && word(i + 3, "of") {
+            (Some(Tok::Caret), 4)
+        } else {
+            (None, 1)
+        };
+        match tok {
+            Some(tok) => out.push(Token { tok, at }),
+            None => out.push(toks[i].clone()),
+        }
+        i += used;
+    }
+    out
+}
+
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
+    lex_raw(src).map(operator_words)
+}
+
+fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
     if src.len() > MAX_INPUT_BYTES {
         return Err(Error::InputTooLong);
     }
@@ -131,6 +173,8 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             'x' | 'X' if is_times_x(&chars, i) => simple(Tok::Star, &mut out),
             '/' | '\u{00F7}' | '\u{2215}' => simple(Tok::Slash, &mut out),
             '^' => simple(Tok::Caret, &mut out),
+            ',' => simple(Tok::Comma, &mut out),
+            '√' => simple(Tok::Word("sqrt".into()), &mut out),
             '%' => {
                 let attached = i > 0
                     && (chars[i - 1].1.is_ascii_digit() || matches!(chars[i - 1].1, ')' | '%'));
@@ -155,7 +199,23 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             c if c.is_alphabetic() => {
-                if let Some((unit, end)) = scan_unit(&chars, i) {
+                // A function name, with any digits it ends in (`log10`), wins over a unit of the same spelling (`min`).
+                let letters_end = word_end(&chars, i);
+                let mut name_end = letters_end;
+                while chars
+                    .get(name_end)
+                    .is_some_and(|(_, ch)| ch.is_ascii_digit())
+                {
+                    name_end += 1;
+                }
+                let name: String = chars[i..name_end].iter().map(|(_, ch)| *ch).collect();
+                let next_open = chars[name_end..]
+                    .iter()
+                    .find(|(_, ch)| *ch != ' ')
+                    .is_some_and(|(_, ch)| *ch == '(');
+                let is_call = crate::functions::lookup(&name).is_some()
+                    && (next_open || name_end > letters_end);
+                if !is_call && let Some((unit, end)) = scan_unit(&chars, i) {
                     out.push(Token {
                         tok: Tok::Unit(unit),
                         at,
@@ -163,12 +223,25 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                     i = end;
                     continue;
                 }
-                let end = word_end(&chars, i);
+                let end = if is_call { name_end } else { letters_end };
                 let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
-                out.push(Token {
-                    tok: Tok::Word(word),
-                    at,
-                });
+                let constant = match word.to_lowercase().as_str() {
+                    "pi" | "π" => Some(crate::approx::pi()),
+                    "tau" | "τ" => Some(crate::approx::tau()),
+                    "phi" | "φ" => Some(crate::approx::phi()),
+                    _ => None,
+                };
+                if let Some(c) = constant {
+                    out.push(Token {
+                        tok: Tok::Value(Value::plain(c).approximate()),
+                        at,
+                    });
+                } else {
+                    out.push(Token {
+                        tok: Tok::Word(word),
+                        at,
+                    });
+                }
                 i = end;
                 continue;
             }

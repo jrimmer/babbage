@@ -10,7 +10,6 @@ the reference-app reference defines itself.
 |---|---|---|---|
 | month | 30.436875 days | 30.4375 | the reference states 30.436875 days |
 | year | 365.2425 days | 365.25 (Julian) | the reference states 365.2425 days (Gregorian) |
-| horsepower | 746 W | 745.699872... W | the reference states 746 W |
 | `KV` | 1000 V | not defined | the reference spells kilovolt with a capital K |
 
 ## Where the reference gives a rounded value and the engine uses the exact definition
@@ -18,6 +17,7 @@ the reference-app reference defines itself.
 | Unit | Reference text | Engine |
 |---|---|---|
 | troy ounce | "31.1035 g" | 31.1034768 g |
+| horsepower | "746 W" | 550 ft·lbf/s = 745.69987158227022 W exactly (mechanical) | the reference's figure is a rounding of a unit with an exact definition; ticket 0033 covers metric horsepower |
 | calorie | "about 4.184 J" | 4.184 J (thermochemical, exact by definition) |
 | psi | "about 6,894.76 Pa" | lbf per square inch, exactly (about 6894.757293168 Pa) |
 | pound-force | "about 4.44822 N" | 0.45359237 x 9.80665 N exactly |

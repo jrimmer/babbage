@@ -3,7 +3,7 @@
 
 Run: .oracle-venv/bin/python tools/gen_unit_corpus.py > crates/babbage-core/tests/corpus/units.tsv
 Columns: expression <TAB> exact n/d (value in the base unit) <TAB> 10dp display with the base unit.
-The reference app-specific constants the reference documents (month, year, horsepower, the 1 kilovolt `KV`) are
+The reference app-specific constants the reference documents (month, year, the 1 kilovolt `KV`) are
 hand formulas from the reference, not pint, because pint disagrees with them on purpose.
 """
 import sys
@@ -44,7 +44,7 @@ GROUPS = {
     ("Hz", "hertz"): pre("nµmkMGT", "Hz", "hertz"),
     ("J", "joule"): pre("kMG", "J", "joule") + [("Wh", "watt_hour"), ("cal", "calorie"), ("kcal", "kilocalorie")]
     + pre("kMGT", "Wh", "watt_hour"),
-    ("W", "watt"): pre("mkMGT", "W", "watt"),
+    ("W", "watt"): pre("mkMGT", "W", "watt") + [("hp", "horsepower")],
     ("N", "newton"): pre("nµmkMG", "N", "newton") + [("lbf", "pound_force"), ("pdl", "poundal")],
     ("Pa", "pascal"): pre("hkMG", "Pa", "pascal")
     + [("bar", "bar"), ("mbar", "millibar"), ("atm", "atmosphere"), ("psi", "psi")],
@@ -73,7 +73,6 @@ HAND = {
     ("m", "m"): [("px", Fraction("0.0254") / 96)],
     ("m³", "m^3"): [("mcup", Fraction(1, 4000))],
     ("kg", "kg"): [("mcg", Fraction(1, 10**9))],
-    ("W", "W"): [("hp", Fraction(746))],
     ("Pa", "Pa"): [("ksi", Fraction(1000) * Q(1, "psi").to("pascal").magnitude),
                    ("Mpsi", Fraction(10**6) * Q(1, "psi").to("pascal").magnitude)],
     ("N", "N"): [("ozf", Q(1, "pound_force").to("newton").magnitude / 16)],

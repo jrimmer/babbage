@@ -11,3 +11,6 @@ cc a7890656db285011b4f313e71859493d5505088fc7374306dd7c00c36e148e07 # shrinks to
 cc ee3cfa81e67116d4bb8f9e742277e8cf66e1703e2fe6aa4e091bc37b5f1ef7dd # shrinks to (a, _b) = ("₴", "₴"), x = "1.0000", k = "1.0000"
 cc 5f85078dccdd9440b1bf64c959cbc3f10fb5e1b073ba11e70d56fd7b001f4b62 # shrinks to (a, b) = ("₱", "₱"), x = "1.0000", y = "1.0000"
 cc 37efb03ef735dd639875a4a451c1a8dfdfff7db05778880f338387040581e239 # shrinks to (a, b) = ("₽", "₽"), x = "1.0000", y = "1.0000"
+cc 2a60227efaed82a32e2ef16c0470027534c373305e5f938a2bf0d2d40b5f31e8 # shrinks to (a, _b) = ("radians", "′"), x = "1.0000", k = "1.0000"
+cc 55ba9f95b3874773175757c8a4c51278630f2319962bf1989c805fd1a892b38a # shrinks to (a, _b) = ("rad", "rad"), x = "1.0000", k = "1.0000"
+cc 048c48381080be21083a0ae68c3eb9235cde00828b451629fb7035a149906928 # shrinks to (a, _b) = ("radian", "radian"), x = "1.0000", k = "1.0000"

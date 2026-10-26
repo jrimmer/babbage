@@ -14,6 +14,7 @@ pub enum Error {
     IncompatibleUnits,
     CurrencyRateNeeded,
     BadReference { line: usize },
+    OutOfDomain,
     DivisionByZero,
     ZeroToTheZero,
     NonIntegerExponent,
@@ -39,6 +40,7 @@ impl fmt::Display for Error {
             Error::NotAPlainNumber => write!(f, "result is not a plain number"),
             Error::IncompatibleUnits => write!(f, "these units measure different things"),
             Error::CurrencyRateNeeded => write!(f, "different currencies need an exchange rate"),
+            Error::OutOfDomain => write!(f, "that value is outside what this function accepts"),
             Error::BadReference { line } => {
                 write!(f, "line {line} has no result above this line to use")
             }

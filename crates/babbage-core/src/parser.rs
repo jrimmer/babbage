@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::error::Error;
+use crate::functions::{self, Func};
 use crate::lexer::{Tok, Token};
 use crate::number::Number;
 use crate::units::UnitExpr;
@@ -13,6 +14,7 @@ pub enum BinOp {
     Mul,
     Div,
     Pow,
+    Mod,
     On,
     Off,
     /// Adjacent quantities such as `1 h 30 min`: a sum that binds tighter than everything but a unit's own exponent.
@@ -23,7 +25,7 @@ impl BinOp {
     fn precedence(self) -> u8 {
         match self {
             BinOp::Add | BinOp::Sub => 1,
-            BinOp::Mul | BinOp::Div | BinOp::On | BinOp::Off => 2,
+            BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::On | BinOp::Off => 2,
             BinOp::Pow => 4,
             BinOp::Join => 5,
         }
@@ -42,6 +44,7 @@ impl fmt::Display for BinOp {
             BinOp::Mul => "*",
             BinOp::Div => "/",
             BinOp::Pow => "^",
+            BinOp::Mod => "mod",
             BinOp::On => "on",
             BinOp::Off => "off",
             BinOp::Join => "+",
@@ -61,6 +64,12 @@ pub enum Phrase {
     WhatPercentOff,
     PercentChange,
     AsPercent,
+    /// `x to 2 dp`: value, places.
+    RoundPlaces,
+    /// `x to nearest 10`, `rounded up/down to nearest 5`: value, step.
+    RoundNearest,
+    RoundUp,
+    RoundDown,
 }
 
 impl Phrase {
@@ -82,6 +91,8 @@ pub enum Node {
     Unit(UnitExpr),
     /// `... in m`: restate the value in another unit of the same kind.
     Convert(UnitExpr),
+    /// A function call with this many values taken from the stack.
+    Call(Func, usize),
     /// `... cast m`: relabel the number with another unit without converting.
     Cast(UnitExpr),
     /// `... in USD at 1.05 USD/EUR`: pops a rate, then the value, converts using the rate.
@@ -150,6 +161,7 @@ fn is_balanced(rpn: &[Node]) -> bool {
             Node::Num(_) | Node::Value(_) => (0, 1),
             Node::Neg | Node::Percent | Node::Unit(_) | Node::Convert(_) | Node::Cast(_) => (1, 1),
             Node::Bin(_) | Node::ConvertAt(_) => (2, 1),
+            Node::Call(_, n) => (*n, 1),
             Node::Phrase(p) => (p.arity(), 1),
         };
         if depth < needs {
@@ -164,16 +176,22 @@ enum Pending {
     Neg,
     Bin(BinOp),
     LParen,
+    /// A function written with parentheses: sits under its `(`.
+    CallParen(Func),
+    /// A function written without them (`sqrt 16`): applies to the next operand.
+    CallPrefix(Func),
 }
 
 const NEG_PRECEDENCE: u8 = 3;
+const PREFIX_CALL_PRECEDENCE: u8 = 6;
 
 impl Pending {
     fn precedence(&self) -> u8 {
         match self {
             Pending::Neg => NEG_PRECEDENCE,
             Pending::Bin(op) => op.precedence(),
-            Pending::LParen => 0,
+            Pending::LParen | Pending::CallParen(_) => 0,
+            Pending::CallPrefix(_) => PREFIX_CALL_PRECEDENCE,
         }
     }
 
@@ -181,9 +199,20 @@ impl Pending {
         match self {
             Pending::Neg => out.push(Node::Neg),
             Pending::Bin(op) => out.push(Node::Bin(op)),
-            Pending::LParen => unreachable!("parentheses are consumed, never emitted"),
+            Pending::CallPrefix(f) => out.push(Node::Call(f, 1)),
+            Pending::LParen | Pending::CallParen(_) => {
+                unreachable!("parentheses are consumed, never emitted")
+            }
         }
     }
+}
+
+/// True for a token that can begin an operand.
+fn starts_operand(t: Option<&Token>) -> bool {
+    matches!(
+        t.map(|t| &t.tok),
+        Some(Tok::Num(_) | Tok::Value(_) | Tok::LParen | Tok::Unit(_) | Tok::Minus)
+    )
 }
 
 /// Emits every pending operator that binds at least as tightly as `op`.
@@ -198,12 +227,23 @@ fn pop_for(op: BinOp, ops: &mut Vec<Pending>, out: &mut Vec<Node>) {
     }
 }
 
+fn binary_word(w: &str) -> Option<BinOp> {
+    match w.to_ascii_lowercase().as_str() {
+        "of" => Some(BinOp::Mul),
+        "on" => Some(BinOp::On),
+        "off" => Some(BinOp::Off),
+        _ => None,
+    }
+}
+
 pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
     if toks.is_empty() {
         return Err(Error::Empty);
     }
     let mut out: Vec<Node> = Vec::with_capacity(toks.len());
     let mut ops: Vec<Pending> = Vec::new();
+    // One entry per open parenthesis: how many comma-separated values it holds so far.
+    let mut arguments: Vec<usize> = Vec::new();
     let mut want_operand = true;
 
     for (index, t) in toks.iter().enumerate() {
@@ -212,10 +252,32 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 out.push(Node::Num(n.clone()));
                 want_operand = false;
             }
-            (Tok::LParen, true) => ops.push(Pending::LParen),
+            (Tok::Word(w), true) if functions::lookup(w).is_some() => {
+                let func = functions::lookup(w).expect("checked by the guard");
+                if matches!(
+                    toks.get(index + 1),
+                    Some(Token {
+                        tok: Tok::LParen,
+                        ..
+                    })
+                ) {
+                    ops.push(Pending::CallParen(func));
+                } else {
+                    ops.push(Pending::CallPrefix(func));
+                }
+            }
+            (Tok::LParen, true) => {
+                ops.push(Pending::LParen);
+                arguments.push(1);
+            }
             (Tok::Minus, true) => ops.push(Pending::Neg),
             (Tok::Plus, true) => {}
             (Tok::Percent { attached: true }, false) => out.push(Node::Percent),
+            (Tok::Percent { attached: false }, false) if starts_operand(toks.get(index + 1)) => {
+                pop_for(BinOp::Mod, &mut ops, &mut out);
+                ops.push(Pending::Bin(BinOp::Mod));
+                want_operand = true;
+            }
             (Tok::Value(v), true) => {
                 out.push(Node::Value(v.clone()));
                 want_operand = false;
@@ -241,7 +303,7 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 ops.push(Pending::Bin(BinOp::Join));
                 out.push(Node::Num(n.clone()));
             }
-            (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret, false)
+            (Tok::Plus | Tok::Minus | Tok::Star | Tok::Slash | Tok::Caret | Tok::Mod, false)
             | (Tok::Word(_), false) => {
                 let op = match &t.tok {
                     Tok::Plus => BinOp::Add,
@@ -249,33 +311,63 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     Tok::Star => BinOp::Mul,
                     Tok::Slash => BinOp::Div,
                     Tok::Caret => BinOp::Pow,
-                    Tok::Word(w) if w.eq_ignore_ascii_case("of") => BinOp::Mul,
-                    Tok::Word(w) if w.eq_ignore_ascii_case("on") => BinOp::On,
-                    Tok::Word(w) if w.eq_ignore_ascii_case("off") => BinOp::Off,
-                    Tok::Word(w) => {
-                        return Err(Error::UnexpectedWord {
-                            word: w.clone(),
-                            at: t.at,
-                        });
-                    }
+                    Tok::Mod => BinOp::Mod,
+                    Tok::Word(w) => match binary_word(w) {
+                        Some(op) => op,
+                        None => {
+                            return Err(Error::UnexpectedWord {
+                                word: w.clone(),
+                                at: t.at,
+                            });
+                        }
+                    },
                     _ => unreachable!("outer pattern admits only operators and words"),
                 };
                 pop_for(op, &mut ops, &mut out);
                 ops.push(Pending::Bin(op));
                 want_operand = true;
             }
-            (Tok::RParen, false) => loop {
-                match ops.pop() {
-                    Some(Pending::LParen) => break,
-                    Some(p) => p.emit(&mut out),
-                    None => {
-                        return Err(Error::UnexpectedToken {
-                            found: t.tok.describe(),
-                            at: t.at,
-                        });
+            (Tok::Comma, false) => {
+                loop {
+                    match ops.last() {
+                        Some(Pending::LParen) => break,
+                        Some(_) => ops.pop().expect("last() was Some").emit(&mut out),
+                        None => {
+                            return Err(Error::UnexpectedToken {
+                                found: t.tok.describe(),
+                                at: t.at,
+                            });
+                        }
                     }
                 }
-            },
+                *arguments.last_mut().expect("an open parenthesis was found") += 1;
+                want_operand = true;
+            }
+            (Tok::RParen, false) => {
+                loop {
+                    match ops.pop() {
+                        Some(Pending::LParen) => break,
+                        Some(p) => p.emit(&mut out),
+                        None => {
+                            return Err(Error::UnexpectedToken {
+                                found: t.tok.describe(),
+                                at: t.at,
+                            });
+                        }
+                    }
+                }
+                let count = arguments.pop().expect("one entry per open parenthesis");
+                if let Some(Pending::CallParen(func)) = ops.last() {
+                    let func = *func;
+                    ops.pop();
+                    out.push(Node::Call(func, count));
+                } else if count > 1 {
+                    return Err(Error::UnexpectedToken {
+                        found: Tok::Comma.describe(),
+                        at: t.at,
+                    });
+                }
+            }
             (Tok::Word(w), true) => {
                 return Err(Error::UnexpectedWord {
                     word: w.clone(),
@@ -294,7 +386,7 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
         return Err(Error::UnexpectedEnd);
     }
     while let Some(p) = ops.pop() {
-        if matches!(p, Pending::LParen) {
+        if matches!(p, Pending::LParen | Pending::CallParen(_)) {
             return Err(Error::UnexpectedEnd);
         }
         p.emit(&mut out);
@@ -332,6 +424,10 @@ impl fmt::Display for Expr {
                 Node::Convert(u) => {
                     let x = stack.pop().expect("well-formed");
                     stack.push(format!("({x} in {})", u.symbol()));
+                }
+                Node::Call(f, n) => {
+                    let args = stack.split_off(stack.len() - n);
+                    stack.push(format!("{f:?}({})", args.join(", ")));
                 }
                 Node::Cast(u) => {
                     let x = stack.pop().expect("well-formed");

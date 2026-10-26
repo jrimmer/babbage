@@ -99,26 +99,38 @@ fn bad_characters_report_offsets_in_bytes_not_chars() {
         evaluate("1 — 2"),
         Err(Error::UnexpectedChar { ch: '—', at: 2 })
     );
-    assert_eq!(evaluate("3 % 2"), Err(tok("'%'", 2)));
+    assert_eq!(evaluate("3 % 2"), Ok(Number::from_i64(1)));
 }
 
 #[test]
 fn thousands_separators_are_strict() {
     assert_eq!(
         evaluate("1,2"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,23"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,2345"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,234,5"),
-        Err(Error::UnexpectedChar { ch: ',', at: 5 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 5
+        })
     );
     assert_eq!(
         evaluate("1234,567"),
@@ -129,15 +141,24 @@ fn thousands_separators_are_strict() {
     );
     assert_eq!(
         evaluate(",5"),
-        Err(Error::UnexpectedChar { ch: ',', at: 0 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 0
+        })
     );
     assert_eq!(
         evaluate("1,000,00"),
-        Err(Error::UnexpectedChar { ch: ',', at: 5 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 5
+        })
     );
     assert_eq!(
         evaluate("1, 000"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(evaluate("0,123"), Ok(Number::from_i64(123)));
     assert_eq!(
@@ -332,19 +353,31 @@ fn error_spans_stop_exactly_where_the_bad_number_stops() {
 fn a_comma_is_only_a_group_separator_before_exactly_three_digits() {
     assert_eq!(
         evaluate("1,a23"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,2a3"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,23a"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(
         evaluate("1,"),
-        Err(Error::UnexpectedChar { ch: ',', at: 1 })
+        Err(Error::UnexpectedToken {
+            found: "','".into(),
+            at: 1
+        })
     );
     assert_eq!(evaluate("12,345+1"), Ok(Number::from_i64(12346)));
     assert_eq!(evaluate("123,456,789"), Ok(Number::from_i64(123_456_789)));

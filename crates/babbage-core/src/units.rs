@@ -85,6 +85,8 @@ struct UnitDef {
     /// Kelvin at zero of this unit, for scales that do not start at absolute zero.
     offset: Number,
     currency: Option<Currency>,
+    /// The factor is a close rational stand-in for an irrational number (radians).
+    approximate: bool,
 }
 
 /// How a currency is written and shown.
@@ -180,7 +182,7 @@ cal | cal,calorie,calories | M L2 T-2 | 4.184
 kcal | kcal,kCal,Cal,kilocalorie,kilocalories | M L2 T-2 | 4184
 W | W,watt,watts | M L2 T-3 | 1
 +m,k,M,G,T
-hp | hp,horsepower | M L2 T-3 | 746
+hp | hp,horsepower | M L2 T-3 | 550*0.3048*0.45359237*9.80665
 N | N,newton,newtons | M L T-2 | 1
 +n,µ,m,k,M,G
 lbf | lbf,pound-force,pounds-force | M L T-2 | 0.45359237*9.80665
@@ -449,6 +451,14 @@ impl Registry {
                 last = Some((cols[0], names, dim, factor));
             }
         }
+        reg.add(
+            "rad",
+            &["rad", "radian", "radians"],
+            Dim::parse("A"),
+            crate::approx::degrees_per_radian(),
+            false,
+        );
+        reg.defs.last_mut().expect("just added").approximate = true;
         reg.add_currencies();
         for (names, expr) in aliases {
             let unit = reg.parse_symbols(expr);
@@ -593,6 +603,7 @@ impl Registry {
             factor,
             offset: Number::from_i64(0),
             currency: None,
+            approximate: false,
         });
         let unit = UnitExpr(vec![(id, 1)]);
         self.insert_name(symbol, unit.clone(), generated);
@@ -779,6 +790,13 @@ impl UnitExpr {
         }
         parts.sort_by_key(|(u, _)| *u);
         Ok((scale, UnitExpr(parts)))
+    }
+
+    /// True when a conversion through this expression uses an approximate factor.
+    pub fn is_approximate(&self) -> bool {
+        self.0
+            .iter()
+            .any(|(u, _)| registry().defs[*u as usize].approximate)
     }
 
     /// True for a scale like °C whose zero is not absolute zero.

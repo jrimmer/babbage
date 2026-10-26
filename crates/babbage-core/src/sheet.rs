@@ -444,7 +444,8 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
     let outcome = (|| {
         let (toks, ends) = lex_with_ends(text)?;
         let toks = substitute(text, toks, &ends, index, st)?;
-        let toks = if opts.natural {
+        let is_word_form = crate::words::parse_words(&toks).is_some();
+        let toks = if opts.natural && !is_word_form {
             drop_unknown(text, toks, &mut ignored, &mut warnings)?
         } else {
             toks

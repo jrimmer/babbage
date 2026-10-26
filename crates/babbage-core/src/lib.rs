@@ -1,6 +1,8 @@
+pub mod approx;
 pub mod error;
 pub mod eval;
 pub mod format;
+pub mod functions;
 pub mod lexer;
 pub mod number;
 pub mod parser;
@@ -8,6 +10,7 @@ pub mod phrase;
 pub mod sheet;
 pub mod units;
 pub mod value;
+pub mod words;
 
 pub use error::Error;
 pub use format::{FormatOptions, Formatted, RoundingMode, format_decimal};

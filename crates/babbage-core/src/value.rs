@@ -1,8 +1,10 @@
 use crate::error::Error;
 use crate::format::{FormatOptions, Formatted, format_decimal};
+use crate::functions::{Rounding, round_to_multiple};
 use crate::number::Number;
 use crate::parser::{BinOp, Phrase};
 use crate::units::UnitExpr;
+use num_traits::ToPrimitive;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Kind {
@@ -17,6 +19,9 @@ pub struct Value {
     number: Number,
     kind: Kind,
     unit: UnitExpr,
+    /// True when the number is a close rational stand-in for an irrational result (a square root, a sine,
+    /// pi), or came from one. It is never silently treated as exact.
+    approx: bool,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -33,6 +38,7 @@ impl Value {
             number,
             kind: Kind::Plain,
             unit: UnitExpr::default(),
+            approx: false,
         }
     }
 
@@ -41,6 +47,7 @@ impl Value {
             number: fraction,
             kind: Kind::Percent,
             unit: UnitExpr::default(),
+            approx: false,
         }
     }
 
@@ -55,7 +62,31 @@ impl Value {
             number,
             kind: Kind::Plain,
             unit,
+            approx: false,
         })
+    }
+
+    /// This value's number restated in the unit of `like`, which must measure the same thing.
+    pub fn convert_to_unit_of(self, like: &Value) -> Result<Number, Error> {
+        if self.unit == like.unit {
+            return Ok(self.number);
+        }
+        self.convert(&like.unit).map(|v| v.number)
+    }
+
+    /// This value marked as approximate.
+    pub fn approximate(mut self) -> Value {
+        self.approx = true;
+        self
+    }
+
+    pub fn is_approximate(&self) -> bool {
+        self.approx
+    }
+
+    fn tainted(mut self, by: bool) -> Value {
+        self.approx |= by;
+        self
     }
 
     pub fn kind(&self) -> Kind {
@@ -79,15 +110,47 @@ impl Value {
         }
     }
 
+    /// Applies `f` to the number and keeps the unit and kind.
+    pub fn map_number(
+        &self,
+        f: impl FnOnce(&Number) -> Result<Number, Error>,
+    ) -> Result<Value, Error> {
+        Ok(Value {
+            number: f(&self.number)?,
+            kind: self.kind,
+            unit: self.unit.clone(),
+            approx: self.approx,
+        })
+    }
+
+    /// Orders two values of the same kind: plain numbers, quantities of one dimension, or percentages.
+    pub fn compare(a: &Value, b: &Value) -> Result<std::cmp::Ordering, Error> {
+        if a.kind != b.kind {
+            return Err(Error::UnsupportedOperation(
+                "a percentage and a plain number cannot be compared",
+            ));
+        }
+        if a.unit.dim() != b.unit.dim() {
+            return Err(mismatch(&a.unit, &b.unit));
+        }
+        Ok(a.si()?.cmp(&b.si()?))
+    }
+
     pub fn neg(&self) -> Value {
         Value {
             number: self.number.neg(),
             kind: self.kind,
             unit: self.unit.clone(),
+            approx: self.approx,
         }
     }
 
     pub fn apply_unit(self, unit: &UnitExpr) -> Result<Value, Error> {
+        let approx = self.approx;
+        self.apply_unit_exact(unit).map(|v| v.tainted(approx))
+    }
+
+    fn apply_unit_exact(self, unit: &UnitExpr) -> Result<Value, Error> {
         if self.kind != Kind::Plain || !self.unit.is_empty() {
             return Err(Error::UnsupportedOperation(
                 "a unit can only follow a plain number",
@@ -102,6 +165,11 @@ impl Value {
     }
 
     pub fn cast(self, target: &UnitExpr) -> Result<Value, Error> {
+        let approx = self.approx;
+        self.cast_exact(target).map(|v| v.tainted(approx))
+    }
+
+    fn cast_exact(self, target: &UnitExpr) -> Result<Value, Error> {
         if self.kind != Kind::Plain {
             return Err(Error::IncompatibleUnits);
         }
@@ -112,6 +180,12 @@ impl Value {
     }
 
     pub fn convert(self, target: &UnitExpr) -> Result<Value, Error> {
+        let approx = self.approx
+            || ((self.unit.is_approximate() || target.is_approximate()) && self.unit != *target);
+        self.convert_exact(target).map(|v| v.tainted(approx))
+    }
+
+    fn convert_exact(self, target: &UnitExpr) -> Result<Value, Error> {
         if self.kind != Kind::Plain || self.unit.is_empty() {
             return Err(Error::IncompatibleUnits);
         }
@@ -129,6 +203,11 @@ impl Value {
     }
 
     pub fn into_percent_literal(self) -> Result<Value, Error> {
+        let approx = self.approx;
+        self.into_percent_literal_exact().map(|v| v.tainted(approx))
+    }
+
+    fn into_percent_literal_exact(self) -> Result<Value, Error> {
         if self.kind != Kind::Plain || !self.unit.is_empty() {
             return Err(Error::UnsupportedOperation("a percentage of a percentage"));
         }
@@ -148,6 +227,11 @@ impl Value {
     }
 
     pub fn binary(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+        let approx = l.approx || r.approx || reconciles_approximate_units(&[&l.unit, &r.unit]);
+        Value::binary_exact(op, l, r).map(|v| v.tainted(approx))
+    }
+
+    fn binary_exact(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
         use Kind::{Percent, Plain};
         if l.unit.has_offset() || r.unit.has_offset() {
             let shifts = matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
@@ -176,6 +260,7 @@ impl Value {
                 Value::quantity(l.number.mul(&r.number)?, l.unit.clone())
             }
             (BinOp::Div, Plain, Plain) => quotient(l, r),
+            (BinOp::Mod, Plain, Plain) => modulo(l, r),
             (BinOp::Pow, Plain, Plain) => power(l, r),
             (BinOp::On | BinOp::Off, rate, Plain) if rate == Percent || l.unit.is_empty() => {
                 let sign = if op == BinOp::On {
@@ -193,6 +278,12 @@ impl Value {
     }
 
     pub fn phrase(phrase: Phrase, args: &[Value]) -> Result<Value, Error> {
+        let units: Vec<&UnitExpr> = args.iter().map(|a| &a.unit).collect();
+        let approx = args.iter().any(|a| a.approx) || reconciles_approximate_units(&units);
+        Value::phrase_exact(phrase, args).map(|v| v.tainted(approx))
+    }
+
+    fn phrase_exact(phrase: Phrase, args: &[Value]) -> Result<Value, Error> {
         use Kind::{Percent, Plain};
         let refuse = || Err(Error::UnsupportedOperation(PHRASE_NEEDS_PLAIN));
         if let (
@@ -211,6 +302,29 @@ impl Value {
             return Err(Error::CurrencyRateNeeded);
         }
         match (phrase, args) {
+            (Phrase::RoundPlaces, [v, places])
+                if places.kind == Plain && places.unit.is_empty() =>
+            {
+                let places = places
+                    .number
+                    .numer()
+                    .to_u32()
+                    .filter(|p| *p <= 1000 && places.number.is_integer())
+                    .ok_or(Error::OutOfDomain)?;
+                let step = Number::from_i64(1)
+                    .div(&Number::from_i64(10).pow(&Number::from_i64(i64::from(places)))?)?;
+                v.map_number(|n| round_to_multiple(n, &step, Rounding::Nearest))
+            }
+            (Phrase::RoundNearest | Phrase::RoundUp | Phrase::RoundDown, [v, step])
+                if step.kind == Plain && step.unit.is_empty() =>
+            {
+                let mode = match phrase {
+                    Phrase::RoundNearest => Rounding::Nearest,
+                    Phrase::RoundUp => Rounding::Up,
+                    _ => Rounding::Down,
+                };
+                v.map_number(|n| round_to_multiple(n, &step.number, mode))
+            }
             (Phrase::AsPercent, [v]) => match v.kind {
                 Plain if v.unit.is_empty() => Ok(Value::percent(v.number.clone())),
                 Percent => Ok(v.clone()),
@@ -263,6 +377,15 @@ fn mismatch(a: &UnitExpr, b: &UnitExpr) -> Error {
     } else {
         Error::IncompatibleUnits
     }
+}
+
+/// True when two different units are brought together and one of them has an approximate factor.
+fn reconciles_approximate_units(units: &[&UnitExpr]) -> bool {
+    units.iter().enumerate().any(|(i, a)| {
+        units[i + 1..].iter().any(|b| {
+            !a.is_empty() && !b.is_empty() && a != b && (a.is_approximate() || b.is_approximate())
+        })
+    })
 }
 
 fn arith(op: BinOp, a: &Number, b: &Number) -> Result<Number, Error> {
@@ -323,6 +446,17 @@ fn product(l: &Value, r: &Value) -> Result<Value, Error> {
     Value::quantity(l.number.mul(&right)?, unit)
 }
 
+fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
+    let right = if l.unit == r.unit {
+        r.number.clone()
+    } else if !l.unit.is_empty() && l.unit.dim() == r.unit.dim() {
+        r.number.mul(&r.unit.factor()?)?.div(&l.unit.factor()?)?
+    } else {
+        return Err(Error::IncompatibleUnits);
+    };
+    Value::quantity(l.number.rem(&right)?, l.unit.clone())
+}
+
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
     let number = l.number.div(&r.number)?;
     if !l.unit.is_empty() && l.unit != r.unit && l.unit.dim() == r.unit.dim() {
@@ -347,6 +481,12 @@ fn power(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 pub fn format_value(v: &Value, opts: &FormatOptions) -> Formatted {
+    let mut f = format_value_digits(v, opts);
+    f.exact &= !v.approx;
+    f
+}
+
+fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
     match v.kind {
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {

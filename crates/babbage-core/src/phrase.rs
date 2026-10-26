@@ -111,6 +111,9 @@ pub fn is_vocabulary_word(word: &str) -> bool {
 
 /// Parses one line, recognising the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
+    if let Some(parsed) = crate::words::parse_words(toks) {
+        return parsed;
+    }
     let mut keywords: Vec<(usize, &str)> = Vec::new();
     let mut depth: i64 = 0;
     for (i, t) in toks.iter().enumerate() {

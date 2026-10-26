@@ -26,3 +26,4 @@ including UI/UX tests: start the app on buildhost and automate its testing. Work
 
 Pushing to any remote, spending money, anything needing a real reference app install to decide, and judging GUI looks.
 Everything else: decide, record in `docs/decisions.md`, keep going.
+- Kill my own processes by PID or an anchored pattern, never an unanchored pkill -f: the pattern matches the shell running it.

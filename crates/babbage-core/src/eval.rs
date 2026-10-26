@@ -1,4 +1,5 @@
 use crate::error::Error;
+use crate::functions;
 use crate::parser::{Expr, Node};
 use crate::value::Value;
 
@@ -28,6 +29,10 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
                 let rate = stack.pop().expect("well-formed expression");
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.convert_at(&rate, u)?);
+            }
+            Node::Call(f, n) => {
+                let args = stack.split_off(stack.len() - n);
+                stack.push(functions::call(*f, &args)?);
             }
             Node::Cast(u) => {
                 let x = stack.pop().expect("well-formed expression");
