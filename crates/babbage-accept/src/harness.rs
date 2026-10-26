@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::process::Command as Process;
+use std::process::{Child, ChildStdin, ChildStdout, Command as Process, Stdio};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, bail, ensure};
@@ -19,6 +19,7 @@ pub struct Harness {
     pub repo: PathBuf,
     bin: PathBuf,
     nested: Nested,
+    pointer: Pointer,
     work: tempfile::TempDir,
     pub logs: PathBuf,
     launches: usize,
@@ -89,6 +90,60 @@ impl Drop for Nested {
     }
 }
 
+/// A virtual mouse (`tools/pointer.py`) that lives as long as the nested compositor, so its seat always
+/// reports a pointer and the app listens for the mouse from its first frame.
+struct Pointer {
+    child: Child,
+    stdin: ChildStdin,
+    stdout: BufReader<ChildStdout>,
+}
+
+impl Pointer {
+    fn start(script: &Path, wayland: &str, extent: (u32, u32)) -> anyhow::Result<Pointer> {
+        let mut child = Process::new("python3")
+            .arg("-I")
+            .arg(script)
+            .args([wayland, &extent.0.to_string(), &extent.1.to_string()])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .context("python3 tools/pointer.py")?;
+        let stdin = child.stdin.take().context("no stdin")?;
+        let stdout = BufReader::new(child.stdout.take().context("no stdout")?);
+        let mut pointer = Pointer {
+            child,
+            stdin,
+            stdout,
+        };
+        let first = pointer.read_line()?;
+        ensure!(first == "ready", "pointer.py said {first:?}");
+        Ok(pointer)
+    }
+
+    fn read_line(&mut self) -> anyhow::Result<String> {
+        let mut line = String::new();
+        let n = self.stdout.read_line(&mut line)?;
+        ensure!(n > 0, "pointer.py exited");
+        Ok(line.trim().to_owned())
+    }
+
+    fn send(&mut self, command: &str) -> anyhow::Result<()> {
+        writeln!(self.stdin, "{command}")?;
+        self.stdin.flush()?;
+        let answer = self.read_line()?;
+        ensure!(answer == "ok", "pointer.py: {command:?} gave {answer:?}");
+        Ok(())
+    }
+}
+
+impl Drop for Pointer {
+    fn drop(&mut self) {
+        // Only the helper this harness started.
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
 pub struct App {
     name: String,
     pid: u32,
@@ -98,6 +153,15 @@ pub struct App {
     pub data_dir: PathBuf,
     sock: PathBuf,
     finished: bool,
+}
+
+fn hyprctl_on(sig: &str, args: &[&str]) -> anyhow::Result<Vec<u8>> {
+    let out = Process::new("hyprctl")
+        .env("HYPRLAND_INSTANCE_SIGNATURE", sig)
+        .args(args)
+        .output()?;
+    ensure!(out.status.success(), "hyprctl {args:?} failed");
+    Ok(out.stdout)
 }
 
 fn alive(pid: u32) -> bool {
@@ -228,10 +292,29 @@ impl Harness {
             .as_secs();
         let logs = repo.join(format!("target/accept-logs/{stamp}"));
         std::fs::create_dir_all(&logs)?;
+        let pointer = {
+            let monitors: Value =
+                serde_json::from_slice(&hyprctl_on(&nested.sig, &["-j", "monitors"])?)?;
+            let (mut right, mut bottom) = (0f64, 0f64);
+            for m in monitors.as_array().context("no monitors")? {
+                let scale = m["scale"].as_f64().unwrap_or(1.);
+                right = right
+                    .max(m["x"].as_f64().unwrap_or(0.) + m["width"].as_f64().unwrap_or(0.) / scale);
+                bottom = bottom.max(
+                    m["y"].as_f64().unwrap_or(0.) + m["height"].as_f64().unwrap_or(0.) / scale,
+                );
+            }
+            Pointer::start(
+                &repo.join("tools/pointer.py"),
+                &nested.wayland,
+                (right.ceil() as u32, bottom.ceil() as u32),
+            )?
+        };
         Ok(Harness {
             repo,
             bin,
             nested,
+            pointer,
             work,
             logs,
             launches: 0,
@@ -239,12 +322,7 @@ impl Harness {
     }
 
     fn hyprctl(&self, sig: &str, args: &[&str]) -> anyhow::Result<Vec<u8>> {
-        let out = Process::new("hyprctl")
-            .env("HYPRLAND_INSTANCE_SIGNATURE", sig)
-            .args(args)
-            .output()?;
-        ensure!(out.status.success(), "hyprctl {args:?} failed");
-        Ok(out.stdout)
+        hyprctl_on(sig, args)
     }
 
     fn nested_json(&self, what: &str) -> anyhow::Result<Value> {
@@ -443,6 +521,28 @@ impl Harness {
         }
         self.grim(&["-o", "HEADLESS-2", &out.to_string_lossy()])?;
         Ok(())
+    }
+
+    /// Clicks at (`x`, `y`), in points from the window's top-left corner, with the left or right button,
+    /// `count` times in quick succession (two is a double click).
+    pub fn click(
+        &mut self,
+        app: &App,
+        x: f32,
+        y: f32,
+        button: &str,
+        count: u32,
+    ) -> anyhow::Result<()> {
+        let w = self.window_of(app.pid)?;
+        let (ax, ay) = (
+            w["at"][0].as_f64().unwrap_or(0.),
+            w["at"][1].as_f64().unwrap_or(0.),
+        );
+        self.pointer.send(&format!(
+            "click {} {} {button} {count}",
+            ax + f64::from(x),
+            ay + f64::from(y)
+        ))
     }
 
     /// Where the app's window starts on the screenshot, in screen pixels.

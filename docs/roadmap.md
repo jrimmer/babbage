@@ -27,9 +27,9 @@ Status as of 2026-10-26. Every row ships only after a Python-oracle differential
 | 21 | Finance formulas: compound interest, present value, returns, loans, sales tax (CPI, income tax tables: post-v1) | done |
 | 22 | Number locale settings | done: three number formats, underscore separators, the user's own zone with daylight saving, the region dollar, US or imperial volume, tax setting; metric volume is ticket 0049 |
 | 23 | Sheets, sheetbooks, reference-format-like file format | done as `babbage-store`: one text file per sheet, atomic writes, a debounced autosaver, a sheetbook with create, rename and move-to-trash; importing real reference-format files is ticket 0051 |
-| 24 | gpui front end | done: sidebar, editor, answer column, total chip, Omarchy theme; 16 end-to-end checks in a nested Hyprland (`bin/accept`); gaps against the reference are ticket 0052 and judging looks is yours |
+| 24 | gpui front end | done: sidebar, editor, answer column, total chip, Omarchy theme; 17 end-to-end checks in a nested Hyprland, mouse included (`bin/accept`); gaps against the reference are ticket 0052 and judging looks is yours |
 
-All 24 rows are built. Every row has oracle or reference tests, and the engine rows have a mutation record (`docs/mutation.md`). What is left is filed as tickets: things that need a real reference app to settle (0018, 0030, 0043 to 0046, 0055), shipped data (0035 to 0038, 0047), and app gaps (0052). `bin/check` runs 468 tests across 49 suites over about 634,000 oracle and corpus lines, and `bin/accept` passes 16 of 16 in the nested Hyprland.
+All 24 rows are built. Every row has oracle or reference tests, and the engine rows have a mutation record (`docs/mutation.md`). What is left is filed as tickets: things that need a real reference app to settle (0018, 0030, 0043 to 0046, 0055), shipped data (0035 to 0038, 0047), and app gaps (0052). `bin/check` runs 468 tests across 49 suites over about 634,000 oracle and corpus lines, and `bin/accept` passes 17 of 17 in the nested Hyprland.
 
 Row 3 leftovers: fraction display, multipliers and the proportion forms are built (ticket 0014). Phrase forms inside parentheses are still open (ticket 0013).
 

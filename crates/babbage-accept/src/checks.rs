@@ -18,6 +18,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("ignored-dim", ignored_dim),
     ("total", total_chip),
     ("sheets", sheets_lifecycle),
+    ("sidebar-mouse", sidebar_mouse),
     ("autosave-sigkill", autosave_sigkill),
     ("keys", keyboard_features),
     ("quit-saves", quit_saves),
@@ -640,6 +641,162 @@ fn sheets_lifecycle(h: &mut Harness) -> anyhow::Result<()> {
     ensure!(trashed.len() == 1, "{} files in the trash", trashed.len());
     let name = trashed[0].file_name().to_string_lossy().into_owned();
     ensure!(name.starts_with("Budget."), "{name}");
+    ensure!(std::fs::read_to_string(trashed[0].path())? == "7 + 7\n");
+    app.finish()
+}
+
+/// Where a sidebar card or one row of an open menu sits, in points from the window's top-left corner.
+struct Sidebar {
+    top: f32,
+    card_h: f32,
+    row_h: f32,
+}
+
+impl Sidebar {
+    fn of(s: &Value) -> anyhow::Result<Sidebar> {
+        Ok(Sidebar {
+            top: f(&s["sidebar"]["top"])?,
+            card_h: f(&s["sidebar"]["card_h"])?,
+            row_h: f(&s["sidebar"]["menu_row_h"])?,
+        })
+    }
+
+    /// The middle of the card at `index`.
+    fn card(&self, index: usize) -> (f32, f32) {
+        (120., self.top + self.card_h * (index as f32 + 0.5))
+    }
+
+    /// The middle of menu row `row` of the menu under the card at `index`.
+    fn menu_row(&self, index: usize, row: usize) -> (f32, f32) {
+        (
+            120.,
+            self.top + self.card_h * (index as f32 + 1.) + self.row_h * (row as f32 + 0.5),
+        )
+    }
+}
+
+fn sheet_index(s: &Value, id: &str) -> anyhow::Result<usize> {
+    s["sheets"]
+        .as_array()
+        .and_then(|a| a.iter().position(|x| x["id"] == id))
+        .with_context(|| format!("no sheet {id} in the sidebar"))
+}
+
+/// The sidebar with a real mouse: click opens, right-click shows Rename and Move to trash, double click
+/// renames, and Escape or a click elsewhere closes the menu.
+fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("sidebar-mouse", None, &[])?;
+    let dir = app.data_dir.clone();
+    h.type_text("1 + 1")?;
+    let s = app.wait_for("the first sheet", T, |s| answer(s, 0) == Some("2"))?;
+    let first = s["current"].as_str().context("current")?.to_owned();
+    h.press(&["ctrl"], "n")?;
+    app.wait_for("a second sheet", T, |s| {
+        s["sheets"].as_array().is_some_and(|a| a.len() == 2)
+    })?;
+    h.type_text("7 + 7")?;
+    let s = app.wait_for("the second sheet's text", T, |s| answer(s, 0) == Some("14"))?;
+    let second = s["current"].as_str().context("current")?.to_owned();
+    let bar = Sidebar::of(&s)?;
+    ensure!(s["menu"].is_null(), "a menu is open at the start");
+
+    // A left click opens a sheet.
+    let (x, y) = bar.card(sheet_index(&s, &first)?);
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the first sheet by click", T, |s| {
+        s["current"] == first.as_str()
+    })?;
+    ensure!(
+        s["lines"][0]["text"] == "1 + 1",
+        "the text of the clicked sheet"
+    );
+    ensure!(s["menu"].is_null() && s["rename"].is_null());
+
+    // A right click opens that sheet's menu.
+    let (x, y) = bar.card(sheet_index(&s, &second)?);
+    h.click(&app, x, y, "right", 1)?;
+    let s = app.wait_for("the menu", T, |s| s["menu"] == second.as_str())?;
+    ensure!(
+        s["current"] == second.as_str(),
+        "right-click opens the sheet"
+    );
+    ensure!(s["lines"][0]["text"] == "7 + 7");
+    ensure!(
+        s["sidebar"]["menu_rows"] == serde_json::json!(["Rename", "Move to trash"]),
+        "{:?}",
+        s["sidebar"]["menu_rows"]
+    );
+    settle();
+    h.save_shot(&h.doc_shot("sidebar-menu.png"))?;
+
+    // Escape closes it and does nothing else.
+    h.press(&[], "Escape")?;
+    let s = app.wait_for("the menu closed by Escape", T, |s| s["menu"].is_null())?;
+    ensure!(s["current"] == second.as_str() && s["rename"].is_null());
+    ensure!(sheet_names(&s).len() == 2);
+
+    // A click in the editor closes it too.
+    let (x, y) = bar.card(sheet_index(&s, &second)?);
+    h.click(&app, x, y, "right", 1)?;
+    app.wait_for("the menu again", T, |s| s["menu"] == second.as_str())?;
+    h.click(
+        &app,
+        f(&s["text_x"])? + 300.,
+        f(&s["lines"][0]["y"])? + 8.,
+        "left",
+        1,
+    )?;
+    app.wait_for("the menu closed by a click", T, |s| s["menu"].is_null())?;
+
+    // Rename from the menu.
+    let (x, y) = bar.card(sheet_index(&s, &second)?);
+    h.click(&app, x, y, "right", 1)?;
+    app.wait_for("the menu for rename", T, |s| s["menu"] == second.as_str())?;
+    let (x, y) = bar.menu_row(sheet_index(&s, &second)?, 0);
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("rename mode", T, |s| {
+        s["rename"].is_string() && s["menu"].is_null()
+    })?;
+    h.press(&["ctrl"], "a")?;
+    for _ in 0..8 {
+        h.press(&[], "BackSpace")?;
+    }
+    h.type_text("Mouse")?;
+    h.press(&[], "Return")?;
+    let s = app.wait_for("the new name", T, |s| s["current"] == "Mouse")?;
+    ensure!(
+        s["lines"][0]["text"] == "7 + 7",
+        "the text survives a rename"
+    );
+    ensure!(dir.join("Mouse.babbage").is_file());
+
+    // A double click renames the sheet under it, and Escape leaves the name alone.
+    let (x, y) = bar.card(sheet_index(&s, &first)?);
+    h.click(&app, x, y, "left", 2)?;
+    let s = app.wait_for("rename by double click", T, |s| {
+        s["current"] == first.as_str() && s["rename"].is_string()
+    })?;
+    ensure!(s["lines"][0]["text"] == "1 + 1");
+    h.press(&[], "Escape")?;
+    let s = app.wait_for("the rename cancelled", T, |s| s["rename"].is_null())?;
+    ensure!(s["current"] == first.as_str() && sheet_names(&s).len() == 2);
+    ensure!(dir.join(format!("{first}.babbage")).is_file());
+
+    // Move to trash from the menu.
+    let (x, y) = bar.card(sheet_index(&s, "Mouse")?);
+    h.click(&app, x, y, "right", 1)?;
+    app.wait_for("the menu for trash", T, |s| s["menu"] == "Mouse")?;
+    let (x, y) = bar.menu_row(sheet_index(&s, "Mouse")?, 1);
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the sheet in the trash", T, |s| {
+        s["menu"].is_null() && s["sheets"].as_array().is_some_and(|a| a.len() == 1)
+    })?;
+    ensure!(s["current"] == first.as_str(), "{:?}", s["current"]);
+    ensure!(!dir.join("Mouse.babbage").exists());
+    let trashed: Vec<_> = std::fs::read_dir(dir.join(".trash"))?.flatten().collect();
+    ensure!(trashed.len() == 1, "{} files in the trash", trashed.len());
+    let name = trashed[0].file_name().to_string_lossy().into_owned();
+    ensure!(name.starts_with("Mouse."), "{name}");
     ensure!(std::fs::read_to_string(trashed[0].path())? == "7 + 7\n");
     app.finish()
 }

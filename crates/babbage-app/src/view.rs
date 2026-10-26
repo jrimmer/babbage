@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use babbage_store::{Autosaver, SheetBook, SheetId, SheetInfo};
 use gpui::{
-    App, Bounds, ClipboardItem, Context, EntityInputHandler, FocusHandle, Focusable, FontWeight,
-    Hsla, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point,
-    ScrollWheelEvent, ShapedLine, SharedString, TextRun, UTF16Selection, UnderlineStyle, Window,
-    div, point, prelude::*, px, size,
+    AnyElement, App, Bounds, ClipboardItem, Context, EntityInputHandler, FocusHandle, Focusable,
+    FontWeight, Hsla, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    Pixels, Point, ScrollWheelEvent, ShapedLine, SharedString, TextRun, UTF16Selection,
+    UnderlineStyle, Window, div, point, prelude::*, px, size,
 };
 
 use crate::computed::{Answer, Computed, compute};
@@ -21,7 +21,13 @@ pub const ROW_H: f32 = 36.;
 pub const FONT_PX: f32 = 21.;
 pub const GUTTER_W: f32 = 64.;
 pub const TOP_PAD: f32 = 22.;
-const SIDEBAR_W: f32 = 250.;
+pub const SIDEBAR_W: f32 = 250.;
+/// Where the first sheet card starts, how tall a card is and how tall a row of its menu is, in points: fixed so
+/// a test can aim at them.
+pub const SIDEBAR_TOP: f32 = 56.;
+pub const CARD_H: f32 = 54.;
+pub const MENU_ROW_H: f32 = 28.;
+pub const MENU_ROWS: [&str; 2] = ["Rename", "Move to trash"];
 const ANSWER_MIN_W: f32 = 300.;
 /// How long a pause in typing is before the sheet is written.
 pub const SAVE_DELAY_MS: u64 = 400;
@@ -80,6 +86,8 @@ pub struct SheetView {
     pub sidebar_open: bool,
     pub answer_focus: Option<usize>,
     pub rename: Option<Rename>,
+    /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
+    pub menu: Option<SheetId>,
     pub notice: Option<String>,
     scroll: f32,
     focus: FocusHandle,
@@ -120,6 +128,7 @@ impl SheetView {
             sidebar_open: true,
             answer_focus: None,
             rename: None,
+            menu: None,
             notice: None,
             scroll: 0.,
             focus,
@@ -177,6 +186,7 @@ impl SheetView {
                 self.scroll = 0.;
                 self.answer_focus = None;
                 self.rename = None;
+                self.menu = None;
                 self.notice = None;
                 self.recompute();
             }
@@ -346,6 +356,14 @@ impl SheetView {
         let m = &ks.modifiers;
         let (ctrl, shift, alt) = (m.control, m.shift, m.alt);
         let key = ks.key.as_str();
+        if self.menu.take().is_some() {
+            // Any key closes the menu; Escape does nothing else.
+            cx.notify();
+            if key == "escape" {
+                cx.stop_propagation();
+                return;
+            }
+        }
         if self.rename.is_some() {
             self.rename_key(ks.key.as_str(), ks.key_char.as_deref(), ctrl, cx);
             cx.stop_propagation();
@@ -551,6 +569,7 @@ impl SheetView {
 
     fn on_mouse_down(&mut self, ev: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         window.focus(&self.focus);
+        self.menu = None;
         let Some((pos, in_answers)) = self.position_at(ev.position) else {
             return;
         };
@@ -589,7 +608,8 @@ impl SheetView {
     // Pieces of the window.
 
     fn sidebar(&self, c: Colors, cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let cards = self.sheets.iter().enumerate().map(|(i, s)| {
+        let mut cards: Vec<AnyElement> = Vec::new();
+        for (i, s) in self.sheets.iter().enumerate() {
             let selected = s.id == self.current;
             let (name, lines) = if selected {
                 // The open sheet shows what is typed now, not what was last saved.
@@ -614,22 +634,37 @@ impl SheetView {
                 1 => "1 line".to_owned(),
                 n => format!("{n} lines"),
             };
-            div()
+            let card = div()
                 .id(("sheet", i))
                 .mx(px(8.))
                 .px(px(12.))
-                .py(px(8.))
+                .h(px(CARD_H))
                 .rounded(px(8.))
                 .flex()
                 .flex_col()
+                .justify_center()
                 .gap(px(2.))
                 .when(selected, |d| d.bg(c.raised))
                 .on_mouse_down(
                     MouseButton::Left,
-                    cx.listener(move |this, _, window, cx| {
+                    cx.listener(move |this, ev: &MouseDownEvent, window, cx| {
                         window.focus(&this.focus);
                         let id = this.sheets[i].id.clone();
                         this.open_sheet(id, cx);
+                        // A double click renames the sheet it opened.
+                        if ev.click_count >= 2 {
+                            this.start_rename(cx);
+                        }
+                    }),
+                )
+                .on_mouse_down(
+                    MouseButton::Right,
+                    cx.listener(move |this, _, window, cx| {
+                        window.focus(&this.focus);
+                        let id = this.sheets[i].id.clone();
+                        this.open_sheet(id.clone(), cx);
+                        this.menu = Some(id);
+                        cx.notify();
                     }),
                 )
                 .child(
@@ -649,8 +684,40 @@ impl SheetView {
                         .text_color(c.muted)
                         .child(SharedString::from(describe_time(s.modified)))
                         .child(SharedString::from(count)),
-                )
-        });
+                );
+            cards.push(card.into_any_element());
+            if self.menu.as_ref() == Some(&s.id) {
+                for (row, label) in MENU_ROWS.iter().enumerate() {
+                    cards.push(
+                        div()
+                            .id(("sheet-menu", row))
+                            .mx(px(20.))
+                            .px(px(12.))
+                            .h(px(MENU_ROW_H))
+                            .flex()
+                            .items_center()
+                            .rounded(px(6.))
+                            .text_size(px(13.))
+                            .bg(c.raised)
+                            .hover(|d| d.text_color(c.warn))
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, _, window, cx| {
+                                    window.focus(&this.focus);
+                                    this.menu = None;
+                                    match row {
+                                        0 => this.start_rename(cx),
+                                        _ => this.delete_current(cx),
+                                    }
+                                    cx.notify();
+                                }),
+                            )
+                            .child(*label)
+                            .into_any_element(),
+                    );
+                }
+            }
+        }
         div()
             .w(px(SIDEBAR_W))
             .h_full()
@@ -664,8 +731,9 @@ impl SheetView {
                     .mx(px(8.))
                     .mt(px(14.))
                     .mb(px(10.))
-                    .py(px(6.))
+                    .h(px(32.))
                     .flex()
+                    .items_center()
                     .justify_center()
                     .gap(px(8.))
                     .rounded(px(8.))

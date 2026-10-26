@@ -45,7 +45,7 @@ the focused answer line. The editor text is `Vec<String>`, one entry per sheet l
 `babbage --control <socket>` serves newline-delimited JSON on a unix socket (mode 0600). Requests:
 `state` (sheets, current sheet, per-line text and answer text, ignored spans, total, sidebar rows, focus),
 `shot_info` (window geometry). It never changes state: all input in the checks is real keystrokes sent
-with `wtype` and `hyprctl dispatch send_shortcut` into the focused window. The harness (`babbage-accept`):
+with `wtype` into the focused window and real mouse clicks from `tools/pointer.py`, a virtual pointer that stays alive for the whole run (a seat with no pointer tells the app it has none). The harness (`babbage-accept`):
 
 1. starts the nested Hyprland (`tools/nested-hyprland.sh`), which is hidden on a special workspace;
 2. starts `babbage` there with a temporary `BABBAGE_DATA_DIR`, a fixed theme file and the control socket;
@@ -76,8 +76,8 @@ with `wtype` and `hyprctl dispatch send_shortcut` into the focused window. The h
   arrives through the input handler, so IME composition works the same way.
 - The answer column is painted by the same element as the text so rows cannot drift apart.
 - A sheet's name in the sidebar is its title (first non-empty line) until the user renames it; then the
-  name is the file name. `F2` is the only rename path in this version.
+  name is the file name. Rename is F2, a double click on the card, or Rename in the card's right-click menu; Move to trash is Ctrl+Shift+Delete or the menu.
 - The theme file is polled once a second; no file-watching crate is needed.
 - Undo history is per open sheet and is dropped when another sheet opens.
 - Not built: the "General" folder pill and the toolbar icons of the reference, chips that show the
-  referenced value instead of `lineN`, and a mouse way to rename or delete.
+  referenced value instead of `lineN`.
