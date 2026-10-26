@@ -1,7 +1,7 @@
 //! The acceptance checks. Each one starts the real binary on a temporary data folder, types real
 //! keystrokes into its window, and reads the result back from the screen and from the app's state hook.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::{Context, bail, ensure};
@@ -34,6 +34,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("drag-select", drag_select),
     ("wheel-scroll", wheel_scroll),
     ("comment-toggle", comment_toggle),
+    ("export", export_sheet),
     ("clipboard-lines", clipboard_lines),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -1135,6 +1136,108 @@ fn comment_toggle(h: &mut Harness) -> anyhow::Result<()> {
     app.wait_for("one undo takes both back", T, |s| {
         s["lines"][0]["text"] == "1 + 1" && s["lines"][1]["text"] == "2 + 2"
     })?;
+    app.finish()
+}
+
+/// Ctrl+Shift+E writes the open sheet with its answers as text, CSV, HTML and PDF; the PDF is checked with the
+/// system's own tools, which read it back.
+fn export_sheet(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("export", None, &[])?;
+    let dir = app.data_dir.clone();
+    h.type_line("# Trip")?;
+    h.type_line("1 + 2")?;
+    h.type_line("hotel 3 nights × $120")?;
+    h.type_text("// a note")?;
+    app.wait_for("the lines worked out", T, |s| {
+        answer(s, 1) == Some("3") && answer(s, 2) == Some("$360.00")
+    })?;
+    ensure!(
+        !app.state()?["notice"].is_string(),
+        "a notice is showing before the export"
+    );
+    h.press(&["ctrl", "shift"], "e")?;
+    let s = app.wait_for("the export notice", T, |s| {
+        s["notice"]
+            .as_str()
+            .is_some_and(|n| n.starts_with("Exported"))
+    })?;
+    let exports = dir.join("exports");
+    ensure!(
+        s["notice"]
+            .as_str()
+            .unwrap_or("")
+            .contains(&exports.display().to_string()),
+        "the notice names the folder: {}",
+        s["notice"]
+    );
+    let name = s["current"].as_str().context("current")?.to_owned();
+    // The one file of each kind; its name is the sheet's, made safe.
+    let file = |ext: &str| -> anyhow::Result<PathBuf> {
+        let found: Vec<PathBuf> = std::fs::read_dir(&exports)
+            .with_context(|| format!("{}", exports.display()))?
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|e| e == ext))
+            .collect();
+        ensure!(
+            found.len() == 1,
+            "{} {ext} files in {}: {found:?}",
+            found.len(),
+            exports.display()
+        );
+        Ok(found[0].clone())
+    };
+    let read = |ext: &str| -> anyhow::Result<String> {
+        let path = file(ext)?;
+        std::fs::read_to_string(&path).with_context(|| format!("{}", path.display()))
+    };
+    let txt = read("txt")?;
+    ensure!(txt.contains("# Trip\n"), "text: {txt:?}");
+    ensure!(
+        txt.contains("1 + 2") && txt.contains("| 3\n"),
+        "text: {txt:?}"
+    );
+    ensure!(txt.contains("| $360.00"), "text: {txt:?}");
+    ensure!(txt.contains("// a note\n"), "text: {txt:?}");
+    let csv = read("csv")?;
+    ensure!(
+        csv.contains("1 + 2,3\r\n") && csv.contains("hotel 3 nights × $120,$360.00\r\n"),
+        "csv: {csv:?}"
+    );
+    let html = read("html")?;
+    ensure!(
+        html.starts_with("<!doctype html>") && html.contains("<td class=\"answer\">$360.00</td>"),
+        "html"
+    );
+    // The pdf is read back by qpdf (structure) and pdftotext (text), not by this code.
+    let pdf = file("pdf")?;
+    let check = std::process::Command::new("qpdf")
+        .arg("--check")
+        .arg(&pdf)
+        .output()?;
+    ensure!(
+        check.status.success(),
+        "qpdf --check failed: {}",
+        String::from_utf8_lossy(&check.stderr)
+    );
+    let layout = std::process::Command::new("pdftotext")
+        .args(["-layout"])
+        .arg(&pdf)
+        .arg("-")
+        .output()?;
+    ensure!(layout.status.success(), "pdftotext failed");
+    let words = String::from_utf8_lossy(&layout.stdout).into_owned();
+    ensure!(
+        words.contains("Trip") && words.contains("1 + 2") && words.contains("$360.00"),
+        "pdftotext read: {words:?}"
+    );
+    // The folder of exports does not turn up as a sheet.
+    let s = app.state()?;
+    ensure!(
+        s["sheets"].as_array().is_some_and(|a| a.len() == 1) && s["current"] == name.as_str(),
+        "the exports folder shows as a sheet: {}",
+        s["sheets"]
+    );
     app.finish()
 }
 

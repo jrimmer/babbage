@@ -307,6 +307,55 @@ impl SheetView {
         cx.notify();
     }
 
+    /// Writes the open sheet, with its answers, as text, CSV, HTML and PDF into the sheetbook's `exports` folder
+    /// (Ctrl+Shift+E) and says where in the notice.
+    fn export_current(&mut self, cx: &mut Context<Self>) {
+        use babbage_core::LineKind;
+        use babbage_store::export::{Row, RowKind};
+        let lines = self.ed.lines().to_vec();
+        let rows: Vec<Row> = lines
+            .iter()
+            .enumerate()
+            .map(|(i, text)| {
+                let kind = match self.computed.results.get(i).map(|r| &r.kind) {
+                    Some(LineKind::Heading(_)) => RowKind::Heading,
+                    Some(LineKind::Comment) => RowKind::Comment,
+                    Some(LineKind::Divider) => RowKind::Divider,
+                    Some(LineKind::Blank) | None => RowKind::Blank,
+                    Some(_) => RowKind::Plain,
+                };
+                let answer = self.computed.answers.get(i).and_then(|a| {
+                    a.text.as_ref().map(|t| {
+                        if a.exact {
+                            t.clone()
+                        } else {
+                            format!("≈ {t}")
+                        }
+                    })
+                });
+                Row {
+                    text: text.clone(),
+                    answer,
+                    kind,
+                }
+            })
+            .collect();
+        let name = self
+            .sheets
+            .iter()
+            .find(|s| s.id == self.current)
+            .map_or_else(|| "sheet".to_owned(), SheetInfo::display_name);
+        let total = self.computed.total.as_ref().and_then(|t| t.text.clone());
+        let dir = self.book.dir().join("exports");
+        self.notice = Some(
+            match babbage_store::export::write_all(&dir, &name, &rows, total.as_deref()) {
+                Ok(_) => format!("Exported as text, CSV, HTML and PDF to {}", dir.display()),
+                Err(e) => format!("Could not export: {e}"),
+            },
+        );
+        cx.notify();
+    }
+
     // Text.
 
     pub fn recompute(&mut self) {
@@ -400,6 +449,10 @@ impl SheetView {
                 }
                 "delete" if shift => {
                     self.delete_current(cx);
+                    true
+                }
+                "e" if shift => {
+                    self.export_current(cx);
                     true
                 }
                 _ => false,

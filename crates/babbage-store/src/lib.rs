@@ -7,6 +7,7 @@
 mod atomic;
 mod autosave;
 mod book;
+pub mod export;
 mod format;
 
 pub use atomic::{Stage, write_atomic, write_atomic_until};
