@@ -717,12 +717,8 @@ fn in_western_europe_a_point_is_a_grouping_mark_and_a_misplaced_one_is_named_exa
         assert_eq!(evaluate_with("1 + 3.14", &s), bad("3.14", 4));
         assert_eq!(evaluate_with("1.2.3", &s), bad("1.2", 0));
         assert_eq!(
-            format_value(
-                &evaluate_with("1.234", &s).unwrap(),
-                &FormatOptions::default()
-            )
-            .text,
-            "1234"
+            format_value(&evaluate_with("1.234", &s).unwrap(), &s.format_options()).text,
+            "1.234"
         );
     });
 }
