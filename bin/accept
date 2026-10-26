@@ -1,0 +1,8 @@
+#!/bin/bash
+# Acceptance checks against the release binary, in a nested headless Hyprland (never on the desktop).
+# Usage: bin/accept [--list] [check ...]      (default: every check)
+# Screenshots of the checks that publish one go to docs/shots/; the rest stay in target/accept-logs/.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bin/build
+exec target/release/babbage-accept "$@"
