@@ -975,6 +975,10 @@ weeks	wk
 wei	WEI
 wk	wk
 wks	wk
+work day	workday
+work days	workday
+workday	workday
+workdays	workday
 yard	yd
 yards	yd
 yd	yd

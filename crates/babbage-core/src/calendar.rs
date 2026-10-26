@@ -57,9 +57,28 @@ pub fn weekday(days: i64) -> u32 {
     (days + 3).rem_euclid(7) as u32
 }
 
-pub const WEEKDAYS: [&str; 7] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+pub const WEEKDAYS: [&str; 7] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+];
 pub const MONTHS: [&str; 12] = [
-    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ];
 
 /// Adds calendar months, keeping the day of the month or the last day of a shorter month:
@@ -68,11 +87,21 @@ pub fn add_months(c: Civil, months: i64) -> Civil {
     let total = c.year * 12 + i64::from(c.month) - 1 + months;
     let year = total.div_euclid(12);
     let month = (total.rem_euclid(12) + 1) as u32;
-    Civil { year, month, day: c.day.min(days_in_month(year, month)) }
+    Civil {
+        year,
+        month,
+        day: c.day.min(days_in_month(year, month)),
+    }
 }
 
 pub fn day_of_year(c: Civil) -> u32 {
-    (days_from_civil(c) - days_from_civil(Civil { year: c.year, month: 1, day: 1 })) as u32 + 1
+    (days_from_civil(c)
+        - days_from_civil(Civil {
+            year: c.year,
+            month: 1,
+            day: 1,
+        })) as u32
+        + 1
 }
 
 /// The ISO 8601 week number (1 to 53) and the year it belongs to.
@@ -81,7 +110,11 @@ pub fn iso_week(c: Civil) -> (i64, u32) {
     // The Thursday of this week decides which year the week belongs to.
     let thursday = days - i64::from(weekday(days)) + 3;
     let year = civil_from_days(thursday).year;
-    let first = days_from_civil(Civil { year, month: 1, day: 1 });
+    let first = days_from_civil(Civil {
+        year,
+        month: 1,
+        day: 1,
+    });
     (year, ((thursday - first) / 7) as u32 + 1)
 }
 
@@ -106,7 +139,11 @@ pub fn easter(year: i64) -> Civil {
 
 /// The `n`th (1 to 4, or 5 for the last) given weekday of a month, such as the 4th Thursday of November.
 pub fn nth_weekday(year: i64, month: u32, weekday_index: u32, n: u32) -> Civil {
-    let first = days_from_civil(Civil { year, month, day: 1 });
+    let first = days_from_civil(Civil {
+        year,
+        month,
+        day: 1,
+    });
     let offset = (i64::from(weekday_index) - i64::from(weekday(first))).rem_euclid(7);
     let mut day = first + offset + 7 * i64::from(n - 1);
     if n == 5 && civil_from_days(day).month != month {

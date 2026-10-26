@@ -154,6 +154,14 @@ pub fn is_form_word(word: &str) -> bool {
         "deviation",
         "what",
         "the",
+        "through",
+        "until",
+        "till",
+        "since",
+        "ago",
+        "after",
+        "before",
+        "weekday",
     ];
     WORDS.iter().any(|w| w.eq_ignore_ascii_case(word))
 }
@@ -161,6 +169,7 @@ pub fn is_form_word(word: &str) -> bool {
 /// The expression a line written in words stands for, or None when it is not one of these forms.
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
+        .or_else(|| crate::dateforms::parse_date_forms(toks))
         .or_else(|| root_and_log(toks))
         .or_else(|| finance_forms(toks))
         .or_else(|| multiplier_forms(toks))

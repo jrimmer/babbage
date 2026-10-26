@@ -95,6 +95,7 @@ pub enum Func {
     GrowthRate,
     /// `30 hours at $30/hour` and `$500 at $20/hour`: multiplies or divides, by the units.
     AtRate,
+    Date(crate::datefns::DateFn),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -141,6 +142,7 @@ impl Func {
                 Arity::Exactly(2)
             }
             Func::AnnualReturn => Arity::Exactly(3),
+            Func::Date(f) => Arity::Exactly(f.arity()),
             Func::Compound
             | Func::InterestOn
             | Func::PresentValue
@@ -362,6 +364,9 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
             Ok(Value::plain(Number::from_ratio(acc, BigInt::one())?))
         }
         Func::Half => Value::binary(BinOp::Div, &args[0], &Value::plain(Number::from_i64(2))),
+        Func::Midpoint if args[0].kind() == Kind::Date => {
+            crate::datefns::midpoint(&args[0], &args[1])
+        }
         Func::Midpoint => {
             let sum = Value::binary(BinOp::Add, &args[0], &args[1])?;
             Value::binary(BinOp::Div, &sum, &Value::plain(Number::from_i64(2)))
@@ -396,6 +401,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::TimeByGrowth => finance::time_by_growth(&args[0], &args[1], &args[2], &args[3]),
         Func::GrowthRate => finance::growth_rate(&args[0], &args[1], &args[2], &args[3]),
         Func::AtRate => at_rate(&args[0], &args[1]),
+        Func::Date(f) => crate::datefns::call(f, args),
         Func::Root => {
             let k = plain_integer(&args[0])?;
             let k = k

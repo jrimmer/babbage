@@ -92,6 +92,11 @@ impl Number {
         Number(&self.0 * BigRational::from_integer(BigInt::from(100)))
     }
 
+    /// The largest whole number not above this one.
+    pub fn floor(&self) -> BigInt {
+        self.0.floor().to_integer()
+    }
+
     pub fn neg(&self) -> Number {
         Number(-&self.0)
     }

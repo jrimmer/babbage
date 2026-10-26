@@ -1,4 +1,8 @@
 pub mod approx;
+pub mod calendar;
+pub mod datefns;
+pub mod dateforms;
+pub mod dates;
 pub mod error;
 pub mod eval;
 pub mod finance;

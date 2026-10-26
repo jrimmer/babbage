@@ -7,6 +7,7 @@ fn vat() -> Settings {
             name: "VAT".into(),
             rate: Number::from_decimal_str("0.15").unwrap(),
         }),
+        ..Settings::default()
     }
 }
 
@@ -54,6 +55,7 @@ fn a_tax_name_means_nothing_without_a_setting() {
             name: "GST".into(),
             rate: Number::from_decimal_str("0.1").unwrap(),
         }),
+        ..Settings::default()
     };
     assert_eq!(
         format_value(

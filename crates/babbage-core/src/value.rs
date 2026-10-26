@@ -18,6 +18,12 @@ pub enum Kind {
     Multiplier,
     /// A named sales tax such as VAT: it adds, removes and extracts by tax rules, not percentage rules.
     TaxRate,
+    /// A calendar day, with a time of day when the number has a fraction. Held as days since 1970-01-01, local.
+    Date,
+    /// A time of day, held as seconds since midnight.
+    Clock,
+    /// An answer that is a word, such as `Tuesday`.
+    Text,
 }
 
 /// A number with an optional unit. A percentage never has a unit.
@@ -31,6 +37,10 @@ pub struct Value {
     approx: bool,
     /// The base to show a whole number in: 10, or 2, 8, 16 and others after `as hex` or a literal like `0xFF`.
     radix: u8,
+    /// The words of a `Text` value.
+    text: Option<std::rc::Rc<str>>,
+    /// Show a length of time as `3 weeks 5 days` instead of a single unit.
+    timespan: bool,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -49,6 +59,8 @@ impl Value {
             unit: UnitExpr::default(),
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         }
     }
 
@@ -59,6 +71,8 @@ impl Value {
             unit: UnitExpr::default(),
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         }
     }
 
@@ -75,6 +89,8 @@ impl Value {
             unit,
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         })
     }
 
@@ -86,6 +102,56 @@ impl Value {
         self.convert(&like.unit).map(|v| v.number)
     }
 
+    pub fn date(days: Number) -> Value {
+        Value {
+            number: days,
+            kind: Kind::Date,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+            text: None,
+            timespan: false,
+        }
+    }
+
+    pub fn clock(seconds: Number) -> Value {
+        Value {
+            number: seconds,
+            kind: Kind::Clock,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+            text: None,
+            timespan: false,
+        }
+    }
+
+    pub fn text(words: &str) -> Value {
+        Value {
+            number: Number::from_i64(0),
+            kind: Kind::Text,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+            text: Some(words.into()),
+            timespan: false,
+        }
+    }
+
+    /// This length of time, to be shown as a timespan.
+    pub fn as_timespan(mut self) -> Value {
+        self.timespan = true;
+        self
+    }
+
+    pub fn is_timespan(&self) -> bool {
+        self.timespan
+    }
+
+    pub fn words(&self) -> Option<&str> {
+        self.text.as_deref()
+    }
+
     pub fn tax_rate(rate: Number) -> Value {
         Value {
             number: rate,
@@ -93,6 +159,8 @@ impl Value {
             unit: UnitExpr::default(),
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         }
     }
 
@@ -103,6 +171,8 @@ impl Value {
             unit: UnitExpr::default(),
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         }
     }
 
@@ -113,6 +183,8 @@ impl Value {
             unit: UnitExpr::default(),
             approx: false,
             radix: 10,
+            text: None,
+            timespan: false,
         }
     }
 
@@ -187,6 +259,8 @@ impl Value {
             unit: self.unit.clone(),
             approx: self.approx,
             radix: 10,
+            text: None,
+            timespan: false,
         })
     }
 
@@ -210,6 +284,8 @@ impl Value {
             unit: self.unit.clone(),
             approx: self.approx,
             radix: self.radix,
+            text: self.text.clone(),
+            timespan: self.timespan,
         }
     }
 
@@ -315,6 +391,10 @@ impl Value {
             return Err(Error::UnsupportedOperation(
                 "true and false take part only in comparisons and logic",
             ));
+        }
+        let temporal = |k: Kind| matches!(k, Kind::Date | Kind::Clock | Kind::Text);
+        if temporal(l.kind) || temporal(r.kind) {
+            return temporal_arithmetic(op, l, r);
         }
         if l.kind == Kind::TaxRate || r.kind == Kind::TaxRate {
             return tax_arithmetic(op, l, r);
@@ -451,7 +531,13 @@ impl Value {
             (Phrase::AsPercent, [v]) => match v.kind {
                 Plain if v.unit.is_empty() => Ok(Value::percent(v.number.clone())),
                 Percent => Ok(v.clone()),
-                Plain | Kind::Bool | Kind::Multiplier | Kind::TaxRate => refuse(),
+                Plain
+                | Kind::Bool
+                | Kind::Multiplier
+                | Kind::TaxRate
+                | Kind::Date
+                | Kind::Clock
+                | Kind::Text => refuse(),
             },
             (
                 Phrase::IsPercentOfWhat | Phrase::IsPercentOnWhat | Phrase::IsPercentOffWhat,
@@ -538,6 +624,104 @@ fn tax_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     }
 }
 
+fn is_length_of_time(v: &Value) -> bool {
+    let seconds = crate::units::lookup("s").expect("seconds are defined");
+    v.kind == Kind::Plain && !v.unit.is_empty() && v.unit.dim() == seconds.dim()
+}
+
+fn seconds_of(v: &Value) -> Result<Number, Error> {
+    v.number.mul(&v.unit.factor()?)
+}
+
+/// A date shifted by a length of time. Months and years move the calendar, so 31 January plus a month is the
+/// last day of February; workdays skip weekends; everything else is an exact number of seconds.
+fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
+    use crate::calendar;
+    let sign_n = Number::from_i64(sign);
+    let lookup = |name: &str| crate::units::lookup(name).expect("unit is defined");
+    let whole_day = date.number.floor();
+    let day = i64::try_from(&whole_day).map_err(|_| Error::Overflow)?;
+    let fraction = date
+        .number
+        .sub(&Number::from_ratio(whole_day, num_bigint::BigInt::from(1))?)?;
+    let months = if by.unit == lookup("mo") {
+        Some(by.number.clone())
+    } else if by.unit == lookup("yr") {
+        Some(by.number.mul(&Number::from_i64(12))?)
+    } else {
+        None
+    };
+    if let Some(m) = months {
+        if !m.is_integer() {
+            return Err(Error::UnsupportedOperation(
+                "a date moves by whole months or years",
+            ));
+        }
+        let n = i64::try_from(m.numer()).map_err(|_| Error::Overflow)? * sign;
+        let moved =
+            calendar::days_from_civil(calendar::add_months(calendar::civil_from_days(day), n));
+        return Ok(Value::date(Number::from_i64(moved).add(&fraction)?));
+    }
+    if by.unit == lookup("workday") {
+        if !by.number.is_integer() {
+            return Err(Error::UnsupportedOperation(
+                "a date moves by whole workdays",
+            ));
+        }
+        let n = i64::try_from(by.number.numer()).map_err(|_| Error::Overflow)? * sign;
+        return Ok(Value::date(
+            Number::from_i64(calendar::add_workdays(day, n)).add(&fraction)?,
+        ));
+    }
+    let days = seconds_of(by)?
+        .div(&Number::from_i64(86_400))?
+        .mul(&sign_n)?;
+    Ok(Value::date(date.number.add(&days)?))
+}
+
+/// A time of day shifted by a length of time, wrapping past midnight.
+fn shift_clock(clock: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
+    let moved = clock
+        .number
+        .add(&seconds_of(by)?.mul(&Number::from_i64(sign))?)?;
+    let day = Number::from_i64(86_400);
+    let wrapped = moved.sub(&day.mul(&Number::from_ratio(
+        moved.div(&day)?.floor(),
+        num_bigint::BigInt::from(1),
+    )?)?)?;
+    Ok(Value::clock(wrapped))
+}
+
+fn temporal_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+    let seconds = || crate::units::lookup("s").expect("seconds are defined");
+    match (op, l.kind, r.kind) {
+        (BinOp::Add | BinOp::Join, Kind::Date, Kind::Plain) if is_length_of_time(r) => {
+            shift_date(l, r, 1)
+        }
+        (BinOp::Sub, Kind::Date, Kind::Plain) if is_length_of_time(r) => shift_date(l, r, -1),
+        (BinOp::Add | BinOp::Join, Kind::Plain, Kind::Date) if is_length_of_time(l) => {
+            shift_date(r, l, 1)
+        }
+        (BinOp::Sub, Kind::Date, Kind::Date) => {
+            let seconds_apart = l.number.sub(&r.number)?.mul(&Number::from_i64(86_400))?;
+            Ok(Value::quantity(seconds_apart, seconds())?.as_timespan())
+        }
+        (BinOp::Add | BinOp::Join, Kind::Clock, Kind::Plain) if is_length_of_time(r) => {
+            shift_clock(l, r, 1)
+        }
+        (BinOp::Sub, Kind::Clock, Kind::Plain) if is_length_of_time(r) => shift_clock(l, r, -1),
+        (BinOp::Add | BinOp::Join, Kind::Plain, Kind::Clock) if is_length_of_time(l) => {
+            shift_clock(r, l, 1)
+        }
+        (BinOp::Sub, Kind::Clock, Kind::Clock) => {
+            Ok(Value::quantity(l.number.sub(&r.number)?, seconds())?.as_timespan())
+        }
+        _ => Err(Error::UnsupportedOperation(
+            "a date or time can be shifted by a length of time, and two of them can be subtracted",
+        )),
+    }
+}
+
 fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     use std::cmp::Ordering::{Equal, Greater, Less};
     if l.kind == Kind::Bool || r.kind == Kind::Bool {
@@ -549,6 +733,15 @@ fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
             )),
             _ => Err(Error::UnsupportedOperation(
                 "a true or false cannot be compared with a number",
+            )),
+        };
+    }
+    if l.kind == Kind::Text || r.kind == Kind::Text {
+        return match (l.words(), r.words(), op) {
+            (Some(a), Some(b), BinOp::Eq) => Ok(Value::boolean(a.eq_ignore_ascii_case(b))),
+            (Some(a), Some(b), BinOp::Ne) => Ok(Value::boolean(!a.eq_ignore_ascii_case(b))),
+            _ => Err(Error::UnsupportedOperation(
+                "words can only be compared for equality",
             )),
         };
     }
@@ -732,6 +925,14 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             text: radix_text(&v.number, v.radix),
             exact: true,
         },
+        Kind::Plain if v.timespan && is_length_of_time(v) => Formatted {
+            text: crate::dates::format_timespan(
+                &v.number
+                    .mul(&v.unit.factor().unwrap_or_else(|_| Number::from_i64(1)))
+                    .unwrap_or_else(|_| v.number.clone()),
+            ),
+            exact: true,
+        },
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {
                 return f;
@@ -743,6 +944,18 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             }
             f
         }
+        Kind::Date => Formatted {
+            text: crate::dates::format_date(&v.number),
+            exact: true,
+        },
+        Kind::Clock => Formatted {
+            text: crate::dates::format_clock(&v.number),
+            exact: true,
+        },
+        Kind::Text => Formatted {
+            text: v.text.as_deref().unwrap_or("").to_string(),
+            exact: true,
+        },
         Kind::TaxRate => {
             let mut f = format_decimal(&v.number.times_hundred(), &opts.unabbreviated());
             f.text.push('%');

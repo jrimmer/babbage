@@ -119,6 +119,7 @@ min | min,mins,minute,minutes | T | 60
 h | h,hr,hrs,hour,hours | T | 3600
 day | day,days | T | 86400
 wk | wk,wks,week,weeks | T | 604800
+workday | workday,workdays,work day,work days | T | 86400
 mo | mo,month,months | T | 30.436875*86400
 yr | yr,yrs,year,years | T | 365.2425*86400
 # length

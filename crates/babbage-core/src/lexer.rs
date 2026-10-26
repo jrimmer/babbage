@@ -19,6 +19,8 @@ pub enum Tok {
     Slash,
     Caret,
     Comma,
+    /// The rest of a line after `as` when it is written like a date format: `EEEE, MMM d, yyyy`.
+    Format(String),
     /// A comparison, logical or bitwise operator spelled with symbols.
     Op(BinOp),
     /// The word `mod`.
@@ -45,6 +47,7 @@ impl Tok {
             Tok::Slash => "'/'".into(),
             Tok::Caret => "'^'".into(),
             Tok::Comma => "','".into(),
+            Tok::Format(_) => "date format".into(),
             Tok::Op(op) => format!("'{op}'"),
             Tok::Mod => "'mod'".into(),
             Tok::LParen => "'('".into(),
@@ -133,7 +136,7 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
 }
 
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
-    lex_raw(src).map(operator_words)
+    lex_raw(src).map(operator_words).map(crate::dates::rewrite)
 }
 
 fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
@@ -348,10 +351,21 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                         at,
                     });
                 } else {
+                    let is_as = word.eq_ignore_ascii_case("as");
                     out.push(Token {
                         tok: Tok::Word(word),
                         at,
                     });
+                    let rest_at = chars.get(end).map_or(src.len(), |c| c.0);
+                    let rest = src[rest_at..].trim();
+                    if is_as && looks_like_date_format(rest) {
+                        out.push(Token {
+                            tok: Tok::Format(rest.to_string()),
+                            at: src.len() - src[rest_at..].trim_start().len(),
+                        });
+                        i = chars.len();
+                        continue;
+                    }
                 }
                 i = end;
                 continue;
@@ -418,6 +432,17 @@ fn radix_prefix(chars: &[(usize, char)], i: usize) -> Option<(u8, usize)> {
         .get(i + 2)
         .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
         .then_some((radix, i + 2))
+}
+
+/// True for text such as `EEEE, MMM d, yyyy` or `yyyy-MM-dd HH:mm`.
+fn looks_like_date_format(text: &str) -> bool {
+    let letters_only = text
+        .chars()
+        .all(|c| c.is_ascii_alphabetic() || " ,.:/-'".contains(c));
+    letters_only
+        && ["yy", "MM", "dd", "EEE", "HH", "hh"]
+            .iter()
+            .any(|p| text.contains(p))
 }
 
 fn word_end(chars: &[(usize, char)], from: usize) -> usize {

@@ -19,8 +19,8 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 13 | Conditionals and comparisons | done |
 | 14 | Bases and bitwise | done (non-negative whole numbers) |
 | 15 | Rates, growth and change, multipliers (cooking is post-v1, ticket 0035) | done |
-| 16 | Dates and calendar math | todo |
-| 17 | Workdays and weekdays | todo |
+| 16 | Dates and calendar math | built, oracle-tested (23k lines); mutation run pending |
+| 17 | Workdays and weekdays | built, oracle-tested; mutation run pending |
 | 18 | Timestamps and ISO 8601 | todo |
 | 19 | Clock time, timespans, lap times, video timecode | todo |
 | 20 | Time zones and cities (bundled tzdb) | todo |
