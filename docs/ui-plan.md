@@ -53,3 +53,31 @@ with `wtype` and `hyprctl dispatch send_shortcut` into the focused window. The h
 4. stops everything it started, by PID.
 
 `bin/accept` builds release binaries and runs every check; `bin/check` is the unit gate and guards.
+
+## Keys
+
+| key | does |
+|---|---|
+| Ctrl+N | new sheet |
+| Ctrl+Tab, Ctrl+Shift+Tab | next, previous sheet (sidebar order, which does not reshuffle while saving) |
+| Ctrl+B | show or hide the sidebar |
+| Ctrl+Q | save and quit |
+| F2 | rename the open sheet (type, Enter to accept, Esc to cancel) |
+| Ctrl+Shift+Delete | move the open sheet to `.trash` |
+| Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y | undo, redo (a run of typing without spaces is one step) |
+| Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+V | select all, copy, cut, paste |
+| Alt+Right | focus the answer of the caret line; Ctrl+C then copies the answer text; Esc or Left returns |
+| Shift with arrows, Home, End | extend the selection; Ctrl adds word steps |
+
+## Decisions made while building
+
+- The key handler is one `on_key_down` on the root instead of gpui actions and a keymap file: the shortcuts
+  are few, and it avoids the layout-dependent re-binding the owner's other app needs. Printable text still
+  arrives through the input handler, so IME composition works the same way.
+- The answer column is painted by the same element as the text so rows cannot drift apart.
+- A sheet's name in the sidebar is its title (first non-empty line) until the user renames it; then the
+  name is the file name. `F2` is the only rename path in this version.
+- The theme file is polled once a second; no file-watching crate is needed.
+- Undo history is per open sheet and is dropped when another sheet opens.
+- Not built: the "General" folder pill and the toolbar icons of the reference, chips that show the
+  referenced value instead of `lineN`, and a mouse way to rename or delete.

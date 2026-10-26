@@ -90,7 +90,7 @@ fn main() -> anyhow::Result<()> {
                         Ok(view) => {
                             if let Err(e) = control::serve(path.clone(), view, cx) {
                                 eprintln!("cannot serve {}: {e}", path.display());
-                                cx.quit();
+                                std::process::exit(1);
                             }
                         }
                         Err(e) => {

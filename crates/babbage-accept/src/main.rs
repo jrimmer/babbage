@@ -48,6 +48,8 @@ fn main() -> anyhow::Result<()> {
         Ok(())
     } else {
         println!("failed: {}", failed.join(", "));
+        // Dropping the harness stops the nested compositor; exiting first would leave it running.
+        drop(h);
         std::process::exit(1);
     }
 }
