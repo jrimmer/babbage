@@ -388,7 +388,10 @@ fn agrees_with_the_sheet_simulator_on_every_line_of_600_sheets() {
             continue;
         }
         let (text, want) = line.rsplit_once('\t').expect("tab-separated");
-        sheets.last_mut().expect("a sheet header comes first").push((text.to_string(), want.to_string()));
+        sheets
+            .last_mut()
+            .expect("a sheet header comes first")
+            .push((text.to_string(), want.to_string()));
     }
     assert_eq!(sheets.len(), 600);
     let mut failures = Vec::new();
@@ -399,11 +402,24 @@ fn agrees_with_the_sheet_simulator_on_every_line_of_600_sheets() {
         for (i, ((text, want), got)) in sheet.iter().zip(&results).enumerate() {
             let got = kind_label(got);
             if &got != want {
-                failures.push(format!("sheet {n} line {}: {text:?} want {want:?}, got {got:?}", i + 1));
+                failures.push(format!(
+                    "sheet {n} line {}: {text:?} want {want:?}, got {got:?}",
+                    i + 1
+                ));
             }
             lines_checked += 1;
         }
     }
     assert!(lines_checked > 6000, "{lines_checked}");
-    assert!(failures.is_empty(), "{} of {lines_checked} lines differ, first 12:\n{}", failures.len(), failures.iter().take(12).cloned().collect::<Vec<_>>().join("\n"));
+    assert!(
+        failures.is_empty(),
+        "{} of {lines_checked} lines differ, first 12:\n{}",
+        failures.len(),
+        failures
+            .iter()
+            .take(12)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
 }
