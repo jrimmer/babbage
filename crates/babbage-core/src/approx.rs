@@ -163,6 +163,38 @@ pub fn root(x: &Number, k: u32) -> Result<Outcome, Error> {
     })
 }
 
+/// `base` to the power of a rational `exp`: exact when the answer is rational, otherwise approximate.
+pub fn pow_rational(base: &Number, exp: &Number) -> Result<Outcome, Error> {
+    if exp.is_integer() {
+        return exact(base.pow(exp)?);
+    }
+    if base.is_negative() {
+        return Err(Error::OutOfDomain);
+    }
+    if base.is_zero() {
+        return if exp.is_negative() {
+            Err(Error::DivisionByZero)
+        } else {
+            exact(int(0))
+        };
+    }
+    if let Some(q) = u32::try_from(exp.denom().clone())
+        .ok()
+        .filter(|q| *q <= 1000)
+        && let Some(r) = exact_root(base, q)
+    {
+        return exact(r.pow(&Number::from_ratio(exp.numer().clone(), BigInt::one())?)?);
+    }
+    if exp.abs() > int(EXPONENT_LIMIT) {
+        return Err(Error::Overflow);
+    }
+    approximate(|cc| {
+        let b = to_float(base, cc);
+        let e = to_float(exp, cc);
+        b.pow(&e, PRECISION_BITS, ROUNDING, cc)
+    })
+}
+
 pub fn sqrt(x: &Number) -> Result<Outcome, Error> {
     if x.is_negative() {
         return Err(Error::OutOfDomain);

@@ -17,6 +17,8 @@ pub enum BinOp {
     Mod,
     On,
     Off,
+    /// `of`: multiplication, except that a tax rate before it extracts the tax from the amount after it.
+    Of,
     Eq,
     Ne,
     Lt,
@@ -51,7 +53,7 @@ impl BinOp {
             BinOp::Lt | BinOp::Gt | BinOp::Le | BinOp::Ge => 7,
             BinOp::Shl | BinOp::Shr => 8,
             BinOp::Add | BinOp::Sub => 9,
-            BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::On | BinOp::Off => 10,
+            BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::On | BinOp::Off | BinOp::Of => 10,
             BinOp::Pow => 12,
             BinOp::Join => 13,
         }
@@ -88,6 +90,7 @@ impl fmt::Display for BinOp {
             BinOp::Shr => ">>",
             BinOp::On => "on",
             BinOp::Off => "off",
+            BinOp::Of => "of",
             BinOp::Join => "+",
         })
     }
@@ -111,11 +114,22 @@ pub enum Phrase {
     RoundNearest,
     RoundUp,
     RoundDown,
+    /// `20/5 as multiplier`.
+    AsMultiplier,
+    /// `50 as x of 5`, `2 as x on 1`, `1 as x off 2`, `50 to 75 is what x`.
+    MultiplierOf,
+    MultiplierOn,
+    MultiplierOff,
+    MultiplierChange,
 }
 
 impl Phrase {
     pub fn arity(self) -> usize {
-        if self == Phrase::AsPercent { 1 } else { 2 }
+        if matches!(self, Phrase::AsPercent | Phrase::AsMultiplier) {
+            1
+        } else {
+            2
+        }
     }
 }
 
@@ -270,12 +284,13 @@ fn pop_for(op: BinOp, ops: &mut Vec<Pending>, out: &mut Vec<Node>) {
 
 fn binary_word(w: &str) -> Option<BinOp> {
     match w.to_ascii_lowercase().as_str() {
-        "of" => Some(BinOp::Mul),
+        "of" => Some(BinOp::Of),
         "on" => Some(BinOp::On),
         "off" => Some(BinOp::Off),
         "and" => Some(BinOp::And),
         "or" => Some(BinOp::Or),
         "xor" => Some(BinOp::Xor),
+        "per" | "over" => Some(BinOp::Div),
         _ => None,
     }
 }
@@ -366,6 +381,12 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     Tok::Slash => BinOp::Div,
                     Tok::Caret => BinOp::Pow,
                     Tok::Mod => BinOp::Mod,
+                    Tok::Word(w)
+                        if (w.eq_ignore_ascii_case("in") || w.eq_ignore_ascii_case("from"))
+                            && matches!(out.last(), Some(Node::Value(v)) if v.kind() == crate::value::Kind::TaxRate) =>
+                    {
+                        BinOp::Of
+                    }
                     Tok::Word(w) => match binary_word(w) {
                         Some(op) => op,
                         None => {

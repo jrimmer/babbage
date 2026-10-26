@@ -90,7 +90,23 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
     let mut i = 0;
     while i < toks.len() {
         let at = toks[i].at;
-        let (tok, used) = if word(i, "plus") {
+        let prev_ends_operand = out.last().is_some_and(|t: &Token| {
+            matches!(
+                t.tok,
+                Tok::Num(_) | Tok::Value(_) | Tok::Unit(_) | Tok::RParen | Tok::Percent { .. }
+            )
+        });
+        let prev_is_for = out.last().is_some_and(
+            |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("for")),
+        );
+        let next_is_unit = matches!(toks.get(i + 1).map(|t| &t.tok), Some(Tok::Unit(_)));
+        let (tok, used) = if (word(i, "a") || word(i, "an")) && next_is_unit && prev_ends_operand {
+            // `$24 a day` is `$24 per day`.
+            (Some(Tok::Slash), 1)
+        } else if (word(i, "a") || word(i, "an")) && next_is_unit && prev_is_for {
+            // `for a year` is one year.
+            (Some(Tok::Num(Number::from_i64(1))), 1)
+        } else if word(i, "plus") {
             (Some(Tok::Plus), 1)
         } else if word(i, "minus") {
             (Some(Tok::Minus), 1)
@@ -148,6 +164,16 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             '@' => simple(Tok::Word("at".into()), &mut out),
+            _ if bare_currency_at(src, &chars, i).is_some() => {
+                let (unit, symbol_chars) =
+                    bare_currency_at(src, &chars, i).expect("checked by the guard");
+                out.push(Token {
+                    tok: Tok::Unit(unit),
+                    at,
+                });
+                i += symbol_chars;
+                continue;
+            }
             '0' if radix_prefix(&chars, i).is_some() => {
                 let (radix, digits_from) = radix_prefix(&chars, i).expect("checked by the guard");
                 let mut end = digits_from;
@@ -302,6 +328,14 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     i = end;
                     continue;
                 }
+                if let Some(rate) = crate::settings::tax_rate_named(&word) {
+                    out.push(Token {
+                        tok: Tok::Value(Value::tax_rate(rate)),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 let constant = match word.to_lowercase().as_str() {
                     "pi" | "π" => Some(crate::approx::pi()),
                     "tau" | "τ" => Some(crate::approx::tau()),
@@ -329,6 +363,26 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
         i += 1;
     }
     Ok(out)
+}
+
+/// A currency symbol standing alone as a unit next to a slash: the `$` of `$/month`.
+fn bare_currency_at(src: &str, chars: &[(usize, char)], i: usize) -> Option<(UnitExpr, usize)> {
+    let (at, first) = chars[i];
+    if first.is_alphanumeric() || first.is_whitespace() {
+        return None;
+    }
+    let (bytes, unit) = currency_prefix(&src[at..])?;
+    let symbol_chars = src[at..at + bytes].chars().count();
+    let next = chars[i + symbol_chars..]
+        .iter()
+        .map(|(_, c)| *c)
+        .find(|c| !c.is_whitespace());
+    let prev = chars[..i]
+        .iter()
+        .rev()
+        .map(|(_, c)| *c)
+        .find(|c| !c.is_whitespace());
+    (next == Some('/') || prev == Some('/')).then_some((unit, symbol_chars))
 }
 
 /// A currency symbol at `i` that is directly followed by a number, as in `$55`, `US$7` or `€.5`.

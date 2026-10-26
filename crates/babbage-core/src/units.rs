@@ -815,6 +815,29 @@ impl UnitExpr {
         k.sub(&d.offset)?.div(&d.factor)
     }
 
+    /// The units with positive exponents, as in `$` of `$/hour`.
+    pub fn numerator(&self) -> UnitExpr {
+        UnitExpr(
+            self.0
+                .iter()
+                .copied()
+                .filter(|(_, e)| e.is_positive())
+                .collect(),
+        )
+    }
+
+    /// The units with negative exponents, turned positive, as in `hour` of `$/hour`.
+    pub fn denominator(&self) -> UnitExpr {
+        UnitExpr(
+            self.0
+                .iter()
+                .copied()
+                .filter(|(_, e)| e.is_negative())
+                .map(|(u, e)| (u, -e))
+                .collect(),
+        )
+    }
+
     pub fn recip(&self) -> UnitExpr {
         self.pow(-1)
     }

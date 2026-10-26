@@ -18,18 +18,18 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 12 | Roots, logs, trig, constants (115-digit, flagged approximate) | done |
 | 13 | Conditionals and comparisons | done |
 | 14 | Bases and bitwise | done (non-negative whole numbers) |
-| 15 | Rates, growth and change, cooking volumes | todo |
+| 15 | Rates, growth and change, multipliers (cooking is post-v1, ticket 0035) | done |
 | 16 | Dates and calendar math | todo |
 | 17 | Workdays and weekdays | todo |
 | 18 | Timestamps and ISO 8601 | todo |
 | 19 | Clock time, timespans, lap times, video timecode | todo |
 | 20 | Time zones and cities (bundled tzdb) | todo |
-| 21 | Finance formulas: compound interest, loans, sales tax | todo |
+| 21 | Finance formulas: compound interest, present value, returns, loans, sales tax (CPI, income tax tables: post-v1) | done |
 | 22 | Number locale settings | todo |
 | 23 | Sheets, sheetbooks, reference-format-like file format | todo |
 | 24 | gpui front end | todo |
 
-14 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
+16 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
 
 Row 3 leftovers, each filed as a ticket: fraction display (`as fraction`), multipliers (`4x`), proportion forms (`20% is 500, what is 750`), and phrase forms inside parentheses.
 

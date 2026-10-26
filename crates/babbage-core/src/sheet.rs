@@ -21,6 +21,8 @@ pub struct SheetOptions {
     pub dividers_reset_scope: bool,
     /// Whether `name = value` lines count in subtotals and the floating total.
     pub declarations_in_totals: bool,
+    /// Settings that apply to every line: the named sales tax.
+    pub settings: crate::settings::Settings,
 }
 
 impl Default for SheetOptions {
@@ -29,6 +31,7 @@ impl Default for SheetOptions {
             natural: true,
             dividers_reset_scope: true,
             declarations_in_totals: true,
+            settings: crate::settings::Settings::default(),
         }
     }
 }
@@ -111,6 +114,10 @@ struct State {
 }
 
 pub fn evaluate_sheet(lines: &[&str], opts: &SheetOptions) -> Vec<LineResult> {
+    crate::settings::scoped(&opts.settings, || evaluate_sheet_in_scope(lines, opts))
+}
+
+fn evaluate_sheet_in_scope(lines: &[&str], opts: &SheetOptions) -> Vec<LineResult> {
     let mut st = State {
         results: Vec::with_capacity(lines.len()),
         vars: HashMap::new(),

@@ -14,6 +14,10 @@ pub enum Kind {
     Percent,
     /// `true` or `false`, held as 1 or 0.
     Bool,
+    /// A ratio shown with an x: `2x`.
+    Multiplier,
+    /// A named sales tax such as VAT: it adds, removes and extracts by tax rules, not percentage rules.
+    TaxRate,
 }
 
 /// A number with an optional unit. A percentage never has a unit.
@@ -80,6 +84,26 @@ impl Value {
             return Ok(self.number);
         }
         self.convert(&like.unit).map(|v| v.number)
+    }
+
+    pub fn tax_rate(rate: Number) -> Value {
+        Value {
+            number: rate,
+            kind: Kind::TaxRate,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+        }
+    }
+
+    pub fn multiplier(ratio: Number) -> Value {
+        Value {
+            number: ratio,
+            kind: Kind::Multiplier,
+            unit: UnitExpr::default(),
+            approx: false,
+            radix: 10,
+        }
     }
 
     pub fn boolean(b: bool) -> Value {
@@ -292,6 +316,28 @@ impl Value {
                 "true and false take part only in comparisons and logic",
             ));
         }
+        if l.kind == Kind::TaxRate || r.kind == Kind::TaxRate {
+            return tax_arithmetic(op, l, r);
+        }
+        if op == BinOp::Of {
+            return Value::binary_exact(BinOp::Mul, l, r);
+        }
+        if l.kind == Kind::Multiplier || r.kind == Kind::Multiplier {
+            return match (op, l.kind, r.kind) {
+                (BinOp::Mul, Kind::Multiplier, Kind::Multiplier) => {
+                    Ok(Value::multiplier(l.number.mul(&r.number)?))
+                }
+                (BinOp::Mul, Kind::Multiplier, Kind::Plain) => {
+                    Value::quantity(l.number.mul(&r.number)?, r.unit.clone())
+                }
+                (BinOp::Mul, Kind::Plain, Kind::Multiplier) => {
+                    Value::quantity(l.number.mul(&r.number)?, l.unit.clone())
+                }
+                _ => Err(Error::UnsupportedOperation(
+                    "a multiplier can only be multiplied",
+                )),
+            };
+        }
         if l.unit.has_offset() || r.unit.has_offset() {
             let shifts = matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
                 && l.kind == Plain
@@ -384,10 +430,28 @@ impl Value {
                 };
                 v.map_number(|n| round_to_multiple(n, &step.number, mode))
             }
+            (Phrase::AsMultiplier, [v]) if v.kind == Plain && v.unit.is_empty() => {
+                Ok(Value::multiplier(v.number.clone()))
+            }
+            (
+                Phrase::MultiplierOf
+                | Phrase::MultiplierOn
+                | Phrase::MultiplierOff
+                | Phrase::MultiplierChange,
+                [a, b],
+            ) if a.kind == Plain && b.kind == Plain && a.unit.dim() == b.unit.dim() => {
+                let (x, y) = (a.si()?, b.si()?);
+                Ok(Value::multiplier(match phrase {
+                    Phrase::MultiplierOf => x.div(&y)?,
+                    Phrase::MultiplierOn => x.sub(&y)?.div(&y)?,
+                    Phrase::MultiplierOff => y.sub(&x)?.div(&y)?,
+                    _ => y.div(&x)?,
+                }))
+            }
             (Phrase::AsPercent, [v]) => match v.kind {
                 Plain if v.unit.is_empty() => Ok(Value::percent(v.number.clone())),
                 Percent => Ok(v.clone()),
-                Plain | Kind::Bool => refuse(),
+                Plain | Kind::Bool | Kind::Multiplier | Kind::TaxRate => refuse(),
             },
             (
                 Phrase::IsPercentOfWhat | Phrase::IsPercentOnWhat | Phrase::IsPercentOffWhat,
@@ -445,6 +509,33 @@ fn reconciles_approximate_units(units: &[&UnitExpr]) -> bool {
             !a.is_empty() && !b.is_empty() && a != b && (a.is_approximate() || b.is_approximate())
         })
     })
+}
+
+/// `$300 + VAT`, `$300 - VAT`, `VAT on $300`, `VAT off $300`, `VAT of $300` and `VAT in $300`.
+/// Removing tax divides by 1 plus the rate: it is not a percentage taken off.
+fn tax_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
+    let with_tax = |rate: &Number| one().add(rate);
+    match (op, l.kind, r.kind) {
+        (BinOp::Add, Kind::Plain, Kind::TaxRate) => {
+            Value::quantity(l.number.mul(&with_tax(&r.number)?)?, l.unit.clone())
+        }
+        (BinOp::Sub, Kind::Plain, Kind::TaxRate) => {
+            Value::quantity(l.number.div(&with_tax(&r.number)?)?, l.unit.clone())
+        }
+        (BinOp::On, Kind::TaxRate, Kind::Plain) => {
+            Value::quantity(r.number.mul(&l.number)?, r.unit.clone())
+        }
+        (BinOp::Off, Kind::TaxRate, Kind::Plain) => {
+            Value::quantity(r.number.div(&with_tax(&l.number)?)?, r.unit.clone())
+        }
+        (BinOp::Of, Kind::TaxRate, Kind::Plain) => {
+            let tax = r.number.mul(&l.number)?.div(&with_tax(&l.number)?)?;
+            Value::quantity(tax, r.unit.clone())
+        }
+        _ => Err(Error::UnsupportedOperation(
+            "a tax is added, removed or extracted from an amount",
+        )),
+    }
 }
 
 fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
@@ -650,6 +741,16 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
                 f.text.push(' ');
                 f.text.push_str(&v.unit.symbol());
             }
+            f
+        }
+        Kind::TaxRate => {
+            let mut f = format_decimal(&v.number.times_hundred(), &opts.unabbreviated());
+            f.text.push('%');
+            f
+        }
+        Kind::Multiplier => {
+            let mut f = format_decimal(&v.number, &opts.unabbreviated());
+            f.text.push('x');
             f
         }
         Kind::Bool => Formatted {

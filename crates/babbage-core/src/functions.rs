@@ -8,6 +8,7 @@ use num_traits::{One, Signed, ToPrimitive};
 
 use crate::approx::{self, Trig};
 use crate::error::Error;
+use crate::finance;
 use crate::number::Number;
 use crate::parser::BinOp;
 use crate::value::{Kind, Value};
@@ -73,6 +74,27 @@ pub enum Func {
     AtanD,
     /// Sample standard deviation.
     StdDev,
+    /// (principal, time, rate, compounding periods per year)
+    Compound,
+    InterestOn,
+    PresentValue,
+    /// (invested, returned)
+    ReturnMultiple,
+    /// (invested, returned, time)
+    AnnualReturn,
+    /// (principal, time, rate, period code: 1 daily, 2 monthly, 3 annual, 4 total)
+    Repayment,
+    LoanInterest,
+    /// (start, time, rate, period)
+    GrowPerPeriod,
+    /// (from, to, step, every)
+    TimeBySteps,
+    /// (from, to, rate, every)
+    TimeByGrowth,
+    /// (from, to, period, time)
+    GrowthRate,
+    /// `30 hours at $30/hour` and `$500 at $20/hour`: multiplies or divides, by the units.
+    AtRate,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -115,7 +137,19 @@ impl Func {
             | Func::Midpoint
             | Func::Random => Arity::Exactly(2),
             Func::Clamp => Arity::Exactly(3),
-            Func::Root | Func::LogBase | Func::ToBase => Arity::Exactly(2),
+            Func::Root | Func::LogBase | Func::ToBase | Func::ReturnMultiple | Func::AtRate => {
+                Arity::Exactly(2)
+            }
+            Func::AnnualReturn => Arity::Exactly(3),
+            Func::Compound
+            | Func::InterestOn
+            | Func::PresentValue
+            | Func::Repayment
+            | Func::LoanInterest
+            | Func::GrowPerPeriod
+            | Func::TimeBySteps
+            | Func::TimeByGrowth
+            | Func::GrowthRate => Arity::Exactly(4),
             Func::StdDev => Arity::AtLeast(2),
             _ => Arity::Exactly(1),
         }
@@ -342,6 +376,26 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
             args[0].clone().in_radix(base)
         }
         Func::StdDev => standard_deviation(args),
+        Func::Compound => finance::compound(&args[0], &args[1], &args[2], whole(&args[3])?),
+        Func::InterestOn => finance::interest_on(&args[0], &args[1], &args[2], whole(&args[3])?),
+        Func::PresentValue => {
+            finance::present_value(&args[0], &args[1], &args[2], whole(&args[3])?)
+        }
+        Func::ReturnMultiple => finance::return_multiple(&args[0], &args[1]),
+        Func::AnnualReturn => finance::annual_return(&args[0], &args[1], &args[2]),
+        Func::Repayment | Func::LoanInterest => {
+            let period = finance::Period::from_code(whole(&args[3])?).ok_or(Error::OutOfDomain)?;
+            if func == Func::Repayment {
+                finance::repayment(&args[0], &args[1], &args[2], period)
+            } else {
+                finance::loan_interest(&args[0], &args[1], &args[2], period)
+            }
+        }
+        Func::GrowPerPeriod => finance::grow_per_period(&args[0], &args[1], &args[2], &args[3]),
+        Func::TimeBySteps => finance::time_by_steps(&args[0], &args[1], &args[2], &args[3]),
+        Func::TimeByGrowth => finance::time_by_growth(&args[0], &args[1], &args[2], &args[3]),
+        Func::GrowthRate => finance::growth_rate(&args[0], &args[1], &args[2], &args[3]),
+        Func::AtRate => at_rate(&args[0], &args[1]),
         Func::Root => {
             let k = plain_integer(&args[0])?;
             let k = k
@@ -376,6 +430,27 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::Asin | Func::Acos | Func::Atan | Func::AsinD | Func::AcosD | Func::AtanD => {
             inverse_trig(func, &args[0])
         }
+    }
+}
+
+fn whole(v: &Value) -> Result<i64, Error> {
+    plain_integer(v)?.to_i64().ok_or(Error::Overflow)
+}
+
+/// `30 hours at $30/hour` multiplies, `$500 at $20/hour` divides: which one the units of the rate decide.
+fn at_rate(amount: &Value, rate: &Value) -> Result<Value, Error> {
+    let (per, of) = (rate.unit().denominator(), rate.unit().numerator());
+    if per.is_empty() || of.is_empty() {
+        return Err(Error::UnsupportedOperation(
+            "a rate such as $30/hour is needed after `at`",
+        ));
+    }
+    if amount.unit().dim() == per.dim() {
+        Value::binary(BinOp::Mul, amount, rate)
+    } else if amount.unit().dim() == of.dim() {
+        Value::binary(BinOp::Div, amount, rate)
+    } else {
+        Err(Error::IncompatibleUnits)
     }
 }
 

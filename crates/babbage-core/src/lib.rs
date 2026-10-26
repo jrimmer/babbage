@@ -1,12 +1,14 @@
 pub mod approx;
 pub mod error;
 pub mod eval;
+pub mod finance;
 pub mod format;
 pub mod functions;
 pub mod lexer;
 pub mod number;
 pub mod parser;
 pub mod phrase;
+pub mod settings;
 pub mod sheet;
 pub mod units;
 pub mod value;
@@ -20,6 +22,11 @@ pub use value::{Kind, Value, format_value};
 
 pub fn parse_expression(line: &str) -> Result<parser::Expr, Error> {
     phrase::parse_line(&lexer::lex(line)?)
+}
+
+/// Evaluates one line with the given settings (a tax rate, for instance) in force.
+pub fn evaluate_with(line: &str, settings: &settings::Settings) -> Result<Value, Error> {
+    settings::scoped(settings, || evaluate(line))
 }
 
 pub fn evaluate(line: &str) -> Result<Value, Error> {

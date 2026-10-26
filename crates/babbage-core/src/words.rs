@@ -162,6 +162,9 @@ pub fn is_form_word(word: &str) -> bool {
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
         .or_else(|| root_and_log(toks))
+        .or_else(|| finance_forms(toks))
+        .or_else(|| multiplier_forms(toks))
+        .or_else(|| rate_forms(toks))
         .or_else(|| clamp(toks))
         .or_else(|| remainder(toks))
         .or_else(|| count_form(toks))
@@ -495,4 +498,268 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
         }
     }
     None
+}
+
+/// The runs between the given words, which must all appear at the top level, in this order.
+fn between<'a>(toks: &'a [Token], words: &[&str]) -> Option<Vec<&'a [Token]>> {
+    let mut parts = Vec::new();
+    let mut from = 0;
+    for w in words {
+        let at = from + depth_zero_word(&toks[from..], w)?;
+        parts.push(&toks[from..at]);
+        from = at + 1;
+    }
+    parts.push(&toks[from..]);
+    parts.iter().all(|p| !p.is_empty()).then_some(parts)
+}
+
+fn call_with(parts: &[&[Token]], extra: Vec<Node>, func: Func) -> Result<Expr, Error> {
+    let mut rpn = rpn_of(parts)?;
+    let count = parts.len() + extra.len();
+    rpn.extend(extra);
+    rpn.push(Node::Call(func, count));
+    Ok(Expr::from_nodes(rpn))
+}
+
+fn number_node(n: i64) -> Node {
+    Node::Num(Number::from_i64(n))
+}
+
+/// A trailing `compounding monthly`, as the part before it and the number of periods a year.
+fn compounding(toks: &[Token]) -> (&[Token], i64) {
+    let n = toks.len();
+    if n >= 3 && (is_word(toks.get(n - 2), "compounding") || is_word(toks.get(n - 2), "compounded"))
+    {
+        let per_year = [
+            ("annually", 1),
+            ("yearly", 1),
+            ("annual", 1),
+            ("semiannually", 2),
+            ("semi-annually", 2),
+            ("biannually", 2),
+            ("quarterly", 4),
+            ("monthly", 12),
+            ("weekly", 52),
+            ("daily", 365),
+        ]
+        .iter()
+        .find(|(w, _)| is_word(toks.get(n - 1), w))
+        .map(|(_, p)| *p);
+        if let Some(p) = per_year {
+            return (&toks[..n - 2], p);
+        }
+    }
+    (toks, 1)
+}
+
+fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    if words_at(toks, 0, &["interest", "on"]) {
+        let (body, per_year) = compounding(&toks[2..]);
+        let parts = between(body, &["after", "at"])?;
+        return Some(call_with(
+            &parts,
+            vec![number_node(per_year)],
+            Func::InterestOn,
+        ));
+    }
+    if words_at(toks, 0, &["present", "value", "of"]) {
+        let (body, per_year) = compounding(&toks[3..]);
+        let parts = between(body, &["after", "at"])?;
+        return Some(call_with(
+            &parts,
+            vec![number_node(per_year)],
+            Func::PresentValue,
+        ));
+    }
+    if words_at(toks, 0, &["annual", "return", "on"]) {
+        let parts = between(&toks[3..], &["invested", "returned"])?;
+        let time = parts[2].strip_prefix(
+            &[Token {
+                tok: Tok::Word("after".into()),
+                at: 0,
+            }][..],
+        );
+        let after = parts[2]
+            .first()
+            .filter(|t| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("after")));
+        let _ = time;
+        return Some(match after {
+            Some(_) if parts[2].len() > 1 => {
+                call(&[parts[0], parts[1], &parts[2][1..]], Func::AnnualReturn)
+            }
+            _ => Err(Error::UnexpectedEnd),
+        });
+    }
+    for (period, code) in [("daily", 1), ("monthly", 2), ("annual", 3), ("total", 4)] {
+        for (noun, func) in [
+            ("repayment", Func::Repayment),
+            ("interest", Func::LoanInterest),
+        ] {
+            if is_word(toks.first(), period)
+                && is_word(toks.get(1), noun)
+                && is_word(toks.get(2), "on")
+            {
+                let parts = between(&toks[3..], &["over", "at"])?;
+                return Some(call_with(&parts, vec![number_node(code)], func));
+            }
+        }
+    }
+    if words_at(toks, 0, &["time", "from"]) {
+        return time_to_reach(&toks[2..]);
+    }
+    if words_at(toks, 0, &["growth", "per"]) {
+        let parts = between(&toks[2..], &["from", "to", "over"])?;
+        return Some(call_with(
+            &[parts[1], parts[2], parts[0], parts[3]],
+            vec![],
+            Func::GrowthRate,
+        ));
+    }
+    if let Some(i) = depth_zero_word(toks, "invested") {
+        let tail = &toks[i + 1..];
+        if depth_zero_word(tail, "returned").is_some_and(|r| r + 1 == tail.len())
+            && i > 0
+            && tail.len() > 1
+        {
+            return Some(call(
+                &[&toks[..i], &tail[..tail.len() - 1]],
+                Func::ReturnMultiple,
+            ));
+        }
+    }
+    // `20k after 6 months at 10% per month`, and `$1,000 after 3 years at 7% compounding monthly`.
+    let (body, per_year) = compounding(toks);
+    let parts = between(body, &["after", "at"])?;
+    let (start, time, rate) = (parts[0], parts[1], parts[2]);
+    if let Some(per) = depth_zero_word(rate, "per") {
+        if per == 0 || per + 1 >= rate.len() {
+            return Some(Err(Error::UnexpectedEnd));
+        }
+        return Some(call_with(
+            &[start, time, &rate[..per], &rate[per + 1..]],
+            vec![],
+            Func::GrowPerPeriod,
+        ));
+    }
+    Some(call_with(
+        &[start, time, rate],
+        vec![number_node(per_year)],
+        Func::Compound,
+    ))
+}
+
+/// `time from $20k to $40k at $2k every month in months`, `time from 20k to 100k at 10% growth per month`.
+fn time_to_reach(rest: &[Token]) -> Option<Result<Expr, Error>> {
+    let (rest, target) = match depth_zero_word(rest, "in") {
+        Some(i) if i + 1 < rest.len() => (
+            &rest[..i],
+            crate::phrase::parse_unit_run(&rest[i + 1..]).ok(),
+        ),
+        _ => (rest, None),
+    };
+    let parts = between(rest, &["to", "at"])?;
+    let (from, to, how) = (parts[0], parts[1], parts[2]);
+    let expr = if let Some(parts) = between(how, &["every"]) {
+        call(&[from, to, parts[0], parts[1]], Func::TimeBySteps)
+    } else {
+        let growth = depth_zero_word(how, "growth")?;
+        let per = growth + 1;
+        let (rate, period) = (&how[..growth], &how[per + 1..]);
+        if growth == 0 || !is_word(how.get(per), "per") || period.is_empty() {
+            return Some(Err(Error::UnexpectedEnd));
+        }
+        call(&[from, to, rate, period], Func::TimeByGrowth)
+    };
+    Some(expr.map(|e| match target {
+        Some(unit) => e.converted_to(unit),
+        None => e,
+    }))
+}
+
+/// `20/5 as multiplier`, `50 as x of 5`, `2 as multiplier on 1`, `1 as x off 2`, `50 to 75 is what x`, `20 to 40 as x`.
+fn multiplier_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    let is_x = |t: Option<&Token>| {
+        is_word(t, "multiplier") || is_word(t, "x") || matches!(t.map(|t| &t.tok), Some(Tok::Star))
+    };
+    // `<A> to <B> is what x` and `<A> to <B> as x`
+    let change = if n >= 6
+        && is_x(toks.get(n - 1))
+        && is_word(toks.get(n - 2), "what")
+        && is_word(toks.get(n - 3), "is")
+    {
+        Some(&toks[..n - 3])
+    } else if n >= 4 && is_x(toks.get(n - 1)) && is_word(toks.get(n - 2), "as") {
+        Some(&toks[..n - 2])
+    } else {
+        None
+    };
+    if let Some(body) = change
+        && let Some(parts) = between(body, &["to"])
+    {
+        return Some(call_with_phrase(&parts, Phrase::MultiplierChange));
+    }
+    for (word, phrase) in [
+        ("of", Phrase::MultiplierOf),
+        ("on", Phrase::MultiplierOn),
+        ("off", Phrase::MultiplierOff),
+    ] {
+        if let Some(at) = depth_zero_word(toks, "as")
+            && is_x(toks.get(at + 1))
+            && is_word(toks.get(at + 2), word)
+            && at > 0
+            && at + 3 < n
+        {
+            return Some(call_with_phrase(&[&toks[..at], &toks[at + 3..]], phrase));
+        }
+    }
+    if n >= 3 && is_x(toks.get(n - 1)) && is_word(toks.get(n - 2), "as") {
+        return Some(call_with_phrase(&[&toks[..n - 2]], Phrase::AsMultiplier));
+    }
+    None
+}
+
+fn call_with_phrase(parts: &[&[Token]], phrase: Phrase) -> Result<Expr, Error> {
+    let mut rpn = rpn_of(parts)?;
+    rpn.push(Node::Phrase(phrase));
+    Ok(Expr::from_nodes(rpn))
+}
+
+/// `30 hours at $30/hour`, `time to upload 3GB at 10 MB/s`, `$24 a day for a year`.
+fn rate_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    // `$24 a day for a year`: a rate, then how long it runs.
+    if let Some(f) = depth_zero_word(toks, "for") {
+        let after_a_rate = f >= 2
+            && matches!(toks[f - 1].tok, Tok::Unit(_))
+            && matches!(toks[f - 2].tok, Tok::Slash)
+            && f + 1 < toks.len();
+        if after_a_rate {
+            return Some(rpn_of(&[&toks[..f], &toks[f + 1..]]).map(|mut rpn| {
+                rpn.push(Node::Bin(crate::parser::BinOp::Mul));
+                Expr::from_nodes(rpn)
+            }));
+        }
+    }
+    let converts = ["in", "to", "as", "into", "cast"];
+    let at = depth_zero_word(toks, "at")?;
+    if converts
+        .iter()
+        .any(|w| depth_zero_word(&toks[..at], w).is_some())
+        && !words_at(toks, 0, &["time", "to"])
+    {
+        return None;
+    }
+    let start = if words_at(toks, 0, &["time", "to"]) {
+        // Skip the words that say what is being timed, up to the first number.
+        toks[2..at]
+            .iter()
+            .position(|t| matches!(t.tok, Tok::Num(_) | Tok::Unit(_) | Tok::Value(_)))?
+            + 2
+    } else {
+        0
+    };
+    if start >= at || at + 1 >= toks.len() {
+        return None;
+    }
+    Some(call(&[&toks[start..at], &toks[at + 1..]], Func::AtRate))
 }

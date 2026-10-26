@@ -73,9 +73,10 @@ fn conversion_words_need_a_value_before_and_a_unit_after() {
     }
     assert_eq!(shown("km to m"), "1,000 m");
     assert_eq!(shown("5 of km"), "5 km");
+    assert_eq!(shown("5 a km"), "5 km⁻¹");
     assert_eq!(shown("5 on km"), "6 km");
     assert_eq!(shown("5 off km"), "-4 km");
-    for word in ["is", "what", "a", "percent"] {
+    for word in ["is", "what", "percent"] {
         assert!(evaluate(&format!("5 {word} km")).is_err(), "5 {word} km");
     }
 }

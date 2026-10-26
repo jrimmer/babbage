@@ -42,7 +42,7 @@ const VOCABULARY: &[&str] = &[
 /// Words that turn `<value> <word> <unit>` into a conversion.
 const CONVERSION_WORDS: &[&str] = &["to", "in", "as", "into"];
 
-fn parse_unit_run(run: &[Token]) -> Result<UnitExpr, Error> {
+pub(crate) fn parse_unit_run(run: &[Token]) -> Result<UnitExpr, Error> {
     if run.is_empty() {
         return Err(Error::UnexpectedEnd);
     }
@@ -100,7 +100,7 @@ pub fn keywords_form_a_phrase(keywords: &[(usize, &str)]) -> bool {
 
 /// Words the arithmetic parser reads as operators when they stand alone.
 pub fn is_infix_word(word: &str) -> bool {
-    ["of", "on", "off", "and", "or", "xor"]
+    ["of", "on", "off", "and", "or", "xor", "per", "over", "from"]
         .iter()
         .any(|k| word.eq_ignore_ascii_case(k))
 }
