@@ -6,7 +6,7 @@
 use std::sync::OnceLock;
 
 use babbage_core::NumberFormat;
-use babbage_core::settings::Settings;
+use babbage_core::settings::{Settings, VolumeSystem};
 use babbage_core::zones::Zone;
 
 /// The settings for this run, read once.
@@ -67,6 +67,19 @@ pub fn from_parts(
                 }
             }
             "timezone" if value != "system" => zone_from_file = Zone::named(value),
+            "dollar" => {
+                settings.dollar = babbage_core::settings::REGION_DOLLARS
+                    .iter()
+                    .find(|c| c.eq_ignore_ascii_case(value))
+                    .copied();
+            }
+            "volume_system" => {
+                settings.volume_system = match value {
+                    "imperial" => VolumeSystem::Imperial,
+                    "us-customary" => VolumeSystem::UsCustomary,
+                    _ => settings.volume_system,
+                }
+            }
             _ => {}
         }
     }
@@ -143,6 +156,16 @@ mod tests {
         assert_eq!(s.number_format, NumberFormat::WesternEurope);
         assert_eq!(s.work_hours_per_day, Some(7));
         assert_eq!(s.local_zone, Zone::named("Pacific/Auckland"));
+    }
+
+    #[test]
+    fn the_file_sets_the_dollar_and_the_volume_system() {
+        let s = from_parts("dollar = aud\nvolume_system = imperial\n", None, None, None);
+        assert_eq!(s.dollar, Some("AUD"));
+        assert_eq!(s.volume_system, VolumeSystem::Imperial);
+        let s = from_parts("dollar = EUR\nvolume_system = metric\n", None, None, None);
+        assert_eq!(s.dollar, None);
+        assert_eq!(s.volume_system, VolumeSystem::UsCustomary);
     }
 
     #[test]

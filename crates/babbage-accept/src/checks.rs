@@ -195,7 +195,10 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
 
 fn number_format(h: &mut Harness) -> anyhow::Result<()> {
     let config = h.logs.join("western-europe.settings");
-    std::fs::write(&config, "number_format = western-europe\nwork_hours = 7\n")?;
+    std::fs::write(
+        &config,
+        "number_format = western-europe\nwork_hours = 7\ndollar = AUD\nvolume_system = imperial\n",
+    )?;
     let config = config.to_string_lossy().into_owned();
     let mut app = h.launch(
         "region",
@@ -210,6 +213,9 @@ fn number_format(h: &mut Harness) -> anyhow::Result<()> {
             ("$1.234,5 + $1", "$1.235,50"),
             ("21 h in workdays", "3 workday"),
             ("1_000 + 1", "1.001"),
+            ("$5 + A$5", "$10,00"),
+            ("US$5", "US$5,00"),
+            ("1 pint in fl oz", "20 floz"),
         ],
     )?;
     ensure!(

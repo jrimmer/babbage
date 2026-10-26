@@ -675,7 +675,14 @@ pub fn currency_prefix(text: &str) -> Option<(usize, UnitExpr)> {
     SYMBOL_INPUTS
         .iter()
         .find(|(symbol, _)| text.starts_with(symbol))
-        .and_then(|(symbol, code)| lookup(code).map(|u| (symbol.len(), u)))
+        .and_then(|(symbol, code)| {
+            let code = if *symbol == "$" {
+                crate::settings::dollar_code()
+            } else {
+                code
+            };
+            lookup(code).map(|u| (symbol.len(), u))
+        })
 }
 
 /// Finds a unit by its spelling. Case matters for symbols (`Mb` is not `MB`); long names also match any case.
@@ -688,6 +695,29 @@ pub fn lookup(name: &str) -> Option<UnitExpr> {
         return reg.by_name.get(&name.to_lowercase()).cloned();
     }
     None
+}
+
+/// A unit's factor to SI under the current settings: a workday is the work-hours setting, and the larger
+/// US volume units become the imperial ones when the volume system says so.
+fn factor_now(def: &UnitDef) -> Number {
+    use crate::settings::VolumeSystem;
+    match def.symbol {
+        "workday" => Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600),
+        "gal" | "qt" | "pint" | "floz"
+            if crate::settings::volume_system() == VolumeSystem::Imperial =>
+        {
+            let divisor = match def.symbol {
+                "gal" => 1,
+                "qt" => 4,
+                "pint" => 8,
+                _ => 160,
+            };
+            Number::from_decimal_str("0.00454609")
+                .and_then(|gallon| gallon.div(&Number::from_i64(divisor)))
+                .expect("the imperial gallon is a plain decimal")
+        }
+        _ => def.factor.clone(),
+    }
 }
 
 impl UnitExpr {
@@ -747,7 +777,16 @@ impl UnitExpr {
     pub fn currency_symbol(&self) -> Option<&'static str> {
         self.0.iter().find_map(|(u, _)| {
             let d = &registry().defs[*u as usize];
-            d.currency.filter(|c| c.prefix_symbol).map(|_| d.symbol)
+            d.currency.filter(|c| c.prefix_symbol).map(|c| {
+                let region_dollar = crate::settings::dollar_code();
+                if c.code == region_dollar && crate::settings::REGION_DOLLARS.contains(&c.code) {
+                    "$"
+                } else if c.code == "USD" {
+                    "US$"
+                } else {
+                    d.symbol
+                }
+            })
         })
     }
 
@@ -857,11 +896,7 @@ impl UnitExpr {
         let mut f = Number::from_i64(1);
         for (u, e) in &self.0 {
             let def = &registry().defs[*u as usize];
-            let base = if def.symbol == "workday" {
-                Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600)
-            } else {
-                def.factor.clone()
-            };
+            let base = factor_now(def);
             let powered = base.pow(&Number::from_i64(i64::from(*e)))?;
             f = f.mul(&powered)?;
         }

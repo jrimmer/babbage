@@ -15,6 +15,17 @@ pub struct Tax {
     pub rate: Number,
 }
 
+/// Which gallons, quarts, pints and fluid ounces are meant. The cup, tablespoon and teaspoon stay US customary.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum VolumeSystem {
+    #[default]
+    UsCustomary,
+    Imperial,
+}
+
+/// Dollar currencies a region can make `$` mean.
+pub const REGION_DOLLARS: &[&str] = &["USD", "AUD", "CAD", "NZD", "SGD", "HKD"];
+
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Settings {
     pub tax: Option<Tax>,
@@ -26,6 +37,9 @@ pub struct Settings {
     pub local_zone: Option<crate::zones::Zone>,
     /// Hours in a working day, for `work hours`.
     pub work_hours_per_day: Option<u32>,
+    /// The currency a bare `$` means: `AUD` in Australia. None is US dollars.
+    pub dollar: Option<&'static str>,
+    pub volume_system: VolumeSystem,
     /// How numbers are typed and shown: `1,234.56`, `1.234,56` or `1 234,56`.
     pub number_format: crate::format::NumberFormat,
 }
@@ -45,6 +59,19 @@ impl Settings {
     pub fn format_options(&self) -> crate::format::FormatOptions {
         crate::format::FormatOptions::default().in_format(self.number_format)
     }
+}
+
+/// The currency code a bare `$` means right now.
+pub fn dollar_code() -> &'static str {
+    current(|s| {
+        s.dollar
+            .filter(|c| REGION_DOLLARS.contains(c))
+            .unwrap_or("USD")
+    })
+}
+
+pub fn volume_system() -> VolumeSystem {
+    current(|s| s.volume_system)
 }
 
 /// How numbers are typed and shown right now.
