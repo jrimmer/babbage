@@ -4,6 +4,7 @@ use num_rational::BigRational;
 use crate::error::Error;
 use crate::number::Number;
 use crate::units::{UnitExpr, currency_prefix, lookup, superscript_digit};
+use crate::value::Value;
 
 pub const MAX_INPUT_BYTES: usize = 65_536;
 pub const MAX_EXPONENT: i64 = 100_000;
@@ -20,6 +21,8 @@ pub enum Tok {
     RParen,
     Word(String),
     Unit(UnitExpr),
+    /// A value already worked out elsewhere: a variable or a reference to another line.
+    Value(Value),
     /// `attached` is true when `%` directly follows a number or `)`, as in `10%`.
     Percent {
         attached: bool,
@@ -39,6 +42,7 @@ impl Tok {
             Tok::RParen => "')'".into(),
             Tok::Word(w) => format!("word {w:?}"),
             Tok::Unit(u) => format!("unit {:?}", u.symbol()),
+            Tok::Value(_) => "value".into(),
             Tok::Percent { .. } => "'%'".into(),
         }
     }
@@ -48,6 +52,26 @@ impl Tok {
 pub struct Token {
     pub tok: Tok,
     pub at: usize,
+}
+
+/// Tokens plus, for each, the byte offset where its text ends (trailing spaces excluded).
+pub fn lex_with_ends(src: &str) -> Result<(Vec<Token>, Vec<usize>), Error> {
+    let toks = lex(src)?;
+    let mut ends = vec![0; toks.len()];
+    let mut i = 0;
+    while i < toks.len() {
+        let mut j = i;
+        while j + 1 < toks.len() && toks[j + 1].at == toks[i].at {
+            j += 1;
+        }
+        let next = toks.get(j + 1).map_or(src.len(), |t| t.at);
+        let end = toks[i].at + src[toks[i].at..next].trim_end().len();
+        for e in &mut ends[i..=j] {
+            *e = end;
+        }
+        i = j + 1;
+    }
+    Ok((toks, ends))
 }
 
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {

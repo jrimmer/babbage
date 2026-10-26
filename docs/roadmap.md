@@ -7,13 +7,13 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 1 | Arithmetic core: + - × ÷ ^, parentheses, literals, aliases | done |
 | 2 | Display: rounding modes, grouping, exact/rounded flag | done |
 | 3 | Percentages: of, +/-, on/off, reverse forms, ratios, as % | done (sub-forms below are todo) |
-| 4 | Units and exact conversion factors (200+) | todo |
-| 5 | Currency symbols and money display (no rates) | todo |
-| 6 | Variables | todo |
-| 7 | Line references | todo |
-| 8 | Totals, subtotals, tags | todo |
-| 9 | Comments, labels, headings | todo |
-| 10 | Large number symbols (k, M, B) and SI display | todo |
+| 4 | Units and exact conversion factors (200+) | done (temperatures convert only; radians wait for row 12) |
+| 5 | Currency symbols and money display (no rates) | done (live rates are post-v1; custom rates work) |
+| 6 | Variables | done (global definition sheet is ticket 0022) |
+| 7 | Line references | done (`line3`, `line 3`) |
+| 8 | Totals, subtotals, tags | done (typed `subtotal`, `total of #tag`; ticket 0023) |
+| 9 | Comments, labels, headings | done |
+| 10 | Large number symbols (k, M, B) and SI display | done (display threshold unverified, ticket 0028) |
 | 11 | Rounding functions, averages, median | todo |
 | 12 | Roots, logs, trig, constants (50-digit, flagged ≈) | todo |
 | 13 | Conditionals and comparisons | todo |
@@ -29,7 +29,7 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 23 | Sheets, sheetbooks, reference-format-like file format | todo |
 | 24 | gpui front end | todo |
 
-3 of 24 done. The hardest remaining precision areas are 4, 16 and 21.
+10 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
 
 Row 3 leftovers, each filed as a ticket: fraction display (`as fraction`), multipliers (`4x`), proportion forms (`20% is 500, what is 750`), and phrase forms inside parentheses.
 

@@ -5,12 +5,14 @@ pub mod lexer;
 pub mod number;
 pub mod parser;
 pub mod phrase;
+pub mod sheet;
 pub mod units;
 pub mod value;
 
 pub use error::Error;
 pub use format::{FormatOptions, Formatted, RoundingMode, format_decimal};
 pub use number::Number;
+pub use sheet::{LineKind, LineResult, SheetOptions, evaluate_sheet};
 pub use value::{Kind, Value, format_value};
 
 pub fn parse_expression(line: &str) -> Result<parser::Expr, Error> {

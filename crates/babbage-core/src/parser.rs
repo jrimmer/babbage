@@ -4,6 +4,7 @@ use crate::error::Error;
 use crate::lexer::{Tok, Token};
 use crate::number::Number;
 use crate::units::UnitExpr;
+use crate::value::Value;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinOp {
@@ -71,6 +72,8 @@ impl Phrase {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
     Num(Number),
+    /// A value computed before parsing: a variable or a line reference.
+    Value(Value),
     Neg,
     Bin(BinOp),
     /// Postfix `%`: the top value becomes a percentage of itself divided by 100.
@@ -144,7 +147,7 @@ fn is_balanced(rpn: &[Node]) -> bool {
     let mut depth: usize = 0;
     for node in rpn {
         let (needs, leaves) = match node {
-            Node::Num(_) => (0, 1),
+            Node::Num(_) | Node::Value(_) => (0, 1),
             Node::Neg | Node::Percent | Node::Unit(_) | Node::Convert(_) | Node::Cast(_) => (1, 1),
             Node::Bin(_) | Node::ConvertAt(_) => (2, 1),
             Node::Phrase(p) => (p.arity(), 1),
@@ -213,6 +216,10 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
             (Tok::Minus, true) => ops.push(Pending::Neg),
             (Tok::Plus, true) => {}
             (Tok::Percent { attached: true }, false) => out.push(Node::Percent),
+            (Tok::Value(v), true) => {
+                out.push(Node::Value(v.clone()));
+                want_operand = false;
+            }
             (Tok::Unit(u), false) => out.push(Node::Unit(u.clone())),
             (Tok::Unit(u), true) => {
                 out.push(Node::Num(Number::from_i64(1)));
@@ -300,6 +307,12 @@ impl fmt::Display for Expr {
         let mut stack: Vec<String> = Vec::new();
         for node in &self.rpn {
             match node {
+                Node::Value(v) => stack.push(format!(
+                    "<{}/{} {}>",
+                    v.number().numer(),
+                    v.number().denom(),
+                    v.unit().symbol()
+                )),
                 Node::Num(n) => stack.push(match n.to_exact_decimal() {
                     Some(s) => s,
                     None => format!("({}/{})", n.numer(), n.denom()),

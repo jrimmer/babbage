@@ -7,6 +7,7 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
     for node in expr.nodes() {
         match node {
             Node::Num(n) => stack.push(Value::plain(n.clone())),
+            Node::Value(v) => stack.push(v.clone()),
             Node::Neg => {
                 let x = stack.pop().expect("well-formed expression");
                 stack.push(x.neg());

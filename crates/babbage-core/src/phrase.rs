@@ -64,6 +64,51 @@ fn parse_unit_run(run: &[Token]) -> Result<UnitExpr, Error> {
     Ok(unit)
 }
 
+/// The phrase keywords at the top level of a line, as (token index, keyword), with `percent` and a loose `%` as "%".
+pub fn keyword_signature(toks: &[Token]) -> Vec<(usize, &'static str)> {
+    let mut keywords = Vec::new();
+    let mut depth: i64 = 0;
+    for (i, t) in toks.iter().enumerate() {
+        match &t.tok {
+            Tok::LParen => depth += 1,
+            Tok::RParen => depth -= 1,
+            Tok::Word(w) if depth == 0 => {
+                if let Some(k) = VOCABULARY
+                    .iter()
+                    .copied()
+                    .find(|k| w.eq_ignore_ascii_case(k))
+                {
+                    keywords.push((i, if k == "percent" { "%" } else { k }));
+                }
+            }
+            Tok::Percent { attached: false } if depth == 0 => keywords.push((i, "%")),
+            _ => {}
+        }
+    }
+    keywords
+}
+
+/// True when the keywords of a line spell a phrase form, a conversion, or a conversion at a rate.
+pub fn keywords_form_a_phrase(keywords: &[(usize, &str)]) -> bool {
+    let names: Vec<&str> = keywords.iter().map(|(_, k)| *k).collect();
+    match names.as_slice() {
+        [one] if CONVERSION_WORDS.contains(one) || *one == "cast" => true,
+        [conv, "at"] if CONVERSION_WORDS.contains(conv) => true,
+        _ => FORMS.iter().any(|f| f.keywords == names.as_slice()),
+    }
+}
+
+/// Words the arithmetic parser reads as operators when they stand alone.
+pub fn is_infix_word(word: &str) -> bool {
+    ["of", "on", "off"]
+        .iter()
+        .any(|k| word.eq_ignore_ascii_case(k))
+}
+
+pub fn is_vocabulary_word(word: &str) -> bool {
+    VOCABULARY.iter().any(|k| word.eq_ignore_ascii_case(k))
+}
+
 /// Parses one line, recognising the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
     let mut keywords: Vec<(usize, &str)> = Vec::new();

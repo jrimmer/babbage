@@ -13,6 +13,7 @@ pub enum Error {
     NotAPlainNumber,
     IncompatibleUnits,
     CurrencyRateNeeded,
+    BadReference { line: usize },
     DivisionByZero,
     ZeroToTheZero,
     NonIntegerExponent,
@@ -38,6 +39,9 @@ impl fmt::Display for Error {
             Error::NotAPlainNumber => write!(f, "result is not a plain number"),
             Error::IncompatibleUnits => write!(f, "these units measure different things"),
             Error::CurrencyRateNeeded => write!(f, "different currencies need an exchange rate"),
+            Error::BadReference { line } => {
+                write!(f, "line {line} has no result above this line to use")
+            }
             Error::DivisionByZero => write!(f, "division by zero"),
             Error::ZeroToTheZero => write!(f, "0 to the power 0 is undefined"),
             Error::NonIntegerExponent => write!(f, "exponent must be a whole number"),
