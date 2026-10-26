@@ -722,3 +722,35 @@ fn in_western_europe_a_point_is_a_grouping_mark_and_a_misplaced_one_is_named_exa
         );
     });
 }
+
+#[test]
+fn a_stray_number_after_a_time_and_stray_characters_after_a_timecode_are_named_exactly() {
+    for (line, want) in [
+        ("5:30 45pm", "ERROR unexpected number at byte 5"),
+        ("5:30 45", "ERROR unexpected number at byte 5"),
+        ("12:30 45 pm", "ERROR unexpected number at byte 6"),
+        ("5:30:15 45pm", "ERROR unexpected number at byte 8"),
+        ("01:00:00:00:00", "ERROR unexpected character ':' at byte 8"),
+        ("01:00:00:00.5", "ERROR unexpected character ':' at byte 8"),
+        ("01:00:00:00x", "ERROR unexpected character ':' at byte 8"),
+        ("01:00:00:00:", "ERROR unexpected character ':' at byte 8"),
+        (
+            "20% is 500 what x 750",
+            "ERROR unexpected word \"is\" at byte 4",
+        ),
+        (
+            "20% is 500 what 750",
+            "ERROR unexpected word \"is\" at byte 4",
+        ),
+        (
+            "in px * m at 326 ppi",
+            "ERROR unexpected word \"in\" at byte 0",
+        ),
+        (
+            "20% is what is 750",
+            "ERROR unexpected word \"is\" at byte 4",
+        ),
+    ] {
+        assert_eq!(answer(line), want, "{line}");
+    }
+}

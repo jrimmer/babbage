@@ -264,7 +264,8 @@ fn proportion(toks: &[Token]) -> Option<Result<Expr, Error>> {
         (true, false) => (a, d_or_what, b),
         _ => return None,
     };
-    if a.is_empty() || b.is_empty() || num1.is_empty() || num2.is_empty() || den.is_empty() {
+    // `num1`, `num2` and `den` are drawn from every part of the line that matters, so these three cover it.
+    if num1.is_empty() || num2.is_empty() || den.is_empty() {
         return Some(Err(Error::UnexpectedEnd));
     }
     Some(rpn_of(&[num1, num2, den]).map(|mut rpn| {
