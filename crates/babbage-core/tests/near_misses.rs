@@ -664,3 +664,65 @@ fn an_approximate_comparison_allows_a_gap_in_proportion_to_the_size_of_the_numbe
         "ERROR unsupported: these approximate values are too close to tell apart"
     );
 }
+
+#[test]
+fn currency_suffixes_have_a_long_spelling_that_plain_numbers_lack() {
+    for (line, want) in [
+        ("$5Tn", "$5T"),
+        ("$5tn", "$5T"),
+        ("$5t", "$5T"),
+        ("$5T", "$5T"),
+        ("$5bn", "$5G"),
+        ("$5Bn", "$5G"),
+        ("5T", "5T"),
+    ] {
+        assert_eq!(answer(line), want, "{line}");
+    }
+    assert!(answer("5Tn").starts_with("ERROR"));
+    assert!(answer("5tn").starts_with("ERROR"));
+}
+
+#[test]
+fn a_lap_time_point_needs_digits_after_it() {
+    assert_eq!(
+        answer("00:00:01."),
+        "ERROR unexpected character '.' at byte 8"
+    );
+    assert_eq!(
+        answer("00:00:01.x"),
+        "ERROR unexpected character '.' at byte 8"
+    );
+    assert_eq!(answer("00:00:01.5"), "00:00:01.5");
+}
+
+#[test]
+fn in_western_europe_a_point_is_a_grouping_mark_and_a_misplaced_one_is_named_exactly() {
+    use babbage_core::settings::Settings;
+    use babbage_core::{Error, NumberFormat};
+    let s = Settings {
+        number_format: NumberFormat::WesternEurope,
+        ..Settings::default()
+    };
+    let bad = |text: &str, at: usize| {
+        Err(Error::InvalidNumber {
+            text: text.into(),
+            at,
+        })
+    };
+    scoped(&s, || {
+        assert_eq!(evaluate_with("3.14", &s), bad("3.14", 0));
+        assert_eq!(evaluate_with("1.23", &s), bad("1.23", 0));
+        assert_eq!(evaluate_with("1.2345", &s), bad("1.2345", 0));
+        assert_eq!(evaluate_with("12.5 + 1", &s), bad("12.5", 0));
+        assert_eq!(evaluate_with("1 + 3.14", &s), bad("3.14", 4));
+        assert_eq!(evaluate_with("1.2.3", &s), bad("1.2", 0));
+        assert_eq!(
+            format_value(
+                &evaluate_with("1.234", &s).unwrap(),
+                &FormatOptions::default()
+            )
+            .text,
+            "1234"
+        );
+    });
+}
