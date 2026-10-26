@@ -250,3 +250,21 @@ fn zones_loaded_from_files_compare_by_identity() {
         assert_ne!(Zone::named("Europe/Berlin"), Zone::named("Asia/Kolkata"));
     });
 }
+
+#[test]
+fn an_offset_has_bounds_on_hours_and_minutes() {
+    use babbage_core::zones::{Zone, offset_zone};
+    assert_eq!(offset_zone(false, 18, 0), Some(Zone::Fixed(18 * 3600)));
+    assert_eq!(offset_zone(false, 19, 0), None);
+    assert_eq!(
+        offset_zone(false, 5, 59),
+        Some(Zone::Fixed(5 * 3600 + 59 * 60))
+    );
+    assert_eq!(offset_zone(false, 5, 60), None);
+    assert_eq!(
+        offset_zone(true, 5, 30),
+        Some(Zone::Fixed(-(5 * 3600 + 30 * 60)))
+    );
+    assert_eq!(offset_zone(true, 0, 0), Some(Zone::Fixed(0)));
+    assert_eq!(babbage_core::zones::place(&[]), None);
+}

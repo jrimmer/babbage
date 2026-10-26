@@ -424,7 +424,7 @@ fn city_table() -> &'static HashMap<String, &'static str> {
 
 /// The zone a name stands for: a city, a country, a region, or an abbreviation. Case does not matter.
 pub fn place(words: &[&str]) -> Option<Zone> {
-    if words.is_empty() || words.len() > 4 {
+    if words.len() > 4 {
         return None;
     }
     let name = words.join(" ").to_lowercase();
