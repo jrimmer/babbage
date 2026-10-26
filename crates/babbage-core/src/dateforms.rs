@@ -176,6 +176,31 @@ fn spans(toks: &[Token]) -> Option<Result<Expr, Error>> {
     if let Some(n) = lead_len(&["work", "hours", "between"]) {
         return between(n, DateFn::WorkHoursBetween);
     }
+    for lead in [&["workdays", "from"][..], &["work", "days", "from"]] {
+        if let Some(n) = lead_len(lead) {
+            let rest = &toks[n..];
+            let to = rest.iter().position(|t| is_word(Some(t), "to"))?;
+            let (a, b) = (&rest[..to], &rest[to + 1..]);
+            if a.is_empty() || b.is_empty() {
+                return None;
+            }
+            return Some(rpn_of(a).and_then(|mut x| {
+                x.extend(rpn_of(b)?);
+                finish(x, DateFn::WorkdaysBetween)
+            }));
+        }
+    }
+    for (lead, f) in [
+        (&["workdays", "in"][..], DateFn::WorkdaysBetween),
+        (&["work", "days", "in"], DateFn::WorkdaysBetween),
+        (&["work", "hours", "in"], DateFn::WorkHoursBetween),
+    ] {
+        if let Some(n) = lead_len(lead)
+            && let Some(span) = month_span(&toks[n..])
+        {
+            return Some(finish(span, f));
+        }
+    }
     if let Some(n) = lead_len(&["days", "until"]).or_else(|| lead_len(&["days", "till"])) {
         return single(n, DateFn::Until);
     }
@@ -486,4 +511,30 @@ fn zone_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         ],
         DateFn::ZoneConvert,
     ))
+}
+
+/// `June` or `June 2024`: the first day of that month and the first day of the next, as dates.
+fn month_span(run: &[Token]) -> Option<Vec<Node>> {
+    let (today, _) = settings::local_now();
+    let this_year = calendar::civil_from_days(today).year;
+    let year_of = |t: &Token| match &t.tok {
+        Tok::Num(n) if n.is_integer() => i64::try_from(n.numer())
+            .ok()
+            .filter(|y| (1000..=9999).contains(y)),
+        _ => None,
+    };
+    let (month, year) = match run {
+        [m] => (crate::dates::month_number(&word_of(m)?)?, this_year),
+        [m, y] => (crate::dates::month_number(&word_of(m)?)?, year_of(y)?),
+        _ => return None,
+    };
+    let (next_year, next_month) = if month == 12 {
+        (year + 1, 1)
+    } else {
+        (year, month + 1)
+    };
+    Some(vec![
+        Node::Value(datefns::first_of(year, month)?),
+        Node::Value(datefns::first_of(next_year, next_month)?),
+    ])
 }

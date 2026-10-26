@@ -119,7 +119,7 @@ min | min,mins,minute,minutes | T | 60
 h | h,hr,hrs,hour,hours | T | 3600
 day | day,days | T | 86400
 wk | wk,wks,week,weeks | T | 604800
-workday | workday,workdays,work day,work days | T | 86400
+workday | workday,workdays,work day,work days | T | 8*3600
 mo | mo,month,months | T | 30.436875*86400
 yr | yr,yrs,year,years | T | 365.2425*86400
 # video
@@ -856,7 +856,12 @@ impl UnitExpr {
     pub fn factor(&self) -> Result<Number, Error> {
         let mut f = Number::from_i64(1);
         for (u, e) in &self.0 {
-            let base = &registry().defs[*u as usize].factor;
+            let def = &registry().defs[*u as usize];
+            let base = if def.symbol == "workday" {
+                Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600)
+            } else {
+                def.factor.clone()
+            };
             let powered = base.pow(&Number::from_i64(i64::from(*e)))?;
             f = f.mul(&powered)?;
         }

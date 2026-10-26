@@ -150,6 +150,15 @@ for _ in range(800):
     lo, hi = sorted((a, b))
     add(f"{literal(lo)} through {literal(hi)}", "days", (hi - lo).days + 1)
 
+for _ in range(400):
+    y, m = rng.randint(1500, 2500), rng.randint(1, 12)
+    first = date(y, m, 1)
+    nxt = date(y + (m == 12), m % 12 + 1, 1)
+    add(f"workdays in {MONTHS[m - 1]} {y}", "workdays", workdays(first, nxt))
+    add(f"work hours in {MONTHS[m - 1]} {y}", "hours", workdays(first, nxt) * 8)
+    a, b = rand_date(1500, 2500), rand_date(1500, 2500)
+    add(f"workdays from {literal(a)} to {literal(b)}", "workdays", workdays(a, b))
+
 for _ in range(500):
     d = rand_date(1500, 2500)
     add(f"days until {literal(d)}", "days", (d - TODAY).days)
