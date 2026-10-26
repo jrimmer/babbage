@@ -747,15 +747,6 @@ impl UnitExpr {
         })
     }
 
-    /// True when every unit in this expression is a currency.
-    pub fn is_only_money(&self) -> bool {
-        !self.0.is_empty()
-            && self
-                .0
-                .iter()
-                .all(|(u, _)| registry().defs[*u as usize].currency.is_some())
-    }
-
     /// Cancels pairs such as `week/day` or `km/m` by converting the number. Returns the scale to apply to
     /// the number and the smaller expression.
     pub fn reduce(&self) -> Result<(Number, UnitExpr), Error> {
@@ -859,13 +850,13 @@ impl UnitExpr {
         let up: Vec<String> = self
             .0
             .iter()
-            .filter(|(_, e)| *e > 0)
+            .filter(|(_, e)| e.is_positive())
             .map(|(u, e)| part(*u, *e))
             .collect();
         let down: Vec<String> = self
             .0
             .iter()
-            .filter(|(_, e)| *e < 0)
+            .filter(|(_, e)| e.is_negative())
             .map(|(u, e)| part(*u, -*e))
             .collect();
         match (up.is_empty(), down.len()) {
@@ -889,7 +880,7 @@ fn part_signed(symbol: &str, e: i8) -> String {
 fn superscript(e: i8) -> String {
     const DIGITS: [char; 10] = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
     let mut out = String::new();
-    if e < 0 {
+    if e.is_negative() {
         out.push('⁻');
     }
     for c in e.unsigned_abs().to_string().chars() {

@@ -431,8 +431,7 @@ fn product(l: &Value, r: &Value) -> Result<Value, Error> {
             return Value::quantity(l.number.mul(&r.number)?, price.unit.clone());
         }
     }
-    let same_kind_different_unit =
-        !l.unit.is_empty() && l.unit != r.unit && l.unit.dim() == r.unit.dim();
+    let same_kind_different_unit = l.unit != r.unit && l.unit.dim() == r.unit.dim();
     let right = if same_kind_different_unit {
         r.number.mul(&r.unit.factor()?)?.div(&l.unit.factor()?)?
     } else {
@@ -458,12 +457,8 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
-    let number = l.number.div(&r.number)?;
-    if !l.unit.is_empty() && l.unit != r.unit && l.unit.dim() == r.unit.dim() {
-        let ratio = l.unit.factor()?.div(&r.unit.factor()?)?;
-        return Ok(Value::plain(number.mul(&ratio)?));
-    }
-    Value::quantity(number, l.unit.times(&r.unit.recip()))
+    // Pairs such as km over m cancel inside `quantity`, which scales the number.
+    Value::quantity(l.number.div(&r.number)?, l.unit.times(&r.unit.recip()))
 }
 
 fn power(l: &Value, r: &Value) -> Result<Value, Error> {

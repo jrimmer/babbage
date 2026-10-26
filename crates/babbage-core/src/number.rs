@@ -206,6 +206,24 @@ mod tests {
     use super::*;
 
     #[test]
+    fn decimal_text_parses_exactly() {
+        let n = |t: &str| Number::from_decimal_str(t).unwrap();
+        let r = |a: i64, b: i64| Number::from_ratio(BigInt::from(a), BigInt::from(b)).unwrap();
+        assert_eq!(n("-12.5"), r(-25, 2));
+        assert_eq!(n(".25"), r(1, 4));
+        assert_eq!(n("5."), r(5, 1));
+        assert_eq!(n("1.5e3"), r(1500, 1));
+        assert_eq!(n("2e-3"), r(1, 500));
+        assert_eq!(n("-0.001"), r(-1, 1000));
+        assert_eq!(n("12.5e-1"), r(25, 20));
+        assert_eq!(n("-1.5E+2"), r(-150, 1));
+        assert_eq!(n("0"), r(0, 1));
+        for bad in ["", "-", ".", "e5", "1e", "1.2.3", "abc", "1e+x"] {
+            assert!(Number::from_decimal_str(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
     fn pow_cap_boundary_is_exact() {
         let cap = MAX_BITS as u32;
         assert!(!pow_exceeds_cap(2, cap));
