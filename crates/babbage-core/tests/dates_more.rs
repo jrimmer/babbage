@@ -429,7 +429,7 @@ fn date_functions_refuse_what_they_cannot_use() {
         bad(DateFn::AsTimecode, &[plain(10)]);
         bad(DateFn::AsTimecode, &[qty(10, "m")]);
         bad(DateFn::AsTimecode, &[date(10)]);
-        bad(DateFn::AsFrames, &[ok_length.clone()]);
+        bad(DateFn::AsFrames, std::slice::from_ref(&ok_length));
         bad(DateFn::AsFramesAt, &[plain(10), plain(24)]);
         bad(DateFn::AsFramesAt, &[qty(10, "m"), plain(24)]);
         // playback
