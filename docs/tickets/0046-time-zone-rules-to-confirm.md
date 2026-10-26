@@ -12,3 +12,5 @@ Choices made without a real install to check:
 - A country means its capital's zone, for about 110 common countries; the rest are refused.
 
 Data to extend after v1: the full country list, the large city dataset and airport codes (ticket 0010). The IANA database is bundled with the `chrono-tz` crate (2025b at the time of writing), so rule changes after that release need a dependency update.
+
+The bundled database is out of date for two places; see ticket 0053.
