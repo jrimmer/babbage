@@ -66,6 +66,8 @@ fn a_week_is_five_workdays_as_in_the_reference() {
         ("1 day in workdays", "0.7142857143 workday"),
         ("1 month in workdays", "21.740625 workday"),
         ("1 year in workdays", "260.8875 workday"),
+        ("$500/workday * 10 days", "$3,571.43"),
+        ("$500/workday * 10 workdays", "$5,000.00"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }
