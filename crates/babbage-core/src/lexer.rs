@@ -141,9 +141,10 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
 }
 
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
+    // `m` is settled first, so that `2m 25s 10 frames at 24 fps` reads its minutes before the frames are gathered.
     lex_raw(src)
-        .and_then(resolve_timecodes)
         .map(minutes_beside_time)
+        .and_then(resolve_timecodes)
         .map(operator_words)
         .map(crate::dates::rewrite)
 }
@@ -375,13 +376,19 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 // A function name, with any digits it ends in (`log10`), wins over a unit of the same spelling (`min`).
                 let letters_end = word_end(&chars, i);
                 // `Valentine's` and `year's` are words with an apostrophe inside, not a unit and a stray mark.
-                if chars.get(letters_end).is_some_and(|(_, ch)| *ch == '\'')
+                // A curly apostrophe (`New Year’s`, as the macOS keyboard types it) is the same mark.
+                if chars
+                    .get(letters_end)
+                    .is_some_and(|(_, ch)| matches!(*ch, '\'' | '\u{2019}'))
                     && chars
                         .get(letters_end + 1)
                         .is_some_and(|(_, ch)| ch.is_alphabetic())
                 {
                     let end = word_end(&chars, letters_end + 1);
-                    let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
+                    let word: String = chars[i..end]
+                        .iter()
+                        .map(|(_, ch)| if *ch == '\u{2019}' { '\'' } else { *ch })
+                        .collect();
                     out.push(Token {
                         tok: Tok::Word(word),
                         at,
@@ -403,6 +410,50 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     .is_some_and(|(_, ch)| *ch == '(');
                 let is_call = crate::functions::lookup(&name).is_some()
                     && (next_open || name_end > letters_end);
+                // `in²`, `in^2`, `in2`, `in³`: square and cubic inches, though a bare `in` is the word.
+                if letters_end - i == 2
+                    && chars[i].1.eq_ignore_ascii_case(&'i')
+                    && chars[i + 1].1.eq_ignore_ascii_case(&'n')
+                    && let Some((exp, end)) = inch_power(&chars, letters_end)
+                    && let Some(inch) = crate::units::lookup("inch")
+                {
+                    out.push(Token {
+                        tok: Tok::Unit(inch.with_exponent(exp)),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
+                // `6 in` at the end of a line or before an operator is six inches; `6 in cm` is a conversion.
+                if letters_end - i == 2
+                    && name_end == letters_end
+                    && chars[i].1.eq_ignore_ascii_case(&'i')
+                    && chars[i + 1].1.eq_ignore_ascii_case(&'n')
+                    && matches!(out.last().map(|t| &t.tok), Some(Tok::Num(_)))
+                    && {
+                        let rest: Vec<char> = chars[letters_end..]
+                            .iter()
+                            .map(|(_, ch)| *ch)
+                            .skip_while(|ch| *ch == ' ')
+                            .collect();
+                        let next_word: String =
+                            rest.iter().take_while(|ch| ch.is_alphabetic()).collect();
+                        // Nothing after it, an operator, `x`, or another conversion word (`6 in in cm`).
+                        rest.first().is_none_or(|ch| {
+                            matches!(ch, ')' | ',' | '+' | '-' | '*' | '/' | '×' | '÷')
+                        }) || ["x", "in", "to", "as", "into"]
+                            .iter()
+                            .any(|w| next_word.eq_ignore_ascii_case(w))
+                    }
+                    && let Some(inch) = crate::units::lookup("inch")
+                {
+                    out.push(Token {
+                        tok: Tok::Unit(inch),
+                        at,
+                    });
+                    i = letters_end;
+                    continue;
+                }
                 if !is_call && let Some((unit, end)) = scan_unit(&chars, i) {
                     out.push(Token {
                         tok: Tok::Unit(unit),
@@ -675,6 +726,27 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .map(|days| (Value::date_at(days, pos - i > 10), pos))
 }
 
+/// The exponent written straight after `in` (`in²`, `in³`, `in^2`, `in^3`, `in2`, `in3`) and where it ends.
+fn inch_power(chars: &[(usize, char)], at: usize) -> Option<(i8, usize)> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    let (exp, len) = match c(at)? {
+        '²' => (2, 1),
+        '³' => (3, 1),
+        '^' => match (c(at + 1)?, c(at + 2)) {
+            ('2', next) if !next.is_some_and(|n| n.is_ascii_digit()) => (2, 2),
+            ('3', next) if !next.is_some_and(|n| n.is_ascii_digit()) => (3, 2),
+            _ => return None,
+        },
+        d @ ('2' | '3') => (d.to_digit(10)? as i8, 1),
+        _ => return None,
+    };
+    let end = at + len;
+    if c(end).is_some_and(|ch| ch.is_alphanumeric()) {
+        return None;
+    }
+    Some((exp, end))
+}
+
 /// A video timecode, `01:02:03:04`: hours, minutes, seconds and frames.
 fn timecode_at(chars: &[(usize, char)], i: usize) -> Option<(Tok, usize)> {
     let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
@@ -697,12 +769,15 @@ fn timecode_at(chars: &[(usize, char)], i: usize) -> Option<(Tok, usize)> {
     }
     let mut pos = i + hour_len;
     let mut fields = vec![number(i, hour_len)];
-    for _ in 0..3 {
-        if c(pos) != Some(':') || digit_run(pos + 1) != 2 {
+    for field in 0..3 {
+        // Minutes and seconds are two digits; the frames may be written with three (`00:00:00:010`).
+        let run = digit_run(pos + 1);
+        let width_ok = run == 2 || (field == 2 && run == 3);
+        if c(pos) != Some(':') || !width_ok {
             return None;
         }
-        fields.push(number(pos + 1, 2));
-        pos += 3;
+        fields.push(number(pos + 1, run));
+        pos += 1 + run;
     }
     if c(pos).is_some_and(|ch| ch.is_alphanumeric() || ch == '.' || ch == ':')
         || fields[1] > 59
@@ -718,10 +793,9 @@ fn timecode_at(chars: &[(usize, char)], i: usize) -> Option<(Tok, usize)> {
 
 /// Gives every timecode on the line its frame rate: the `at 30 fps` written anywhere on it, else 24.
 fn resolve_timecodes(toks: Vec<Token>) -> Result<Vec<Token>, Error> {
-    if !toks.iter().any(|t| matches!(t.tok, Tok::Timecode(..))) {
-        return Ok(toks);
-    }
     let fps = crate::units::lookup("fps");
+    let frame = crate::units::lookup("frame");
+    let is_frame = |t: &Token| matches!((&t.tok, &frame), (Tok::Unit(u), Some(f)) if u == f);
     let is_at = |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("at"));
     let mut rate = Number::from_i64(24);
     let mut skip: Option<usize> = None;
@@ -735,6 +809,15 @@ fn resolve_timecodes(toks: Vec<Token>) -> Result<Vec<Token>, Error> {
             break;
         }
     }
+    // A count of frames written with a rate (`43,440 frames @ 24 fps`, `3h 2m 25s 10 frames at 24 fps`) is a
+    // timecode too.
+    let counts_frames = toks
+        .windows(2)
+        .any(|w| matches!(w[0].tok, Tok::Num(_)) && is_frame(&w[1]));
+    let frames_with_rate = skip.is_some() && counts_frames;
+    if !frames_with_rate && !toks.iter().any(|t| matches!(t.tok, Tok::Timecode(..))) {
+        return Ok(toks);
+    }
     if !rate.is_integer() || !rate.is_positive() {
         return Err(Error::UnsupportedOperation(
             "a timecode needs a whole number of frames per second",
@@ -742,11 +825,50 @@ fn resolve_timecodes(toks: Vec<Token>) -> Result<Vec<Token>, Error> {
     }
     let seconds =
         crate::units::lookup("s").ok_or(Error::UnsupportedOperation("seconds are missing"))?;
+    let time_dim = seconds.dim();
+    let frame_dim = frame.as_ref().map(|f| f.dim());
+    // The run of `number unit` pairs from `k` whose units are time or frames, when it holds frames.
+    let frames_run = |k: usize| -> Option<(usize, Number)> {
+        let mut total = Number::from_i64(0);
+        let (mut at, mut has_frames) = (k, false);
+        while let (Some(n), Some(u)) = (toks.get(at), toks.get(at + 1)) {
+            let (Tok::Num(n), Tok::Unit(u)) = (&n.tok, &u.tok) else {
+                break;
+            };
+            if is_frame(&toks[at + 1]) {
+                has_frames = true;
+                total = total.add(&n.div(&rate).ok()?).ok()?;
+            } else if u.dim() == time_dim {
+                total = total.add(&n.mul(&u.factor().ok()?).ok()?).ok()?;
+            } else {
+                break;
+            }
+            at += 2;
+        }
+        let _ = &frame_dim;
+        (has_frames && at > k).then_some((at - k, total))
+    };
     let mut out = Vec::with_capacity(toks.len());
-    for (k, t) in toks.into_iter().enumerate() {
+    let mut run_left = 0usize;
+    for (k, t) in toks.iter().cloned().enumerate() {
+        if run_left > 0 {
+            run_left -= 1;
+            continue;
+        }
         if let Some(a) = skip
             && (a..a + 3).contains(&k)
         {
+            continue;
+        }
+        if frames_with_rate
+            && matches!(t.tok, Tok::Num(_))
+            && let Some((len, total)) = frames_run(k)
+        {
+            out.push(Token {
+                tok: Tok::Value(Value::quantity(total, seconds.clone())?.as_timecode(rate.clone())),
+                at: t.at,
+            });
+            run_left = len - 1;
             continue;
         }
         match t.tok {

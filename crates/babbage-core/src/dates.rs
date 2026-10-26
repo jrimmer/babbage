@@ -70,7 +70,22 @@ impl Bias {
 
     fn pick(self, today: i64, candidates: impl Iterator<Item = i64>) -> Option<i64> {
         match self {
-            Bias::Nearest => candidates.min_by_key(|d| (d - today).abs()),
+            // A date with no year is this year's or next year's, whichever is closer, as the reference says.
+            // A date that has no occurrence in either (a leap day) is the closest one in any year.
+            Bias::Nearest => {
+                let all: Vec<i64> = candidates.collect();
+                let this_year = calendar::civil_from_days(today).year;
+                let near: Vec<i64> = all
+                    .iter()
+                    .copied()
+                    .filter(|d| {
+                        let y = calendar::civil_from_days(*d).year;
+                        y == this_year || y == this_year + 1
+                    })
+                    .collect();
+                let pool = if near.is_empty() { all } else { near };
+                pool.into_iter().min_by_key(|d| (d - today).abs())
+            }
             Bias::Next => candidates.filter(|d| *d >= today).min(),
             Bias::Last => candidates.filter(|d| *d <= today).max(),
         }
@@ -140,7 +155,18 @@ fn holiday(words: &[&str], year: Option<i64>, bias: Bias) -> Option<i64> {
         ["valentine's", "day"] | ["valentines", "day"] | ["valentine's"] | ["valentines"] => {
             at(2, 14)
         }
-        ["easter"] => movable(&calendar::easter),
+        ["christmas", "eve"] => at(12, 24),
+        ["boxing", "day"] => at(12, 26),
+        ["orthodox", "christmas"] => at(1, 7),
+        ["new", "year's", "eve"] | ["new", "years", "eve"] | ["new", "year", "eve"] => at(12, 31),
+        ["easter"] | ["easter", "sunday"] => movable(&calendar::easter),
+        ["good", "friday"] => movable(&|y| easter_plus(y, -2)),
+        ["holy", "saturday"] => movable(&|y| easter_plus(y, -1)),
+        ["easter", "monday"] => movable(&|y| easter_plus(y, 1)),
+        ["orthodox", "easter"] => movable(&calendar::orthodox_easter),
+        ["orthodox", "good", "friday"] => movable(&|y| {
+            calendar::civil_from_days(calendar::days_from_civil(calendar::orthodox_easter(y)) - 2)
+        }),
         ["thanksgiving"] => movable(&|y| calendar::nth_weekday(y, 11, 3, 4)),
         ["black", "friday"] => movable(&|y| {
             let thanksgiving = calendar::days_from_civil(calendar::nth_weekday(y, 11, 3, 4));
@@ -148,6 +174,11 @@ fn holiday(words: &[&str], year: Option<i64>, bias: Bias) -> Option<i64> {
         }),
         _ => None,
     }
+}
+
+/// The date `days` after (or before, if negative) Western Easter in `year`.
+fn easter_plus(year: i64, days: i64) -> Civil {
+    calendar::civil_from_days(calendar::days_from_civil(calendar::easter(year)) + days)
 }
 
 fn word_of(t: Option<&Token>) -> Option<String> {
@@ -246,6 +277,18 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                 }
                 "midnight" => {
                     push(&mut out, Value::clock(Number::from_i64(0)));
+                    i += 1;
+                    continue;
+                }
+                // A weekday on its own is the next one after today: on a Monday, `Monday` is a week away.
+                name if WEEKDAYS.iter().any(|d| d.eq_ignore_ascii_case(name)) => {
+                    let target = weekday_index(name).expect("a full weekday name");
+                    let current = i64::from(calendar::weekday(today));
+                    let ahead = (i64::from(target) - current).rem_euclid(7);
+                    push(
+                        &mut out,
+                        date_value(today + if ahead == 0 { 7 } else { ahead }),
+                    );
                     i += 1;
                     continue;
                 }
@@ -428,13 +471,24 @@ pub fn format_date(days: &Number) -> String {
     let civil = calendar::civil_from_days(day);
     let (today, _) = settings::local_now();
     let this_year = calendar::civil_from_days(today).year;
+    // A date with a time reads `Yesterday at 6:35 PM` or `Tomorrow at 12:30 AM` a day either side of today, and
+    // otherwise always carries its year (`November 1, 2026 at 10:30 PM`), as the reference app prints it.
+    if !seconds.is_zero() {
+        let clock = format_clock(&seconds);
+        return match day - today {
+            -1 => format!("Yesterday at {clock}"),
+            1 => format!("Tomorrow at {clock}"),
+            _ => format!(
+                "{} {}, {} at {clock}",
+                MONTHS[civil.month as usize - 1],
+                civil.day,
+                civil.year
+            ),
+        };
+    }
     let mut text = format!("{} {}", MONTHS[civil.month as usize - 1], civil.day);
     if civil.year != this_year {
         text.push_str(&format!(", {}", civil.year));
-    }
-    if !seconds.is_zero() {
-        text.push_str(" at ");
-        text.push_str(&format_clock(&seconds));
     }
     text
 }

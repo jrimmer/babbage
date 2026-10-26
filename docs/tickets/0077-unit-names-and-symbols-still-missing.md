@@ -1,0 +1,7 @@
+# 0077 Unit names and symbols the unit reference lists that the engine lacks
+
+Status: open
+Milestone: v1
+Area: units
+
+From the audit of `unit-reference.md` (claims checked by probing the engine): feet and inches written `'` and `"` (`5'6"`, `3' 4" + 9' 2"`); ares `a` (a bare `a` is also the word, so `5 a in m²` is dropped as prose and gives `5 m²`); `W s` and `W m` (watt seconds and minutes; read as watt-metres); `ppi` and `dpi` as units in their own right (they work only inside `at N ppi`); CSS `em`, `rem`, `Pt`; molar (`ᴍ`, `molar`); `kΩ`, `MΩ`, `mΩ`, `µΩ`; `kilowatt hours`, `milliampere hours` and the other prefixed two-word names; `newton meters`, `pound feet`; `millibars`, `kilopounds per square inch`; `meters per second squared` (also ticket 0019); `khz` in lower case. Display symbols also differ from the reference in places (`°` for degrees, `fl oz`, `mph`, `Ω`); the owner has not been asked. Values below about 1e-10 print `0` (`1 ng in kg`). Done in this pass: `sq ft`, `sq in`, `sq yd`, `sq mi`, `cu ft`, `in²`, `in^2`, `in2`, `in³`, `ounce troy`, `hz`, and every `Bps` and `bps` data rate with SI and binary prefixes.

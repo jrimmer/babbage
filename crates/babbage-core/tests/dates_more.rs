@@ -146,18 +146,18 @@ fn until_looks_ahead_and_since_looks_back_and_today_counts_as_both() {
 }
 
 #[test]
-fn a_yearless_date_means_the_closest_one_unless_the_line_says_which() {
+fn a_yearless_date_is_this_year_or_next_unless_the_line_says_which() {
     let at = |now, line: &str| run_at(now, line).unwrap_or_else(|e| panic!("{line}: {e}"));
     all(&[
-        ("December 25 as yyyy", "2023"),
+        ("December 25 as yyyy", "2024"),
         ("December 1 as yyyy", "2024"),
         ("January 5 as yyyy", "2024"),
     ]);
     // Late December: the next January is closer than the last one.
     assert_eq!(at(1_734_696_000, "January 5 as yyyy"), "2025");
     assert_eq!(at(1_734_696_000, "December 25 as yyyy"), "2024");
-    // Early January: the last December is closer.
-    assert_eq!(at(1_704_283_200, "December 28 as yyyy"), "2023");
+    // Early January: still this year's December, as the reference says "the current year or the following one".
+    assert_eq!(at(1_704_283_200, "December 28 as yyyy"), "2024");
     // A leap day is found in whichever year has one, up to four years either way.
     assert_eq!(at(1_835_265_600, "days since February 29"), "1,459 days");
     assert_eq!(at(1_709_294_400, "days until February 29"), "1,460 days");
@@ -251,8 +251,8 @@ fn the_words_after_a_long_expression_still_find_their_place() {
             "2 days + 1 hour before June 5, 2019",
             "June 2, 2019 at 11:00 PM",
         ),
-        ("5 days + 2 hours ago", "June 10 at 10:00 AM"),
-        ("3 hours + 30 minutes from now", "June 15 at 3:30 PM"),
+        ("5 days + 2 hours ago", "June 10, 2024 at 10:00 AM"),
+        ("3 hours + 30 minutes from now", "June 15, 2024 at 3:30 PM"),
         ("1 hour 30 minutes + 5 minutes at 1.5x", "1 hour 3 min 20 s"),
         (
             "time saved 1 hour 30 minutes + 5 minutes at 1.5x",

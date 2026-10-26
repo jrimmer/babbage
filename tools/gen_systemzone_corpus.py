@@ -29,9 +29,19 @@ def clock_text(sec):
     return f"{h % 12 or 12}:{m:02} {'AM' if h < 12 else 'PM'}"
 
 
-def shown(d, secs=0):
-    text = f"{MONTHS[d.month - 1]} {d.day}" + ("" if d.year == NOW.year else f", {d.year}")
-    return text + (f" at {clock_text(secs)}" if secs else "")
+def dated(d, clock, today):
+    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    if d == today - timedelta(1):
+        return f"Yesterday at {clock}"
+    if d == today + timedelta(1):
+        return f"Tomorrow at {clock}"
+    return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
+
+
+def shown(d, secs=0, today=None):
+    if secs:
+        return dated(d, clock_text(secs), today or NOW.date())
+    return f"{MONTHS[d.month - 1]} {d.day}" + ("" if d.year == NOW.year else f", {d.year}")
 
 
 def literal(d, secs):
@@ -66,7 +76,7 @@ for name in names:
     z = ZONES[name]
     here = NOW.astimezone(z)
     tod = here.hour * 3600 + here.minute * 60
-    add(PLACES[name], "now", shown(here.date(), tod))
+    add(PLACES[name], "now", shown(here.date(), tod, here.date()))
     add("-", f"time in {name}", clock_text(tod))
     for _ in range(150):
         d = date(2026, 1, 1) + timedelta(days=rng.randint(200, 420))
@@ -76,7 +86,7 @@ for name in names:
             continue
         stamp = int((naive.replace(tzinfo=z) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
         add(PLACES[name], f"{literal(d, secs)} to timestamp", stamp)
-        add(PLACES[name], f"{stamp} to date", shown(d, secs))
+        add(PLACES[name], f"{stamp} to date", shown(d, secs, here.date()))
 
 for row in rows:
     print("\t".join(map(str, row)))

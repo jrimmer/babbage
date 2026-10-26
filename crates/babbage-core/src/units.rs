@@ -162,7 +162,7 @@ oz | oz,ounce,ounces | M | 0.45359237/16
 st | st,stone,stones | M | 0.45359237*14
 ton | ton,tons,short ton,short tons | M | 0.45359237*2000
 t | t,tonne,tonnes,metric ton,metric tons | M | 1000
-ozt | oz t,ozt,troy ounce,troy ounces | M | 0.0311034768
+ozt | oz t,ozt,troy ounce,troy ounces,ounce troy,ounces troy | M | 0.0311034768
 ct | ct,carat,carats | M | 0.0002
 # angle (degrees; radians need an irrational factor and are not defined yet)
 deg | °,deg,degree,degrees | A | 1
@@ -174,7 +174,7 @@ K | K,kelvin | K | 1
 °C | °C,ºC,degC,celsius,C | K | 1 | 273.15
 °F | °F,ºF,degF,fahrenheit,F | K | 5/9 | 459.67*5/9
 # frequency
-Hz | Hz,hertz | T-1 | 1
+Hz | Hz,hz,hertz | T-1 | 1
 +n,µ,m,k,M,G,T
 # energy, power, force, pressure
 J | J,joule,joules | M L2 T-2 | 1
@@ -261,6 +261,39 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 @ mpg,MPG = mi/gal
 @ Bps = B/s
 @ bps = bit/s
+# data rates: bytes and bits per second with SI prefixes, and the binary ones
+@ kBps,KBps = kB/s
+@ MBps = MB/s
+@ GBps = GB/s
+@ TBps = TB/s
+@ PBps = PB/s
+@ EBps = EB/s
+@ ZBps = ZB/s
+@ YBps = YB/s
+@ kbps,Kbps = kb/s
+@ Mbps = Mb/s
+@ Gbps = Gb/s
+@ Tbps = Tb/s
+@ Pbps = Pb/s
+@ Ebps = Eb/s
+@ Zbps = Zb/s
+@ Ybps = Yb/s
+@ KiBps = KiB/s
+@ MiBps = MiB/s
+@ GiBps = GiB/s
+@ TiBps = TiB/s
+@ PiBps = PiB/s
+@ EiBps = EiB/s
+@ ZiBps = ZiB/s
+@ YiBps = YiB/s
+@ Kibps = Kib/s
+@ Mibps = Mib/s
+@ Gibps = Gib/s
+@ Tibps = Tib/s
+@ Pibps = Pib/s
+@ Eibps = Eib/s
+@ Zibps = Zib/s
+@ Yibps = Yib/s
 "#;
 
 /// Words the phrase layer owns. A unit can show one as its symbol but is never found by it.
@@ -495,6 +528,8 @@ impl Registry {
                 let unit = UnitExpr(vec![(id, exp)]);
                 if symbol.chars().all(|c| c.is_ascii_alphabetic()) {
                     reg.insert_name(&format!("{prefix}{symbol}"), unit.clone(), false);
+                    // `sq ft`, `sq yd`, `cu ft`: the short word, then the symbol.
+                    reg.insert_name(&format!("{prefix} {symbol}"), unit.clone(), false);
                 }
                 for n in names
                     .iter()
@@ -941,6 +976,19 @@ impl UnitExpr {
             parts.sort_by_key(|(u, _)| *u);
             UnitExpr(parts)
         })
+    }
+
+    /// The one unit and its exponent when this is a single unit (`ft`, `ft²`), as (that unit to the first power, exponent).
+    pub fn single_power(&self) -> Option<(UnitExpr, i8)> {
+        match self.0.as_slice() {
+            [(u, e)] => Some((UnitExpr(vec![(*u, 1)]), *e)),
+            _ => None,
+        }
+    }
+
+    /// True for a unit of length to the first power (`ft`, `in`, `km`).
+    pub fn is_length(&self) -> bool {
+        lookup("m").is_some_and(|m| self.dim() == m.dim())
     }
 
     /// True when some unit is divided by another, as in `$/day` or `km/h`.

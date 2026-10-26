@@ -25,9 +25,19 @@ def clock_text(sec):
     return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
-def shown(d, secs=0):
-    text = f"{MONTHS[d.month - 1]} {d.day}" + ("" if d.year == 2024 else f", {d.year}")
-    return text + (f" at {clock_text(secs)}" if secs else "")
+def dated(d, clock, today):
+    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    if d == today - timedelta(1):
+        return f"Yesterday at {clock}"
+    if d == today + timedelta(1):
+        return f"Tomorrow at {clock}"
+    return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
+
+
+def shown(d, secs=0, today=None):
+    if secs:
+        return dated(d, clock_text(secs), today or date(2024, 6, 15))
+    return f"{MONTHS[d.month - 1]} {d.day}" + ("" if d.year == 2024 else f", {d.year}")
 
 
 def clock_literal(sec):
@@ -42,6 +52,7 @@ def once(naive, zone):
 
 for name in ZONES:
     zone = ZoneInfo(name)
+    today_here = datetime(2024, 6, 15, 12, tzinfo=timezone.utc).astimezone(zone).date()
     for _ in range(900):
         d = date(rng.randint(1995, 2035), rng.randint(1, 12), rng.randint(1, 28))
         secs = rng.randrange(60, 86400, 60)
@@ -55,12 +66,12 @@ for name in ZONES:
         off = int(aware.utcoffset().total_seconds())
         z = "Z" if off == 0 else f"{'+' if off > 0 else '-'}{abs(off) // 3600:02}:{abs(off) % 3600 // 60:02}"
         rows.append((name, f"{lit} as iso8601", f"{d.year:04}-{d.month:02}-{d.day:02}T{secs // 3600:02}:{secs % 3600 // 60:02}:00{z}"))
-        rows.append((name, f"{stamp} to date", shown(d, secs)))
+        rows.append((name, f"{stamp} to date", shown(d, secs, today_here)))
         utc = aware.astimezone(timezone.utc)
-        rows.append((name, f"{utc.year:04}-{utc.month:02}-{utc.day:02}T{utc.hour:02}:{utc.minute:02}:00Z to date", shown(d, secs)))
+        rows.append((name, f"{utc.year:04}-{utc.month:02}-{utc.day:02}T{utc.hour:02}:{utc.minute:02}:00Z to date", shown(d, secs, today_here)))
     here = datetime(2024, 6, 15, 12, tzinfo=timezone.utc).astimezone(zone)
     tod = here.hour * 3600 + here.minute * 60
-    rows.append((name, "now", shown(here.date(), tod)))
+    rows.append((name, "now", shown(here.date(), tod, here.date())))
     rows.append((name, "today", shown(here.date())))
     rows.append((name, "current timestamp", 1718452800))
 

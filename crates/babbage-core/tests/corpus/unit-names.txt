@@ -57,6 +57,7 @@ DOP	DOP
 DOT	DOT
 DZD	DZD
 EB	EB
+EBps	EB/s
 EGP	EGP
 EOS	EOS
 ERN	ERN
@@ -65,13 +66,17 @@ ETC	ETC
 ETH	ETH
 EUR	€
 Eb	Eb
+Ebps	Eb/s
 EiB	EiB
+EiBps	EiB/s
 Eib	Eib
+Eibps	Eib/s
 F	°F
 FJD	FJD
 FKP	FKP
 GB	GB
 GBP	£
+GBps	GB/s
 GEL	GEL
 GGP	GGP
 GHS	GHS
@@ -88,8 +93,11 @@ GWEI	GWEI
 GWh	GWh
 GYD	GYD
 Gb	Gb
+Gbps	Gb/s
 GiB	GiB
+GiBps	GiB/s
 Gib	Gib
+Gibps	Gib/s
 Gwei	GWEI
 HK$	HK$
 HKD	HK$
@@ -111,6 +119,7 @@ JMD	JMD
 JOD	JOD
 JPY	¥
 K	K
+KBps	kB/s
 KES	KES
 KGS	KGS
 KHR	KHR
@@ -121,8 +130,11 @@ KV	KV
 KWD	KWD
 KYD	KYD
 KZT	KZT
+Kbps	kb/s
 KiB	KiB
+KiBps	KiB/s
 Kib	Kib
+Kibps	Kib/s
 L	L
 LAK	LAK
 LBP	LBP
@@ -139,6 +151,7 @@ MAD	MAD
 MATIC	MATIC
 MAh	MAh
 MB	MB
+MBps	MB/s
 MDL	MDL
 MGA	MGA
 MHz	MHz
@@ -163,10 +176,13 @@ MXN	MXN
 MYR	MYR
 MZN	MZN
 Mb	Mb
+Mbps	Mb/s
 Mfarad	Mfarad
 Mhenry	Mhenry
 MiB	MiB
+MiBps	MiB/s
 Mib	Mib
+Mibps	Mib/s
 Mohm	Mohm
 Mpsi	Mpsi
 Msiemens	Msiemens
@@ -185,6 +201,7 @@ NZD	NZ$
 OMR	OMR
 PAB	PAB
 PB	PB
+PBps	PB/s
 PEN	PEN
 PGK	PGK
 PHP	₱
@@ -194,8 +211,11 @@ POL	POL
 PYG	PYG
 Pa	Pa
 Pb	Pb
+Pbps	Pb/s
 PiB	PiB
+PiBps	PiB/s
 Pib	Pib
+Pibps	Pib/s
 QAR	QAR
 R$	R$
 RON	RON
@@ -222,6 +242,7 @@ SYP	SYP
 SZL	SZL
 Satoshi	SAT
 TB	TB
+TBps	TB/s
 THB	฿
 THz	THz
 TJS	TJS
@@ -236,8 +257,11 @@ TWD	NT$
 TWh	TWh
 TZS	TZS
 Tb	Tb
+Tbps	Tb/s
 TiB	TiB
+TiBps	TiB/s
 Tib	Tib
+Tibps	Tib/s
 UAH	₴
 UGX	UGX
 USD	$
@@ -265,17 +289,25 @@ XOF	XOF
 XPF	XPF
 XRP	XRP
 YB	YB
+YBps	YB/s
 YER	YER
 Yb	Yb
+Ybps	Yb/s
 YiB	YiB
+YiBps	YiB/s
 Yib	Yib
+Yibps	Yib/s
 ZAR	ZAR
 ZB	ZB
+ZBps	ZB/s
 ZMW	ZMW
 ZWL	ZWL
 Zb	Zb
+Zbps	Zb/s
 ZiB	ZiB
+ZiBps	ZiB/s
 Zib	Zib
+Zibps	Zib/s
 ac	ac
 acre	ac
 acre feet	af
@@ -331,6 +363,22 @@ cm	cm
 coulomb	coulomb
 coulombs	coulomb
 ct	ct
+cu NM	NM³
+cu cm	cm³
+cu dm	dm³
+cu ft	ft³
+cu ftm	ftm³
+cu fur	fur³
+cu in	in³
+cu km	km³
+cu ly	ly³
+cu m	m³
+cu mi	mi³
+cu mm	mm³
+cu nm	nm³
+cu pt	pt³
+cu px	px³
+cu yd	yd³
 cuNM	NM³
 cubic NM	NM³
 cubic centimeter	cm³
@@ -504,6 +552,7 @@ hours	h
 hp	hp
 hr	h
 hrs	h
+hz	Hz
 inch	in
 inches	in
 joule	J
@@ -511,6 +560,7 @@ joules	J
 kA	kA
 kAh	kAh
 kB	kB
+kBps	kB/s
 kCal	kcal
 kHz	kHz
 kJ	kJ
@@ -522,6 +572,7 @@ kW	kW
 kWb	kWb
 kWh	kWh
 kb	kb
+kbps	kb/s
 kcal	kcal
 kelvin	K
 kfarad	kfarad
@@ -790,7 +841,9 @@ ns	ns
 ohm	ohm
 ohms	ohm
 ounce	oz
+ounce troy	ozt
 ounces	oz
+ounces troy	ozt
 oz	oz
 oz t	ozt
 ozf	ozf
@@ -842,6 +895,22 @@ secs	s
 short ton	ton
 short tons	ton
 siemens	siemens
+sq NM	NM²
+sq cm	cm²
+sq dm	dm²
+sq ft	ft²
+sq ftm	ftm²
+sq fur	fur²
+sq in	in²
+sq km	km²
+sq ly	ly²
+sq m	m²
+sq mi	mi²
+sq mm	mm²
+sq nm	nm²
+sq pt	pt²
+sq px	px²
+sq yd	yd²
 sqNM	NM²
 sqcm	cm²
 sqdm	dm²

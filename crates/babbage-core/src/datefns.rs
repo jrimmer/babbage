@@ -61,6 +61,11 @@ pub enum DateFn {
     DateIn,
     /// (zone, zone): how far the first is ahead of the second right now.
     ZoneDifference,
+    /// How much of the current year, month, week (from Monday) or day has gone, as a percentage.
+    ElapsedYear,
+    ElapsedMonth,
+    ElapsedWeek,
+    ElapsedDay,
 }
 
 impl DateFn {
@@ -82,7 +87,11 @@ impl DateFn {
             | DateFn::AsFrames
             | DateFn::TimeIn
             | DateFn::DateIn => 1,
-            DateFn::CurrentTimestamp => 0,
+            DateFn::CurrentTimestamp
+            | DateFn::ElapsedYear
+            | DateFn::ElapsedMonth
+            | DateFn::ElapsedWeek
+            | DateFn::ElapsedDay => 0,
             DateFn::DaysInQuarter
             | DateFn::DaysBetween
             | DateFn::Inclusive
@@ -256,6 +265,9 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
             )?
             .as_timespan())
         }
+        DateFn::ElapsedYear | DateFn::ElapsedMonth | DateFn::ElapsedWeek | DateFn::ElapsedDay => {
+            elapsed(f)
+        }
         DateFn::AsFramesAt => as_frames(&args[0], Some(plain_rate(&args[1])?)),
         DateFn::CurrentTimestamp => Ok(digits(Number::from_i64(settings::now_utc_seconds()))),
         DateFn::DateAt => {
@@ -269,6 +281,45 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
             Ok(Value::date(Number::from_i64(day).add(&fraction)?))
         }
     }
+}
+
+/// How much of the current year, month, week or day has gone, as a percentage of its whole length.
+fn elapsed(f: DateFn) -> Result<Value, Error> {
+    let (today, seconds) = settings::local_now();
+    let civil = calendar::civil_from_days(today);
+    let (start, end) = match f {
+        DateFn::ElapsedYear => (
+            calendar::days_from_civil(calendar::Civil {
+                year: civil.year,
+                month: 1,
+                day: 1,
+            }),
+            calendar::days_from_civil(calendar::Civil {
+                year: civil.year + 1,
+                month: 1,
+                day: 1,
+            }),
+        ),
+        DateFn::ElapsedMonth => {
+            let first = calendar::days_from_civil(calendar::Civil {
+                year: civil.year,
+                month: civil.month,
+                day: 1,
+            });
+            (
+                first,
+                first + i64::from(calendar::days_in_month(civil.year, civil.month)),
+            )
+        }
+        DateFn::ElapsedWeek => {
+            let monday = today - i64::from(calendar::weekday(today)).rem_euclid(7);
+            (monday, monday + 7)
+        }
+        _ => (today, today + 1),
+    };
+    let gone = Number::from_i64((today - start) * 86_400 + seconds);
+    let whole = Number::from_i64((end - start) * 86_400);
+    Ok(Value::percent(gone.div(&whole)?))
 }
 
 /// The date halfway between two dates.

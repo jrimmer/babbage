@@ -160,8 +160,8 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "June 15 at 5:00 AM"),
-            ("3pm in Tokyo", "June 16 at 7:00 AM"),
+            ("now", "June 15, 2024 at 5:00 AM"),
+            ("3pm in Tokyo", "Tomorrow at 7:00 AM"),
             ("now to timestamp", "1718452800"),
             (
                 "January 15, 2024 3pm as iso8601",
@@ -171,7 +171,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         ],
     )?;
     ensure!(
-        answer(&s, 0) != Some("June 15 at 12:00 PM"),
+        answer(&s, 0) != Some("June 15, 2024 at 12:00 PM"),
         "the app is showing UTC, not the local zone"
     );
     settle();
@@ -198,7 +198,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     answers_for(
         h,
         &mut app,
-        &[("now", "June 15 at 5:30 PM"), ("today", "June 15")],
+        &[("now", "June 15, 2024 at 5:30 PM"), ("today", "June 15")],
     )?;
     app.finish()?;
 
@@ -215,7 +215,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     answers_for(
         h,
         &mut app,
-        &[("today", "June 15"), ("now", "June 15 at 8:00 PM")],
+        &[("today", "June 15"), ("now", "June 15, 2024 at 8:00 PM")],
     )?;
     app.finish()
 }
@@ -239,7 +239,7 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "December 1 at 5:00 AM"),
+            ("now", "December 1, 2026 at 5:00 AM"),
             ("noon in Casablanca", "7:00 PM"),
             ("time in Paris", "1:00 PM"),
         ],
@@ -264,7 +264,7 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
             ("BABBAGE_CONFIG_FILE", &config),
         ],
     )?;
-    let s = answers_for(h, &mut app, &[("now", "December 1 at 4:00 AM")])?;
+    let s = answers_for(h, &mut app, &[("now", "December 1, 2026 at 4:00 AM")])?;
     ensure!(
         s["tzdb"].as_str() == Some("2025b"),
         "the bundled source should report 2025b, got {:?}",

@@ -174,6 +174,9 @@ def trig_cases():
                     continue
                 else:
                     emit_approx(spelling, fn(rad))
+        if m not in (0, 45, 90, 135, 180, 225, 270, 315) and m not in EXACT_SIN and m not in EXACT_COS and m not in EXACT_TAN:
+            emit_approx(f"cotd({deg})", 1 / tan(rad))
+            emit_approx(f"cscd({deg})", 1 / sin(rad))
     for _ in range(80):
         tq, q = rational()
         t = f"({tq})" if "/" in tq else tq
@@ -183,6 +186,17 @@ def trig_cases():
                 emit_approx(f"{name}({t})", fn(x))
             emit_approx(f"asinh({t})", asinh(x))
             emit_approx(f"atan({t})", atan(x))
+            # The reciprocal functions of reference app 3.16: cot, csc and their hyperbolic and inverse forms.
+            for name, fn in (("cot", lambda v: 1 / tan(v)), ("csc", lambda v: 1 / sin(v)),
+                             ("coth", lambda v: 1 / tanh(v)), ("csch", lambda v: 1 / sinh(v))):
+                emit_approx(f"{name}({t})", fn(x))
+            emit_approx(f"acot({t})", atan(1 / x))
+            if abs(q) >= 1:
+                emit_approx(f"acsc({t})", asin(1 / x))
+            if q not in (1, -1, 2, -2):
+                emit_deg_approx(f"acotd({t})", atan(1 / x) * 180 / pi)
+                if abs(q) > 1:
+                    emit_deg_approx(f"acscd({t})", asin(1 / x) * 180 / pi)
         if q > 1:
             emit_approx(f"acosh({t})", acosh(x))
         if 0 < abs(q) < 1:

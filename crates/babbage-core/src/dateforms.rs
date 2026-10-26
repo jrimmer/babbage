@@ -61,12 +61,36 @@ const ONE_DATE: &[(&[&str], DateFn)] = &[
     (&["day", "number"], DateFn::DayNumber),
     (&["day", "of", "the", "year"], DateFn::DayNumber),
     (&["day", "of", "the", "month"], DateFn::DayOfMonth),
+    (&["day", "of", "month"], DateFn::DayOfMonth),
+    (&["day", "of", "year"], DateFn::DayNumber),
+    (&["week", "of", "year"], DateFn::WeekNumber),
+];
+
+/// Part of a date with no date given means today: `day of year`, `week of year`, `day of month`.
+const OF_TODAY: &[(&[&str], DateFn)] = &[
+    (&["day", "of", "year"], DateFn::DayNumber),
+    (&["day", "of", "the", "year"], DateFn::DayNumber),
+    (&["day", "of", "month"], DateFn::DayOfMonth),
+    (&["day", "of", "the", "month"], DateFn::DayOfMonth),
+    (&["week", "of", "year"], DateFn::WeekNumber),
+    (&["week", "of", "the", "year"], DateFn::WeekNumber),
+    (&["day", "number"], DateFn::DayNumber),
+    (&["week", "number"], DateFn::WeekNumber),
+];
+
+/// `year percentage`, `month percentage`, `week percentage`, `day percentage`.
+const ELAPSED: &[(&str, DateFn)] = &[
+    ("year", DateFn::ElapsedYear),
+    ("month", DateFn::ElapsedMonth),
+    ("week", DateFn::ElapsedWeek),
+    ("day", DateFn::ElapsedDay),
 ];
 
 const CONNECTORS: &[&str] = &["on", "of", "for", "in", "is"];
 
 pub fn parse_date_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
-    one_date(toks)
+    of_today(toks)
+        .or_else(|| one_date(toks))
         .or_else(|| days_in(toks))
         .or_else(|| spans(toks))
         .or_else(|| through(toks))
@@ -77,6 +101,21 @@ pub fn parse_date_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| playback(toks))
         .or_else(|| timecodes(toks))
         .or_else(|| zone_forms(toks))
+}
+
+fn of_today(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    for (lead, f) in OF_TODAY {
+        if toks.len() == lead.len() && starts_with_words(toks, lead) {
+            return Some(finish(vec![today_node()], *f));
+        }
+    }
+    if let [a, b] = toks
+        && is_word(Some(b), "percentage")
+        && let Some((_, f)) = ELAPSED.iter().find(|(w, _)| is_word(Some(a), w))
+    {
+        return Some(finish(vec![], *f));
+    }
+    None
 }
 
 fn one_date(toks: &[Token]) -> Option<Result<Expr, Error>> {
@@ -481,6 +520,34 @@ fn zone_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
                 DateFn::ZoneDifference,
             ));
         }
+    }
+    // `time in Tokyo when it is 9am in London`: the clock in the first place when it reads this in the second.
+    if starts_with_words(toks, &["time", "in"])
+        && let Some(w) = (2..n).find(|k| is_word(toks.get(*k), "when"))
+    {
+        let to = place_of(&toks[2..w])?;
+        let mut k = w + 1;
+        if is_word(toks.get(k), "it") && is_word(toks.get(k + 1), "is") {
+            k += 2;
+        } else if is_word(toks.get(k), "it's") {
+            k += 1;
+        } else {
+            return None;
+        }
+        let when =
+            single_value(toks.get(k)?).filter(|v| matches!(v.kind(), Kind::Clock | Kind::Date))?;
+        if !is_word(toks.get(k + 1), "in") {
+            return None;
+        }
+        let from = place_of(&toks[k + 2..])?;
+        return Some(finish(
+            vec![
+                Node::Value(when.clone()),
+                zone_node(Some(from)),
+                zone_node(Some(to)),
+            ],
+            DateFn::ZoneConvert,
+        ));
     }
     for (lead, f) in [("time", DateFn::TimeIn), ("date", DateFn::DateIn)] {
         if n >= 3

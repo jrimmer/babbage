@@ -73,6 +73,17 @@ pub enum Func {
     AsinD,
     AcosD,
     AtanD,
+    /// Cotangent and cosecant, with their hyperbolic, inverse and degree variants (reference app 3.16).
+    Cot,
+    Csc,
+    Coth,
+    Csch,
+    Acot,
+    Acsc,
+    CotD,
+    CscD,
+    AcotD,
+    AcscD,
     /// Sample standard deviation.
     StdDev,
     /// (principal, time, rate, compounding periods per year)
@@ -216,6 +227,16 @@ const NAMES: &[(&str, Func)] = &[
     ("asind", Func::AsinD),
     ("acosd", Func::AcosD),
     ("atand", Func::AtanD),
+    ("cot", Func::Cot),
+    ("csc", Func::Csc),
+    ("coth", Func::Coth),
+    ("csch", Func::Csch),
+    ("acot", Func::Acot),
+    ("acsc", Func::Acsc),
+    ("cotd", Func::CotD),
+    ("cscd", Func::CscD),
+    ("acotd", Func::AcotD),
+    ("acscd", Func::AcscD),
     ("stddev", Func::StdDev),
 ];
 
@@ -447,7 +468,23 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::Asin | Func::Acos | Func::Atan | Func::AsinD | Func::AcosD | Func::AtanD => {
             inverse_trig(func, &args[0])
         }
+        // The reciprocal functions are the plain ones inverted: `cot` is 1/tan and `acot(x)` is atan(1/x).
+        Func::Cot => reciprocal(&call(Func::Tan, args)?),
+        Func::Csc => reciprocal(&call(Func::Sin, args)?),
+        Func::Coth => reciprocal(&call(Func::Tanh, args)?),
+        Func::Csch => reciprocal(&call(Func::Sinh, args)?),
+        Func::CotD => reciprocal(&call(Func::TanD, args)?),
+        Func::CscD => reciprocal(&call(Func::SinD, args)?),
+        Func::Acot => call(Func::Atan, &[reciprocal(&args[0])?]),
+        Func::Acsc => call(Func::Asin, &[reciprocal(&args[0])?]),
+        Func::AcotD => call(Func::AtanD, &[reciprocal(&args[0])?]),
+        Func::AcscD => call(Func::AsinD, &[reciprocal(&args[0])?]),
     }
+}
+
+/// One over a value, which is an error when the value is zero.
+fn reciprocal(v: &Value) -> Result<Value, Error> {
+    Value::binary(BinOp::Div, &Value::plain(Number::from_i64(1)), v)
 }
 
 fn whole(v: &Value) -> Result<i64, Error> {

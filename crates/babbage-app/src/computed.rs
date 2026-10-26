@@ -104,10 +104,13 @@ mod tests {
             )
         };
         let (june, jan) = (1_718_452_800, 1_705_320_000);
-        assert_eq!(text(&at("America/New_York", june)).0, "June 15 at 8:00 AM");
+        assert_eq!(
+            text(&at("America/New_York", june)).0,
+            "June 15, 2024 at 8:00 AM"
+        );
         assert_eq!(
             text(&at("America/New_York", jan)).0,
-            "January 15 at 7:00 AM"
+            "January 15, 2024 at 7:00 AM"
         );
         // 2024-06-16 03:00 UTC is still the evening of June 15 in Los Angeles.
         assert_eq!(text(&at("America/Los_Angeles", 1_718_506_800)).1, "June 15");

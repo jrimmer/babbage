@@ -1122,6 +1122,21 @@ fn sum(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     }
 }
 
+/// For `ft²` times `in` (powers of two different length units), the product's unit in the left length unit and
+/// the factor that restates the right number in it.
+fn length_powers_in_left_unit(l: &Value, r: &Value) -> Result<Option<(UnitExpr, Number)>, Error> {
+    let (Some((lu, la)), Some((ru, ra))) = (l.unit.single_power(), r.unit.single_power()) else {
+        return Ok(None);
+    };
+    if lu == ru || la <= 0 || ra <= 0 || !lu.is_length() || !ru.is_length() {
+        return Ok(None);
+    }
+    // The right number, one length unit at a time: (right unit / left unit) to the power of its exponent.
+    let per = ru.factor()?.div(&lu.factor()?)?;
+    let scale = per.pow(&Number::from_i64(i64::from(ra)))?;
+    Ok(Some((lu.with_exponent(la + ra), scale)))
+}
+
 /// Two quantities of one kind in different units multiply in the left one's unit.
 fn product(l: &Value, r: &Value) -> Result<Value, Error> {
     // `$30 x 4 days`: a price times a count of something is that price per thing.
@@ -1132,6 +1147,10 @@ fn product(l: &Value, r: &Value) -> Result<Value, Error> {
         {
             return Value::quantity(l.number.mul(&r.number)?, price.unit.clone());
         }
+    }
+    // Lengths of different units multiply in the left one's length unit: `10 ft x 12 ft x 6 in` is 60 ft³.
+    if let Some((unit, scale)) = length_powers_in_left_unit(l, r)? {
+        return Value::quantity(l.number.mul(&r.number)?.mul(&scale)?, unit);
     }
     let same_kind_different_unit = l.unit != r.unit && l.unit.dim() == r.unit.dim();
     let right = if same_kind_different_unit {

@@ -50,15 +50,21 @@ fn agrees_with_the_zoneinfo_oracle_for_the_users_own_zone() {
 #[test]
 fn now_follows_daylight_saving_through_the_year() {
     let january = 1_705_320_000; // 2024-01-15 12:00 UTC
-    assert_eq!(run("America/New_York", "now", NOW), "June 15 at 8:00 AM");
+    assert_eq!(
+        run("America/New_York", "now", NOW),
+        "June 15, 2024 at 8:00 AM"
+    );
     assert_eq!(
         run("America/New_York", "now", january),
-        "January 15 at 7:00 AM"
+        "January 15, 2024 at 7:00 AM"
     );
-    assert_eq!(run("Australia/Sydney", "now", NOW), "June 15 at 10:00 PM");
+    assert_eq!(
+        run("Australia/Sydney", "now", NOW),
+        "June 15, 2024 at 10:00 PM"
+    );
     assert_eq!(
         run("Australia/Sydney", "now", january),
-        "January 15 at 11:00 PM"
+        "January 15, 2024 at 11:00 PM"
     );
 }
 
@@ -86,7 +92,7 @@ fn a_date_in_another_season_uses_that_seasons_offset() {
 fn a_time_with_no_place_is_in_the_users_zone() {
     assert_eq!(
         run("America/New_York", "3pm in Tokyo", NOW),
-        "June 16 at 4:00 AM"
+        "Tomorrow at 4:00 AM"
     );
     assert!(run("America/New_York", "3pm Tokyo in local", NOW).starts_with("ERROR"));
     assert_eq!(run("Asia/Tokyo", "3pm in Tokyo", NOW), "3:00 PM");

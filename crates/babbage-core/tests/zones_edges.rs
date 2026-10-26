@@ -74,8 +74,8 @@ fn an_abbreviation_is_a_fixed_offset_all_year() {
 #[test]
 fn offsets_are_written_gmt_or_utc_with_a_sign() {
     assert_eq!(shown("noon GMT+5:45 in UTC"), "6:15 AM");
-    assert_eq!(shown("noon UTC+14 in GMT-12"), "June 15 at 10:00 AM");
-    assert_eq!(shown("noon gmt-12 in utc+14"), "June 16 at 2:00 PM");
+    assert_eq!(shown("noon UTC+14 in GMT-12"), "June 15, 2024 at 10:00 AM");
+    assert_eq!(shown("noon gmt-12 in utc+14"), "Tomorrow at 2:00 PM");
 }
 
 #[test]
@@ -83,16 +83,16 @@ fn a_repeated_or_skipped_hour_is_decided_the_same_way_every_time() {
     // 2024-03-10 02:30 does not exist in New York: the offset from before the change applies.
     assert_eq!(
         shown("March 10, 2024 2:30am New York in London"),
-        "March 10 at 7:30 AM"
+        "March 10, 2024 at 7:30 AM"
     );
     // 2024-11-03 01:30 happens twice in New York: the first reading, daylight time, applies.
     assert_eq!(
         shown("November 3, 2024 1:30am New York in London"),
-        "November 3 at 5:30 AM"
+        "November 3, 2024 at 5:30 AM"
     );
     assert_eq!(
         shown("November 3, 2024 3:30am New York in London"),
-        "November 3 at 8:30 AM"
+        "November 3, 2024 at 8:30 AM"
     );
 }
 
@@ -142,7 +142,9 @@ fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
     match (day, hour) {
         (0, _) if !with_date => clock,
         (d, 0) => format!("June {}", 15 + d),
-        (d, _) => format!("June {} at {clock}", 15 + d),
+        (-1, _) => format!("Yesterday at {clock}"),
+        (1, _) => format!("Tomorrow at {clock}"),
+        (d, _) => format!("June {}, 2024 at {clock}", 15 + d),
     }
 }
 

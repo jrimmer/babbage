@@ -102,14 +102,23 @@ def parts(total, units):
     return ("-" if neg else "") + " ".join(out)
 
 
-def shown_date(d, secs=0):
-    text = f"{MONTHS[d.month - 1]} {d.day}"
-    if d.year != TODAY.year:
-        text += f", {d.year}"
+def dated(d, clock, today):
+    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    if d == today - timedelta(1):
+        return f"Yesterday at {clock}"
+    if d == today + timedelta(1):
+        return f"Tomorrow at {clock}"
+    return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
+
+
+def shown_date(d, secs=0, today=None):
     if secs:
         h, m, s = secs // 3600, secs % 3600 // 60, secs % 60
         body = f"{h % 12 or 12}:{m:02}" + (f":{s:02}" if s else "")
-        text += f" at {body} {'AM' if h < 12 else 'PM'}"
+        return dated(d, f"{body} {'AM' if h < 12 else 'PM'}", today or TODAY)
+    text = f"{MONTHS[d.month - 1]} {d.day}"
+    if d.year != TODAY.year:
+        text += f", {d.year}"
     return text
 
 
@@ -226,6 +235,14 @@ for _ in range(3000):
     if small < 100_000:
         add(f"{tc_literal(small, rate)}{suffix} as frames" if suffix else f"{tc_literal(small, 24)} as frames", f"{small:,}{unit_suffix('frame', small)}" if suffix else f"{small:,}{unit_suffix('frame', small)}")
         add(f"{small} frames at {rate} fps as timecode", timecode(small, rate))
+        add(f"{small} frames @ {rate} fps", timecode(small, rate))
+    frames_n = rng.randint(0, 5000)
+    add(f"{ta} at {rate} fps + {frames_n} frames", timecode(a + frames_n, rate))
+    mm_, ss_, ff_ = rng.randint(0, 59), rng.randint(0, 59), rng.randint(0, rate - 1)
+    add(f"00:{mm_:02}:{ss_:02}:{ff_:03} at {rate} fps", timecode((mm_ * 60 + ss_) * rate + ff_, rate))
+    hh_ = rng.randint(1, 9)
+    add(f"{hh_} hours {mm_ + 1} minutes {ss_ + 1} seconds {ff_} frames at {rate} fps",
+        timecode(((hh_ * 60 + mm_ + 1) * 60 + ss_ + 1) * rate + ff_, rate))
     d = rng.randint(1, 600)
     if rate * d < 100_000:
         add(f"{rate} fps * {d} seconds", f"{rate * d:,}{unit_suffix('frame', rate * d)}")
@@ -233,6 +250,7 @@ for _ in range(3000):
 EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 for offset in OFFSETS:
     tz = timezone(timedelta(seconds=offset))
+    local_today = (datetime(2024, 6, 15, 12, tzinfo=timezone.utc) + timedelta(seconds=offset)).date()
     for _ in range(800):
         d = date(rng.randint(1971, 2400), rng.randint(1, 12), rng.randint(1, 28))
         secs = rng.randrange(0, 86400)
@@ -241,14 +259,14 @@ for offset in OFFSETS:
         # a date with no time is midday, as the reference app treats it
         add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} to timestamp", int((datetime(d.year, d.month, d.day, 12, tzinfo=tz) - EPOCH).total_seconds()), offset)
         local_view = local
-        add(f"{stamp} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second), offset)
+        add(f"{stamp} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today), offset)
         if stamp * 1000 >= 10**11:
-            add(f"{stamp * 1000} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second), offset)
+            add(f"{stamp * 1000} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today), offset)
         zone = "Z" if offset == 0 else f"{'+' if offset > 0 else '-'}{abs(offset) // 3600:02}:{abs(offset) % 3600 // 60:02}"
         iso = f"{local.year:04}-{local.month:02}-{local.day:02}T{local.hour:02}:{local.minute:02}:{local.second:02}{zone}"
         add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(0)} to timestamp", int((datetime(d.year, d.month, d.day, tzinfo=tz) - EPOCH).total_seconds()), offset)
         add(f"{iso} as iso8601", iso, offset)
-        add(f"{iso} to date", shown_date(local.date(), local.hour * 3600 + local.minute * 60 + local.second), offset)
+        add(f"{iso} to date", shown_date(local.date(), local.hour * 3600 + local.minute * 60 + local.second, local_today), offset)
         elsewhere = local.astimezone(timezone(timedelta(seconds=rng.choice(OFFSETS))))
         z2 = elsewhere.utcoffset().total_seconds()
         zone2 = "Z" if z2 == 0 else f"{'+' if z2 > 0 else '-'}{abs(int(z2)) // 3600:02}:{abs(int(z2)) % 3600 // 60:02}"

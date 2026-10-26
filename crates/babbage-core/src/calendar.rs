@@ -137,6 +137,17 @@ pub fn easter(year: i64) -> Civil {
     Civil { year, month, day }
 }
 
+/// Orthodox Easter Sunday in the Gregorian calendar (the Julian computus, moved on by the century difference).
+pub fn orthodox_easter(year: i64) -> Civil {
+    let (a, b, c) = (year % 4, year % 7, year % 19);
+    let d = (19 * c + 15) % 30;
+    let e = (2 * a + 4 * b - d + 34) % 7;
+    let month = ((d + e + 114) / 31) as u32;
+    let day = ((d + e + 114) % 31 + 1) as u32;
+    let julian_as_gregorian = days_from_civil(Civil { year, month, day });
+    civil_from_days(julian_as_gregorian + (year / 100 - year / 400 - 2))
+}
+
 /// The `n`th (1 to 4, or 5 for the last) given weekday of a month, such as the 4th Thursday of November.
 pub fn nth_weekday(year: i64, month: u32, weekday_index: u32, n: u32) -> Civil {
     let first = days_from_civil(Civil {
@@ -263,6 +274,19 @@ mod tests {
         assert_eq!(easter(2024), d(2024, 3, 31));
         assert_eq!(easter(2019), d(2019, 4, 21));
         assert_eq!(easter(1961), d(1961, 4, 2));
+    }
+
+    #[test]
+    fn orthodox_easter_dates() {
+        // From the published tables of the Julian computus in Gregorian dates.
+        assert_eq!(orthodox_easter(2019), d(2019, 4, 28));
+        assert_eq!(orthodox_easter(2020), d(2020, 4, 19));
+        assert_eq!(orthodox_easter(2021), d(2021, 5, 2));
+        assert_eq!(orthodox_easter(2022), d(2022, 4, 24));
+        assert_eq!(orthodox_easter(2023), d(2023, 4, 16));
+        assert_eq!(orthodox_easter(2024), d(2024, 5, 5));
+        assert_eq!(orthodox_easter(2025), d(2025, 4, 20));
+        assert_eq!(orthodox_easter(2027), d(2027, 5, 2));
     }
 
     #[test]

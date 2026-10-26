@@ -158,6 +158,166 @@ const REGIONS: &[(&str, &str)] = &[
 ];
 
 /// Cities and short names that are not the last part of an IANA name.
+/// Airport codes, each standing for the zone of the airport (`7:30am LAX to Japan`). `IST` is left out: it is India's
+/// zone abbreviation, as the reference app reads it.
+const AIRPORTS: &[(&str, &str)] = &[
+    ("atl", "America/New_York"),
+    ("lax", "America/Los_Angeles"),
+    ("ord", "America/Chicago"),
+    ("dfw", "America/Chicago"),
+    ("den", "America/Denver"),
+    ("jfk", "America/New_York"),
+    ("sfo", "America/Los_Angeles"),
+    ("sea", "America/Los_Angeles"),
+    ("las", "America/Los_Angeles"),
+    ("mco", "America/New_York"),
+    ("ewr", "America/New_York"),
+    ("clt", "America/New_York"),
+    ("phx", "America/Phoenix"),
+    ("iah", "America/Chicago"),
+    ("mia", "America/New_York"),
+    ("bos", "America/New_York"),
+    ("msp", "America/Chicago"),
+    ("fll", "America/New_York"),
+    ("dtw", "America/Detroit"),
+    ("phl", "America/New_York"),
+    ("lga", "America/New_York"),
+    ("bwi", "America/New_York"),
+    ("slc", "America/Denver"),
+    ("san", "America/Los_Angeles"),
+    ("iad", "America/New_York"),
+    ("dca", "America/New_York"),
+    ("tpa", "America/New_York"),
+    ("pdx", "America/Los_Angeles"),
+    ("hnl", "Pacific/Honolulu"),
+    ("ogg", "Pacific/Honolulu"),
+    ("anc", "America/Anchorage"),
+    ("stl", "America/Chicago"),
+    ("bna", "America/Chicago"),
+    ("aus", "America/Chicago"),
+    ("mdw", "America/Chicago"),
+    ("oak", "America/Los_Angeles"),
+    ("sjc", "America/Los_Angeles"),
+    ("smf", "America/Los_Angeles"),
+    ("rdu", "America/New_York"),
+    ("msy", "America/Chicago"),
+    ("dal", "America/Chicago"),
+    ("hou", "America/Chicago"),
+    ("sna", "America/Los_Angeles"),
+    ("mci", "America/Chicago"),
+    ("cle", "America/New_York"),
+    ("pit", "America/New_York"),
+    ("cvg", "America/New_York"),
+    ("cmh", "America/New_York"),
+    ("ind", "America/Indiana/Indianapolis"),
+    ("mke", "America/Chicago"),
+    ("sat", "America/Chicago"),
+    ("yyz", "America/Toronto"),
+    ("yvr", "America/Vancouver"),
+    ("yul", "America/Montreal"),
+    ("yyc", "America/Edmonton"),
+    ("yow", "America/Toronto"),
+    ("yeg", "America/Edmonton"),
+    ("ywg", "America/Winnipeg"),
+    ("yhz", "America/Halifax"),
+    ("mex", "America/Mexico_City"),
+    ("cun", "America/Cancun"),
+    ("gru", "America/Sao_Paulo"),
+    ("gig", "America/Sao_Paulo"),
+    ("eze", "America/Argentina/Buenos_Aires"),
+    ("scl", "America/Santiago"),
+    ("bog", "America/Bogota"),
+    ("lim", "America/Lima"),
+    ("pty", "America/Panama"),
+    ("uio", "America/Guayaquil"),
+    ("ccs", "America/Caracas"),
+    ("lhr", "Europe/London"),
+    ("lgw", "Europe/London"),
+    ("man", "Europe/London"),
+    ("edi", "Europe/London"),
+    ("dub", "Europe/Dublin"),
+    ("cdg", "Europe/Paris"),
+    ("ory", "Europe/Paris"),
+    ("ams", "Europe/Amsterdam"),
+    ("fra", "Europe/Berlin"),
+    ("muc", "Europe/Berlin"),
+    ("ber", "Europe/Berlin"),
+    ("dus", "Europe/Berlin"),
+    ("ham", "Europe/Berlin"),
+    ("mad", "Europe/Madrid"),
+    ("bcn", "Europe/Madrid"),
+    ("lis", "Europe/Lisbon"),
+    ("fco", "Europe/Rome"),
+    ("mxp", "Europe/Rome"),
+    ("vce", "Europe/Rome"),
+    ("zrh", "Europe/Zurich"),
+    ("gva", "Europe/Zurich"),
+    ("vie", "Europe/Vienna"),
+    ("bru", "Europe/Brussels"),
+    ("cph", "Europe/Copenhagen"),
+    ("arn", "Europe/Stockholm"),
+    ("osl", "Europe/Oslo"),
+    ("hel", "Europe/Helsinki"),
+    ("waw", "Europe/Warsaw"),
+    ("prg", "Europe/Prague"),
+    ("bud", "Europe/Budapest"),
+    ("ath", "Europe/Athens"),
+    ("saw", "Europe/Istanbul"),
+    ("svo", "Europe/Moscow"),
+    ("dme", "Europe/Moscow"),
+    ("kef", "Atlantic/Reykjavik"),
+    ("dxb", "Asia/Dubai"),
+    ("auh", "Asia/Dubai"),
+    ("doh", "Asia/Qatar"),
+    ("tlv", "Asia/Jerusalem"),
+    ("cai", "Africa/Cairo"),
+    ("jnb", "Africa/Johannesburg"),
+    ("cpt", "Africa/Johannesburg"),
+    ("nbo", "Africa/Nairobi"),
+    ("add", "Africa/Addis_Ababa"),
+    ("los", "Africa/Lagos"),
+    ("cmn", "Africa/Casablanca"),
+    ("ruh", "Asia/Riyadh"),
+    ("jed", "Asia/Riyadh"),
+    ("kwi", "Asia/Kuwait"),
+    ("nrt", "Asia/Tokyo"),
+    ("hnd", "Asia/Tokyo"),
+    ("kix", "Asia/Tokyo"),
+    ("icn", "Asia/Seoul"),
+    ("gmp", "Asia/Seoul"),
+    ("pek", "Asia/Shanghai"),
+    ("pvg", "Asia/Shanghai"),
+    ("sha", "Asia/Shanghai"),
+    ("can", "Asia/Shanghai"),
+    ("hkg", "Asia/Hong_Kong"),
+    ("tpe", "Asia/Taipei"),
+    ("sin", "Asia/Singapore"),
+    ("bkk", "Asia/Bangkok"),
+    ("kul", "Asia/Kuala_Lumpur"),
+    ("cgk", "Asia/Jakarta"),
+    ("mnl", "Asia/Manila"),
+    ("del", "Asia/Kolkata"),
+    ("bom", "Asia/Kolkata"),
+    ("blr", "Asia/Kolkata"),
+    ("maa", "Asia/Kolkata"),
+    ("ccu", "Asia/Kolkata"),
+    ("hyd", "Asia/Kolkata"),
+    ("syd", "Australia/Sydney"),
+    ("mel", "Australia/Melbourne"),
+    ("bne", "Australia/Brisbane"),
+    ("per", "Australia/Perth"),
+    ("adl", "Australia/Adelaide"),
+    ("akl", "Pacific/Auckland"),
+    ("wlg", "Pacific/Auckland"),
+    ("chc", "Pacific/Auckland"),
+    ("nan", "Pacific/Fiji"),
+    ("sgn", "Asia/Ho_Chi_Minh"),
+    ("dac", "Asia/Dhaka"),
+    ("khi", "Asia/Karachi"),
+    ("cmb", "Asia/Colombo"),
+    ("ktm", "Asia/Kathmandu"),
+];
+
 const ALIASES: &[(&str, &str)] = &[
     ("nyc", "America/New_York"),
     ("new york city", "America/New_York"),
@@ -416,7 +576,12 @@ fn city_table() -> &'static HashMap<String, &'static str> {
                 .entry(city.replace('_', " ").to_lowercase())
                 .or_insert(name);
         }
-        for (alias, iana) in ALIASES.iter().chain(COUNTRIES).chain(REGIONS) {
+        for (alias, iana) in ALIASES
+            .iter()
+            .chain(COUNTRIES)
+            .chain(REGIONS)
+            .chain(AIRPORTS)
+        {
             table.insert((*alias).to_string(), *iana);
         }
         table
@@ -449,7 +614,12 @@ mod tests {
 
     #[test]
     fn every_table_entry_names_a_zone_in_the_bundled_database() {
-        for (alias, iana) in ALIASES.iter().chain(COUNTRIES).chain(REGIONS) {
+        for (alias, iana) in ALIASES
+            .iter()
+            .chain(COUNTRIES)
+            .chain(REGIONS)
+            .chain(AIRPORTS)
+        {
             assert!(iana.parse::<Tz>().is_ok(), "{alias} -> {iana}");
         }
     }
@@ -457,7 +627,12 @@ mod tests {
     #[test]
     fn no_alias_or_country_is_listed_twice() {
         let mut seen = std::collections::HashSet::new();
-        for (name, _) in ALIASES.iter().chain(COUNTRIES).chain(REGIONS) {
+        for (name, _) in ALIASES
+            .iter()
+            .chain(COUNTRIES)
+            .chain(REGIONS)
+            .chain(AIRPORTS)
+        {
             assert!(seen.insert(*name), "{name} is listed twice");
         }
     }

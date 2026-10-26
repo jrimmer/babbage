@@ -8,7 +8,7 @@ import calendar
 import random
 from datetime import date, datetime, timedelta
 
-from dateutil.easter import easter
+from dateutil.easter import EASTER_ORTHODOX, easter
 from dateutil.relativedelta import relativedelta
 
 rng = random.Random(0xDA7E5)
@@ -19,11 +19,22 @@ SHORT["September"] = rng.choice(["Sep", "Sept"])
 DAYS = list(calendar.day_name)
 
 
+def dated(d, clock, today):
+    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    if d == today - timedelta(1):
+        return f"Yesterday at {clock}"
+    if d == today + timedelta(1):
+        return f"Tomorrow at {clock}"
+    return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
+
+
 def shown(d, time=None):
+    if time:
+        return dated(d, time, TODAY)
     text = f"{MONTHS[d.month - 1]} {d.day}"
     if d.year != TODAY.year:
         text += f", {d.year}"
-    return text + (f" at {time}" if time else "")
+    return text
 
 
 def literal(d):
@@ -176,6 +187,16 @@ for y in range(1583, 2600):
     add(f"Black Friday {y}", "text", shown(thanksgiving(y) + timedelta(1)))
     add(f"Christmas {y}", "text", shown(date(y, 12, 25)))
     add(f"Halloween {y}", "text", shown(date(y, 10, 31)))
+    add(f"Christmas Eve {y}", "text", shown(date(y, 12, 24)))
+    add(f"Boxing Day {y}", "text", shown(date(y, 12, 26)))
+    add(f"Orthodox Christmas {y}", "text", shown(date(y, 1, 7)))
+    add(f"New Year\u2019s Eve {y}" if y % 2 else f"New Year's Eve {y}", "text", shown(date(y, 12, 31)))
+    add(f"Good Friday {y}", "text", shown(easter(y) - timedelta(2)))
+    add(f"Holy Saturday {y}", "text", shown(easter(y) - timedelta(1)))
+    add(f"Easter Sunday {y}", "text", shown(easter(y)))
+    add(f"Easter Monday {y}", "text", shown(easter(y) + timedelta(1)))
+    add(f"Orthodox Easter {y}", "text", shown(easter(y, EASTER_ORTHODOX)))
+    add(f"Orthodox Good Friday {y}", "text", shown(easter(y, EASTER_ORTHODOX) - timedelta(2)))
 
 PIECES = ["yyyy", "yy", "MMMM", "MMM", "MM", "M", "dd", "d", "EEEE", "EEE"]
 SEPS = [", ", " ", "/", "-", ". "]

@@ -68,7 +68,7 @@ fn the_machines_newer_rules_replace_the_bundled_ones() {
     let line = "now in Vancouver";
     let (old, new) = (run(&bundled, line), run(&files, line));
     assert_ne!(old, new, "the rule change should be visible: {old}");
-    assert_eq!(new, "December 1 at 5:00 AM", "from the 2026e files");
+    assert_eq!(new, "December 1, 2026 at 5:00 AM", "from the 2026e files");
     // Casablanca: 2026-09-23 onward.
     assert_ne!(
         run(&bundled, "now in Casablanca"),

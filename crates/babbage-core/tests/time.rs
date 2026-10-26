@@ -72,7 +72,7 @@ fn the_reference_time_examples() {
         ("16:00 + 3 hours 12 minutes", "7:12 PM"),
         ("7:30am to 8:45pm", "13 hours 15 min"),
         ("5pm - 3pm", "2 hours"),
-        ("1733823083000 to date", "December 10 at 9:31:23 AM"),
+        ("1733823083000 to date", "December 10, 2024 at 9:31:23 AM"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }

@@ -85,12 +85,21 @@ def clock_text(sec):
     return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
-def shown_date(d, secs=0):
+def dated(d, clock, today):
+    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    if d == today - timedelta(1):
+        return f"Yesterday at {clock}"
+    if d == today + timedelta(1):
+        return f"Tomorrow at {clock}"
+    return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
+
+
+def shown_date(d, secs=0, today=None):
+    if secs:
+        return dated(d, clock_text(secs), today or NOW.date())
     text = f"{MONTHS[d.month - 1]} {d.day}"
     if d.year != TODAY_YEAR:
         text += f", {d.year}"
-    if secs:
-        text += f" at {clock_text(secs)}"
     return text
 
 
@@ -199,7 +208,7 @@ for offset in OFFSETS[1:]:
         naive = datetime(d.year, d.month, d.day) + timedelta(seconds=secs)
         there = naive.replace(tzinfo=local).astimezone(PLACES[b])
         tod = there.hour * 3600 + there.minute * 60 + there.second
-        add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} in {spell(b)}", shown_date(there.date(), tod), offset)
+        add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} in {spell(b)}", shown_date(there.date(), tod, (NOW + timedelta(seconds=offset)).date()), offset)
 
 for row in rows:
     print("\t".join(map(str, row)))

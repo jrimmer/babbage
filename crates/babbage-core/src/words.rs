@@ -96,6 +96,7 @@ const LIST_FORMS: &[(&[&str], Func)] = &[
 /// Leading forms with no `of`: `midpoint between a and b`.
 const BETWEEN_FORMS: &[(&[&str], Func)] = &[
     (&["midpoint", "between"], Func::Midpoint),
+    (&["halfway", "between"], Func::Midpoint),
     (&["random", "number", "between"], Func::Random),
 ];
 
