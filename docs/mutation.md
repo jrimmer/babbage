@@ -32,6 +32,10 @@ Changed lines since the last clean engine run.
 
 After the last run, one real gap (a Western-European number with a point and no digit after it) was pinned. Every other survivor in these runs was either closed or is listed below.
 
+## Parenthesised phrase forms (ticket 0013)
+
+`collapse_groups` in `phrase.rs`, run with `MUTATE_RE=collapse_groups` against the parenthesised, percent, near-miss and unit tests: 11 mutants, 9 caught, 2 unviable (they do not compile), 0 missed.
+
 ## Real bugs that mutation or the fuzz test found
 
 - `workdays_between` recursed forever on a zero-length span (`workdays in 2024`): a stack overflow that would crash the app.
