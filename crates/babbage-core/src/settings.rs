@@ -5,6 +5,7 @@
 
 use std::cell::RefCell;
 
+use crate::error::Error;
 use crate::number::Number;
 
 /// A sales tax named in settings: `VAT` at 15%.
@@ -19,10 +20,14 @@ pub struct Settings {
     pub tax: Option<Tax>,
     /// The moment `now` and `today` mean, in seconds since 1970-01-01 UTC. None reads the system clock.
     pub now_utc_seconds: Option<i64>,
-    /// Seconds east of UTC for local time (a fixed offset; named zones are looked up where they are written).
+    /// Seconds east of UTC for local time when `local_zone` is not set: one fixed offset all year.
     pub local_utc_offset_seconds: i64,
+    /// The user's own time zone, with its daylight saving rules. When set it replaces the fixed offset.
+    pub local_zone: Option<crate::zones::Zone>,
     /// Hours in a working day, for `work hours`.
     pub work_hours_per_day: Option<u32>,
+    /// How numbers are typed and shown: `1,234.56`, `1.234,56` or `1 234,56`.
+    pub number_format: crate::format::NumberFormat,
 }
 
 impl Settings {
@@ -35,6 +40,18 @@ impl Settings {
     }
 }
 
+impl Settings {
+    /// The options to show answers with under these settings.
+    pub fn format_options(&self) -> crate::format::FormatOptions {
+        crate::format::FormatOptions::default().in_format(self.number_format)
+    }
+}
+
+/// How numbers are typed and shown right now.
+pub fn number_format() -> crate::format::NumberFormat {
+    current(|s| s.number_format)
+}
+
 /// The current moment in UTC seconds, from the settings or the system clock.
 pub fn now_utc_seconds() -> i64 {
     current(|s| s.now_utc_seconds).unwrap_or_else(|| {
@@ -44,8 +61,39 @@ pub fn now_utc_seconds() -> i64 {
     })
 }
 
+/// The zone local time is read in: the user's own, or the fixed offset from the settings.
+pub fn local_zone() -> crate::zones::Zone {
+    current(|s| {
+        s.local_zone
+            .unwrap_or(crate::zones::Zone::Fixed(s.local_utc_offset_seconds))
+    })
+}
+
+/// Seconds east of UTC for local time at this instant.
+pub fn local_offset_at(utc: i64) -> i64 {
+    local_zone().offset_at(utc)
+}
+
+/// Seconds east of UTC for local time right now.
 pub fn local_offset_seconds() -> i64 {
-    current(|s| s.local_utc_offset_seconds)
+    local_offset_at(now_utc_seconds())
+}
+
+/// A local wall-clock reading in seconds (since 1970-01-01 00:00 local) as the UTC instant it falls on.
+pub fn wall_to_utc(wall: &Number) -> Result<Number, Error> {
+    let whole = wall.floor();
+    let fraction = wall.sub(&Number::from_ratio(
+        whole.clone(),
+        num_bigint::BigInt::from(1),
+    )?)?;
+    let whole = i64::try_from(&whole).map_err(|_| Error::Overflow)?;
+    Number::from_i64(local_zone().local_to_utc(whole)).add(&fraction)
+}
+
+/// A UTC instant in seconds as the local wall-clock reading it shows.
+pub fn utc_to_wall(utc: &Number) -> Result<Number, Error> {
+    let whole = i64::try_from(&utc.floor()).map_err(|_| Error::Overflow)?;
+    utc.add(&Number::from_i64(local_offset_at(whole)))
 }
 
 /// Local time as (days since 1970-01-01, seconds into that day).

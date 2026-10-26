@@ -11,6 +11,7 @@ mod computed;
 mod control;
 mod editor_model;
 mod element;
+mod prefs;
 mod syntax;
 mod theme;
 mod timefmt;

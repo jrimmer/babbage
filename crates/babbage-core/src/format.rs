@@ -15,6 +15,55 @@ pub enum RoundingMode {
     AwayFromZero,
 }
 
+/// How numbers are written: which mark groups thousands and which marks the decimal point.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum NumberFormat {
+    /// `1,234.56`
+    #[default]
+    NorthAmerica,
+    /// `1.234,56`
+    WesternEurope,
+    /// `1 234,56`, where either `,` or `.` is read as the decimal point.
+    EasternEurope,
+}
+
+impl NumberFormat {
+    /// The mark written between groups of three digits.
+    pub fn group_mark(self) -> char {
+        match self {
+            NumberFormat::NorthAmerica => ',',
+            NumberFormat::WesternEurope => '.',
+            NumberFormat::EasternEurope => '\u{a0}',
+        }
+    }
+
+    /// The mark written before the fraction.
+    pub fn decimal_mark(self) -> char {
+        match self {
+            NumberFormat::NorthAmerica => '.',
+            NumberFormat::WesternEurope | NumberFormat::EasternEurope => ',',
+        }
+    }
+
+    /// True for a character that separates groups of three digits when typed.
+    pub fn reads_as_group(self, c: char) -> bool {
+        match self {
+            NumberFormat::NorthAmerica => c == ',',
+            NumberFormat::WesternEurope => c == '.',
+            NumberFormat::EasternEurope => matches!(c, ' ' | '\u{a0}' | '\u{202f}'),
+        }
+    }
+
+    /// True for a character that starts the fraction when typed.
+    pub fn reads_as_decimal(self, c: char) -> bool {
+        match self {
+            NumberFormat::NorthAmerica => c == '.',
+            NumberFormat::WesternEurope => c == ',',
+            NumberFormat::EasternEurope => c == ',' || c == '.',
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FormatOptions {
     decimal_places: u32,
@@ -25,6 +74,7 @@ pub struct FormatOptions {
     pub abbreviate_large: bool,
     /// Show money with its currency's fixed digits (`$5.00`). Off shows every digit, as for a declared variable.
     pub fixed_money_digits: bool,
+    pub number_format: NumberFormat,
 }
 
 impl FormatOptions {
@@ -39,6 +89,7 @@ impl FormatOptions {
             trim_trailing_zeros: true,
             abbreviate_large: false,
             fixed_money_digits: true,
+            number_format: NumberFormat::NorthAmerica,
         })
     }
 
@@ -50,6 +101,15 @@ impl FormatOptions {
             trim_trailing_zeros: false,
             abbreviate_large: false,
             fixed_money_digits: true,
+            number_format: NumberFormat::NorthAmerica,
+        }
+    }
+
+    /// The same options written in another number format.
+    pub fn in_format(&self, number_format: NumberFormat) -> FormatOptions {
+        FormatOptions {
+            number_format,
+            ..self.clone()
         }
     }
 
@@ -127,10 +187,10 @@ pub fn format_decimal(n: &Number, opts: &FormatOptions) -> Formatted {
         let integer_digits = f
             .text
             .trim_start_matches('-')
-            .split('.')
+            .split(opts.number_format.decimal_mark())
             .next()
             .unwrap_or("")
-            .replace(',', "")
+            .replace(opts.number_format.group_mark(), "")
             .len();
         if integer_digits > 3 && step + 1 < LARGE.len() {
             step += 1;
@@ -190,22 +250,22 @@ fn format_plain(n: &Number, opts: &FormatOptions) -> Formatted {
         text.push('-');
     }
     if opts.group_thousands {
-        push_grouped(&mut text, int_part);
+        push_grouped(&mut text, int_part, opts.number_format.group_mark());
     } else {
         text.push_str(int_part);
     }
     if !frac_part.is_empty() {
-        text.push('.');
+        text.push(opts.number_format.decimal_mark());
         text.push_str(frac_part);
     }
     Formatted { text, exact }
 }
 
-fn push_grouped(out: &mut String, int_part: &str) {
+fn push_grouped(out: &mut String, int_part: &str, mark: char) {
     let len = int_part.len();
     for (i, ch) in int_part.chars().enumerate() {
         if i > 0 && (len - i).is_multiple_of(3) {
-            out.push(',');
+            out.push(mark);
         }
         out.push(ch);
     }

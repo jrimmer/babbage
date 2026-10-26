@@ -21,6 +21,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("autosave-sigkill", autosave_sigkill),
     ("keys", keyboard_features),
     ("quit-saves", quit_saves),
+    ("local-time", local_time),
+    ("number-format", number_format),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -106,6 +108,115 @@ fn sheet_names(s: &Value) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// The clock the zone checks run on: Saturday 2024-06-15 12:00 UTC.
+const FIXED_NOW: &str = "1718452800";
+
+/// Types one expression per line and waits for every answer, returning the final state.
+fn answers_for(h: &Harness, app: &mut App, lines: &[(&str, &str)]) -> anyhow::Result<Value> {
+    for (i, (text, _)) in lines.iter().enumerate() {
+        if i + 1 == lines.len() {
+            h.type_text(text)?;
+        } else {
+            h.type_line(text)?;
+        }
+    }
+    let want: Vec<String> = lines.iter().map(|(_, a)| (*a).to_owned()).collect();
+    app.wait_for("every answer", T, |s| {
+        want.iter()
+            .enumerate()
+            .all(|(i, w)| answer(s, i) == Some(w.as_str()))
+    })
+}
+
+fn local_time(h: &mut Harness) -> anyhow::Result<()> {
+    // Los Angeles is on daylight time in June and standard time in January: one fixed offset cannot do both.
+    let mut app = h.launch(
+        "local-la",
+        None,
+        &[("TZ", "America/Los_Angeles"), ("BABBAGE_NOW", FIXED_NOW)],
+    )?;
+    let s = answers_for(
+        h,
+        &mut app,
+        &[
+            ("now", "June 15 at 5:00 am"),
+            ("3pm in Tokyo", "June 16 at 7:00 am"),
+            ("now to timestamp", "1718452800"),
+            (
+                "January 15, 2024 3pm as iso8601",
+                "2024-01-15T15:00:00-08:00",
+            ),
+            ("June 15, 2024 3pm as iso8601", "2024-06-15T15:00:00-07:00"),
+        ],
+    )?;
+    ensure!(
+        answer(&s, 0) != Some("June 15 at 12:00 pm"),
+        "the app is showing UTC, not the local zone"
+    );
+    settle();
+    let s = app.state()?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    ensure!(
+        luminance(scr.answer_cell(&shot, &s, 0)?) > 150.,
+        "no answer text on screen for the first line"
+    );
+    h.save_shot(&h.logs.join("local-time.png"))?;
+    app.finish()?;
+
+    // A zone with no daylight saving and a half-hour offset.
+    let mut app = h.launch(
+        "local-kolkata",
+        None,
+        &[("TZ", "Asia/Kolkata"), ("BABBAGE_NOW", FIXED_NOW)],
+    )?;
+    answers_for(
+        h,
+        &mut app,
+        &[("now", "June 15 at 5:30 pm"), ("today", "June 15")],
+    )?;
+    app.finish()?;
+
+    // Late in the evening in Los Angeles it is already the next day in UTC: `today` must be the local day.
+    let mut app = h.launch(
+        "local-late",
+        None,
+        &[("TZ", "America/Los_Angeles"), ("BABBAGE_NOW", "1718506800")],
+    )?;
+    answers_for(
+        h,
+        &mut app,
+        &[("today", "June 15"), ("now", "June 15 at 8:00 pm")],
+    )?;
+    app.finish()
+}
+
+fn number_format(h: &mut Harness) -> anyhow::Result<()> {
+    let config = h.logs.join("western-europe.settings");
+    std::fs::write(&config, "number_format = western-europe\nwork_hours = 7\n")?;
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch(
+        "region",
+        None,
+        &[("BABBAGE_CONFIG_FILE", &config), ("TZ", "UTC")],
+    )?;
+    let s = answers_for(
+        h,
+        &mut app,
+        &[
+            ("1.234,5 + 1", "1.235,5"),
+            ("$1.234,5 + $1", "$1.235,50"),
+            ("21 h in workdays", "3 workday"),
+            ("1_000 + 1", "1.001"),
+        ],
+    )?;
+    ensure!(
+        answer(&s, 0) != Some("1,235.5"),
+        "the settings file was ignored"
+    );
+    app.finish()
 }
 
 fn sum_shows_39(h: &mut Harness) -> anyhow::Result<()> {

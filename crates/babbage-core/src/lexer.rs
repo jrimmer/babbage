@@ -214,14 +214,24 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
             }
             '0' if radix_prefix(&chars, i).is_some() => {
                 let (radix, digits_from) = radix_prefix(&chars, i).expect("checked by the guard");
+                let is_digit = |k: usize| {
+                    chars
+                        .get(k)
+                        .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
+                };
                 let mut end = digits_from;
-                while chars
-                    .get(end)
-                    .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
+                while is_digit(end)
+                    || (chars.get(end).is_some_and(|(_, c)| *c == '_')
+                        && is_digit(end - 1)
+                        && is_digit(end + 1))
                 {
                     end += 1;
                 }
-                let text: String = chars[digits_from..end].iter().map(|(_, d)| *d).collect();
+                let text: String = chars[digits_from..end]
+                    .iter()
+                    .map(|(_, d)| *d)
+                    .filter(|d| *d != '_')
+                    .collect();
                 let value = num_bigint::BigInt::parse_bytes(text.as_bytes(), u32::from(radix))
                     .ok_or(Error::InvalidNumber { text, at })?;
                 let n = Number::from_ratio(value, num_bigint::BigInt::from(1))?;
@@ -336,7 +346,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
             '≥' => simple(Tok::Op(BinOp::Ge), &mut out),
             '≠' => simple(Tok::Op(BinOp::Ne), &mut out),
             '^' => simple(Tok::Caret, &mut out),
-            ',' => simple(Tok::Comma, &mut out),
+            ',' | ';' => simple(Tok::Comma, &mut out),
             '√' => simple(Tok::Word("sqrt".into()), &mut out),
             '%' => {
                 let attached = i > 0
@@ -498,10 +508,15 @@ fn radix_prefix(chars: &[(usize, char)], i: usize) -> Option<(u8, usize)> {
         Some('o') => 8,
         _ => return None,
     };
+    let first = if chars.get(i + 2).is_some_and(|(_, c)| *c == '_') {
+        i + 3
+    } else {
+        i + 2
+    };
     chars
-        .get(i + 2)
+        .get(first)
         .is_some_and(|(_, d)| d.is_digit(u32::from(radix)))
-        .then_some((radix, i + 2))
+        .then_some((radix, first))
 }
 
 /// An `x` right after a number that makes it a multiplier (`1.5x`) and not a times sign: nothing that
@@ -640,11 +655,8 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .add(&seconds)
         .ok()?;
     if let Some(offset) = zone {
-        local = local
-            .sub(&Number::from_i64(offset))
-            .ok()?
-            .add(&Number::from_i64(crate::settings::local_offset_seconds()))
-            .ok()?;
+        let utc = local.sub(&Number::from_i64(offset)).ok()?;
+        local = crate::settings::utc_to_wall(&utc).ok()?;
     }
     local
         .div(&Number::from_i64(86_400))
@@ -936,6 +948,24 @@ fn digit_at(chars: &[(usize, char)], i: usize) -> bool {
     chars.get(i).is_some_and(|(_, c)| c.is_ascii_digit())
 }
 
+/// Appends the digits starting at `j`, allowing one underscore between two digits (`1_000`), and returns
+/// where they end.
+fn take_digits(chars: &[(usize, char)], mut j: usize, out: &mut String) -> usize {
+    loop {
+        if digit_at(chars, j) {
+            out.push(chars[j].1);
+        } else if chars.get(j).is_some_and(|(_, c)| *c == '_')
+            && j > 0
+            && digit_at(chars, j - 1)
+            && digit_at(chars, j + 1)
+        {
+        } else {
+            return j;
+        }
+        j += 1;
+    }
+}
+
 fn scan_number(
     src: &str,
     chars: &[(usize, char)],
@@ -948,14 +978,12 @@ fn scan_number(
         at,
     };
 
+    let format = crate::settings::number_format();
     let mut j = start;
     let mut mantissa = String::new();
-    while digit_at(chars, j) {
-        mantissa.push(chars[j].1);
-        j += 1;
-    }
+    j = take_digits(chars, j, &mut mantissa);
     let first_group = mantissa.len();
-    while chars.get(j).is_some_and(|(_, c)| *c == ',')
+    while chars.get(j).is_some_and(|(_, c)| format.reads_as_group(*c))
         && digit_at(chars, j + 1)
         && digit_at(chars, j + 2)
         && digit_at(chars, j + 3)
@@ -969,16 +997,33 @@ fn scan_number(
         }
         j += 4;
     }
+    if format == crate::format::NumberFormat::WesternEurope
+        && chars.get(j).is_some_and(|(_, c)| *c == '.')
+        && digit_at(chars, j + 1)
+    {
+        let mut end = j + 1;
+        while digit_at(chars, end) {
+            end += 1;
+        }
+        return Err(bad(end));
+    }
 
     let mut frac_len: i64 = 0;
-    if chars.get(j).is_some_and(|(_, c)| *c == '.') && digit_at(chars, j + 1) {
+    if chars
+        .get(j)
+        .is_some_and(|(_, c)| format.reads_as_decimal(*c))
+        && digit_at(chars, j + 1)
+    {
         j += 1;
-        while digit_at(chars, j) {
-            mantissa.push(chars[j].1);
-            frac_len += 1;
-            j += 1;
-        }
-        if chars.get(j).is_some_and(|(_, c)| *c == '.') && digit_at(chars, j + 1) {
+        let mut fraction = String::new();
+        j = take_digits(chars, j, &mut fraction);
+        frac_len = fraction.len() as i64;
+        mantissa.push_str(&fraction);
+        if chars
+            .get(j)
+            .is_some_and(|(_, c)| format.reads_as_decimal(*c))
+            && digit_at(chars, j + 1)
+        {
             let mut end = j + 1;
             while digit_at(chars, end) {
                 end += 1;

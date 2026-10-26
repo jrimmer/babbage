@@ -1,5 +1,6 @@
 //! Runs the engine over a whole sheet and turns each result into the text the answer column shows.
 
+use babbage_core::settings::{Settings, scoped};
 use babbage_core::sheet::floating_total;
 use babbage_core::{
     FormatOptions, LineKind, LineResult, SheetOptions, evaluate_sheet, format_value,
@@ -22,10 +23,22 @@ pub struct Computed {
 }
 
 pub fn compute(lines: &[String]) -> Computed {
+    compute_with(lines, crate::prefs::current())
+}
+
+/// Evaluates and formats inside one settings scope, so dates print in the same zone they were read in.
+pub fn compute_with(lines: &[String], settings: &Settings) -> Computed {
+    scoped(settings, || compute_scoped(lines, settings))
+}
+
+fn compute_scoped(lines: &[String], settings: &Settings) -> Computed {
     let refs: Vec<&str> = lines.iter().map(String::as_str).collect();
-    let opts = SheetOptions::default();
+    let opts = SheetOptions {
+        settings: settings.clone(),
+        ..SheetOptions::default()
+    };
     let results = evaluate_sheet(&refs, &opts);
-    let base = FormatOptions::default();
+    let base: FormatOptions = settings.format_options();
     let answers = results
         .iter()
         .map(|r| match &r.kind {
@@ -73,6 +86,39 @@ mod tests {
 
     fn sheet(lines: &[&str]) -> Vec<String> {
         lines.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn now_and_today_are_read_and_printed_in_the_local_zone() {
+        use babbage_core::zones::Zone;
+        let at = |zone: &str, now: i64| Settings {
+            local_zone: Zone::named(zone),
+            now_utc_seconds: Some(now),
+            ..Settings::default()
+        };
+        let text = |s: &Settings| {
+            let c = compute_with(&sheet(&["now", "today"]), s);
+            (
+                c.answers[0].text.clone().unwrap_or_default(),
+                c.answers[1].text.clone().unwrap_or_default(),
+            )
+        };
+        let (june, jan) = (1_718_452_800, 1_705_320_000);
+        assert_eq!(text(&at("America/New_York", june)).0, "June 15 at 8:00 am");
+        assert_eq!(
+            text(&at("America/New_York", jan)).0,
+            "January 15 at 7:00 am"
+        );
+        // 2024-06-16 03:00 UTC is still the evening of June 15 in Los Angeles.
+        assert_eq!(text(&at("America/Los_Angeles", 1_718_506_800)).1, "June 15");
+        assert_eq!(
+            text(&Settings {
+                now_utc_seconds: Some(1_718_506_800),
+                ..Settings::default()
+            })
+            .1,
+            "June 16"
+        );
     }
 
     #[test]

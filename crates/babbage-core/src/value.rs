@@ -1093,7 +1093,7 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
         (Some(minor), false, false) => {
             // Unrounded, but never fewer digits than the currency shows: `$45,000.00`, `$1.005`.
             let mut f = format_decimal(&v.number, opts);
-            f.text = pad_fraction(&f.text, minor);
+            f.text = pad_fraction(&f.text, minor, opts.number_format.decimal_mark());
             f
         }
         _ => format_decimal(&v.number, opts),
@@ -1116,13 +1116,13 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
 }
 
 /// Adds zeros so `text` has at least `places` digits after the point.
-fn pad_fraction(text: &str, places: u32) -> String {
+fn pad_fraction(text: &str, places: u32, mark: char) -> String {
     let places = places as usize;
-    match text.split_once('.') {
-        Some((whole, frac)) if frac.len() >= places => format!("{whole}.{frac}"),
-        Some((whole, frac)) => format!("{whole}.{frac}{}", "0".repeat(places - frac.len())),
+    match text.split_once(mark) {
+        Some((whole, frac)) if frac.len() >= places => format!("{whole}{mark}{frac}"),
+        Some((whole, frac)) => format!("{whole}{mark}{frac}{}", "0".repeat(places - frac.len())),
         None if places == 0 => text.to_string(),
-        None => format!("{text}.{}", "0".repeat(places)),
+        None => format!("{text}{mark}{}", "0".repeat(places)),
     }
 }
 

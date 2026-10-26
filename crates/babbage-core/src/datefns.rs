@@ -213,9 +213,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
             let local = Number::from_i64(day)
                 .add(&rest)?
                 .mul(&Number::from_i64(86_400))?;
-            Ok(digits(local.sub(&Number::from_i64(
-                settings::local_offset_seconds(),
-            ))?))
+            Ok(digits(settings::wall_to_utc(&local)?))
         }
         DateFn::AsIso => as_iso(&args[0]),
         DateFn::AsTimecode => {
@@ -289,7 +287,7 @@ pub fn first_of(year: i64, month: u32) -> Option<Value> {
 /// The zone a text value names: `local`, or what `Zone::to_spec` wrote.
 fn zone_arg(v: &Value) -> Result<Zone, Error> {
     match v.words() {
-        Some("local") => Ok(Zone::Fixed(settings::local_offset_seconds())),
+        Some("local") => Ok(settings::local_zone()),
         Some(spec) => {
             Zone::from_spec(spec).ok_or(Error::UnsupportedOperation("this time zone is not known"))
         }
@@ -449,7 +447,7 @@ fn to_date(v: &Value) -> Result<Value, Error> {
             {
                 seconds = seconds.div(&thousand)?;
             }
-            let local = seconds.add(&Number::from_i64(settings::local_offset_seconds()))?;
+            let local = settings::utc_to_wall(&seconds)?;
             Ok(Value::date(local.div(&seconds_per_day())?))
         }
         _ => Err(Error::UnsupportedOperation(
@@ -477,7 +475,12 @@ fn as_iso(v: &Value) -> Result<Value, Error> {
     } else {
         secs
     };
-    let offset = settings::local_offset_seconds();
+    let wall = Number::from_i64(day)
+        .mul(&seconds_per_day())?
+        .add(&seconds_in_day)?;
+    let utc_at =
+        i64::try_from(&settings::wall_to_utc(&wall)?.floor()).map_err(|_| Error::Overflow)?;
+    let offset = settings::local_offset_at(utc_at);
     let zone = if offset == 0 {
         "Z".to_string()
     } else {

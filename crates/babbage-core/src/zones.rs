@@ -47,6 +47,11 @@ impl Zone {
         }
     }
 
+    /// The zone with this IANA name, such as `America/New_York`.
+    pub fn named(name: &str) -> Option<Zone> {
+        name.parse::<Tz>().ok().map(Zone::Named)
+    }
+
     /// A text form that can travel inside a value: `local`, `fixed:-28800` or `tz:Asia/Tokyo`.
     pub fn to_spec(self) -> String {
         match self {

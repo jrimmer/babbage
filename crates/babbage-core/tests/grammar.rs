@@ -92,8 +92,8 @@ fn bad_characters_report_offsets_in_bytes_not_chars() {
         })
     );
     assert_eq!(
-        evaluate("1; 2"),
-        Err(Error::UnexpectedChar { ch: ';', at: 1 })
+        evaluate("1 § 2"),
+        Err(Error::UnexpectedChar { ch: '§', at: 2 })
     );
     assert_eq!(
         evaluate("1 — 2"),
