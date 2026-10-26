@@ -22,6 +22,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("keys", keyboard_features),
     ("quit-saves", quit_saves),
     ("local-time", local_time),
+    ("tz-database", tz_database),
     ("number-format", number_format),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -130,12 +131,25 @@ fn answers_for(h: &Harness, app: &mut App, lines: &[(&str, &str)]) -> anyhow::Re
     })
 }
 
+/// The vendored zoneinfo files (IANA 2026e), so zone checks give the same answers on any machine.
+fn tzdir(h: &Harness) -> String {
+    h.repo
+        .join("crates/babbage-core/tests/fixtures/zoneinfo")
+        .to_string_lossy()
+        .into_owned()
+}
+
 fn local_time(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = tzdir(h);
     // Los Angeles is on daylight time in June and standard time in January: one fixed offset cannot do both.
     let mut app = h.launch(
         "local-la",
         None,
-        &[("TZ", "America/Los_Angeles"), ("BABBAGE_NOW", FIXED_NOW)],
+        &[
+            ("TZ", "America/Los_Angeles"),
+            ("BABBAGE_NOW", FIXED_NOW),
+            ("BABBAGE_TZDIR", &dir),
+        ],
     )?;
     let s = answers_for(
         h,
@@ -170,7 +184,11 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     let mut app = h.launch(
         "local-kolkata",
         None,
-        &[("TZ", "Asia/Kolkata"), ("BABBAGE_NOW", FIXED_NOW)],
+        &[
+            ("TZ", "Asia/Kolkata"),
+            ("BABBAGE_NOW", FIXED_NOW),
+            ("BABBAGE_TZDIR", &dir),
+        ],
     )?;
     answers_for(
         h,
@@ -183,13 +201,70 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     let mut app = h.launch(
         "local-late",
         None,
-        &[("TZ", "America/Los_Angeles"), ("BABBAGE_NOW", "1718506800")],
+        &[
+            ("TZ", "America/Los_Angeles"),
+            ("BABBAGE_NOW", "1718506800"),
+            ("BABBAGE_TZDIR", &dir),
+        ],
     )?;
     answers_for(
         h,
         &mut app,
         &[("today", "June 15"), ("now", "June 15 at 8:00 pm")],
     )?;
+    app.finish()
+}
+
+/// 2026-12-01 12:00 UTC, after the rule changes that came in tzdata releases newer than the bundled 2025b.
+const AFTER_RULE_CHANGES: &str = "1796126400";
+
+fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = tzdir(h);
+    // The machine's files say Vancouver stays on UTC-7 from November 2026; the bundled 2025b says UTC-8.
+    let mut app = h.launch(
+        "tz-system",
+        None,
+        &[
+            ("TZ", "America/Vancouver"),
+            ("BABBAGE_NOW", AFTER_RULE_CHANGES),
+            ("BABBAGE_TZDIR", &dir),
+        ],
+    )?;
+    let s = answers_for(
+        h,
+        &mut app,
+        &[
+            ("now", "December 1 at 5:00 am"),
+            ("noon in Casablanca", "7:00 pm"),
+            ("time in Paris", "1:00 pm"),
+        ],
+    )?;
+    ensure!(
+        s["tzdb"].as_str() == Some("2026e"),
+        "the app should report the machine's release, got {:?}",
+        s["tzdb"]
+    );
+    app.finish()?;
+
+    let config = h.logs.join("bundled-zones.settings");
+    std::fs::write(&config, "tz_source = bundled\n")?;
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch(
+        "tz-bundled",
+        None,
+        &[
+            ("TZ", "America/Vancouver"),
+            ("BABBAGE_NOW", AFTER_RULE_CHANGES),
+            ("BABBAGE_TZDIR", &dir),
+            ("BABBAGE_CONFIG_FILE", &config),
+        ],
+    )?;
+    let s = answers_for(h, &mut app, &[("now", "December 1 at 4:00 am")])?;
+    ensure!(
+        s["tzdb"].as_str() == Some("2025b"),
+        "the bundled source should report 2025b, got {:?}",
+        s["tzdb"]
+    );
     app.finish()
 }
 

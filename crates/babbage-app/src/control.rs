@@ -174,6 +174,7 @@ pub fn report(v: &SheetView) -> Value {
         "cursor": {"line": head.line, "col": head.col},
         "selection": sel,
         "total": v.computed.total.as_ref().map(|t| json!({"text": t.text, "exact": t.exact, "error": t.error})),
+        "tzdb": babbage_core::settings::scoped(crate::prefs::current(), babbage_core::zones::current_release),
         "sidebar_open": v.sidebar_open,
         "answer_focus": v.answer_focus,
         "rename": v.rename.as_ref().map(|r| r.text.clone()),

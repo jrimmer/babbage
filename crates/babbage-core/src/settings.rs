@@ -40,6 +40,8 @@ pub struct Settings {
     /// The currency a bare `$` means: `AUD` in Australia. None is US dollars.
     pub dollar: Option<&'static str>,
     pub volume_system: VolumeSystem,
+    /// Where zone rules come from: the bundled database (the default) or the machine's zoneinfo files.
+    pub zone_source: crate::zones::ZoneSource,
     /// How numbers are typed and shown: `1,234.56`, `1.234,56` or `1 234,56`.
     pub number_format: crate::format::NumberFormat,
 }
@@ -68,6 +70,10 @@ pub fn dollar_code() -> &'static str {
             .filter(|c| REGION_DOLLARS.contains(c))
             .unwrap_or("USD")
     })
+}
+
+pub fn zone_source() -> crate::zones::ZoneSource {
+    current(|s| s.zone_source.clone())
 }
 
 pub fn volume_system() -> VolumeSystem {

@@ -1,18 +1,52 @@
 //! Time zones: which zone a city, country or abbreviation means, and how a wall-clock time maps to an instant.
 //!
-//! Rules come from the IANA database bundled with `chrono-tz`, so results do not depend on the machine.
+//! Rules come from the IANA database bundled with `chrono-tz`, so results do not depend on the machine, or, when
+//! the settings ask for it, from the machine's own zoneinfo files (kept current by the operating system), with
+//! the bundled copy as the fallback for any zone the machine does not have.
 //! Seconds are whole numbers throughout; no floating point is used.
 
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
 use chrono::{DateTime, Offset, TimeZone};
 use chrono_tz::{TZ_VARIANTS, Tz};
 
+/// The IANA release the bundled database carries.
+pub const BUNDLED_RELEASE: &str = "2025b";
+
+/// Where zone rules come from.
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub enum ZoneSource {
+    /// The database inside the program: the same answers on every machine.
+    #[default]
+    Bundled,
+    /// The zoneinfo files in this folder (usually `/usr/share/zoneinfo`), falling back to the bundled
+    /// database for a zone the folder does not have.
+    System { dir: PathBuf },
+}
+
+/// A zone read from a TZif file.
+#[derive(Debug)]
+pub struct Loaded {
+    name: String,
+    rules: tz::TimeZone,
+}
+
+impl PartialEq for Loaded {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
+    }
+}
+
+impl Eq for Loaded {}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Zone {
-    /// A place with daylight saving rules.
+    /// A place with daylight saving rules, from the bundled database.
     Named(Tz),
+    /// A place with daylight saving rules, from the machine's zoneinfo files.
+    Loaded(&'static Loaded),
     /// A fixed offset in seconds east of UTC: `GMT+8`, `PST`.
     Fixed(i64),
 }
@@ -22,6 +56,10 @@ impl Zone {
     pub fn offset_at(self, utc: i64) -> i64 {
         match self {
             Zone::Fixed(seconds) => seconds,
+            Zone::Loaded(loaded) => loaded
+                .rules
+                .find_local_time_type(utc)
+                .map_or(0, |t| i64::from(t.ut_offset())),
             Zone::Named(tz) => DateTime::from_timestamp(utc, 0).map_or(0, |instant| {
                 i64::from(
                     tz.offset_from_utc_datetime(&instant.naive_utc())
@@ -47,8 +85,13 @@ impl Zone {
         }
     }
 
-    /// The zone with this IANA name, such as `America/New_York`.
+    /// The zone with this IANA name, such as `America/New_York`, from the source the settings choose.
     pub fn named(name: &str) -> Option<Zone> {
+        if let ZoneSource::System { dir } = crate::settings::zone_source()
+            && let Some(loaded) = load(&dir, name)
+        {
+            return Some(Zone::Loaded(loaded));
+        }
         name.parse::<Tz>().ok().map(Zone::Named)
     }
 
@@ -57,6 +100,7 @@ impl Zone {
         match self {
             Zone::Fixed(seconds) => format!("fixed:{seconds}"),
             Zone::Named(tz) => format!("tz:{}", tz.name()),
+            Zone::Loaded(loaded) => format!("tz:{}", loaded.name),
         }
     }
 
@@ -64,10 +108,7 @@ impl Zone {
         if let Some(seconds) = spec.strip_prefix("fixed:") {
             return seconds.parse().ok().map(Zone::Fixed);
         }
-        spec.strip_prefix("tz:")?
-            .parse::<Tz>()
-            .ok()
-            .map(Zone::Named)
+        Zone::named(spec.strip_prefix("tz:")?)
     }
 }
 
@@ -306,17 +347,60 @@ const LEGACY_PREFIXES: &[&str] = &[
     "Etc/", "SystemV/", "US/", "Canada/", "Brazil/", "Chile/", "Mexico/",
 ];
 
-fn named(name: &str) -> Zone {
-    Zone::Named(
-        name.parse::<Tz>()
-            .unwrap_or_else(|_| panic!("{name} is not in the bundled time zone database")),
-    )
+/// Reads a zone from `dir`, once. A name that could leave the folder is refused.
+fn load(dir: &Path, name: &str) -> Option<&'static Loaded> {
+    type Cache = Mutex<HashMap<(PathBuf, String), Option<&'static Loaded>>>;
+    static CACHE: OnceLock<Cache> = OnceLock::new();
+    let plain = !name.is_empty()
+        && name
+            .split('/')
+            .all(|part| !part.is_empty() && part != "." && part != "..")
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '_' | '-' | '+'));
+    if !plain {
+        return None;
+    }
+    let mut cache = CACHE.get_or_init(Default::default).lock().ok()?;
+    let key = (dir.to_path_buf(), name.to_string());
+    if let Some(found) = cache.get(&key) {
+        return *found;
+    }
+    let loaded = std::fs::read(dir.join(name))
+        .ok()
+        .and_then(|bytes| tz::TimeZone::from_tz_data(&bytes).ok())
+        .map(|rules| {
+            &*Box::leak(Box::new(Loaded {
+                name: name.to_string(),
+                rules,
+            }))
+        });
+    cache.insert(key, loaded);
+    loaded
 }
 
-fn city_table() -> &'static HashMap<String, Zone> {
-    static TABLE: OnceLock<HashMap<String, Zone>> = OnceLock::new();
+/// The IANA release of a zoneinfo folder, from the first line of its `tzdata.zi` (`# version 2026e`).
+pub fn release(dir: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(dir.join("tzdata.zi")).ok()?;
+    let first = text.lines().next()?;
+    first
+        .strip_prefix("# version ")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+/// The release of the rules the current settings use: the folder's when it has one, else the bundled one.
+pub fn current_release() -> String {
+    match crate::settings::zone_source() {
+        ZoneSource::System { dir } => release(&dir).unwrap_or_else(|| BUNDLED_RELEASE.to_string()),
+        ZoneSource::Bundled => BUNDLED_RELEASE.to_string(),
+    }
+}
+
+fn city_table() -> &'static HashMap<String, &'static str> {
+    static TABLE: OnceLock<HashMap<String, &'static str>> = OnceLock::new();
     TABLE.get_or_init(|| {
-        let mut table: HashMap<String, Zone> = HashMap::new();
+        let mut table: HashMap<String, &'static str> = HashMap::new();
         let mut zones: Vec<&Tz> = TZ_VARIANTS.iter().collect();
         zones.sort_by_key(|tz| tz.name());
         for tz in zones {
@@ -329,10 +413,10 @@ fn city_table() -> &'static HashMap<String, Zone> {
             };
             table
                 .entry(city.replace('_', " ").to_lowercase())
-                .or_insert(Zone::Named(*tz));
+                .or_insert(name);
         }
         for (alias, iana) in ALIASES.iter().chain(COUNTRIES).chain(REGIONS) {
-            table.insert((*alias).to_string(), named(iana));
+            table.insert((*alias).to_string(), *iana);
         }
         table
     })
@@ -347,7 +431,7 @@ pub fn place(words: &[&str]) -> Option<Zone> {
     if let Some((_, seconds)) = ABBREVIATIONS.iter().find(|(abbr, _)| *abbr == name) {
         return Some(Zone::Fixed(*seconds));
     }
-    city_table().get(&name).copied()
+    city_table().get(&name).and_then(|iana| Zone::named(iana))
 }
 
 /// `GMT+8` or `UTC-5:30` as a fixed zone, from the hours and minutes written after the sign.
@@ -404,7 +488,7 @@ mod tests {
 
     #[test]
     fn a_repeated_hour_takes_the_first_reading_and_a_skipped_hour_the_offset_before() {
-        let new_york = named("America/New_York");
+        let new_york = Zone::named("America/New_York").expect("bundled");
         // 2024-11-03 01:30 happens twice; the first is EDT (UTC-4).
         let local = 1_730_597_400;
         assert_eq!(new_york.local_to_utc(local), local + 4 * 3600);

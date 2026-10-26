@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 use babbage_core::NumberFormat;
 use babbage_core::settings::{Settings, VolumeSystem};
-use babbage_core::zones::Zone;
+use babbage_core::zones::{Zone, ZoneSource};
 
 /// The settings for this run, read once.
 pub fn current() -> &'static Settings {
@@ -21,6 +21,7 @@ pub fn current() -> &'static Settings {
             std::env::var("TZ").ok().as_deref(),
             std::fs::read_link("/etc/localtime").ok().as_deref(),
             std::env::var("BABBAGE_NOW").ok().as_deref(),
+            std::env::var("BABBAGE_TZDIR").ok().as_deref(),
         )
     })
 }
@@ -35,15 +36,25 @@ fn config_path() -> Option<std::path::PathBuf> {
     Some(base.join("babbage").join("settings"))
 }
 
-/// The settings from a config file's text, the `TZ` variable, the `/etc/localtime` link and the test clock.
+/// Where the machine keeps its zone rules.
+const SYSTEM_ZONEINFO: &str = "/usr/share/zoneinfo";
+
+/// The settings from a config file's text, the `TZ` variable, the `/etc/localtime` link, the test clock and
+/// the zoneinfo folder to read (None means the machine's own).
 pub fn from_parts(
     file: &str,
     tz_env: Option<&str>,
     localtime_link: Option<&std::path::Path>,
     now_override: Option<&str>,
+    tzdir_override: Option<&str>,
 ) -> Settings {
-    let mut settings = Settings::default();
-    let mut zone_from_file = None;
+    let mut settings = Settings {
+        zone_source: ZoneSource::System {
+            dir: tzdir_override.unwrap_or(SYSTEM_ZONEINFO).into(),
+        },
+        ..Settings::default()
+    };
+    let mut zone_from_file: Option<String> = None;
     for line in file.lines() {
         let line = line.split('#').next().unwrap_or("").trim();
         let Some((key, value)) = line.split_once('=') else {
@@ -66,7 +77,12 @@ pub fn from_parts(
                     settings.work_hours_per_day = Some(h);
                 }
             }
-            "timezone" if value != "system" => zone_from_file = Zone::named(value),
+            "timezone" if value != "system" => zone_from_file = Some(value.to_string()),
+            "tz_source" => {
+                if value == "bundled" {
+                    settings.zone_source = ZoneSource::Bundled;
+                }
+            }
             "dollar" => {
                 settings.dollar = babbage_core::settings::REGION_DOLLARS
                     .iter()
@@ -83,7 +99,13 @@ pub fn from_parts(
             _ => {}
         }
     }
-    settings.local_zone = zone_from_file.or_else(|| system_zone(tz_env, localtime_link));
+    // The zone is looked up under the chosen rule source, so it must be resolved inside that scope.
+    let source_only = settings.clone();
+    settings.local_zone = babbage_core::settings::scoped(&source_only, || {
+        zone_from_file
+            .map(|name: String| Zone::named(&name))
+            .unwrap_or_else(|| system_zone(tz_env, localtime_link))
+    });
     settings.now_utc_seconds = now_override.and_then(|n| n.trim().parse().ok());
     settings
 }
@@ -106,35 +128,51 @@ mod tests {
     use super::*;
     use std::path::Path;
 
+    /// Real zoneinfo files that ship with the engine's tests, so these tests do not depend on the machine.
+    fn fixtures() -> String {
+        format!(
+            "{}/../babbage-core/tests/fixtures/zoneinfo",
+            env!("CARGO_MANIFEST_DIR")
+        )
+    }
+
+    fn parts(file: &str, tz: Option<&str>, link: Option<&Path>, now: Option<&str>) -> Settings {
+        from_parts(file, tz, link, now, Some(&fixtures()))
+    }
+
+    fn zone(s: &Settings) -> Option<String> {
+        s.local_zone.map(Zone::to_spec)
+    }
+
     #[test]
     fn the_tz_variable_wins_over_the_localtime_link() {
-        let s = from_parts(
+        let s = parts(
             "",
             Some("Asia/Tokyo"),
             Some(Path::new("/usr/share/zoneinfo/Europe/Paris")),
             None,
         );
-        assert_eq!(s.local_zone, Zone::named("Asia/Tokyo"));
+        assert_eq!(zone(&s).as_deref(), Some("tz:Asia/Tokyo"));
     }
 
     #[test]
     fn the_localtime_link_names_the_zone_when_tz_is_unset() {
-        let s = from_parts(
+        let s = parts(
             "",
             None,
             Some(Path::new("/usr/share/zoneinfo/America/Los_Angeles")),
             None,
         );
-        assert_eq!(s.local_zone, Zone::named("America/Los_Angeles"));
-        let s = from_parts("", Some(":America/Chicago"), None, None);
-        assert_eq!(s.local_zone, Zone::named("America/Chicago"));
+        assert_eq!(zone(&s).as_deref(), Some("tz:America/Los_Angeles"));
+        let s = parts("", Some(":America/Chicago"), None, None);
+        assert_eq!(zone(&s).as_deref(), Some("tz:America/Chicago"));
     }
 
     #[test]
     fn nothing_known_means_utc_not_a_guess() {
-        assert_eq!(from_parts("", None, None, None).local_zone, None);
+        assert_eq!(parts("", None, None, None).local_zone, None);
         assert_eq!(
-            from_parts(
+            parts(
                 "",
                 Some("Not/AZone"),
                 Some(Path::new("/etc/elsewhere")),
@@ -146,8 +184,41 @@ mod tests {
     }
 
     #[test]
+    fn zone_rules_come_from_the_machine_unless_the_file_says_bundled() {
+        let s = parts("", None, None, None);
+        assert_eq!(
+            s.zone_source,
+            ZoneSource::System {
+                dir: fixtures().into()
+            }
+        );
+        let s = parts("tz_source = bundled\n", None, None, None);
+        assert_eq!(s.zone_source, ZoneSource::Bundled);
+        let s = from_parts("", None, None, None, None);
+        assert_eq!(
+            s.zone_source,
+            ZoneSource::System {
+                dir: "/usr/share/zoneinfo".into()
+            }
+        );
+    }
+
+    #[test]
+    fn a_zone_the_machine_has_is_read_from_its_files() {
+        let s = parts("", Some("America/Vancouver"), None, None);
+        assert!(matches!(s.local_zone, Some(Zone::Loaded(_))));
+        let s = parts(
+            "tz_source = bundled\n",
+            Some("America/Vancouver"),
+            None,
+            None,
+        );
+        assert!(matches!(s.local_zone, Some(Zone::Named(_))));
+    }
+
+    #[test]
     fn the_file_sets_the_format_work_hours_and_zone() {
-        let s = from_parts(
+        let s = parts(
             "number_format = western-europe  # decimal comma\nwork_hours = 7\ntimezone = Pacific/Auckland\nbogus line\n",
             Some("Asia/Tokyo"),
             None,
@@ -155,22 +226,22 @@ mod tests {
         );
         assert_eq!(s.number_format, NumberFormat::WesternEurope);
         assert_eq!(s.work_hours_per_day, Some(7));
-        assert_eq!(s.local_zone, Zone::named("Pacific/Auckland"));
+        assert_eq!(zone(&s).as_deref(), Some("tz:Pacific/Auckland"));
     }
 
     #[test]
     fn the_file_sets_the_dollar_and_the_volume_system() {
-        let s = from_parts("dollar = aud\nvolume_system = imperial\n", None, None, None);
+        let s = parts("dollar = aud\nvolume_system = imperial\n", None, None, None);
         assert_eq!(s.dollar, Some("AUD"));
         assert_eq!(s.volume_system, VolumeSystem::Imperial);
-        let s = from_parts("dollar = EUR\nvolume_system = metric\n", None, None, None);
+        let s = parts("dollar = EUR\nvolume_system = metric\n", None, None, None);
         assert_eq!(s.dollar, None);
         assert_eq!(s.volume_system, VolumeSystem::UsCustomary);
     }
 
     #[test]
     fn bad_values_are_ignored_and_the_test_clock_is_read() {
-        let s = from_parts(
+        let s = parts(
             "number_format = mars\nwork_hours = 99\ntimezone = system\n",
             None,
             None,
