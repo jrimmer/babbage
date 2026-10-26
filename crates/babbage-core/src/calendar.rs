@@ -154,7 +154,10 @@ pub fn nth_weekday(year: i64, month: u32, weekday_index: u32, n: u32) -> Civil {
 
 /// Monday to Friday between two days, counting the first and not the last (a half-open range).
 pub fn workdays_between(from: i64, to: i64) -> i64 {
-    if to <= from {
+    if to == from {
+        return 0;
+    }
+    if to < from {
         return -workdays_between(to, from);
     }
     let full_weeks = (to - from) / 7;

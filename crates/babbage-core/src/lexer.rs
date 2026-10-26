@@ -374,6 +374,21 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
             c if c.is_alphabetic() => {
                 // A function name, with any digits it ends in (`log10`), wins over a unit of the same spelling (`min`).
                 let letters_end = word_end(&chars, i);
+                // `Valentine's` and `year's` are words with an apostrophe inside, not a unit and a stray mark.
+                if chars.get(letters_end).is_some_and(|(_, ch)| *ch == '\'')
+                    && chars
+                        .get(letters_end + 1)
+                        .is_some_and(|(_, ch)| ch.is_alphabetic())
+                {
+                    let end = word_end(&chars, letters_end + 1);
+                    let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
+                    out.push(Token {
+                        tok: Tok::Word(word),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 let mut name_end = letters_end;
                 while chars
                     .get(name_end)
@@ -851,10 +866,12 @@ fn looks_like_date_format(text: &str) -> bool {
     let letters_only = text
         .chars()
         .all(|c| c.is_ascii_alphabetic() || " ,.:/-'".contains(c));
+    let clock_pattern = text.contains(':') && text.chars().any(|c| "hHms".contains(c));
     letters_only
-        && ["yy", "MM", "dd", "EEE", "HH", "hh"]
+        && (["yy", "MM", "dd", "EEE", "HH", "hh"]
             .iter()
             .any(|p| text.contains(p))
+            || clock_pattern)
 }
 
 fn word_end(chars: &[(usize, char)], from: usize) -> usize {

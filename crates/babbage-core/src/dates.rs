@@ -25,13 +25,19 @@ pub fn month_number(word: &str) -> Option<u32> {
         .map(|i| i as u32 + 1)
 }
 
+/// A weekday by its full name, its first three letters, or `tues`, `weds`, `thur`, `thurs`.
 pub fn weekday_index(word: &str) -> Option<u32> {
     let w = word.to_lowercase();
     WEEKDAYS
         .iter()
         .position(|d| {
-            d.to_lowercase() == w
-                || (w.len() >= 3 && d.to_lowercase().starts_with(&w) && w.len() <= 4)
+            let d = d.to_lowercase();
+            w == d
+                || (w.len() == 3 && d.starts_with(&w))
+                || matches!(
+                    (d.as_str(), w.as_str()),
+                    ("tuesday", "tues") | ("wednesday", "weds") | ("thursday", "thur" | "thurs")
+                )
         })
         .map(|i| i as u32)
 }
@@ -71,12 +77,16 @@ impl Bias {
     }
 }
 
+/// The years a yearless date can mean: four either side of this one, so the next or last leap day is in range.
+fn candidate_years(this_year: i64) -> impl Iterator<Item = i64> {
+    this_year - 4..=this_year + 4
+}
+
 /// The day of the year that falls on `month` and `day`, chosen by `bias`.
 fn nearest_occurrence(month: u32, day: u32, bias: Bias) -> Option<i64> {
     let (today, _) = settings::local_now();
     let this_year = calendar::civil_from_days(today).year;
-    let candidates = [this_year - 1, this_year, this_year + 1, this_year + 2]
-        .into_iter()
+    let candidates = candidate_years(this_year)
         .filter(|y| {
             calendar::is_valid(Civil {
                 year: *y,
@@ -116,18 +126,20 @@ fn holiday(words: &[&str], year: Option<i64>, bias: Bias) -> Option<i64> {
         Some(y) => Some(calendar::days_from_civil(f(y))),
         None => bias.pick(
             today,
-            [this_year - 1, this_year, this_year + 1, this_year + 2]
-                .into_iter()
-                .map(|y| calendar::days_from_civil(f(y))),
+            candidate_years(this_year).map(|y| calendar::days_from_civil(f(y))),
         ),
     };
     match words {
         ["christmas"] | ["christmas", "day"] => at(12, 25),
-        ["new", "year"] | ["new", "years"] | ["new", "year's"] | ["new", "year's", "day"] => {
-            at(1, 1)
-        }
+        ["new", "year"]
+        | ["new", "years"]
+        | ["new", "year's"]
+        | ["new", "year", "day"]
+        | ["new", "year's", "day"] => at(1, 1),
         ["halloween"] => at(10, 31),
-        ["valentine's", "day"] | ["valentines", "day"] | ["valentine's"] => at(2, 14),
+        ["valentine's", "day"] | ["valentines", "day"] | ["valentine's"] | ["valentines"] => {
+            at(2, 14)
+        }
         ["easter"] => movable(&calendar::easter),
         ["thanksgiving"] => movable(&|y| calendar::nth_weekday(y, 11, 3, 4)),
         ["black", "friday"] => movable(&|y| {
@@ -145,6 +157,26 @@ fn word_of(t: Option<&Token>) -> Option<String> {
     }
 }
 
+/// Like `word_of`, but a unit written as one of the words a date uses (`year`, `day`, `st`, `nd`, `rd`, `th`)
+/// counts as that word: `New Year`, `Valentine's Day` and `June 1st` lex those as units.
+fn date_word_of(t: Option<&Token>) -> Option<String> {
+    match t.map(|t| &t.tok) {
+        Some(Tok::Word(w)) => Some(w.to_lowercase()),
+        Some(Tok::Unit(u)) => {
+            let is = |name: &str| crate::units::lookup(name).is_some_and(|k| &k == u);
+            if is("year") {
+                Some("year".to_string())
+            } else if is("day") {
+                Some("day".to_string())
+            } else {
+                let symbol = u.symbol();
+                matches!(symbol.as_str(), "st" | "nd" | "rd" | "th").then_some(symbol)
+            }
+        }
+        _ => None,
+    }
+}
+
 fn number_of(t: Option<&Token>) -> Option<i64> {
     match t.map(|t| &t.tok) {
         Some(Tok::Num(n)) => int(n),
@@ -155,7 +187,7 @@ fn number_of(t: Option<&Token>) -> Option<i64> {
 /// Reads an optional `st`/`nd`/`rd`/`th`, then an optional comma, then an optional four-digit year after a day number.
 fn year_after(toks: &[Token], mut i: usize) -> (Option<i64>, usize) {
     if matches!(
-        word_of(toks.get(i)).as_deref(),
+        date_word_of(toks.get(i)).as_deref(),
         Some("st" | "nd" | "rd" | "th")
     ) {
         i += 1;
@@ -261,7 +293,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
             // Holidays, one to three words, with an optional year after.
             let hit = [3usize, 2, 1].into_iter().find_map(|length| {
                 let words: Vec<String> = (0..length)
-                    .filter_map(|k| word_of(toks.get(i + k)))
+                    .filter_map(|k| date_word_of(toks.get(i + k)))
                     .collect();
                 if words.len() != length {
                     return None;
