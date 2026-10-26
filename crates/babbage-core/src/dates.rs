@@ -273,12 +273,19 @@ fn year_after(toks: &[Token], mut i: usize) -> (Option<i64>, usize) {
 
 /// Replaces date words and patterns with date values.
 pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
+    // `3 March to 30 May`: the two ends of a range are in the same year, this one.
+    let range = toks
+        .iter()
+        .any(|t| matches!(word_of(Some(t)).as_deref(), Some("to" | "through")));
     let (today, seconds) = settings::local_now();
     let mut out: Vec<Token> = Vec::with_capacity(toks.len());
     let mut i = 0;
     while i < toks.len() {
         let at = toks[i].at;
-        let bias = Bias::before(&out);
+        let bias = match Bias::before(&out) {
+            Bias::Nearest if range => Bias::ThisYear,
+            other => other,
+        };
         let push = |out: &mut Vec<Token>, v: Value| {
             out.push(Token {
                 tok: Tok::Value(v),

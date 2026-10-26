@@ -195,6 +195,47 @@ fn unit_products(toks: Vec<Token>) -> Vec<Token> {
     out
 }
 
+/// A date moved by several lengths of time written one after another moves by each in turn:
+/// `June 5 + 2 months 3 days` is `June 5 + 2 months + 3 days`, `April 1, 2019 - 3 months 5 days` is
+/// `April 1, 2019 - 3 months - 5 days`. Months and years move the calendar, the rest a number of days.
+fn split_date_shifts(toks: Vec<Token>) -> Vec<Token> {
+    let seconds = crate::units::lookup("s").map(|s| s.dim());
+    let is_length = |t: Option<&Token>, u: Option<&Token>| {
+        matches!(t.map(|t| &t.tok), Some(Tok::Num(_)))
+            && matches!(u.map(|t| &t.tok), Some(Tok::Unit(unit)) if Some(unit.dim()) == seconds)
+    };
+    let mut out = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        let is_date = matches!(&toks[i].tok, Tok::Value(v) if v.kind() == crate::value::Kind::Date);
+        let op = toks.get(i + 1).map(|t| t.tok.clone());
+        if is_date && matches!(op, Some(Tok::Plus | Tok::Minus)) {
+            let mut pairs = 0;
+            while is_length(toks.get(i + 2 + 2 * pairs), toks.get(i + 3 + 2 * pairs)) {
+                pairs += 1;
+            }
+            if pairs >= 2 {
+                out.push(toks[i].clone());
+                for p in 0..pairs {
+                    // A repeated operator sits where the token before it ends, so positions never go backwards.
+                    let mut operator = toks[i + 1].clone();
+                    if p > 0 {
+                        operator.at = toks[i + 1 + 2 * p].at;
+                    }
+                    out.push(operator);
+                    out.push(toks[i + 2 + 2 * p].clone());
+                    out.push(toks[i + 3 + 2 * p].clone());
+                }
+                i += 2 + 2 * pairs;
+                continue;
+            }
+        }
+        out.push(toks[i].clone());
+        i += 1;
+    }
+    out
+}
+
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
     // `m` is settled first, so that `2m 25s 10 frames at 24 fps` reads its minutes before the frames are gathered.
     lex_raw(src)
@@ -203,6 +244,7 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         .map(operator_words)
         .map(unit_products)
         .map(crate::dates::rewrite)
+        .map(split_date_shifts)
 }
 
 /// In a run of quantities written one after another (`3h 5m 10s`), `m` next to a unit of time is minutes.

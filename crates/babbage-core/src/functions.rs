@@ -39,6 +39,7 @@ pub enum Func {
     PermutationsOf,
     CombinationsOf,
     AsNumber,
+    AsDms,
     Hex,
     Bin,
     Oct,
@@ -142,7 +143,8 @@ impl Func {
             | Func::Ceil
             | Func::Half
             | Func::IsPrime
-            | Func::AsNumber => Arity::Exactly(1),
+            | Func::AsNumber
+            | Func::AsDms => Arity::Exactly(1),
             Func::Min
             | Func::Max
             | Func::Sum
@@ -247,6 +249,58 @@ pub fn lookup(name: &str) -> Option<Func> {
         .iter()
         .find(|(n, _)| n.eq_ignore_ascii_case(name))
         .map(|(_, f)| *f)
+}
+
+/// `156.742° as DMS` is `156° 44′ 31.2″`: whole degrees, whole minutes, and the rest in seconds, to ten places at
+/// most. A plain number is read as degrees.
+fn as_dms(angle: &Value) -> Result<Value, Error> {
+    let degrees = match angle.kind() {
+        Kind::Plain if angle.unit().is_empty() => angle.number().clone(),
+        Kind::Plain
+            if angle.unit().dim()
+                == units::lookup("deg").ok_or(Error::IncompatibleUnits)?.dim() =>
+        {
+            angle
+                .clone()
+                .convert(&units::lookup("deg").ok_or(Error::IncompatibleUnits)?)?
+                .number()
+                .clone()
+        }
+        _ => return Err(Error::IncompatibleUnits),
+    };
+    let ten = Number::from_i64(10).pow(&Number::from_i64(10))?;
+    let sixty = Number::from_i64(60);
+    let negative = degrees.is_negative();
+    let total = degrees.abs();
+    let whole = |n: &Number| Number::from_ratio(n.floor(), BigInt::one());
+    let d = whole(&total)?;
+    let rest = total.sub(&d)?.mul(&sixty)?;
+    let m = whole(&rest)?;
+    // Seconds to ten decimal places, rounded half up, so a result such as 59.99999999999 carries over.
+    let scaled = rest
+        .sub(&m)?
+        .mul(&sixty)?
+        .mul(&ten)?
+        .add(&Number::from_ratio(BigInt::one(), BigInt::from(2))?)?;
+    let mut s = whole(&scaled)?.div(&ten)?;
+    let (mut d, mut m) = (d, m);
+    if s >= sixty {
+        s = s.sub(&sixty)?;
+        m = m.add(&Number::from_i64(1))?;
+    }
+    if m >= sixty {
+        m = m.sub(&sixty)?;
+        d = d.add(&Number::from_i64(1))?;
+    }
+    let seconds = s.to_exact_decimal().unwrap_or_else(|| "0".to_string());
+    let plain = |n: &Number| n.to_exact_decimal().unwrap_or_default();
+    Ok(Value::text(&format!(
+        "{}{}° {}′ {}″",
+        if negative { "-" } else { "" },
+        plain(&d),
+        plain(&m),
+        seconds
+    )))
 }
 
 /// Trial division, which is exact and quick up to the limit (a million steps at most).
@@ -431,6 +485,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
             Ok(Value::plain(args[0].number().div(&Number::from_i64(3600))?))
         }
         Func::AsNumber => Ok(Value::plain(args[0].number().clone())),
+        Func::AsDms => as_dms(&args[0]),
         Func::Hex => args[0].clone().in_radix(16),
         Func::Bin => args[0].clone().in_radix(2),
         Func::Oct => args[0].clone().in_radix(8),

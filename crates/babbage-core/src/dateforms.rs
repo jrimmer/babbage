@@ -94,6 +94,7 @@ pub fn parse_date_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| days_in(toks))
         .or_else(|| spans(toks))
         .or_else(|| through(toks))
+        .or_else(|| date_to_date(toks))
         .or_else(|| relative(toks))
         .or_else(|| formatted(toks))
         .or_else(|| timestamps(toks))
@@ -363,10 +364,60 @@ fn days_left_in(rest: &[Token]) -> Result<Expr, Error> {
     )
 }
 
-/// `April 1 through April 30`: both ends counted.
+/// `3 March to 30 May` is `2 months 3 weeks 6 days`; `3 March to 30 May in days` and `10 March to 17 March in
+/// workdays` give that many of the unit.
+fn date_to_date(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let is_date = |t: Option<&Token>| matches!(t.map(|t| &t.tok), Some(Tok::Value(v)) if v.kind() == Kind::Date);
+    if !(is_date(toks.first()) && is_word(toks.get(1), "to") && is_date(toks.get(2))) {
+        return None;
+    }
+    let both = vec![
+        Node::Value(value_of(&toks[0])?),
+        Node::Value(value_of(&toks[2])?),
+    ];
+    match &toks[3..] {
+        [] => Some(finish(both, DateFn::SpanBetween)),
+        [
+            word,
+            Token {
+                tok: Tok::Unit(u), ..
+            },
+        ] if is_word(Some(word), "in") => {
+            let day = units::lookup("day")?;
+            let workday = units::lookup("workday")?;
+            if *u == day {
+                Some(finish(both, DateFn::DaysBetween))
+            } else if *u == workday {
+                Some(finish(both, DateFn::WorkdaysBetween))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn value_of(t: &Token) -> Option<Value> {
+    match &t.tok {
+        Tok::Value(v) => Some(v.clone()),
+        _ => None,
+    }
+}
+
+/// `April 1 through April 30`: both ends counted; a trailing `in days` only says what the count is.
 fn through(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let at = toks.iter().position(|t| is_word(Some(t), "through"))?;
     let (a, b) = (&toks[..at], &toks[at + 1..]);
+    let b = match b {
+        [
+            rest @ ..,
+            word,
+            Token {
+                tok: Tok::Unit(u), ..
+            },
+        ] if is_word(Some(word), "in") && units::lookup("day").is_some_and(|d| d == *u) => rest,
+        _ => b,
+    };
     if a.is_empty() || b.is_empty() {
         return None;
     }
@@ -419,7 +470,39 @@ fn relative(toks: &[Token]) -> Option<Result<Expr, Error>> {
         ) {
             return None;
         }
-        return Some(rpn_of(&toks[..n - 2]).map(|l| {
+        // `2 months 3 days after June 5`: each length moves the date in turn.
+        let left = &toks[..n - 2];
+        let pairs: Vec<&[Token]> = left.chunks(2).collect();
+        let several = left.len() >= 4
+            && left.len().is_multiple_of(2)
+            && pairs.iter().all(|p| {
+                matches!(
+                    p,
+                    [
+                        Token {
+                            tok: Tok::Num(_),
+                            ..
+                        },
+                        Token {
+                            tok: Tok::Unit(_),
+                            ..
+                        }
+                    ]
+                )
+            });
+        if several {
+            return Some(
+                pairs
+                    .iter()
+                    .try_fold(vec![Node::Value(date)], |mut x, p| {
+                        x.extend(rpn_of(p)?);
+                        x.push(Node::Bin(sign));
+                        Ok(x)
+                    })
+                    .map(Expr::from_nodes),
+            );
+        }
+        return Some(rpn_of(left).map(|l| {
             let mut x = vec![Node::Value(date)];
             x.extend(l);
             x.push(Node::Bin(sign));

@@ -284,7 +284,13 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
             ':' if depth == 0 => {
                 let prefix: String = chars[..i].iter().collect();
                 let next_is_digit = chars.get(i + 1).is_some_and(char::is_ascii_digit);
-                if prefix.chars().any(char::is_alphabetic) && !next_is_digit {
+                // `now as HH:mm`: after `as`, the colon belongs to a date and time pattern.
+                let in_a_pattern = prefix
+                    .split_whitespace()
+                    .rev()
+                    .nth(1)
+                    .is_some_and(|w| w.eq_ignore_ascii_case("as"));
+                if prefix.chars().any(char::is_alphabetic) && !next_is_digit && !in_a_pattern {
                     label = Some(prefix.trim().to_string());
                     blanks.push((0, i + 1));
                 }

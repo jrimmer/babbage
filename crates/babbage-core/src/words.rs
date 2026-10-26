@@ -122,6 +122,7 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| remainder(toks))
         .or_else(|| count_form(toks))
         .or_else(|| proportion(toks))
+        .or_else(|| as_dms(toks))
         .or_else(|| as_number(toks))
         .or_else(|| to_radix(toks))
         .or_else(|| rounding(toks))
@@ -372,6 +373,18 @@ fn proportion(toks: &[Token]) -> Option<Result<Expr, Error>> {
 
 fn den_len(den: &[Token]) -> usize {
     parse(den).map_or(0, |e| e.nodes().len())
+}
+
+/// `156.742° as DMS`: degrees, minutes and seconds.
+fn as_dms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    if n < 3 || !is_word(toks.last(), "dms") {
+        return None;
+    }
+    let joiner = ["as", "to", "in", "into"]
+        .iter()
+        .any(|w| is_word(toks.get(n - 2), w));
+    joiner.then(|| call(&[&toks[..n - 2]], Func::AsDms))
 }
 
 /// `$100 as number`, `40/day to decimal`, `20% as dec`.

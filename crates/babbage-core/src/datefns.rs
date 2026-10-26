@@ -69,6 +69,8 @@ pub enum DateFn {
     /// The calendar span from a date to now (`time since January 1`) or from now to a date (`time to December 25`).
     SpanSince,
     SpanUntil,
+    /// (date, date): the calendar span from the first to the second.
+    SpanBetween,
 }
 
 impl DateFn {
@@ -98,6 +100,7 @@ impl DateFn {
             | DateFn::ElapsedWeek
             | DateFn::ElapsedDay => 0,
             DateFn::DaysInQuarter
+            | DateFn::SpanBetween
             | DateFn::DaysBetween
             | DateFn::Inclusive
             | DateFn::WorkdaysBetween
@@ -184,6 +187,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
             365
         }),
         DateFn::DaysBetween => days((date_arg(&args[0])?.0 - date_arg(&args[1])?.0).abs()),
+        DateFn::SpanBetween => span_between(&args[0], &args[1]),
         DateFn::SpanSince => calendar_span(&args[0], true),
         DateFn::SpanUntil => calendar_span(&args[0], false),
         DateFn::Until => days(date_arg(&args[0])?.0 - today),
@@ -334,24 +338,39 @@ fn elapsed(f: DateFn) -> Result<Value, Error> {
     Ok(Value::percent(now.sub(&from)?.div(&to.sub(&from)?)?))
 }
 
+/// A date as seconds on the wall clock, from the start of its day when it has no time.
+fn wall_seconds(date: &Value) -> Result<i64, Error> {
+    let whole = date.number().floor();
+    let day = i64::try_from(&whole).map_err(|_| Error::Overflow)?;
+    let rest = date
+        .number()
+        .sub(&Number::from_ratio(whole, num_bigint::BigInt::from(1))?)?
+        .mul(&Number::from_i64(86_400))?;
+    let seconds = i64::try_from(&rest.floor()).map_err(|_| Error::Overflow)?;
+    Ok(day * 86_400 + seconds)
+}
+
 /// The span between a date (at its start, when it has no time) and now, in calendar months, weeks, days and the
-/// clock units: `9 months 3 weeks 4 days 13 hours 11 min`. Zero parts are left out. It is read on the wall
-/// clock, so a daylight saving change between the two does not move the hours.
+/// clock units: `9 months 3 weeks 4 days 13 hours 11 min`.
 fn calendar_span(date: &Value, since: bool) -> Result<Value, Error> {
-    let (day, seconds_into) = {
-        let whole = date.number().floor();
-        let day = i64::try_from(&whole).map_err(|_| Error::Overflow)?;
-        let rest = date
-            .number()
-            .sub(&Number::from_ratio(whole, num_bigint::BigInt::from(1))?)?
-            .mul(&Number::from_i64(86_400))?;
-        let seconds = i64::try_from(&rest.floor()).map_err(|_| Error::Overflow)?;
-        (day, seconds)
-    };
-    let target = day * 86_400 + seconds_into;
+    let target = wall_seconds(date)?;
     let (today, seconds) = settings::local_now();
     let now = today * 86_400 + seconds;
-    let (from, to) = if since { (target, now) } else { (now, target) };
+    if since {
+        span_text(target, now)
+    } else {
+        span_text(now, target)
+    }
+}
+
+/// The span from one date to another: `3 March to 30 May` is `2 months 3 weeks 6 days`.
+fn span_between(from: &Value, to: &Value) -> Result<Value, Error> {
+    span_text(wall_seconds(from)?, wall_seconds(to)?)
+}
+
+/// The calendar span between two wall-clock instants, months then weeks, days and the clock units, with zero parts
+/// left out. It is read on the wall clock, so a daylight saving change between the two does not move the hours.
+fn span_text(from: i64, to: i64) -> Result<Value, Error> {
     let (negative, from, to) = if to < from {
         (true, to, from)
     } else {
