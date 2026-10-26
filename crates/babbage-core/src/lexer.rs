@@ -572,7 +572,7 @@ fn iso_shape_at(chars: &[(usize, char)], i: usize) -> bool {
         i == 0 || !c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | '-' | ':'));
     before_ok
         && after_ok
-        && (0..4).all(digit)
+        && (i..i + 4).all(digit)
         && c(i + 4) == Some('-')
         && digit(i + 5)
         && digit(i + 6)
