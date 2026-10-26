@@ -545,6 +545,37 @@ impl Harness {
         ))
     }
 
+    /// Presses the left button at (`x0`, `y0`), moves to (`x1`, `y1`) in steps and releases it; points are from the
+    /// window's top-left corner.
+    pub fn drag(&mut self, app: &App, from: (f32, f32), to: (f32, f32)) -> anyhow::Result<()> {
+        let w = self.window_of(app.pid)?;
+        let (ax, ay) = (
+            w["at"][0].as_f64().unwrap_or(0.),
+            w["at"][1].as_f64().unwrap_or(0.),
+        );
+        self.pointer.send(&format!(
+            "drag {} {} {} {}",
+            ax + f64::from(from.0),
+            ay + f64::from(from.1),
+            ax + f64::from(to.0),
+            ay + f64::from(to.1)
+        ))
+    }
+
+    /// Turns the wheel `notches` times over (`x`, `y`): positive scrolls down.
+    pub fn scroll(&mut self, app: &App, x: f32, y: f32, notches: i32) -> anyhow::Result<()> {
+        let w = self.window_of(app.pid)?;
+        let (ax, ay) = (
+            w["at"][0].as_f64().unwrap_or(0.),
+            w["at"][1].as_f64().unwrap_or(0.),
+        );
+        self.pointer.send(&format!(
+            "scroll {} {} {notches}",
+            ax + f64::from(x),
+            ay + f64::from(y)
+        ))
+    }
+
     /// Where the app's window starts on the screenshot, in screen pixels.
     pub fn window_origin(&self, app: &App) -> anyhow::Result<(f32, f32)> {
         let w = self.window_of(app.pid)?;

@@ -31,6 +31,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("number-format", number_format),
     ("scrolling", scrolling),
     ("mouse-editing", mouse_editing),
+    ("drag-select", drag_select),
+    ("wheel-scroll", wheel_scroll),
     ("comment-toggle", comment_toggle),
     ("clipboard-lines", clipboard_lines),
     ("no-real-desktop", no_real_desktop),
@@ -1046,6 +1048,62 @@ fn mouse_editing(h: &mut Harness) -> anyhow::Result<()> {
             .as_str()
             .is_some_and(|t| t.contains('X') && t.len() == 7)
     })?;
+    app.finish()
+}
+
+/// Dragging with the left button selects the text between the press and the release, and dragging the other way
+/// selects backwards.
+fn drag_select(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("drag-select", None, &[])?;
+    h.type_text("12 + 345 apples")?;
+    let s = app.wait_for("the line", T, |s| answer(s, 0) == Some("357"))?;
+    let spans = s["lines"][0]["spans"].as_array().context("spans")?;
+    let number = spans
+        .iter()
+        .find(|x| x["text"] == "345")
+        .context("a span for 345")?;
+    let (y, rh) = (f(&s["lines"][0]["y"])?, f(&s["lines"][0]["h"])?);
+    let mid = y + rh / 2.;
+    let start = f(&s["text_x"])? + 1.;
+    let end_of_345 = f(&number["x1"])? - 1.;
+    h.drag(&app, (start, mid), (end_of_345, mid))?;
+    app.wait_for("the dragged text selected", T, |s| {
+        s["selection"] == "12 + 345"
+    })?;
+    // Backwards: from the end of the line to the start of 345.
+    let begin_of_345 = f(&number["x0"])? + 1.;
+    h.drag(&app, (f(&s["text_x"])? + 400., mid), (begin_of_345, mid))?;
+    app.wait_for("the backward drag", T, |s| s["selection"] == "345 apples")?;
+    app.finish()
+}
+
+/// The mouse wheel scrolls the sheet, and scrolling back returns to the top.
+fn wheel_scroll(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("wheel-scroll", None, &[])?;
+    for i in 1..=80 {
+        h.type_line(&format!("{i}"))?;
+    }
+    let s = app.wait_for("a long sheet", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 81)
+    })?;
+    h.press(&["ctrl"], "Home")?;
+    let s2 = app.wait_for("the top", T, |s| s["scroll"].as_f64() == Some(0.))?;
+    let (x, y) = (f(&s2["text_x"])? + 50., 200.);
+    h.scroll(&app, x, y, 5)?;
+    let down = app.wait_for("scrolled down by the wheel", T, |s| {
+        s["scroll"].as_f64().is_some_and(|v| v > 0.)
+    })?;
+    let amount = f(&down["scroll"])?;
+    ensure!(
+        amount > 20.,
+        "five notches moved the sheet {amount} points: {}",
+        s["window"]
+    );
+    h.scroll(&app, x, y, -5)?;
+    app.wait_for("scrolled back up", T, |s| s["scroll"].as_f64() == Some(0.))?;
+    // The caret did not move with the wheel.
+    let top = app.state()?;
+    ensure!(top["cursor"]["line"] == 0);
     app.finish()
 }
 

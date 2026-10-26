@@ -7,6 +7,8 @@ Reads one command per line on stdin and answers "ok" after each; it exits when s
 
     move X Y
     click X Y [left|right] [count]
+    drag X0 Y0 X1 Y1        press at the first point, move to the second in steps, release
+    scroll X Y NOTCHES      wheel notches at the point (positive scrolls down)
 
 X and Y are layout points. The extents are the size of the compositor's whole layout (every output
 together), which the protocol needs to turn a point into an absolute position. It speaks the
@@ -102,6 +104,12 @@ def main(argv):
         wire.send(pointer, 2, struct.pack("<III", now(), BUTTONS[which], state))
         wire.send(pointer, 4)
 
+    def wheel(notches):
+        # axis_source(wheel), then axis_discrete(vertical, value, notches), then frame.
+        wire.send(pointer, 5, struct.pack("<I", 0))
+        wire.send(pointer, 7, struct.pack("<IIii", now(), 0, int(notches * 10 * 256), int(notches)))
+        wire.send(pointer, 4)
+
     roundtrip()
     print("ready", flush=True)
     for line in sys.stdin:
@@ -109,6 +117,30 @@ def main(argv):
         if not words:
             continue
         verb = words[0]
+        if verb == "drag" and len(words) == 5:
+            x0, y0, x1, y1 = (int(float(w)) for w in words[1:])
+            motion(x0, y0)
+            time.sleep(0.15)
+            button("left", 1)
+            time.sleep(0.08)
+            steps = 8
+            for i in range(1, steps + 1):
+                motion(x0 + (x1 - x0) * i // steps, y0 + (y1 - y0) * i // steps)
+                time.sleep(0.05)
+            time.sleep(0.1)
+            button("left", 0)
+            roundtrip()
+            time.sleep(0.1)
+            print("ok", flush=True)
+            continue
+        if verb == "scroll" and len(words) == 4:
+            motion(int(float(words[1])), int(float(words[2])))
+            time.sleep(0.15)
+            wheel(int(words[3]))
+            roundtrip()
+            time.sleep(0.15)
+            print("ok", flush=True)
+            continue
         if verb not in ("move", "click") or len(words) < 3:
             print(f"error: {line.strip()}", flush=True)
             continue
