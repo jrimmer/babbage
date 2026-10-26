@@ -1,5 +1,6 @@
 pub mod approx;
 pub mod calendar;
+mod chinese_new_year;
 pub mod datefns;
 pub mod dateforms;
 pub mod dates;
@@ -9,6 +10,7 @@ pub mod finance;
 pub mod format;
 pub mod functions;
 pub mod lexer;
+pub mod lunar;
 pub mod number;
 pub mod parser;
 pub mod phrase;

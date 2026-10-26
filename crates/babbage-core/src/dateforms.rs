@@ -240,8 +240,35 @@ fn spans(toks: &[Token]) -> Option<Result<Expr, Error>> {
             return Some(finish(span, f));
         }
     }
+    // `time since January 1`, `time to December 25`: the calendar span to or from a date.
+    for (lead, f) in [
+        (&["time", "since"][..], DateFn::SpanSince),
+        (&["time", "until"], DateFn::SpanUntil),
+        (&["time", "till"], DateFn::SpanUntil),
+        (&["time", "to"], DateFn::SpanUntil),
+    ] {
+        if let Some(n) = lead_len(lead)
+            && let [
+                Token {
+                    tok: Tok::Value(d), ..
+                },
+            ] = &toks[n..]
+            && d.kind() == Kind::Date
+        {
+            return single(n, f);
+        }
+    }
     if let Some(n) = lead_len(&["days", "until"]).or_else(|| lead_len(&["days", "till"])) {
+        if let Some(day) = period_start(&toks[n..]) {
+            return Some(finish(
+                vec![Node::Value(Value::date(Number::from_i64(day)))],
+                DateFn::Until,
+            ));
+        }
         return single(n, DateFn::Until);
+    }
+    if let Some(n) = lead_len(&["days", "left", "in"]) {
+        return Some(days_left_in(&toks[n..]));
     }
     if let Some(n) = lead_len(&["days", "since"]) {
         return single(n, DateFn::Since);
@@ -261,6 +288,79 @@ fn spans(toks: &[Token]) -> Option<Result<Expr, Error>> {
         }
     }
     None
+}
+
+/// The first day of a period named after `until`: `April` is the next 1 April, `next year` the coming 1 January,
+/// `next month` the 1st of the coming month and `next week` the coming Sunday.
+fn period_start(rest: &[Token]) -> Option<i64> {
+    let (today, _) = settings::local_now();
+    let civil = calendar::civil_from_days(today);
+    let first = |year: i64, month: u32| {
+        calendar::days_from_civil(calendar::Civil {
+            year,
+            month,
+            day: 1,
+        })
+    };
+    match rest {
+        [
+            Token {
+                tok: Tok::Word(w), ..
+            },
+        ] => {
+            let month = crate::dates::month_number(w)?;
+            let this = first(civil.year, month);
+            Some(if this > today {
+                this
+            } else {
+                first(civil.year + 1, month)
+            })
+        }
+        [next, period] if is_word(Some(next), "next") => {
+            if is_word(Some(period), "year") {
+                Some(first(civil.year + 1, 1))
+            } else if is_word(Some(period), "month") {
+                let c = calendar::add_months(calendar::Civil { day: 1, ..civil }, 1);
+                Some(calendar::days_from_civil(c))
+            } else if is_word(Some(period), "week") {
+                Some(today + 7 - (i64::from(calendar::weekday(today)) + 1) % 7)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// `days left in 2026`: the days from today to the last day of that year. A month is not accepted: the owner's
+/// the reference app shows no answer for `days left in March`.
+fn days_left_in(rest: &[Token]) -> Result<Expr, Error> {
+    let (today, _) = settings::local_now();
+    let this_year = calendar::civil_from_days(today).year;
+    let [
+        Token {
+            tok: Tok::Num(year),
+            ..
+        },
+    ] = rest
+    else {
+        return Err(Error::UnsupportedOperation("days left in needs a year"));
+    };
+    let year = i64::try_from(year.numer())
+        .ok()
+        .filter(|y| year.is_integer() && (this_year..=9999).contains(y))
+        .ok_or(Error::UnsupportedOperation(
+            "days left in needs this year or a later one",
+        ))?;
+    let last = calendar::days_from_civil(calendar::Civil {
+        year,
+        month: 12,
+        day: 31,
+    });
+    finish(
+        vec![Node::Value(Value::date(Number::from_i64(last)))],
+        DateFn::Until,
+    )
 }
 
 /// `April 1 through April 30`: both ends counted.

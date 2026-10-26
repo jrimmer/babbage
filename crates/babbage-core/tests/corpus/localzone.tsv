@@ -3598,7 +3598,7 @@ America/New_York	October 2, 2002 6:16am to timestamp	1033553760
 America/New_York	October 2, 2002 6:16am as iso8601	2002-10-02T06:16:00-04:00
 America/New_York	1033553760 to date	October 2, 2002 at 6:16 AM
 America/New_York	2002-10-02T10:16:00Z to date	October 2, 2002 at 6:16 AM
-America/New_York	now	June 15, 2024 at 8:00 AM
+America/New_York	now	8:00 AM
 America/New_York	today	June 15
 America/New_York	current timestamp	1718452800
 America/Los_Angeles	November 8, 1998 9:05pm to timestamp	910587900
@@ -4243,8 +4243,8 @@ America/Los_Angeles	1590628260 to date	May 27, 2020 at 6:11 PM
 America/Los_Angeles	2020-05-28T01:11:00Z to date	May 27, 2020 at 6:11 PM
 America/Los_Angeles	June 15, 2024 3:49am to timestamp	1718448540
 America/Los_Angeles	June 15, 2024 3:49am as iso8601	2024-06-15T03:49:00-07:00
-America/Los_Angeles	1718448540 to date	June 15, 2024 at 3:49 AM
-America/Los_Angeles	2024-06-15T10:49:00Z to date	June 15, 2024 at 3:49 AM
+America/Los_Angeles	1718448540 to date	3:49 AM
+America/Los_Angeles	2024-06-15T10:49:00Z to date	3:49 AM
 America/Los_Angeles	February 6, 2024 3:56am to timestamp	1707220560
 America/Los_Angeles	February 6, 2024 3:56am as iso8601	2024-02-06T03:56:00-08:00
 America/Los_Angeles	1707220560 to date	February 6, 2024 at 3:56 AM
@@ -7201,7 +7201,7 @@ America/Los_Angeles	May 7, 2022 11:13am to timestamp	1651947180
 America/Los_Angeles	May 7, 2022 11:13am as iso8601	2022-05-07T11:13:00-07:00
 America/Los_Angeles	1651947180 to date	May 7, 2022 at 11:13 AM
 America/Los_Angeles	2022-05-07T18:13:00Z to date	May 7, 2022 at 11:13 AM
-America/Los_Angeles	now	June 15, 2024 at 5:00 AM
+America/Los_Angeles	now	5:00 AM
 America/Los_Angeles	today	June 15
 America/Los_Angeles	current timestamp	1718452800
 Europe/London	January 15, 1998 12:39pm to timestamp	884867940
@@ -10804,7 +10804,7 @@ Europe/London	June 23, 2019 4:56am to timestamp	1561262160
 Europe/London	June 23, 2019 4:56am as iso8601	2019-06-23T04:56:00+01:00
 Europe/London	1561262160 to date	June 23, 2019 at 4:56 AM
 Europe/London	2019-06-23T03:56:00Z to date	June 23, 2019 at 4:56 AM
-Europe/London	now	June 15, 2024 at 1:00 PM
+Europe/London	now	1:00 PM
 Europe/London	today	June 15
 Europe/London	current timestamp	1718452800
 Australia/Sydney	September 12, 2002 5:45am to timestamp	1031773500
@@ -14407,7 +14407,7 @@ Australia/Sydney	January 21, 2027 1:45pm to timestamp	1800499500
 Australia/Sydney	January 21, 2027 1:45pm as iso8601	2027-01-21T13:45:00+11:00
 Australia/Sydney	1800499500 to date	January 21, 2027 at 1:45 PM
 Australia/Sydney	2027-01-21T02:45:00Z to date	January 21, 2027 at 1:45 PM
-Australia/Sydney	now	June 15, 2024 at 10:00 PM
+Australia/Sydney	now	10:00 PM
 Australia/Sydney	today	June 15
 Australia/Sydney	current timestamp	1718452800
 Asia/Kolkata	June 3, 2018 1:04pm to timestamp	1528011240
@@ -18010,7 +18010,7 @@ Asia/Kolkata	April 25, 1995 9:19am to timestamp	798781740
 Asia/Kolkata	April 25, 1995 9:19am as iso8601	1995-04-25T09:19:00+05:30
 Asia/Kolkata	798781740 to date	April 25, 1995 at 9:19 AM
 Asia/Kolkata	1995-04-25T03:49:00Z to date	April 25, 1995 at 9:19 AM
-Asia/Kolkata	now	June 15, 2024 at 5:30 PM
+Asia/Kolkata	now	5:30 PM
 Asia/Kolkata	today	June 15
 Asia/Kolkata	current timestamp	1718452800
 Asia/Tokyo	November 3, 2024 6:26am to timestamp	1730582760
@@ -21613,7 +21613,7 @@ Asia/Tokyo	July 12, 2025 1:36pm to timestamp	1752294960
 Asia/Tokyo	July 12, 2025 1:36pm as iso8601	2025-07-12T13:36:00+09:00
 Asia/Tokyo	1752294960 to date	July 12, 2025 at 1:36 PM
 Asia/Tokyo	2025-07-12T04:36:00Z to date	July 12, 2025 at 1:36 PM
-Asia/Tokyo	now	June 15, 2024 at 9:00 PM
+Asia/Tokyo	now	9:00 PM
 Asia/Tokyo	today	June 15
 Asia/Tokyo	current timestamp	1718452800
 Pacific/Auckland	July 2, 2025 9:31pm to timestamp	1751448660
@@ -28815,7 +28815,7 @@ America/Sao_Paulo	November 25, 2020 7:40am to timestamp	1606300800
 America/Sao_Paulo	November 25, 2020 7:40am as iso8601	2020-11-25T07:40:00-03:00
 America/Sao_Paulo	1606300800 to date	November 25, 2020 at 7:40 AM
 America/Sao_Paulo	2020-11-25T10:40:00Z to date	November 25, 2020 at 7:40 AM
-America/Sao_Paulo	now	June 15, 2024 at 9:00 AM
+America/Sao_Paulo	now	9:00 AM
 America/Sao_Paulo	today	June 15
 America/Sao_Paulo	current timestamp	1718452800
 Europe/Berlin	April 26, 2020 1:37am to timestamp	1587857820
@@ -32418,7 +32418,7 @@ Europe/Berlin	May 2, 2016 5:40pm to timestamp	1462203600
 Europe/Berlin	May 2, 2016 5:40pm as iso8601	2016-05-02T17:40:00+02:00
 Europe/Berlin	1462203600 to date	May 2, 2016 at 5:40 PM
 Europe/Berlin	2016-05-02T15:40:00Z to date	May 2, 2016 at 5:40 PM
-Europe/Berlin	now	June 15, 2024 at 2:00 PM
+Europe/Berlin	now	2:00 PM
 Europe/Berlin	today	June 15
 Europe/Berlin	current timestamp	1718452800
 Australia/Lord_Howe	August 27, 1997 9:32am to timestamp	872636520
@@ -36021,6 +36021,6 @@ Australia/Lord_Howe	November 15, 2003 1:58pm to timestamp	1068865080
 Australia/Lord_Howe	November 15, 2003 1:58pm as iso8601	2003-11-15T13:58:00+11:00
 Australia/Lord_Howe	1068865080 to date	November 15, 2003 at 1:58 PM
 Australia/Lord_Howe	2003-11-15T02:58:00Z to date	November 15, 2003 at 1:58 PM
-Australia/Lord_Howe	now	June 15, 2024 at 10:30 PM
+Australia/Lord_Howe	now	10:30 PM
 Australia/Lord_Howe	today	June 15
 Australia/Lord_Howe	current timestamp	1718452800

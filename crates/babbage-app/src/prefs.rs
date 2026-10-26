@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 use babbage_core::Number;
 use babbage_core::NumberFormat;
-use babbage_core::settings::{Settings, Tax, VolumeSystem};
+use babbage_core::settings::{Settings, Tax};
 use babbage_core::zones::{Zone, ZoneSource};
 
 /// The settings for this run, read once.
@@ -90,13 +90,6 @@ pub fn from_parts(
                     .iter()
                     .find(|c| c.eq_ignore_ascii_case(value))
                     .copied();
-            }
-            "volume_system" => {
-                settings.volume_system = match value {
-                    "imperial" => VolumeSystem::Imperial,
-                    "us-customary" => VolumeSystem::UsCustomary,
-                    _ => settings.volume_system,
-                }
             }
             _ => {}
         }
@@ -249,13 +242,11 @@ mod tests {
     }
 
     #[test]
-    fn the_file_sets_the_dollar_and_the_volume_system() {
-        let s = parts("dollar = aud\nvolume_system = imperial\n", None, None, None);
+    fn the_file_sets_the_dollar() {
+        let s = parts("dollar = aud\n", None, None, None);
         assert_eq!(s.dollar, Some("AUD"));
-        assert_eq!(s.volume_system, VolumeSystem::Imperial);
-        let s = parts("dollar = EUR\nvolume_system = metric\n", None, None, None);
+        let s = parts("dollar = EUR\n", None, None, None);
         assert_eq!(s.dollar, None);
-        assert_eq!(s.volume_system, VolumeSystem::UsCustomary);
     }
 
     #[test]

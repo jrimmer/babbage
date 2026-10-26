@@ -63,18 +63,19 @@ fn case_and_spacing_do_not_matter() {
 }
 
 #[test]
-fn an_abbreviation_is_a_fixed_offset_all_year() {
-    assert_eq!(shown("3pm PDT to PST"), "2:00 PM");
-    assert_eq!(shown("12pm PST in PDT"), "1:00 PM");
-    assert_eq!(shown("12pm EST in New York"), "1:00 PM");
+fn a_us_abbreviation_is_its_region_all_year_and_the_others_are_fixed() {
+    assert_eq!(shown("3pm PDT to PST"), "3:00 PM");
+    assert_eq!(shown("12pm PST in PDT"), "12:00 PM");
+    assert_eq!(shown("12pm EST in New York"), "12:00 PM");
+    assert_eq!(shown("3pm CET to CEST"), "4:00 PM");
     assert_eq!(shown("12pm eastern time in New York"), "12:00 PM");
     assert_eq!(shown("12pm pacific time in eastern time"), "3:00 PM");
 }
 
 #[test]
 fn offsets_are_written_gmt_or_utc_with_a_sign() {
-    assert_eq!(shown("noon GMT+5:45 in UTC"), "6:15 AM");
-    assert_eq!(shown("noon UTC+14 in GMT-12"), "June 15, 2024 at 10:00 AM");
+    assert_eq!(shown("noon GMT+5:45 in UTC"), "06:15");
+    assert_eq!(shown("noon UTC+14 in GMT-12"), "10:00 AM");
     assert_eq!(shown("noon gmt-12 in utc+14"), "Tomorrow at 2:00 PM");
 }
 
@@ -125,14 +126,10 @@ fn zone_words_do_not_disturb_other_lines() {
     assert_eq!(shown("10 inch to cm"), "25.4 cm");
 }
 
-/// A moment given as hours after 00:00 UTC on June 15 (the test clock's day), written as the answer shows it:
-/// a time of day on June 15, or the date with its time (midnight too, since the answer came from a time).
+/// A moment given as hours after 00:00 UTC on June 15 (the test clock's day), written as the answer shows it: just
+/// the time on June 15 itself, `Yesterday at` or `Tomorrow at` a day either side, and the date with its year beyond;
+/// exactly midnight is a bare date.
 fn shown_moment(hours_after: i32) -> String {
-    shown_moment_with(hours_after, false)
-}
-
-/// Like `shown_moment`, but with the date written even for June 15 itself.
-fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
     let (day, hour) = (hours_after.div_euclid(24), hours_after.rem_euclid(24));
     let clock = format!(
         "{}:00 {}",
@@ -140,7 +137,8 @@ fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
         if hour < 12 { "AM" } else { "PM" }
     );
     match (day, hour) {
-        (0, _) if !with_date => clock,
+        (d, 0) => format!("June {}", 15 + d),
+        (0, _) => clock,
         (-1, _) => format!("Yesterday at {clock}"),
         (1, _) => format!("Tomorrow at {clock}"),
         (d, _) => format!("June {}, 2024 at {clock}", 15 + d),
@@ -148,15 +146,15 @@ fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
 }
 
 /// Noon in a zone `offset` hours ahead of UTC means noon on that zone's own date, which the test clock
-/// (12:00 UTC on June 15) puts at `floor((12 + offset) / 24)` days after June 15. The answer is a bare time
-/// of day when it lands on that same date, and a date otherwise.
+/// (12:00 UTC on June 15) puts at `floor((12 + offset) / 24)` days after June 15. Shown in UTC the answer is a time
+/// of day on the 24-hour clock when it lands on that same date, and a date otherwise.
 fn noon_in_zone_as_utc(offset: i32) -> String {
     let zone_day = (12 + offset).div_euclid(24);
     let moment = zone_day * 24 + 12 - offset;
     if moment.div_euclid(24) == zone_day {
-        shown_moment(moment.rem_euclid(24))
+        format!("{:02}:00", moment.rem_euclid(24))
     } else {
-        shown_moment_with(moment, true)
+        shown_moment(moment)
     }
 }
 
@@ -182,15 +180,38 @@ fn every_abbreviation_is_the_fixed_offset_it_names() {
         ("AEDT", 11),
         ("NZST", 12),
         ("NZDT", 13),
-        ("EST", -5),
+    ] {
+        assert_eq!(
+            shown(&format!("noon {abbr} in UTC")),
+            noon_in_zone_as_utc(hours),
+            "{abbr} to UTC"
+        );
+        let to_abbr = if ["UTC", "GMT", "UT", "Z"].contains(&abbr) {
+            "12:00".to_string()
+        } else {
+            shown_moment(12 + hours)
+        };
+        assert_eq!(
+            shown(&format!("noon UTC in {abbr}")),
+            to_abbr,
+            "UTC to {abbr}"
+        );
+    }
+}
+
+/// The US abbreviations are their regions, summer time included: on 15 June `PST` is UTC-7 like `PDT`.
+#[test]
+fn the_us_abbreviations_are_their_regions() {
+    for (abbr, hours) in [
+        ("EST", -4),
         ("EDT", -4),
-        ("CST", -6),
+        ("CST", -5),
         ("CDT", -5),
-        ("MST", -7),
+        ("MST", -6),
         ("MDT", -6),
-        ("PST", -8),
+        ("PST", -7),
         ("PDT", -7),
-        ("AKST", -9),
+        ("AKST", -8),
         ("AKDT", -8),
         ("HST", -10),
     ] {

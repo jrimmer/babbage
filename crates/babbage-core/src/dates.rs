@@ -56,6 +56,8 @@ enum Bias {
     Nearest,
     Next,
     Last,
+    /// This year's, whatever the month: `halfway between January 1 and March 1` is `January 31` in October.
+    ThisYear,
 }
 
 impl Bias {
@@ -64,6 +66,18 @@ impl Bias {
         match out.last().and_then(|t| word_of(Some(t))).as_deref() {
             Some("until" | "till") => Bias::Next,
             Some("since") => Bias::Last,
+            // `time to December 25` looks ahead like `days until`.
+            Some("to")
+                if out.len() >= 2 && word_of(out.get(out.len() - 2)).as_deref() == Some("time") =>
+            {
+                Bias::Next
+            }
+            _ if out
+                .iter()
+                .any(|t| matches!(word_of(Some(t)).as_deref(), Some("midpoint" | "halfway"))) =>
+            {
+                Bias::ThisYear
+            }
             _ => Bias::Nearest,
         }
     }
@@ -85,6 +99,15 @@ impl Bias {
                     .collect();
                 let pool = if near.is_empty() { all } else { near };
                 pool.into_iter().min_by_key(|d| (d - today).abs())
+            }
+            Bias::ThisYear => {
+                let all: Vec<i64> = candidates.collect();
+                let this_year = calendar::civil_from_days(today).year;
+                let mine = all
+                    .iter()
+                    .copied()
+                    .find(|d| calendar::civil_from_days(*d).year == this_year);
+                mine.or_else(|| all.into_iter().min_by_key(|d| (d - today).abs()))
             }
             Bias::Next => candidates.filter(|d| *d >= today).min(),
             Bias::Last => candidates.filter(|d| *d <= today).max(),
@@ -144,7 +167,22 @@ fn holiday(words: &[&str], year: Option<i64>, bias: Bias) -> Option<i64> {
             candidate_years(this_year).map(|y| calendar::days_from_civil(f(y))),
         ),
     };
+    // The Hebrew, Islamic and Chinese festivals, for the years their calculation covers.
+    let lunar = |f: &dyn Fn(i64) -> Option<i64>| match year {
+        Some(y) => f(y),
+        None => bias.pick(today, candidate_years(this_year).filter_map(f)),
+    };
     match words {
+        ["hanukkah"] => lunar(&crate::lunar::hanukkah),
+        ["end", "of", "hanukkah"] => lunar(&crate::lunar::end_of_hanukkah),
+        ["chinese", "new", "year"] | ["lunar", "new", "year"] => {
+            lunar(&crate::lunar::chinese_new_year)
+        }
+        ["chinese", "new", "year's", "eve"]
+        | ["chinese", "new", "years", "eve"]
+        | ["chinese", "new", "year", "eve"] => lunar(&crate::lunar::chinese_new_years_eve),
+        ["ramadan"] => lunar(&crate::lunar::ramadan),
+        ["end", "of", "ramadan"] => lunar(&crate::lunar::end_of_ramadan),
         ["christmas"] | ["christmas", "day"] => at(12, 25),
         ["new", "year"]
         | ["new", "years"]
@@ -261,8 +299,9 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
             }
             match w.as_str() {
                 "now" => {
+                    // The current time is shown to the minute, as the reference app does (`12:55 PM`).
                     let moment = Number::from_ratio(
-                        BigInt::from(today * 86_400 + seconds),
+                        BigInt::from(today * 86_400 + seconds - seconds % 60),
                         BigInt::from(86_400),
                     )
                     .expect("nonzero");
@@ -282,18 +321,19 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                 }
                 // A weekday on its own is the next one after today: on a Monday, `Monday` is a week away.
                 // `Tuesday next week`, `Friday last week`, `Monday this week`: that day of the week, with the
-                // week starting on Monday.
+                // week starting on Sunday as it does in the owner's region.
                 name if WEEKDAYS.iter().any(|d| d.eq_ignore_ascii_case(name))
                     && matches!(toks.get(i + 2).map(|t| &t.tok), Some(Tok::Unit(u))
                         if crate::units::lookup("week").is_some_and(|k| &k == u))
                     && let Some(shift) = word_of(toks.get(i + 1))
                         .and_then(|w| ["last", "this", "next"].iter().position(|s| *s == w)) =>
                 {
-                    let target = i64::from(weekday_index(name).expect("a full weekday name"));
-                    let monday = today - i64::from(calendar::weekday(today));
+                    let from_sunday =
+                        (i64::from(weekday_index(name).expect("a full weekday name")) + 1) % 7;
+                    let sunday = today - (i64::from(calendar::weekday(today)) + 1) % 7;
                     push(
                         &mut out,
-                        date_value(monday + target + 7 * (shift as i64 - 1)),
+                        date_value(sunday + from_sunday + 7 * (shift as i64 - 1)),
                     );
                     i += 3;
                     continue;
@@ -351,7 +391,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                 }
             }
             // Holidays, one to three words, with an optional year after.
-            let hit = [3usize, 2, 1].into_iter().find_map(|length| {
+            let hit = [4usize, 3, 2, 1].into_iter().find_map(|length| {
                 let words: Vec<String> = (0..length)
                     .filter_map(|k| date_word_of(toks.get(i + k)))
                     .collect();
@@ -471,6 +511,18 @@ pub fn format_clock(seconds: &Number) -> String {
     }
 }
 
+/// `19:00` style: two digits for the hour, seconds only when there are some.
+pub fn format_clock_24(seconds: &Number) -> String {
+    let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
+    let total = whole.mod_floor(&BigInt::from(86_400)).to_i64().unwrap_or(0);
+    let (h, m, s) = (total / 3600, total % 3600 / 60, total % 60);
+    if s == 0 {
+        format!("{h:02}:{m:02}")
+    } else {
+        format!("{h:02}:{m:02}:{s:02}")
+    }
+}
+
 fn split_days(value: &Number) -> (i64, Number) {
     let day = BigInt::div_floor(value.numer(), value.denom());
     let rest = value
@@ -482,18 +534,19 @@ fn split_days(value: &Number) -> (i64, Number) {
     )
 }
 
-/// `June 17`, or `June 17, 2019` when the year is not the current one; with ` at 3:30 pm` for a time of day,
-/// which a `timed` date shows even at midnight.
-pub fn format_date(days: &Number, timed: bool) -> String {
+/// `June 17`, or `June 17, 2019` when the year is not the current one; with ` at 3:30 pm` for a time of day.
+pub fn format_date(days: &Number) -> String {
     let (day, seconds) = split_days(days);
     let civil = calendar::civil_from_days(day);
     let (today, _) = settings::local_now();
     let this_year = calendar::civil_from_days(today).year;
-    // A date with a time reads `Yesterday at 6:35 PM` or `Tomorrow at 12:30 AM` a day either side of today, and
-    // otherwise always carries its year (`November 1, 2026 at 10:30 PM`), as the reference app prints it.
-    if !seconds.is_zero() || timed {
+    // A date with a time reads `Yesterday at 6:35 PM` or `Tomorrow at 12:30 AM` a day either side of today, as
+    // just the time (`12:55 PM`) today, and otherwise always carries its year (`November 1, 2026 at 10:30 PM`),
+    // as the reference app prints it.
+    if !seconds.is_zero() {
         let clock = format_clock(&seconds);
         return match day - today {
+            0 => clock,
             -1 => format!("Yesterday at {clock}"),
             1 => format!("Tomorrow at {clock}"),
             _ => format!(

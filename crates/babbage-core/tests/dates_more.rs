@@ -223,7 +223,8 @@ fn today_tomorrow_yesterday_and_now() {
         ("now as hh:mm a", "12:00 PM"),
         ("now as m:ss", "0:00"),
     ]);
-    assert_eq!(run_at(NOW + 45, "now as HH:mm:ss").unwrap(), "12:00:45");
+    // `now` is read to the minute, as the reference app shows it (`12:55 PM`).
+    assert_eq!(run_at(NOW + 45, "now as HH:mm:ss").unwrap(), "12:00:00");
     assert_eq!(run_at(NOW + 86_400, "tomorrow as EEEE").unwrap(), "Monday");
 }
 
@@ -252,7 +253,7 @@ fn the_words_after_a_long_expression_still_find_their_place() {
             "June 2, 2019 at 11:00 PM",
         ),
         ("5 days + 2 hours ago", "June 10, 2024 at 10:00 AM"),
-        ("3 hours + 30 minutes from now", "June 15, 2024 at 3:30 PM"),
+        ("3 hours + 30 minutes from now", "3:30 PM"),
         ("1 hour 30 minutes + 5 minutes at 1.5x", "1 hour 3 min 20 s"),
         (
             "time saved 1 hour 30 minutes + 5 minutes at 1.5x",
@@ -373,9 +374,9 @@ fn days_in_a_period() {
 #[test]
 fn offsets_and_months_written_with_a_number() {
     all(&[
-        ("noon GMT+5:30 in UTC", "6:30 AM"),
-        ("noon GMT+ 5 in UTC", "7:00 AM"),
-        ("noon UTC-3 in UTC", "3:00 PM"),
+        ("noon GMT+5:30 in UTC", "06:30"),
+        ("noon GMT+ 5 in UTC", "07:00"),
+        ("noon UTC-3 in UTC", "15:00"),
         ("workdays in June 2024", "20 workdays"),
         ("workdays in June", "20 workdays"),
         ("work hours in June", "160 hours"),
@@ -549,7 +550,7 @@ fn a_time_of_day_keeps_its_fraction_of_a_second() {
         ("5pm + 90.25 seconds", "5:01:30.25 PM"),
         ("5pm + 1 second", "5:00:01 PM"),
         ("5pm + 60 seconds", "5:01 PM"),
-        ("11:59:59pm + 1.5 seconds", "12:00:00.5 AM"),
+        ("11:59:59pm + 1.5 seconds", "Tomorrow at 12:00:00.5 AM"),
     ]);
 }
 

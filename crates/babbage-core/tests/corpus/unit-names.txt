@@ -183,10 +183,11 @@ MiB	MiB
 MiBps	MiB/s
 Mib	Mib
 Mibps	Mib/s
-Mohm	Mohm
+Mohm	MΩ
 Mpsi	Mpsi
 Msiemens	Msiemens
 Mtesla	Mtesla
+MΩ	MΩ
 N	N
 NAD	NAD
 NEO	NEO
@@ -632,8 +633,8 @@ kilometre	km
 kilometres	km
 kilonewton	kN
 kilonewtons	kN
-kiloohm	kohm
-kiloohms	kohm
+kiloohm	kΩ
+kiloohms	kΩ
 kilopascal	kPa
 kilopascals	kPa
 kilosiemens	ksiemens
@@ -650,11 +651,13 @@ kmh	km/h
 kn	NM/h
 knot	NM/h
 knots	NM/h
-kohm	kohm
+kohm	kΩ
+kohms	kΩ
 kph	km/h
 ksi	ksi
 ksiemens	ksiemens
 ktesla	ktesla
+kΩ	kΩ
 l	L
 lb	lb
 lbf	lbf
@@ -704,8 +707,8 @@ megalitre	ML
 megalitres	ML
 meganewton	MN
 meganewtons	MN
-megaohm	Mohm
-megaohms	Mohm
+megaohm	MΩ
+megaohms	MΩ
 megapascal	MPa
 megapascals	MPa
 megasiemens	Msiemens
@@ -717,6 +720,8 @@ megawatt	MW
 megawatts	MW
 megaweber	MWb
 megawebers	MWb
+megohm	MΩ
+megohms	MΩ
 meter	m
 meters	m
 metre	m
@@ -752,8 +757,8 @@ micromole	µmol
 micromoles	µmol
 micronewton	µN
 micronewtons	µN
-microohm	µohm
-microohms	µohm
+microohm	µΩ
+microohms	µΩ
 microsec	µs
 microsecond	µs
 microseconds	µs
@@ -794,8 +799,8 @@ millimole	mmol
 millimoles	mmol
 millinewton	mN
 millinewtons	mN
-milliohm	mohm
-milliohms	mohm
+milliohm	mΩ
+milliohms	mΩ
 millisec	ms
 millisecond	ms
 milliseconds	ms
@@ -816,7 +821,7 @@ minutes	min
 mm	mm
 mmol	mmol
 mo	mo
-mohm	mohm
+mohm	mΩ
 mol	mol
 mole	mol
 moles	mol
@@ -827,6 +832,7 @@ mph	mi/h
 ms	ms
 msiemens	msiemens
 mtesla	mtesla
+mΩ	mΩ
 nHz	nHz
 nN	nN
 nanogram	ng
@@ -856,8 +862,8 @@ nm	nm
 nmi	NM
 nmol	nmol
 ns	ns
-ohm	ohm
-ohms	ohm
+ohm	Ω
+ohms	Ω
 ounce	oz
 ounce troy	ozt
 ounces	oz
@@ -1056,10 +1062,11 @@ uk quart	imp qt
 uk quarts	imp qt
 um	µm
 umol	µmol
-uohm	µohm
+uohm	µΩ
 us	µs
 usiemens	µsiemens
 utesla	µtesla
+uΩ	µΩ
 volt	V
 volts	V
 watt	W
@@ -1118,13 +1125,14 @@ zettabytes	ZB
 µhenry	µhenry
 µm	µm
 µmol	µmol
-µohm	µohm
+µohm	µΩ
 µs	µs
 µsiemens	µsiemens
 µtesla	µtesla
+µΩ	µΩ
 ºC	°C
 ºF	°F
-Ω	ohm
+Ω	Ω
 ฿	฿
 ′	arcmin
 ″	arcsec

@@ -112,24 +112,30 @@ impl Zone {
     }
 }
 
-/// US and a few widely used abbreviations. Each is a fixed offset: `PST` is eight hours behind UTC all year.
+/// The US abbreviations name their region, daylight saving included, as the reference app reads them:
+/// `noon PST in UTC` on 26 October is 19:00, because Los Angeles is on summer time.
+const US_REGIONS: &[(&str, &str)] = &[
+    ("est", "America/New_York"),
+    ("edt", "America/New_York"),
+    ("cst", "America/Chicago"),
+    ("cdt", "America/Chicago"),
+    ("mst", "America/Denver"),
+    ("mdt", "America/Denver"),
+    ("pst", "America/Los_Angeles"),
+    ("pdt", "America/Los_Angeles"),
+    ("akst", "America/Anchorage"),
+    ("akdt", "America/Anchorage"),
+    ("hst", "Pacific/Honolulu"),
+    // Western European Time never changes in winter; Reykjavik is on it all year.
+    ("wet", "Atlantic/Reykjavik"),
+];
+
+/// Other widely used abbreviations. Each is a fixed offset: `CET` is one hour ahead of UTC all year.
 const ABBREVIATIONS: &[(&str, i64)] = &[
     ("utc", 0),
     ("gmt", 0),
     ("ut", 0),
     ("z", 0),
-    ("est", -5 * 3600),
-    ("edt", -4 * 3600),
-    ("cst", -6 * 3600),
-    ("cdt", -5 * 3600),
-    ("mst", -7 * 3600),
-    ("mdt", -6 * 3600),
-    ("pst", -8 * 3600),
-    ("pdt", -7 * 3600),
-    ("akst", -9 * 3600),
-    ("akdt", -8 * 3600),
-    ("hst", -10 * 3600),
-    ("wet", 0),
     ("west", 3600),
     ("cet", 3600),
     ("cest", 2 * 3600),
@@ -594,6 +600,9 @@ pub fn place(words: &[&str]) -> Option<Zone> {
         return None;
     }
     let name = words.join(" ").to_lowercase();
+    if let Some((_, iana)) = US_REGIONS.iter().find(|(abbr, _)| *abbr == name) {
+        return Zone::named(iana);
+    }
     if let Some((_, seconds)) = ABBREVIATIONS.iter().find(|(abbr, _)| *abbr == name) {
         return Some(Zone::Fixed(*seconds));
     }
@@ -618,6 +627,7 @@ mod tests {
             .iter()
             .chain(COUNTRIES)
             .chain(REGIONS)
+            .chain(US_REGIONS)
             .chain(AIRPORTS)
         {
             assert!(iana.parse::<Tz>().is_ok(), "{alias} -> {iana}");
@@ -631,6 +641,7 @@ mod tests {
             .iter()
             .chain(COUNTRIES)
             .chain(REGIONS)
+            .chain(US_REGIONS)
             .chain(AIRPORTS)
         {
             assert!(seen.insert(*name), "{name} is listed twice");

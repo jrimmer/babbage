@@ -89,9 +89,32 @@ def fixed10(q):
     return out[1:] if out.startswith("-") and set(out[1:]) <= {"0", "."} else out
 
 
+DISPLAY = {"deg": "°", "deg/s": "°/s", "ohm": "Ω"}
+
+
+def scientific(q):
+    """An amount too small for ten decimal places is written 1e-12, ten decimals in the mantissa at most."""
+    d = Decimal(q.numerator) / Decimal(q.denominator)
+    exponent = d.adjusted()
+    mantissa = (d / (Decimal(10) ** exponent)).quantize(Decimal("1e-10"), rounding=ROUND_HALF_UP)
+    if abs(mantissa) >= 10:
+        mantissa /= 10
+        exponent += 1
+    text = format(mantissa.normalize(), "f")
+    return f"{text}e{exponent}"
+
+
+def shown_amount(q, unit):
+    """The amount and unit as the engine writes them: degrees as `°` with no space, ohms as `Ω`."""
+    q = Fraction(q)
+    text = scientific(q) if q != 0 and abs(q) * 10**10 < Fraction(1, 2) else fixed10(q)
+    shown = DISPLAY.get(unit, unit)
+    return f"{text}{'' if shown == '°' else ' '}{shown}"
+
+
 def row(sym, base_sym, q):
     q = Fraction(q)
-    print(f"1 {sym} in {base_sym}\t{q.numerator}/{q.denominator}\t{fixed10(q)} {base_sym}")
+    print(f"1 {sym} in {base_sym}\t{q.numerator}/{q.denominator}\t{shown_amount(q, base_sym)}")
 
 
 COMPOUND = [
@@ -126,10 +149,10 @@ def main():
     for sym, base, theirs in COMPOUND:
         target = base.replace("km/L", "kilometer/liter").replace("m/s", "meter/second").replace("deg/s", "degree/second").replace("bit/s", "bit/second")
         q = Fraction(Q(Fraction(1), theirs).to(target).magnitude)
-        print(f"1 {sym} in {base}\t{q.numerator}/{q.denominator}\t{fixed10(q)} {base}")
+        print(f"1 {sym} in {base}\t{q.numerator}/{q.denominator}\t{shown_amount(q, base)}")
     for (base_sym, base_ascii), items in HAND.items():
         for sym, value in items:
-            print(f"1 {sym} in {base_ascii}\t{Fraction(value).numerator}/{Fraction(value).denominator}\t{fixed10(Fraction(value))} {base_sym}")
+            print(f"1 {sym} in {base_ascii}\t{Fraction(value).numerator}/{Fraction(value).denominator}\t{shown_amount(Fraction(value), base_sym)}")
 
 
 main()

@@ -160,7 +160,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "June 15, 2024 at 5:00 AM"),
+            ("now", "5:00 AM"),
             ("3pm in Tokyo", "Tomorrow at 7:00 AM"),
             ("now to timestamp", "1718452800"),
             (
@@ -171,7 +171,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         ],
     )?;
     ensure!(
-        answer(&s, 0) != Some("June 15, 2024 at 12:00 PM"),
+        answer(&s, 0) != Some("12:00 PM"),
         "the app is showing UTC, not the local zone"
     );
     settle();
@@ -195,11 +195,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
             ("BABBAGE_TZDIR", &dir),
         ],
     )?;
-    answers_for(
-        h,
-        &mut app,
-        &[("now", "June 15, 2024 at 5:30 PM"), ("today", "June 15")],
-    )?;
+    answers_for(h, &mut app, &[("now", "5:30 PM"), ("today", "June 15")])?;
     app.finish()?;
 
     // Late in the evening in Los Angeles it is already the next day in UTC: `today` must be the local day.
@@ -212,11 +208,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
             ("BABBAGE_TZDIR", &dir),
         ],
     )?;
-    answers_for(
-        h,
-        &mut app,
-        &[("today", "June 15"), ("now", "June 15, 2024 at 8:00 PM")],
-    )?;
+    answers_for(h, &mut app, &[("today", "June 15"), ("now", "8:00 PM")])?;
     app.finish()
 }
 
@@ -239,7 +231,7 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "December 1, 2026 at 5:00 AM"),
+            ("now", "5:00 AM"),
             ("noon in Casablanca", "7:00 PM"),
             ("time in Paris", "1:00 PM"),
         ],
@@ -264,7 +256,7 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
             ("BABBAGE_CONFIG_FILE", &config),
         ],
     )?;
-    let s = answers_for(h, &mut app, &[("now", "December 1, 2026 at 4:00 AM")])?;
+    let s = answers_for(h, &mut app, &[("now", "4:00 AM")])?;
     ensure!(
         s["tzdb"].as_str() == Some("2025b"),
         "the bundled source should report 2025b, got {:?}",
@@ -357,7 +349,7 @@ fn number_format(h: &mut Harness) -> anyhow::Result<()> {
     let config = h.logs.join("western-europe.settings");
     std::fs::write(
         &config,
-        "number_format = western-europe\nwork_hours = 7\ndollar = AUD\nvolume_system = imperial\n",
+        "number_format = western-europe\nwork_hours = 7\ndollar = AUD\n",
     )?;
     let config = config.to_string_lossy().into_owned();
     let mut app = h.launch(
@@ -375,7 +367,6 @@ fn number_format(h: &mut Harness) -> anyhow::Result<()> {
             ("1_000 + 1", "1.001"),
             ("$5 + A$5", "$10,00"),
             ("US$5", "US$5,00"),
-            ("1 pint in fl oz", "20 floz"),
         ],
     )?;
     ensure!(

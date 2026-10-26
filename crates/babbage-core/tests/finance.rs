@@ -88,7 +88,7 @@ fn the_reference_growth_examples() {
 
 #[test]
 fn returns_and_multiples() {
-    assert_eq!(shown("$500 invested $1,500 returned"), "3x");
+    assert_eq!(shown("$500 invested $1,500 returned"), "2x");
     assert!(
         shown("annual return on $1,000 invested $2,500 returned after 7 years")
             .starts_with("13.98")

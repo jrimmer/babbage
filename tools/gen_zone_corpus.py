@@ -66,6 +66,13 @@ for name, iana in {**CITIES, **ALIASES, **COUNTRIES, **{k.title(): v for k, v in
     PLACES[name] = ZoneInfo(iana)
 for abbr, hours in ABBREVIATIONS.items():
     PLACES[abbr] = timezone(timedelta(hours=hours))
+# The US abbreviations name their region, daylight saving included, as the reference app reads them.
+US_REGIONS = {"EST": "America/New_York", "EDT": "America/New_York", "CST": "America/Chicago", "CDT": "America/Chicago",
+              "MST": "America/Denver", "MDT": "America/Denver", "PST": "America/Los_Angeles", "PDT": "America/Los_Angeles",
+              "AKST": "America/Anchorage", "AKDT": "America/Anchorage", "HST": "Pacific/Honolulu"}
+for abbr, iana in US_REGIONS.items():
+    PLACES[abbr] = ZoneInfo(iana)
+UTC_NAMES = {"UTC", "GMT", "UT", "Z"}
 
 rows = []
 
@@ -85,8 +92,18 @@ def clock_text(sec):
     return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
+def clock_for(target, sec):
+    """A time of day shown in `target`: UTC reads on the 24-hour clock, every other place on the 12-hour one."""
+    if target in UTC_NAMES:
+        h, m, s = sec // 3600, sec % 3600 // 60, sec % 60
+        return f"{h:02}:{m:02}" + (f":{s:02}" if s else "")
+    return clock_text(sec)
+
+
 def dated(d, clock, today):
-    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    """A date with a time: just the time today, Yesterday or Tomorrow a day either side, else the full date."""
+    if d == today:
+        return clock
     if d == today - timedelta(1):
         return f"Yesterday at {clock}"
     if d == today + timedelta(1):
@@ -94,9 +111,8 @@ def dated(d, clock, today):
     return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
 
 
-def shown_date(d, secs=0, today=None, timed=False):
-    """`timed` marks an answer that came from a time of day, so midnight still prints as a time."""
-    if secs or timed:
+def shown_date(d, secs=0, today=None):
+    if secs:
         return dated(d, clock_text(secs), today or NOW.date())
     text = f"{MONTHS[d.month - 1]} {d.day}"
     if d.year != TODAY_YEAR:
@@ -134,9 +150,9 @@ for _ in range(2500):
         continue
     there = naive.replace(tzinfo=za).astimezone(zb)
     if there.date() == source_day:
-        want = clock_text(there.hour * 3600 + there.minute * 60 + there.second)
+        want = clock_for(b, there.hour * 3600 + there.minute * 60 + there.second)
     else:
-        want = shown_date(there.date(), there.hour * 3600 + there.minute * 60 + there.second, timed=True)
+        want = shown_date(there.date(), there.hour * 3600 + there.minute * 60 + there.second)
     connector = rng.choice(["in", "to"])
     add(f"{clock_literal(secs)} {spell(a)} {connector} {spell(b)}", want)
 
@@ -151,18 +167,17 @@ for _ in range(2500):
         continue
     there = naive.replace(tzinfo=za).astimezone(zb)
     tod = there.hour * 3600 + there.minute * 60 + there.second
-    add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} {spell(a)} in {spell(b)}", shown_date(there.date(), tod, timed=True))
+    add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} {spell(a)} in {spell(b)}", shown_date(there.date(), tod))
 
 # the current time and date in a place
 for name in names:
     z = PLACES[name]
     here = NOW.astimezone(z)
     tod = here.hour * 3600 + here.minute * 60
-    here_text = clock_text(tod) if here.date() == NOW.date() else dated(here.date(), clock_text(tod), NOW.date())
-    add(f"time in {spell(name)}", here_text)
-    add(f"{spell(name)} time", here_text) if " " not in name and name.upper() not in ABBREVIATIONS else None
+    add(f"time in {spell(name)}", clock_text(tod))
+    add(f"{spell(name)} time", clock_text(tod)) if " " not in name and name.upper() not in ABBREVIATIONS else None
     add(f"date in {spell(name)}", shown_date(here.date()))
-    add(f"now in {spell(name)}", shown_date(here.date(), tod, timed=True))
+    add(f"now in {spell(name)}", shown_date(here.date(), tod))
 
 # differences
 def span_hours(delta):
@@ -196,7 +211,7 @@ for _ in range(600):
     naive = datetime(source_day.year, source_day.month, source_day.day) + timedelta(seconds=secs)
     there = naive.replace(tzinfo=zone).astimezone(PLACES[b])
     tod = there.hour * 3600 + there.minute * 60 + there.second
-    want = clock_text(tod) if there.date() == source_day else shown_date(there.date(), tod, timed=True)
+    want = clock_for(b, tod) if there.date() == source_day else shown_date(there.date(), tod)
     text = f"{h}" if m == 0 else f"{h}:{m:02}"
     add(f"{clock_literal(secs)} {rng.choice(['GMT', 'UTC'])}{'+' if sign > 0 else '-'}{text} in {spell(b)}", want)
 
@@ -210,7 +225,7 @@ for offset in OFFSETS[1:]:
         naive = datetime(d.year, d.month, d.day) + timedelta(seconds=secs)
         there = naive.replace(tzinfo=local).astimezone(PLACES[b])
         tod = there.hour * 3600 + there.minute * 60 + there.second
-        add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} in {spell(b)}", shown_date(there.date(), tod, (NOW + timedelta(seconds=offset)).date(), timed=True), offset)
+        add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(secs)} in {spell(b)}", shown_date(there.date(), tod, (NOW + timedelta(seconds=offset)).date()), offset)
 
 for row in rows:
     print("\t".join(map(str, row)))

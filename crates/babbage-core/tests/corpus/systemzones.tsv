@@ -535,7 +535,7 @@
 -	1796126400	February 21, 2035 2:30pm Lord Howe in Sydney	February 21, 2035 at 2:30 PM
 -	1796126400	January 8, 2027 8:33pm Berlin in Edmonton	January 8, 2027 at 1:33 PM
 -	1796126400	January 30, 2027 5:21pm London in Sao Paulo	January 30, 2027 at 2:21 PM
--	1796126400	August 26, 2028 6:30am Auckland in Kolkata	August 26, 2028 at 12:00 AM
+-	1796126400	August 26, 2028 6:30am Auckland in Kolkata	August 26, 2028
 -	1796126400	January 3, 2039 6:00pm Kolkata in Los Angeles	January 3, 2039 at 4:30 AM
 -	1796126400	December 24, 2026 11:08am Sydney in Lord Howe	December 24, 2026 at 11:08 AM
 -	1796126400	October 24, 2031 1:02am Los Angeles in Edmonton	October 24, 2031 at 2:02 AM
@@ -1508,7 +1508,7 @@
 -	1796126400	May 8, 2023 11:57pm Auckland in Sao Paulo	May 8, 2023 at 8:57 AM
 -	1796126400	December 24, 2030 3:09am New York in London	December 24, 2030 at 8:09 AM
 -	1796126400	July 23, 2030 1:31pm Vancouver in London	July 23, 2030 at 9:31 PM
--	1796126400	November 30, 2026 9:11pm Berlin in Kolkata	December 1, 2026 at 1:41 AM
+-	1796126400	November 30, 2026 9:11pm Berlin in Kolkata	1:41 AM
 -	1796126400	September 17, 2031 12:52pm Auckland in Vancouver	September 16, 2031 at 5:52 PM
 -	1796126400	March 4, 2036 1:22am Kolkata in London	March 3, 2036 at 7:52 PM
 -	1796126400	December 4, 2026 4:25pm Casablanca in Sao Paulo	December 4, 2026 at 1:25 PM
@@ -1726,7 +1726,7 @@
 -	1796126400	January 19, 2027 5:05pm Edmonton in Lord Howe	January 20, 2027 at 10:05 AM
 -	1796126400	September 7, 2026 11:41am Lord Howe in Kolkata	September 7, 2026 at 6:41 AM
 -	1796126400	October 30, 2026 2:41am Vancouver in Kolkata	October 30, 2026 at 3:11 PM
--	1796126400	December 1, 2026 11:45am Kolkata in Berlin	December 1, 2026 at 7:15 AM
+-	1796126400	December 1, 2026 11:45am Kolkata in Berlin	7:15 AM
 -	1796126400	January 9, 2027 2:34am Vancouver in Lord Howe	January 9, 2027 at 8:34 PM
 -	1796126400	August 21, 2026 9:49am Sydney in Vancouver	August 20, 2026 at 4:49 PM
 -	1796126400	March 9, 2023 2:38pm Tokyo in Vancouver	March 8, 2023 at 9:38 PM
@@ -1941,7 +1941,7 @@
 -	1796126400	February 24, 2027 6:19am Los Angeles in Kolkata	February 24, 2027 at 7:49 PM
 -	1796126400	June 28, 2031 12:51pm London in Edmonton	June 28, 2031 at 5:51 AM
 -	1796126400	December 23, 2029 9:30pm New York in Vancouver	December 23, 2029 at 7:30 PM
--	1796126400	December 1, 2026 1:04pm Casablanca in Tokyo	December 1, 2026 at 10:04 PM
+-	1796126400	December 1, 2026 1:04pm Casablanca in Tokyo	10:04 PM
 -	1796126400	October 31, 2026 6:46am Sao Paulo in Tokyo	October 31, 2026 at 6:46 PM
 -	1796126400	January 31, 2027 10:09am Edmonton in Sao Paulo	January 31, 2027 at 1:09 PM
 -	1796126400	February 16, 2027 12:16pm Tokyo in Auckland	February 16, 2027 at 4:16 PM
@@ -2266,7 +2266,7 @@
 -	1796126400	May 28, 2023 7:59pm Vancouver in Auckland	May 29, 2023 at 2:59 PM
 -	1796126400	November 13, 2026 8:02pm Sao Paulo in Tokyo	November 14, 2026 at 8:02 AM
 -	1796126400	October 25, 2023 8:20am Tokyo in Vancouver	October 24, 2023 at 4:20 PM
--	1796126400	November 30, 2026 12:43pm Sao Paulo in Auckland	December 1, 2026 at 4:43 AM
+-	1796126400	November 30, 2026 12:43pm Sao Paulo in Auckland	4:43 AM
 -	1796126400	September 15, 2026 1:42am New York in Tokyo	September 15, 2026 at 2:42 PM
 -	1796126400	March 10, 2037 4:31pm Auckland in London	March 10, 2037 at 3:31 AM
 -	1796126400	September 17, 2026 3:45pm Vancouver in Kolkata	September 18, 2026 at 4:15 AM
@@ -2423,7 +2423,7 @@
 -	1796126400	November 9, 2026 3:42pm Casablanca in Sydney	November 10, 2026 at 2:42 AM
 -	1796126400	December 27, 2029 1:33am Sao Paulo in Los Angeles	December 26, 2029 at 8:33 PM
 -	1796126400	January 19, 2027 2:44am Sydney in Los Angeles	January 18, 2027 at 7:44 AM
--	1796126400	November 30, 2026 10:17pm Los Angeles in Casablanca	December 1, 2026 at 6:17 AM
+-	1796126400	November 30, 2026 10:17pm Los Angeles in Casablanca	6:17 AM
 -	1796126400	January 5, 2025 1:58am Sydney in Berlin	January 4, 2025 at 3:58 PM
 -	1796126400	February 4, 2026 12:43pm London in Lord Howe	February 4, 2026 at 11:43 PM
 -	1796126400	December 11, 2026 3:35am Kolkata in Los Angeles	December 10, 2026 at 2:05 PM
@@ -2672,14 +2672,14 @@
 -	1796126400	November 25, 2037 10:20am London in Auckland	November 25, 2037 at 11:20 PM
 -	1796126400	February 3, 2027 6:37pm Tokyo in New York	February 3, 2027 at 4:37 AM
 -	1796126400	August 23, 2021 8:39am Casablanca in Lord Howe	August 23, 2021 at 6:09 PM
--	1796126400	December 1, 2026 11:43am Casablanca in Berlin	December 1, 2026 at 12:43 PM
+-	1796126400	December 1, 2026 11:43am Casablanca in Berlin	12:43 PM
 -	1796126400	November 9, 2026 2:37am Edmonton in London	November 9, 2026 at 8:37 AM
 -	1796126400	March 25, 2029 8:10am Kolkata in London	March 25, 2029 at 3:40 AM
 -	1796126400	January 17, 2036 12:28am Vancouver in Casablanca	January 17, 2036 at 7:28 AM
 -	1796126400	July 7, 2031 1:22pm Vancouver in Sydney	July 8, 2031 at 6:22 AM
 -	1796126400	August 17, 2026 9:28pm New York in London	August 18, 2026 at 2:28 AM
 -	1796126400	July 24, 2026 1:37am Lord Howe in Edmonton	July 23, 2026 at 9:07 AM
--	1796126400	December 1, 2026 11:39pm Auckland in Tokyo	December 1, 2026 at 7:39 PM
+-	1796126400	December 1, 2026 11:39pm Auckland in Tokyo	7:39 PM
 -	1796126400	February 8, 2027 8:35pm New York in Casablanca	February 9, 2027 at 1:35 AM
 -	1796126400	August 8, 2036 7:16pm Casablanca in New York	August 8, 2036 at 3:16 PM
 -	1796126400	February 17, 2027 8:15pm Los Angeles in Auckland	February 18, 2027 at 5:15 PM
@@ -2983,7 +2983,7 @@
 -	1796126400	December 7, 2026 10:09am Tokyo in Auckland	December 7, 2026 at 2:09 PM
 -	1796126400	October 11, 2026 5:49pm New York in Auckland	October 12, 2026 at 10:49 AM
 -	1796126400	October 16, 2026 10:33pm Los Angeles in Edmonton	October 16, 2026 at 11:33 PM
--	1796126400	December 2, 2026 11:51am Lord Howe in New York	December 1, 2026 at 7:51 PM
+-	1796126400	December 2, 2026 11:51am Lord Howe in New York	7:51 PM
 -	1796126400	August 19, 2026 11:46pm Tokyo in New York	August 19, 2026 at 10:46 AM
 -	1796126400	September 29, 2026 2:25pm Casablanca in Kolkata	September 29, 2026 at 7:55 PM
 -	1796126400	December 19, 2039 9:52pm Sao Paulo in Tokyo	December 20, 2039 at 9:52 AM
@@ -3120,7 +3120,7 @@
 -	1796126400	August 21, 2026 5:39pm Sydney in Sao Paulo	August 21, 2026 at 4:39 AM
 -	1796126400	October 10, 2034 10:29pm Los Angeles in Casablanca	October 11, 2034 at 5:29 AM
 -	1796126400	September 15, 2026 8:22pm Sao Paulo in Lord Howe	September 16, 2026 at 9:52 AM
--	1796126400	December 2, 2026 11:17am Auckland in Edmonton	December 1, 2026 at 4:17 PM
+-	1796126400	December 2, 2026 11:17am Auckland in Edmonton	4:17 PM
 -	1796126400	January 9, 2027 4:06am Sydney in Edmonton	January 8, 2027 at 11:06 AM
 -	1796126400	December 5, 2026 7:59pm Edmonton in Auckland	December 6, 2026 at 2:59 PM
 -	1796126400	August 4, 2026 8:30am Berlin in Vancouver	August 3, 2026 at 11:30 PM
@@ -3184,7 +3184,7 @@
 -	1796126400	July 31, 2026 2:24pm Edmonton in Sydney	August 1, 2026 at 6:24 AM
 -	1796126400	November 16, 2026 9:50am Sao Paulo in Edmonton	November 16, 2026 at 6:50 AM
 -	1796126400	October 18, 2036 11:05pm Vancouver in New York	October 19, 2036 at 2:05 AM
--	1796126400	December 1, 2026 10:26am Vancouver in Kolkata	December 1, 2026 at 10:56 PM
+-	1796126400	December 1, 2026 10:26am Vancouver in Kolkata	10:56 PM
 -	1796126400	October 30, 2026 2:05am Los Angeles in Casablanca	October 30, 2026 at 9:05 AM
 -	1796126400	April 16, 2022 7:41am New York in Edmonton	April 16, 2022 at 5:41 AM
 -	1796126400	January 4, 2027 3:31pm Berlin in Kolkata	January 4, 2027 at 8:01 PM
@@ -3679,7 +3679,7 @@
 -	1796126400	September 30, 2026 6:17pm Tokyo in Auckland	September 30, 2026 at 10:17 PM
 -	1796126400	August 16, 2026 10:31pm Kolkata in Sydney	August 17, 2026 at 3:01 AM
 -	1796126400	September 20, 2025 2:54pm Auckland in Sydney	September 20, 2025 at 12:54 PM
--	1796126400	January 28, 2027 1:00am New York in Edmonton	January 28, 2027 at 12:00 AM
+-	1796126400	January 28, 2027 1:00am New York in Edmonton	January 28, 2027
 -	1796126400	November 11, 2026 6:54am Kolkata in New York	November 10, 2026 at 8:24 PM
 -	1796126400	September 15, 2026 2:14pm Lord Howe in Sydney	September 15, 2026 at 1:44 PM
 -	1796126400	October 30, 2026 6:07am Vancouver in Casablanca	October 30, 2026 at 1:07 PM
@@ -3943,7 +3943,7 @@
 -	1796126400	January 3, 2027 2:16pm Tokyo in Kolkata	January 3, 2027 at 10:46 AM
 -	1796126400	September 25, 2026 8:23pm London in Auckland	September 26, 2026 at 7:23 AM
 -	1796126400	February 2, 2027 8:26am Tokyo in Casablanca	February 1, 2027 at 11:26 PM
--	1796126400	December 1, 2026 10:00am Vancouver in Casablanca	December 1, 2026 at 5:00 PM
+-	1796126400	December 1, 2026 10:00am Vancouver in Casablanca	5:00 PM
 -	1796126400	December 4, 2026 11:01am Edmonton in New York	December 4, 2026 at 12:01 PM
 -	1796126400	October 21, 2026 12:39pm Sydney in Berlin	October 21, 2026 at 3:39 AM
 -	1796126400	September 23, 2036 5:38am Sydney in Berlin	September 22, 2036 at 9:38 PM
@@ -3998,7 +3998,7 @@
 -	1796126400	December 11, 2026 9:07pm Tokyo in Sydney	December 11, 2026 at 11:07 PM
 -	1796126400	September 23, 2026 10:23pm Berlin in Lord Howe	September 24, 2026 at 6:53 AM
 -	1796126400	January 18, 2026 9:53pm Auckland in Sydney	January 18, 2026 at 7:53 PM
-Africa/Casablanca	1796126400	now	December 1, 2026 at 12:00 PM
+Africa/Casablanca	1796126400	now	12:00 PM
 -	1796126400	time in Casablanca	12:00 PM
 Africa/Casablanca	1796126400	February 21, 2027 8:02pm to timestamp	1803240120
 Africa/Casablanca	1796126400	1803240120 to date	February 21, 2027 at 8:02 PM
@@ -4300,7 +4300,7 @@ Africa/Casablanca	1796126400	January 5, 2027 2:17am to timestamp	1799115420
 Africa/Casablanca	1796126400	1799115420 to date	January 5, 2027 at 2:17 AM
 Africa/Casablanca	1796126400	July 27, 2026 9:08am to timestamp	1785139680
 Africa/Casablanca	1796126400	1785139680 to date	July 27, 2026 at 9:08 AM
-America/Vancouver	1796126400	now	December 1, 2026 at 5:00 AM
+America/Vancouver	1796126400	now	5:00 AM
 -	1796126400	time in Vancouver	5:00 AM
 America/Vancouver	1796126400	February 19, 2027 12:13am to timestamp	1803021180
 America/Vancouver	1796126400	1803021180 to date	February 19, 2027 at 12:13 AM
@@ -4602,7 +4602,7 @@ America/Vancouver	1796126400	November 8, 2026 8:22am to timestamp	1794151320
 America/Vancouver	1796126400	1794151320 to date	November 8, 2026 at 8:22 AM
 America/Vancouver	1796126400	February 15, 2027 10:24pm to timestamp	1802755440
 America/Vancouver	1796126400	1802755440 to date	February 15, 2027 at 10:24 PM
-America/Edmonton	1796126400	now	December 1, 2026 at 6:00 AM
+America/Edmonton	1796126400	now	6:00 AM
 -	1796126400	time in Edmonton	6:00 AM
 America/Edmonton	1796126400	September 12, 2026 3:16am to timestamp	1789204560
 America/Edmonton	1796126400	1789204560 to date	September 12, 2026 at 3:16 AM
@@ -4765,7 +4765,7 @@ America/Edmonton	1796126400	1794014400 to date	November 6, 2026 at 7:20 PM
 America/Edmonton	1796126400	February 1, 2027 4:10am to timestamp	1801476600
 America/Edmonton	1796126400	1801476600 to date	February 1, 2027 at 4:10 AM
 America/Edmonton	1796126400	December 1, 2026 12:07pm to timestamp	1796148420
-America/Edmonton	1796126400	1796148420 to date	December 1, 2026 at 12:07 PM
+America/Edmonton	1796126400	1796148420 to date	12:07 PM
 America/Edmonton	1796126400	February 9, 2027 5:46am to timestamp	1802173560
 America/Edmonton	1796126400	1802173560 to date	February 9, 2027 at 5:46 AM
 America/Edmonton	1796126400	August 13, 2026 5:24pm to timestamp	1786663440
@@ -4885,7 +4885,7 @@ America/Edmonton	1796126400	1794753960 to date	November 15, 2026 at 8:46 AM
 America/Edmonton	1796126400	November 23, 2026 6:37pm to timestamp	1795480620
 America/Edmonton	1796126400	1795480620 to date	November 23, 2026 at 6:37 PM
 America/Edmonton	1796126400	December 1, 2026 9:10am to timestamp	1796137800
-America/Edmonton	1796126400	1796137800 to date	December 1, 2026 at 9:10 AM
+America/Edmonton	1796126400	1796137800 to date	9:10 AM
 America/Edmonton	1796126400	October 21, 2026 5:24am to timestamp	1792581840
 America/Edmonton	1796126400	1792581840 to date	October 21, 2026 at 5:24 AM
 America/Edmonton	1796126400	September 3, 2026 4:39am to timestamp	1788431940
@@ -4904,7 +4904,7 @@ America/Edmonton	1796126400	October 22, 2026 5:57pm to timestamp	1792713420
 America/Edmonton	1796126400	1792713420 to date	October 22, 2026 at 5:57 PM
 America/Edmonton	1796126400	November 13, 2026 10:31am to timestamp	1794587460
 America/Edmonton	1796126400	1794587460 to date	November 13, 2026 at 10:31 AM
-America/New_York	1796126400	now	December 1, 2026 at 7:00 AM
+America/New_York	1796126400	now	7:00 AM
 -	1796126400	time in New York	7:00 AM
 America/New_York	1796126400	January 22, 2027 7:09pm to timestamp	1800662940
 America/New_York	1796126400	1800662940 to date	January 22, 2027 at 7:09 PM
@@ -5206,7 +5206,7 @@ America/New_York	1796126400	December 10, 2026 11:15pm to timestamp	1796962500
 America/New_York	1796126400	1796962500 to date	December 10, 2026 at 11:15 PM
 America/New_York	1796126400	December 9, 2026 12:06am to timestamp	1796792760
 America/New_York	1796126400	1796792760 to date	December 9, 2026 at 12:06 AM
-America/Los_Angeles	1796126400	now	December 1, 2026 at 4:00 AM
+America/Los_Angeles	1796126400	now	4:00 AM
 -	1796126400	time in Los Angeles	4:00 AM
 America/Los_Angeles	1796126400	February 2, 2027 1:16pm to timestamp	1801602960
 America/Los_Angeles	1796126400	1801602960 to date	February 2, 2027 at 1:16 PM
@@ -5407,7 +5407,7 @@ America/Los_Angeles	1796126400	1798191900 to date	December 25, 2026 at 1:45 AM
 America/Los_Angeles	1796126400	February 15, 2027 12:53pm to timestamp	1802724780
 America/Los_Angeles	1796126400	1802724780 to date	February 15, 2027 at 12:53 PM
 America/Los_Angeles	1796126400	December 1, 2026 7:43am to timestamp	1796139780
-America/Los_Angeles	1796126400	1796139780 to date	December 1, 2026 at 7:43 AM
+America/Los_Angeles	1796126400	1796139780 to date	7:43 AM
 America/Los_Angeles	1796126400	September 21, 2026 5:22am to timestamp	1789993320
 America/Los_Angeles	1796126400	1789993320 to date	September 21, 2026 at 5:22 AM
 America/Los_Angeles	1796126400	November 10, 2026 5:34pm to timestamp	1794360840
@@ -5508,7 +5508,7 @@ America/Los_Angeles	1796126400	January 5, 2027 9:17am to timestamp	1799169420
 America/Los_Angeles	1796126400	1799169420 to date	January 5, 2027 at 9:17 AM
 America/Los_Angeles	1796126400	October 25, 2026 5:52pm to timestamp	1792975920
 America/Los_Angeles	1796126400	1792975920 to date	October 25, 2026 at 5:52 PM
-Europe/London	1796126400	now	December 1, 2026 at 12:00 PM
+Europe/London	1796126400	now	12:00 PM
 -	1796126400	time in London	12:00 PM
 Europe/London	1796126400	July 22, 2026 12:22am to timestamp	1784676120
 Europe/London	1796126400	1784676120 to date	July 22, 2026 at 12:22 AM
@@ -5810,7 +5810,7 @@ Europe/London	1796126400	August 30, 2026 12:03am to timestamp	1788044580
 Europe/London	1796126400	1788044580 to date	August 30, 2026 at 12:03 AM
 Europe/London	1796126400	November 8, 2026 1:41am to timestamp	1794102060
 Europe/London	1796126400	1794102060 to date	November 8, 2026 at 1:41 AM
-Europe/Berlin	1796126400	now	December 1, 2026 at 1:00 PM
+Europe/Berlin	1796126400	now	1:00 PM
 -	1796126400	time in Berlin	1:00 PM
 Europe/Berlin	1796126400	January 6, 2027 9:58am to timestamp	1799225880
 Europe/Berlin	1796126400	1799225880 to date	January 6, 2027 at 9:58 AM
@@ -6112,7 +6112,7 @@ Europe/Berlin	1796126400	September 26, 2026 12:55am to timestamp	1790376900
 Europe/Berlin	1796126400	1790376900 to date	September 26, 2026 at 12:55 AM
 Europe/Berlin	1796126400	August 5, 2026 11:19pm to timestamp	1785964740
 Europe/Berlin	1796126400	1785964740 to date	August 5, 2026 at 11:19 PM
-Australia/Sydney	1796126400	now	December 1, 2026 at 11:00 PM
+Australia/Sydney	1796126400	now	11:00 PM
 -	1796126400	time in Sydney	11:00 PM
 Australia/Sydney	1796126400	February 22, 2027 3:11pm to timestamp	1803269460
 Australia/Sydney	1796126400	1803269460 to date	February 22, 2027 at 3:11 PM
@@ -6414,7 +6414,7 @@ Australia/Sydney	1796126400	September 27, 2026 2:36pm to timestamp	1790483760
 Australia/Sydney	1796126400	1790483760 to date	September 27, 2026 at 2:36 PM
 Australia/Sydney	1796126400	August 24, 2026 5:20pm to timestamp	1787556000
 Australia/Sydney	1796126400	1787556000 to date	August 24, 2026 at 5:20 PM
-Asia/Tokyo	1796126400	now	December 1, 2026 at 9:00 PM
+Asia/Tokyo	1796126400	now	9:00 PM
 -	1796126400	time in Tokyo	9:00 PM
 Asia/Tokyo	1796126400	September 27, 2026 2:08pm to timestamp	1790485680
 Asia/Tokyo	1796126400	1790485680 to date	September 27, 2026 at 2:08 PM
@@ -6716,7 +6716,7 @@ Asia/Tokyo	1796126400	September 14, 2026 5:29pm to timestamp	1789374540
 Asia/Tokyo	1796126400	1789374540 to date	September 14, 2026 at 5:29 PM
 Asia/Tokyo	1796126400	December 5, 2026 8:32am to timestamp	1796427120
 Asia/Tokyo	1796126400	1796427120 to date	December 5, 2026 at 8:32 AM
-Asia/Kolkata	1796126400	now	December 1, 2026 at 5:30 PM
+Asia/Kolkata	1796126400	now	5:30 PM
 -	1796126400	time in Kolkata	5:30 PM
 Asia/Kolkata	1796126400	December 17, 2026 4:43pm to timestamp	1797505980
 Asia/Kolkata	1796126400	1797505980 to date	December 17, 2026 at 4:43 PM
@@ -6725,7 +6725,7 @@ Asia/Kolkata	1796126400	1789053060 to date	September 10, 2026 at 8:41 PM
 Asia/Kolkata	1796126400	September 30, 2026 12:38pm to timestamp	1790752080
 Asia/Kolkata	1796126400	1790752080 to date	September 30, 2026 at 12:38 PM
 Asia/Kolkata	1796126400	December 1, 2026 11:44am to timestamp	1796105640
-Asia/Kolkata	1796126400	1796105640 to date	December 1, 2026 at 11:44 AM
+Asia/Kolkata	1796126400	1796105640 to date	11:44 AM
 Asia/Kolkata	1796126400	November 11, 2026 11:07pm to timestamp	1794418620
 Asia/Kolkata	1796126400	1794418620 to date	November 11, 2026 at 11:07 PM
 Asia/Kolkata	1796126400	September 12, 2026 6:46am to timestamp	1789175760
@@ -7018,8 +7018,8 @@ Asia/Kolkata	1796126400	August 2, 2026 2:46pm to timestamp	1785662160
 Asia/Kolkata	1796126400	1785662160 to date	August 2, 2026 at 2:46 PM
 Asia/Kolkata	1796126400	November 28, 2026 1:47am to timestamp	1795810620
 Asia/Kolkata	1796126400	1795810620 to date	November 28, 2026 at 1:47 AM
-Pacific/Auckland	1796126400	now	December 2, 2026 at 1:00 AM
--	1796126400	time in Auckland	Tomorrow at 1:00 AM
+Pacific/Auckland	1796126400	now	1:00 AM
+-	1796126400	time in Auckland	1:00 AM
 Pacific/Auckland	1796126400	August 28, 2026 7:49am to timestamp	1787860140
 Pacific/Auckland	1796126400	1787860140 to date	August 28, 2026 at 7:49 AM
 Pacific/Auckland	1796126400	September 8, 2026 11:04am to timestamp	1788822240
@@ -7320,7 +7320,7 @@ Pacific/Auckland	1796126400	August 27, 2026 10:55am to timestamp	1787784900
 Pacific/Auckland	1796126400	1787784900 to date	August 27, 2026 at 10:55 AM
 Pacific/Auckland	1796126400	January 7, 2027 3:08am to timestamp	1799244480
 Pacific/Auckland	1796126400	1799244480 to date	January 7, 2027 at 3:08 AM
-America/Sao_Paulo	1796126400	now	December 1, 2026 at 9:00 AM
+America/Sao_Paulo	1796126400	now	9:00 AM
 -	1796126400	time in Sao Paulo	9:00 AM
 America/Sao_Paulo	1796126400	August 14, 2026 3:13am to timestamp	1786687980
 America/Sao_Paulo	1796126400	1786687980 to date	August 14, 2026 at 3:13 AM
@@ -7465,7 +7465,7 @@ America/Sao_Paulo	1796126400	1801986540 to date	February 7, 2027 at 4:49 AM
 America/Sao_Paulo	1796126400	November 29, 2026 5:39am to timestamp	1795941540
 America/Sao_Paulo	1796126400	1795941540 to date	November 29, 2026 at 5:39 AM
 America/Sao_Paulo	1796126400	December 1, 2026 8:50am to timestamp	1796125800
-America/Sao_Paulo	1796126400	1796125800 to date	December 1, 2026 at 8:50 AM
+America/Sao_Paulo	1796126400	1796125800 to date	8:50 AM
 America/Sao_Paulo	1796126400	January 8, 2027 6:05am to timestamp	1799399100
 America/Sao_Paulo	1796126400	1799399100 to date	January 8, 2027 at 6:05 AM
 America/Sao_Paulo	1796126400	October 23, 2026 8:35pm to timestamp	1792798500
@@ -7622,7 +7622,7 @@ America/Sao_Paulo	1796126400	October 26, 2026 4:52am to timestamp	1793001120
 America/Sao_Paulo	1796126400	1793001120 to date	October 26, 2026 at 4:52 AM
 America/Sao_Paulo	1796126400	October 20, 2026 10:08pm to timestamp	1792544880
 America/Sao_Paulo	1796126400	1792544880 to date	October 20, 2026 at 10:08 PM
-Australia/Lord_Howe	1796126400	now	December 1, 2026 at 11:00 PM
+Australia/Lord_Howe	1796126400	now	11:00 PM
 -	1796126400	time in Lord Howe	11:00 PM
 Australia/Lord_Howe	1796126400	July 23, 2026 8:27pm to timestamp	1784800620
 Australia/Lord_Howe	1796126400	1784800620 to date	July 23, 2026 at 8:27 PM
@@ -7703,7 +7703,7 @@ Australia/Lord_Howe	1796126400	1784521800 to date	July 20, 2026 at 3:00 PM
 Australia/Lord_Howe	1796126400	July 23, 2026 10:36pm to timestamp	1784808360
 Australia/Lord_Howe	1796126400	1784808360 to date	July 23, 2026 at 10:36 PM
 Australia/Lord_Howe	1796126400	December 1, 2026 11:04pm to timestamp	1796126640
-Australia/Lord_Howe	1796126400	1796126640 to date	December 1, 2026 at 11:04 PM
+Australia/Lord_Howe	1796126400	1796126640 to date	11:04 PM
 Australia/Lord_Howe	1796126400	October 16, 2026 6:46am to timestamp	1792093560
 Australia/Lord_Howe	1796126400	1792093560 to date	October 16, 2026 at 6:46 AM
 Australia/Lord_Howe	1796126400	August 5, 2026 5:17am to timestamp	1785869220

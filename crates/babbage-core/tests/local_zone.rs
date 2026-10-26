@@ -50,22 +50,10 @@ fn agrees_with_the_zoneinfo_oracle_for_the_users_own_zone() {
 #[test]
 fn now_follows_daylight_saving_through_the_year() {
     let january = 1_705_320_000; // 2024-01-15 12:00 UTC
-    assert_eq!(
-        run("America/New_York", "now", NOW),
-        "June 15, 2024 at 8:00 AM"
-    );
-    assert_eq!(
-        run("America/New_York", "now", january),
-        "January 15, 2024 at 7:00 AM"
-    );
-    assert_eq!(
-        run("Australia/Sydney", "now", NOW),
-        "June 15, 2024 at 10:00 PM"
-    );
-    assert_eq!(
-        run("Australia/Sydney", "now", january),
-        "January 15, 2024 at 11:00 PM"
-    );
+    assert_eq!(run("America/New_York", "now", NOW), "8:00 AM");
+    assert_eq!(run("America/New_York", "now", january), "7:00 AM");
+    assert_eq!(run("Australia/Sydney", "now", NOW), "10:00 PM");
+    assert_eq!(run("Australia/Sydney", "now", january), "11:00 PM");
 }
 
 #[test]

@@ -88,6 +88,14 @@ def clock(sec):
     return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
+def shifted(sec):
+    """A time of day moved by a length of time: past midnight it is a time on the day before or after today."""
+    days, rest = divmod(sec, 86400)
+    if days == 0:
+        return clock(rest)
+    return shown_date(TODAY + timedelta(days), rest)
+
+
 def parts(total, units):
     neg = total < 0
     rest = abs(total)
@@ -103,7 +111,9 @@ def parts(total, units):
 
 
 def dated(d, clock, today):
-    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    """A date with a time: just the time today, Yesterday or Tomorrow a day either side, else the full date."""
+    if d == today:
+        return clock
     if d == today - timedelta(1):
         return f"Yesterday at {clock}"
     if d == today + timedelta(1):
@@ -155,10 +165,10 @@ for _ in range(1500):
     add(f"{la} - {lb}", timespan(Fraction(abs(a - b))) if a != b else "0 s")
     add(f"{la}", clock(a))
     minutes = rng.randint(0, 3000)
-    add(f"{la} + {minutes} minutes", clock(a + minutes * 60))
-    add(f"{la} - {minutes} minutes", clock(a - minutes * 60))
+    add(f"{la} + {minutes} minutes", shifted(a + minutes * 60))
+    add(f"{la} - {minutes} minutes", shifted(a - minutes * 60))
     hours = rng.randint(0, 40)
-    add(f"{la} + {hours} hours {minutes % 60} minutes", clock(a + hours * 3600 + (minutes % 60) * 60))
+    add(f"{la} + {hours} hours {minutes % 60} minutes", shifted(a + hours * 3600 + (minutes % 60) * 60))
 
 for _ in range(2500):
     def lap():

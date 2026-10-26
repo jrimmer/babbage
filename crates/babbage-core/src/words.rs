@@ -83,6 +83,9 @@ const LIST_FORMS: &[(&[&str], Func)] = &[
     (&["median"], Func::Median),
     (&["gcd"], Func::Gcd),
     (&["lcm"], Func::Lcm),
+    (&["minimum"], Func::Min),
+    (&["max"], Func::Max),
+    (&["maximum"], Func::Max),
     (&["larger"], Func::Max),
     (&["greater"], Func::Max),
     (&["smaller"], Func::Min),
@@ -103,7 +106,7 @@ const BETWEEN_FORMS: &[(&[&str], Func)] = &[
 /// The expression a line written in words stands for, or None when it is not one of these forms.
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
-        .or_else(|| year_span(toks))
+        .or_else(|| number_span(toks))
         .or_else(|| is_what_per(toks))
         .or_else(|| pace(toks))
         .or_else(|| crate::dateforms::parse_date_forms(toks))
@@ -170,27 +173,32 @@ fn pace(toks: &[Token]) -> Option<Result<Expr, Error>> {
     }))
 }
 
-/// `1978 to 2021`: two four-digit years are 43 apart, a plain number, as the reference app prints it.
-fn year_span(toks: &[Token]) -> Option<Result<Expr, Error>> {
+/// `1978 to 2021` is 43 and `10 to 25` is 15: two plain numbers joined by `to` are how far apart they are, a
+/// plain number, as the reference app prints it.
+fn number_span(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let [a, to, b] = toks else {
         return None;
     };
-    let year = |t: &Token| match &t.tok {
-        Tok::Num(n)
-            if n.is_integer() && (1000..=9999).contains(&i64::try_from(n.numer()).ok()?) =>
-        {
-            Some(n.clone())
-        }
+    let number = |t: &Token| match &t.tok {
+        Tok::Num(n) => Some(n.clone()),
         _ => None,
     };
     if !is_word(Some(to), "to") {
         return None;
     }
-    let (from, until) = (year(a)?, year(b)?);
+    let (from, until) = (number(a)?, number(b)?);
     Some(until.sub(&from).map(Expr::num))
 }
 
 fn list_form(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    // `min` lexes as the unit of time, so `min of 3 and 4` is spelled out here.
+    if matches!(toks.first().map(|t| &t.tok), Some(Tok::Unit(u))
+            if crate::units::lookup("min").is_some_and(|k| &k == u))
+        && is_word(toks.get(1), "of")
+        && toks.len() > 2
+    {
+        return Some(call(&list_parts(&toks[2..]), Func::Min));
+    }
     for (names, func) in LIST_FORMS {
         if words_at(toks, 0, names)
             && is_word(toks.get(names.len()), "of")

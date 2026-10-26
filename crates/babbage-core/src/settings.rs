@@ -15,14 +15,6 @@ pub struct Tax {
     pub rate: Number,
 }
 
-/// Which gallons, quarts, pints, fluid ounces, tablespoons and teaspoons are meant. The cup stays US customary.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum VolumeSystem {
-    #[default]
-    UsCustomary,
-    Imperial,
-}
-
 /// Dollar currencies a region can make `$` mean.
 pub const REGION_DOLLARS: &[&str] = &["USD", "AUD", "CAD", "NZD", "SGD", "HKD"];
 
@@ -39,7 +31,6 @@ pub struct Settings {
     pub work_hours_per_day: Option<u32>,
     /// The currency a bare `$` means: `AUD` in Australia. None is US dollars.
     pub dollar: Option<&'static str>,
-    pub volume_system: VolumeSystem,
     /// Where zone rules come from: the bundled database (the default) or the machine's zoneinfo files.
     pub zone_source: crate::zones::ZoneSource,
     /// How numbers are typed and shown: `1,234.56`, `1.234,56` or `1 234,56`.
@@ -77,10 +68,6 @@ pub fn dollar_code() -> &'static str {
 
 pub fn zone_source() -> crate::zones::ZoneSource {
     current(|s| s.zone_source.clone())
-}
-
-pub fn volume_system() -> VolumeSystem {
-    current(|s| s.volume_system)
 }
 
 /// How numbers are typed and shown right now.

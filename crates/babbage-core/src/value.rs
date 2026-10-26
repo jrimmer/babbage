@@ -65,6 +65,10 @@ pub enum Shown {
     Timed,
     /// `5 km in 25 min`: minutes and seconds per this unit, written `05:00/km`.
     Pace(String),
+    /// A time of day converted into UTC reads on the 24-hour clock: `19:00`.
+    Clock24,
+    /// `5' 6"` reads `5 feet 6 inches`.
+    FeetInches,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -163,6 +167,22 @@ impl Value {
             text: None,
             layout: None,
         }
+    }
+
+    /// A length written `5' 6"`, shown as feet and inches.
+    pub fn feet_inches(feet: Number, inches: Number) -> Result<Value, Error> {
+        let total = feet.add(&inches.div(&Number::from_i64(12))?)?;
+        let foot = crate::units::lookup("ft").ok_or(Error::IncompatibleUnits)?;
+        let mut v = Value::quantity(total, foot)?;
+        v.layout = Some(Shown::FeetInches);
+        Ok(v)
+    }
+
+    /// A time of day read on the 24-hour clock.
+    pub fn clock_24(seconds: Number) -> Value {
+        let mut v = Value::clock(seconds);
+        v.layout = Some(Shown::Clock24);
+        v
     }
 
     pub fn text(words: &str) -> Value {
@@ -908,20 +928,35 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
     let days = seconds_of(by)?
         .div(&Number::from_i64(86_400))?
         .mul(&sign_n)?;
-    Ok(Value::date(date.number.add(&days)?))
+    // A date written with no time is midday, so hours added to it make a time: `Tuesday next week + 72 hours`
+    // is `November 6, 2026 at 12:00 PM`, as the reference app prints it.
+    let sub_day = ["h", "min", "s"].iter().any(|u| by.unit == lookup(u));
+    let start = if date.is_bare_date() && sub_day {
+        date.number.add(&Number::from_ratio(
+            num_bigint::BigInt::from(1),
+            num_bigint::BigInt::from(2),
+        )?)?
+    } else {
+        date.number.clone()
+    };
+    Ok(Value::date(start.add(&days)?))
 }
 
-/// A time of day shifted by a length of time, wrapping past midnight.
+/// A time of day shifted by a length of time. Past midnight it is a time on the day before or after today:
+/// `9:45 am - 15 hours 10 minutes` is `Yesterday at 6:35 PM`.
 fn shift_clock(clock: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
     let moved = clock
         .number
         .add(&seconds_of(by)?.mul(&Number::from_i64(sign))?)?;
     let day = Number::from_i64(86_400);
-    let wrapped = moved.sub(&day.mul(&Number::from_ratio(
-        moved.div(&day)?.floor(),
-        num_bigint::BigInt::from(1),
-    )?)?)?;
-    Ok(Value::clock(wrapped))
+    let days_over = i64::try_from(&moved.div(&day)?.floor()).map_err(|_| Error::Overflow)?;
+    if days_over == 0 {
+        return Ok(Value::clock(moved));
+    }
+    let (today, _) = crate::settings::local_now();
+    Ok(Value::date(Number::from_i64(today + days_over).add(
+        &moved.div(&day)?.sub(&Number::from_i64(days_over))?,
+    )?))
 }
 
 /// A sum or difference of two lengths of time is written the way its operands were: a timespan stays a
@@ -1249,13 +1284,17 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             if let Some(f) = format_money(v, opts) {
                 return f;
             }
-            let mut f = format_decimal(&v.number, opts);
+            let mut f = if v.unit.is_empty() || v.unit.currency_symbol().is_some() {
+                format_decimal(&v.number, opts)
+            } else {
+                crate::format::format_amount(&v.number, opts)
+            };
             if !v.unit.is_empty() {
                 let plural = v.number.abs() != Number::from_i64(1);
                 let symbol = v.unit.display(plural);
-                // the reference app writes pixels with no space (`128.3464566929px`) and a rate that has no
-                // numerator unit straight after the number (`30/week`).
-                if symbol != "px" && !symbol.starts_with('/') {
+                // the reference app writes pixels and degrees with no space (`128.3464566929px`, `180°`) and a
+                // rate that has no numerator unit straight after the number (`30/week`).
+                if !matches!(symbol.as_str(), "px" | "°") && !symbol.starts_with('/') {
                     f.text.push(' ');
                 }
                 f.text.push_str(&symbol);
@@ -1263,11 +1302,15 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             f
         }
         Kind::Date => Formatted {
-            text: crate::dates::format_date(&v.number, v.layout == Some(Shown::Timed)),
+            text: crate::dates::format_date(&v.number),
             exact: true,
         },
         Kind::Clock => Formatted {
-            text: crate::dates::format_clock(&v.number),
+            text: if v.layout == Some(Shown::Clock24) {
+                crate::dates::format_clock_24(&v.number)
+            } else {
+                crate::dates::format_clock(&v.number)
+            },
             exact: true,
         },
         Kind::Text => Formatted {
@@ -1395,11 +1438,55 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
             Formatted { text, exact }
         }
         Shown::Parts(units) => format_parts(&base, units, opts),
+        Shown::FeetInches => {
+            let inches = base
+                .div(&Number::from_decimal_str("0.0254").expect("a decimal"))
+                .unwrap_or_else(|_| base.clone());
+            let feet = Number::from_ratio(
+                inches
+                    .div(&Number::from_i64(12))
+                    .map_or_else(|_| num_bigint::BigInt::from(0), |n| n.floor()),
+                num_bigint::BigInt::from(1),
+            )
+            .unwrap_or_else(|_| Number::from_i64(0));
+            let rest = inches
+                .sub(
+                    &feet
+                        .mul(&Number::from_i64(12))
+                        .unwrap_or_else(|_| feet.clone()),
+                )
+                .unwrap_or_else(|_| inches.clone());
+            let foot = |n: &Number| {
+                let f = crate::format::format_decimal(n, opts);
+                (f.text.clone(), f.exact, *n == Number::from_i64(1))
+            };
+            let mut text = Vec::new();
+            let mut exact = true;
+            if !feet.is_zero() || rest.is_zero() {
+                let (t, e, one) = foot(&feet);
+                exact &= e;
+                text.push(format!("{t} {}", if one { "foot" } else { "feet" }));
+            }
+            if !rest.is_zero() {
+                let (t, e, one) = foot(&rest);
+                exact &= e;
+                text.push(format!("{t} {}", if one { "inch" } else { "inches" }));
+            }
+            Formatted {
+                text: text.join(" "),
+                exact,
+            }
+        }
         Shown::Timecode(rate) => {
             let (text, exact) = crate::dates::format_timecode(&base, rate);
             Formatted { text, exact }
         }
-        Shown::Digits | Shown::Fraction | Shown::Ratio(_) | Shown::Timed | Shown::Pace(_) => {
+        Shown::Digits
+        | Shown::Fraction
+        | Shown::Ratio(_)
+        | Shown::Timed
+        | Shown::Pace(_)
+        | Shown::Clock24 => {
             unreachable!("written out before this is called")
         }
     }

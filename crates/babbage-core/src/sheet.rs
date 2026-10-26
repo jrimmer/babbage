@@ -159,15 +159,42 @@ fn normalise_name(name: &str) -> String {
     name.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// Sums values, applying any percentages to the running result at the end.
-fn add_up(values: &[&Value]) -> Result<Value, Error> {
+/// Adds values in order: `None` for no values at all.
+fn sum_in_order(values: &[&Value]) -> Result<Option<Value>, Error> {
     let mut total: Option<Value> = None;
-    for v in values.iter().filter(|v| v.kind() == Kind::Plain) {
+    for v in values {
         total = Some(match total {
             None => (*v).clone(),
             Some(t) => Value::binary(BinOp::Add, &t, v)?,
         });
     }
+    Ok(total)
+}
+
+/// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to each
+/// other (`$10`, `5` and `3 gallons`) do not make the Total an error: as the reference app shows, it is then
+/// the sum of the lines of the last line's kind (`3 gal`), and the plain numbers are left out.
+fn add_up(values: &[&Value]) -> Result<Value, Error> {
+    let plain: Vec<&Value> = values
+        .iter()
+        .copied()
+        .filter(|v| v.kind() == Kind::Plain)
+        .collect();
+    let total = match sum_in_order(&plain) {
+        Err(Error::IncompatibleUnits | Error::CurrencyRateNeeded) => {
+            let last_with_unit = plain.iter().rev().find(|v| !v.unit().is_empty());
+            let same_kind: Vec<&Value> = plain
+                .iter()
+                .copied()
+                .filter(|v| {
+                    !v.unit().is_empty()
+                        && last_with_unit.is_some_and(|l| Value::binary(BinOp::Add, l, v).is_ok())
+                })
+                .collect();
+            sum_in_order(&same_kind)?
+        }
+        other => other?,
+    };
     let Some(mut total) = total else {
         return Err(Error::UnsupportedOperation("there is nothing to add up"));
     };

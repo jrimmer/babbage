@@ -822,10 +822,10 @@ fn a_zone_offset_is_hours_and_minutes_never_a_twelve_hour_clock() {
             answer(line)
         );
     }
-    assert_eq!(answer("noon GMT+5 in UTC"), "7:00 AM");
-    assert_eq!(answer("noon GMT+5:30 in UTC"), "6:30 AM");
-    assert_eq!(answer("noon UTC-5:30 in UTC"), "5:30 PM");
+    assert_eq!(answer("noon GMT+5 in UTC"), "07:00");
+    assert_eq!(answer("noon GMT+5:30 in UTC"), "06:30");
+    assert_eq!(answer("noon UTC-5:30 in UTC"), "17:30");
     // A time before the zone is still a time.
-    assert_eq!(answer("5pm GMT+2 in UTC"), "3:00 PM");
-    assert_eq!(answer("5:30pm GMT-5 in UTC"), "10:30 PM");
+    assert_eq!(answer("5pm GMT+2 in UTC"), "15:00");
+    assert_eq!(answer("5:30pm GMT-5 in UTC"), "22:30");
 }

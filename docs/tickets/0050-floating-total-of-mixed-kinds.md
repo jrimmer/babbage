@@ -1,6 +1,6 @@
 # 0050 What the floating Total shows for dollars, plain numbers and volumes together
 
-Status: decided: Total adds the first line's kind
+Status: closed (the reference app)
 Milestone: v1
 Area: sheets
 
@@ -17,3 +17,5 @@ $10
 Expected here: an error chip. If the reference app instead shows a number, say which lines it counted (all three, the bare number only, or the dollars only) and the rule follows from that.
 
 The reference app: for the lines `$10`, `5`, `3 gallons` the Total was `$10.00`; and the owner then reported `5` and `3 gal` for the next two steps, which fits the Total adding only the lines of the first line's kind (the owner probably deleted lines from the top, not the bottom as the instructions said). The engine refuses a mixed sheet. To confirm, one more check is needed.
+
+Settled by the reference app (second pass, Sheet C): `$10`, `5`, `3 gallons` is `3 gal`; `5`, `3 gallons` is `8 gal`; `3 gallons` is `3 gal`; `5`, `$10`, `$20`, `7` is `$42.00`. The rule built: lines that can all be added give the sum (plain numbers take the unit); otherwise the Total is the sum of the lines of the last line with a unit's kind, and plain numbers are left out. Which kind wins when the last line is a plain number is not known.

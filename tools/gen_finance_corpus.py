@@ -104,7 +104,7 @@ for _ in range(450):
 
     # multiples and returns
     a, b = Fraction(rng.randint(100, 5000)), Fraction(rng.randint(100, 20000))
-    exact(f"${a} invested ${b} returned", b / a)
+    exact(f"${a} invested ${b} returned", (b - a) / a)
     y = rng.randint(1, 12)
     root = iroot_frac(b / a, y)
     if root is not None:

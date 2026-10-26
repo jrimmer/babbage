@@ -91,8 +91,8 @@ fn the_example_lines() {
     ] {
         assert_eq!(shown(line).0, want, "{line}");
     }
-    assert_eq!(shown("asind(0.5)").0, "30 deg");
-    assert_eq!(shown("asin(0.5 degrees)").0, "30 deg");
+    assert_eq!(shown("asind(0.5)").0, "30°");
+    assert_eq!(shown("asin(0.5 degrees)").0, "30°");
 }
 
 #[test]
@@ -156,10 +156,10 @@ fn approximation_spreads_through_arithmetic() {
 
 #[test]
 fn degrees_and_radians() {
-    assert_eq!(shown("1 rad in degrees").0, "57.2957795131 deg");
+    assert_eq!(shown("1 rad in degrees").0, "57.2957795131°");
     assert!(evaluate("1 rad in degrees").unwrap().is_approximate());
     assert_eq!(shown("180 degrees in rad").0, "3.1415926536 rad");
-    assert_eq!(shown("1 rev in degrees").0, "360 deg");
+    assert_eq!(shown("1 rev in degrees").0, "360°");
     assert!(!evaluate("1 rev in degrees").unwrap().is_approximate());
     assert_eq!(shown("sin(30 degrees)").0, "0.5");
     assert!(!evaluate("2 rad + 3 rad").unwrap().is_approximate());
@@ -206,7 +206,7 @@ fn negative_inputs_that_are_fine() {
     assert_eq!(shown("cos(-60 degrees)").0, "0.5");
     assert_eq!(shown("tan(-45 degrees)").0, "-1");
     assert_eq!(shown("sin(390 degrees)").0, "0.5");
-    assert_eq!(shown("asind(-1)").0, "-90 deg");
+    assert_eq!(shown("asind(-1)").0, "-90°");
     assert_eq!(shown("sinh(0)").0, "0");
     assert_eq!(shown("ln(1/2)").0, "-0.6931471806");
 }

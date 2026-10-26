@@ -6,10 +6,13 @@ Columns: expression <TAB> mode <TAB> expected. Modes: text (the whole display), 
 """
 import calendar
 import random
+import warnings
 from datetime import date, datetime, timedelta
 
+from convertdate import hebrew, islamic
 from dateutil.easter import EASTER_ORTHODOX, easter
 from dateutil.relativedelta import relativedelta
+from lunardate import LunarDate
 
 rng = random.Random(0xDA7E5)
 TODAY = date(2024, 6, 15)
@@ -20,7 +23,9 @@ DAYS = list(calendar.day_name)
 
 
 def dated(d, clock, today):
-    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    """A date with a time: just the time today, Yesterday or Tomorrow a day either side, else the full date."""
+    if d == today:
+        return clock
     if d == today - timedelta(1):
         return f"Yesterday at {clock}"
     if d == today + timedelta(1):
@@ -157,7 +162,7 @@ for _ in range(800):
     add(f"days between {la} and {lb}", "days", abs((a - b).days))
     add(f"workdays between {la} and {lb}", "workdays", workdays(a, b))
     add(f"work hours between {la} and {lb}", "hours", workdays(a, b) * 8)
-    add(f"midpoint between {la} and {lb}", "text", shown(a + (b - a) / 2) if (b - a).days % 2 == 0 else shown(min(a, b) + timedelta(days=abs((b - a).days) // 2)) + " at 12:00 PM")
+    add(f"midpoint between {la} and {lb}", "text", shown(min(a, b) + timedelta(days=(abs((b - a).days) + 1) // 2)))
     lo, hi = sorted((a, b))
     add(f"{literal(lo)} through {literal(hi)}", "days", (hi - lo).days + 1)
 
@@ -197,6 +202,30 @@ for y in range(1583, 2600):
     add(f"Easter Monday {y}", "text", shown(easter(y) + timedelta(1)))
     add(f"Orthodox Easter {y}", "text", shown(easter(y, EASTER_ORTHODOX)))
     add(f"Orthodox Good Friday {y}", "text", shown(easter(y, EASTER_ORTHODOX) - timedelta(2)))
+
+warnings.simplefilter("ignore")
+
+
+def first_ramadan(year):
+    """The first Ramadan that starts in `year` in the arithmetic Islamic calendar: (first day, first of Shawwal)."""
+    for hijri in range((year - 622) * 33 // 32 - 3, (year - 622) * 33 // 32 + 4):
+        first = date(*islamic.to_gregorian(hijri, 9, 1))
+        if first.year == year:
+            return first, date(*islamic.to_gregorian(hijri, 10, 1))
+
+
+# Festivals are given as the evening they begin and the day they end, as the reference app does.
+for y in range(1583, 2600):
+    kislev25 = date(*hebrew.to_gregorian(y + 3761, 9, 25))
+    add(f"Hanukkah {y}", "text", shown(kislev25 - timedelta(1)))
+    add(f"End of Hanukkah {y}", "text", shown(kislev25 + timedelta(7)))
+    first, shawwal = first_ramadan(y)
+    add(f"Ramadan {y}", "text", shown(first - timedelta(1)))
+    add(f"End of Ramadan {y}", "text", shown(shawwal - timedelta(1)))
+for y in range(1900, 2100):
+    new_year = LunarDate(y, 1, 1).to_solar_date()
+    add(f"Chinese New Year {y}", "text", shown(new_year))
+    add(f"Chinese New Year's Eve {y}", "text", shown(new_year - timedelta(1)))
 
 PIECES = ["yyyy", "yy", "MMMM", "MMM", "MM", "M", "dd", "d", "EEEE", "EEE"]
 SEPS = [", ", " ", "/", "-", ". "]

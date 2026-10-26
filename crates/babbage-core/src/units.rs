@@ -152,10 +152,10 @@ floz | fl oz,floz,fluid ounce,fluid ounces | L3 | 0.003785411784/128
 tbsp | tbsp,tablespoon,tablespoons | L3 | 0.003785411784/256
 tsp | tsp,teaspoon,teaspoons | L3 | 0.003785411784/768
 bsh | bsh,bushel,bushels | L3 | 0.03523907016688
-imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 0.00454609
-imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 0.00454609/4
-imp pt | imperial pint,imperial pints,imp pt,imp pint,imp pints,uk pint,uk pints | L3 | 0.00454609/8
-imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 0.00454609/160
+imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 0.568261*8/1000
+imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 0.568261*2/1000
+imp pt | imperial pint,imperial pints,imp pt,imp pint,imp pints,uk pint,uk pints | L3 | 0.568261/1000
+imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 0.568261/20/1000
 af | af,acre foot,acre feet,acre-foot | L3 | 4046.8564224*0.3048
 # mass
 g | g,gram,grams,gramme,grammes | M | 0.001
@@ -212,7 +212,7 @@ V | V,volt,volts | M L2 T-3 I-1 | 1
 KV | KV | M L2 T-3 I-1 | 1000
 A | A,amp,amps,ampere,amperes | I | 1
 +m,µ,k,M
-ohm | Ω,ohm,ohms | M L2 T-3 I-2 | 1
+Ω | Ω,ohm,ohms | M L2 T-3 I-2 | 1
 +m,µ,k,M
 coulomb | coulomb,coulombs | T I | 1
 Ah | Ah,ampere hour,ampere hours | T I | 3600
@@ -257,6 +257,10 @@ Zib | Zib,zebibit,zebibits | B | 1024^7
 Yib | Yib,yobibit,yobibits | B | 1024^8
 # compound aliases
 @ mph = mi/h
+@ kohm,kohms = kΩ
+@ Mohm,megohm,megohms = MΩ
+@ mohm = mΩ
+@ uohm,µohm = µΩ
 @ kph,kmh = km/h
 @ kn,knot,knots = NM/h
 @ fps = frame/s
@@ -757,30 +761,11 @@ fn factor_in_context(def: &UnitDef, workday_context: bool) -> Number {
     }
 }
 
-/// A unit's factor to SI under the current settings: a workday is the work-hours setting, and the larger
-/// US volume units become the imperial ones when the volume system says so.
+/// A unit's factor to SI under the current settings: a workday is the work-hours setting. The volume units are
+/// the same whatever the reference app volume setting says: it changed none of them.
 fn factor_now(def: &UnitDef) -> Number {
-    use crate::settings::VolumeSystem;
     match def.symbol {
         "workday" => Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600),
-        "gal" | "qt" | "pint" | "floz" | "tbsp" | "tsp"
-            if crate::settings::volume_system() == VolumeSystem::Imperial =>
-        {
-            // The imperial fluid ounce is a hundred and sixtieth of the gallon; the tablespoon is five
-            // eighths of it and the teaspoon a third of the tablespoon. The cup stays US customary.
-            let (numerator, divisor) = match def.symbol {
-                "gal" => (1, 1),
-                "qt" => (1, 4),
-                "pint" => (1, 8),
-                "floz" => (1, 160),
-                "tbsp" => (5, 160 * 8),
-                _ => (5, 160 * 8 * 3),
-            };
-            Number::from_decimal_str("0.00454609")
-                .and_then(|gallon| gallon.mul(&Number::from_i64(numerator)))
-                .and_then(|n| n.div(&Number::from_i64(divisor)))
-                .expect("the imperial gallon is a plain decimal")
-        }
         _ => def.factor.clone(),
     }
 }
@@ -1097,11 +1082,23 @@ const WORD_UNITS: &[(&str, &str)] = &[
 impl UnitExpr {
     /// How this unit reads in an answer. `plural` is whether the amount in front of it is not one.
     pub fn display(&self, plural: bool) -> String {
+        // Miles per hour is written `mph`, however it was reached.
+        if let (Some(mile), Some(hour)) = (lookup("mi"), lookup("h"))
+            && let ([(m, 1)], [(h, 1)]) = (&mile.0[..], &hour.0[..])
+            && self.0.len() == 2
+            && self.0.contains(&(*m, 1))
+            && self.0.contains(&(*h, -1))
+        {
+            return "mph".to_string();
+        }
         let reg = registry();
         let name = |u: UnitId| -> (String, bool) {
             let symbol = reg.defs[u as usize].symbol;
             match WORD_UNITS.iter().find(|(s, _)| *s == symbol) {
                 Some((_, word)) => ((*word).to_string(), true),
+                // The imperial pint is written `pt`; its table symbol cannot be, for the typographic point has it.
+                None if symbol == "imp pt" => ("pt".to_string(), false),
+                None if symbol == "deg" => ("°".to_string(), false),
                 None => (symbol.to_string(), false),
             }
         };
@@ -1117,9 +1114,11 @@ impl UnitExpr {
                 format!("{text}{}", superscript(e))
             }
         };
+        // The units of a product read named ones before base ones, as the table lists them backwards: `3 W s`.
         let up: Vec<String> = self
             .0
             .iter()
+            .rev()
             .filter(|(_, e)| e.is_positive())
             .enumerate()
             .map(|(i, (u, e))| part(*u, *e, i == 0))
@@ -1130,35 +1129,16 @@ impl UnitExpr {
             .filter(|(_, e)| e.is_negative())
             .map(|(u, e)| (*u, -*e))
             .collect();
-        // A speed such as `km/h` keeps its symbols: words are for rates of money, counts and times.
-        let speed_like = !self.0.iter().any(|(u, e)| {
-            e.is_positive() && {
-                let def = &reg.defs[*u as usize];
-                def.currency.is_some() || WORD_UNITS.iter().any(|(s, _)| *s == def.symbol)
-            }
-        }) && !up.is_empty();
-        let down_text: Vec<String> = down
-            .iter()
-            .map(|(u, e)| {
-                if speed_like {
-                    let s = reg.defs[*u as usize].symbol;
-                    if *e == 1 {
-                        s.to_string()
-                    } else {
-                        format!("{s}{}", superscript(*e))
-                    }
-                } else {
-                    part(*u, *e, false)
-                }
-            })
-            .collect();
+        // A speed made by division reads `10 km / 2 hours` as `5 km/hour`, as the reference app prints it;
+        // `mph` is a unit of its own and keeps its name.
+        let down_text: Vec<String> = down.iter().map(|(u, e)| part(*u, *e, false)).collect();
         match (up.is_empty(), down.len()) {
-            (_, 0) => up.join("·"),
+            (_, 0) => up.join(" "),
             // Only a denominator (`30/week`): written after a slash when each is to the first power.
             (true, 1) if down[0].1 == 1 => format!("/{}", down_text[0]),
             (true, _) => self.symbol(),
-            (false, 1) => format!("{}/{}", up.join("·"), down_text[0]),
-            (false, _) => format!("{}/({})", up.join("·"), down_text.join("·")),
+            (false, 1) => format!("{}/{}", up.join(" "), down_text[0]),
+            (false, _) => format!("{}/({})", up.join(" "), down_text.join("·")),
         }
     }
 }

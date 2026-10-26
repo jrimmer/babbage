@@ -163,6 +163,20 @@ pub struct Formatted {
 /// Symbols from the reference, smallest first: `k` thousand, `M` million, `G` billion, `T` trillion.
 const LARGE: [(&str, u32, u32); 4] = [("k", 3, 5), ("M", 6, 6), ("G", 9, 9), ("T", 12, 12)];
 
+/// An amount with a unit: one too small for ten decimal places would print as 0, so it is written in scientific
+/// form instead, `1e-12`, as the reference app does for `1 ng in kg`.
+pub fn format_amount(n: &Number, opts: &FormatOptions) -> Formatted {
+    let half = Number::from_ratio(BigInt::from(1), BigInt::from(2)).expect("a half");
+    if !n.is_zero()
+        && n.abs()
+            .mul(&power_of_ten(10))
+            .is_ok_and(|scaled| scaled < half)
+    {
+        return scientific(n, opts);
+    }
+    format_decimal(n, opts)
+}
+
 pub fn format_decimal(n: &Number, opts: &FormatOptions) -> Formatted {
     if !opts.abbreviate_large {
         return format_plain(n, opts);
@@ -198,6 +212,55 @@ pub fn format_decimal(n: &Number, opts: &FormatOptions) -> Formatted {
         }
         f.text.push_str(symbol);
         return f;
+    }
+}
+
+/// `1e-12`, `-2.5e-11`: ten significant digits at most, the mantissa between 1 and 10.
+fn scientific(n: &Number, opts: &FormatOptions) -> Formatted {
+    let ten = |e: i64| {
+        let p = BigInt::from(10).pow(e.unsigned_abs() as u32);
+        if e >= 0 {
+            Number::from_ratio(p, BigInt::from(1))
+        } else {
+            Number::from_ratio(BigInt::from(1), p)
+        }
+        .expect("a power of ten")
+    };
+    let x = n.abs();
+    let mut k = x.numer().to_string().len() as i64 - x.denom().to_string().len() as i64;
+    let mantissa = loop {
+        let m = x.div(&ten(k)).expect("ten to a power is never zero");
+        if m < ten(0) {
+            k -= 1;
+        } else if m >= ten(1) {
+            k += 1;
+        } else {
+            break m;
+        }
+    };
+    let digits = 10;
+    let mut scaled = mantissa
+        .mul(&ten(digits))
+        .and_then(|m| m.add(&Number::from_ratio(BigInt::from(1), BigInt::from(2)).expect("a half")))
+        .map(|m| m.floor())
+        .expect("small");
+    if scaled >= BigInt::from(10).pow(digits as u32 + 1) {
+        scaled /= BigInt::from(10);
+        k += 1;
+    }
+    let text = scaled.to_string();
+    let rest = text[1..].trim_end_matches('0');
+    let mantissa_text = if rest.is_empty() {
+        text[..1].to_string()
+    } else {
+        format!("{}{}{rest}", &text[..1], opts.number_format.decimal_mark())
+    };
+    Formatted {
+        text: format!(
+            "{}{mantissa_text}e{k}",
+            if n.is_negative() { "-" } else { "" }
+        ),
+        exact: false,
     }
 }
 

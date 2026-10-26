@@ -88,9 +88,19 @@ pub fn present_value(
     scale(future, approx::pow_rational(&base, &m.mul(&t)?.neg())?)
 }
 
-/// Returned over invested, as a multiple.
+/// What was gained over what was invested, as a multiple: `$500 invested $1,500 returned` is `2x`, as the
+/// the reference app prints it (the gain of $1,000 is twice the stake).
 pub fn return_multiple(invested: &Value, returned: &Value) -> Result<Value, Error> {
-    let ratio = Value::binary(BinOp::Div, returned, invested)?;
+    let gain = Value::binary(BinOp::Sub, returned, invested)?;
+    multiple_of(Value::binary(BinOp::Div, &gain, invested)?)
+}
+
+/// What the stake grew to, as a multiple of itself: the factor an annual return is the root of.
+fn growth(invested: &Value, returned: &Value) -> Result<Value, Error> {
+    multiple_of(Value::binary(BinOp::Div, returned, invested)?)
+}
+
+fn multiple_of(ratio: Value) -> Result<Value, Error> {
     let n = ratio
         .clone()
         .into_plain()
@@ -105,7 +115,7 @@ pub fn return_multiple(invested: &Value, returned: &Value) -> Result<Value, Erro
 
 /// The yearly rate that turns `invested` into `returned` in `time`.
 pub fn annual_return(invested: &Value, returned: &Value, time: &Value) -> Result<Value, Error> {
-    let multiple = return_multiple(invested, returned)?;
+    let multiple = growth(invested, returned)?;
     let t = years(time)?;
     if t.is_zero() || t.is_negative() {
         return Err(Error::OutOfDomain);

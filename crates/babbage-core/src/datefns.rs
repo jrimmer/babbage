@@ -66,6 +66,9 @@ pub enum DateFn {
     ElapsedMonth,
     ElapsedWeek,
     ElapsedDay,
+    /// The calendar span from a date to now (`time since January 1`) or from now to a date (`time to December 25`).
+    SpanSince,
+    SpanUntil,
 }
 
 impl DateFn {
@@ -86,6 +89,8 @@ impl DateFn {
             | DateFn::AsTimecode
             | DateFn::AsFrames
             | DateFn::TimeIn
+            | DateFn::SpanSince
+            | DateFn::SpanUntil
             | DateFn::DateIn => 1,
             DateFn::CurrentTimestamp
             | DateFn::ElapsedYear
@@ -179,6 +184,8 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
             365
         }),
         DateFn::DaysBetween => days((date_arg(&args[0])?.0 - date_arg(&args[1])?.0).abs()),
+        DateFn::SpanSince => calendar_span(&args[0], true),
+        DateFn::SpanUntil => calendar_span(&args[0], false),
         DateFn::Until => days(date_arg(&args[0])?.0 - today),
         DateFn::Since => days(today - date_arg(&args[0])?.0),
         DateFn::Inclusive => days(date_arg(&args[1])?.0 - date_arg(&args[0])?.0 + 1),
@@ -244,16 +251,10 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::TimeIn => {
             let zone = zone_arg(&args[0])?;
             let now = settings::now_utc_seconds();
-            let wall = now + zone.offset_at(now);
-            // On the day before or after the local day the answer names that day: `Tomorrow at 12:30 AM`.
-            if wall.div_euclid(86_400) != settings::local_now().0 {
-                let days = Number::from_ratio(
-                    num_bigint::BigInt::from(wall),
-                    num_bigint::BigInt::from(86_400),
-                )?;
-                return Ok(Value::date_at(days, true));
-            }
-            Ok(Value::clock(Number::from_i64(wall.rem_euclid(86_400))))
+            // To the minute, as the reference app shows it (`7:29 PM`), and a bare time of day even when it is
+            // already tomorrow there (`time in Thailand` at 1:12 PM in Los Angeles is `3:12 AM`).
+            let wall = (now + zone.offset_at(now)).rem_euclid(86_400);
+            Ok(Value::clock(Number::from_i64(wall - wall % 60)))
         }
         DateFn::DateIn => {
             let zone = zone_arg(&args[0])?;
@@ -292,7 +293,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
 
 /// How much of the current year, month, week or day has gone, as a percentage of its whole length.
 fn elapsed(f: DateFn) -> Result<Value, Error> {
-    let (today, seconds) = settings::local_now();
+    let (today, _) = settings::local_now();
     let civil = calendar::civil_from_days(today);
     let (start, end) = match f {
         DateFn::ElapsedYear => (
@@ -318,15 +319,90 @@ fn elapsed(f: DateFn) -> Result<Value, Error> {
                 first + i64::from(calendar::days_in_month(civil.year, civil.month)),
             )
         }
+        // A week starts on Sunday in the owner's region: `week percentage` on a Monday afternoon is about 22%.
         DateFn::ElapsedWeek => {
-            let monday = today - i64::from(calendar::weekday(today)).rem_euclid(7);
-            (monday, monday + 7)
+            let sunday = today - (i64::from(calendar::weekday(today)) + 1) % 7;
+            (sunday, sunday + 7)
         }
         _ => (today, today + 1),
     };
-    let gone = Number::from_i64((today - start) * 86_400 + seconds);
-    let whole = Number::from_i64((end - start) * 86_400);
-    Ok(Value::percent(gone.div(&whole)?))
+    // Real elapsed time, so a daylight saving change inside the period counts: from the start of the period to
+    // now, over its length, all as instants.
+    let instant = |day: i64| settings::wall_to_utc(&Number::from_i64(day * 86_400));
+    let (from, to) = (instant(start)?, instant(end)?);
+    let now = Number::from_i64(settings::now_utc_seconds());
+    Ok(Value::percent(now.sub(&from)?.div(&to.sub(&from)?)?))
+}
+
+/// The span between a date (at its start, when it has no time) and now, in calendar months, weeks, days and the
+/// clock units: `9 months 3 weeks 4 days 13 hours 11 min`. Zero parts are left out. It is read on the wall
+/// clock, so a daylight saving change between the two does not move the hours.
+fn calendar_span(date: &Value, since: bool) -> Result<Value, Error> {
+    let (day, seconds_into) = {
+        let whole = date.number().floor();
+        let day = i64::try_from(&whole).map_err(|_| Error::Overflow)?;
+        let rest = date
+            .number()
+            .sub(&Number::from_ratio(whole, num_bigint::BigInt::from(1))?)?
+            .mul(&Number::from_i64(86_400))?;
+        let seconds = i64::try_from(&rest.floor()).map_err(|_| Error::Overflow)?;
+        (day, seconds)
+    };
+    let target = day * 86_400 + seconds_into;
+    let (today, seconds) = settings::local_now();
+    let now = today * 86_400 + seconds;
+    let (from, to) = if since { (target, now) } else { (now, target) };
+    let (negative, from, to) = if to < from {
+        (true, to, from)
+    } else {
+        (false, from, to)
+    };
+    let from_day = from.div_euclid(86_400);
+    let from_seconds = from.rem_euclid(86_400);
+    let (a, b) = (
+        calendar::civil_from_days(from_day),
+        calendar::civil_from_days(to.div_euclid(86_400)),
+    );
+    let at = |months: i64| {
+        calendar::days_from_civil(calendar::add_months(a, months)) * 86_400 + from_seconds
+    };
+    let mut months = (b.year - a.year) * 12 + i64::from(b.month) - i64::from(a.month);
+    if at(months) > to {
+        months -= 1;
+    }
+    let mut rest = to - at(months);
+    let weeks = rest / 604_800;
+    rest %= 604_800;
+    let days_part = rest / 86_400;
+    rest %= 86_400;
+    let (hours, minutes, secs) = (rest / 3600, rest % 3600 / 60, rest % 60);
+    let plural = |n: i64, word: &str| format!("{n} {word}{}", if n == 1 { "" } else { "s" });
+    let mut parts = Vec::new();
+    for (n, word) in [
+        (months, "month"),
+        (weeks, "week"),
+        (days_part, "day"),
+        (hours, "hour"),
+    ] {
+        if n != 0 {
+            parts.push(plural(n, word));
+        }
+    }
+    if minutes != 0 {
+        parts.push(format!("{minutes} min"));
+    }
+    if secs != 0 {
+        parts.push(format!("{secs} s"));
+    }
+    if parts.is_empty() {
+        parts.push("0 s".to_string());
+    }
+    let text = parts.join(" ");
+    Ok(Value::text(&if negative {
+        format!("-{text}")
+    } else {
+        text
+    }))
 }
 
 /// The date halfway between two dates.
@@ -334,9 +410,17 @@ pub fn midpoint(a: &Value, b: &Value) -> Result<Value, Error> {
     if a.kind() != Kind::Date || b.kind() != Kind::Date {
         return Err(Error::IncompatibleUnits);
     }
-    Ok(Value::date(
-        a.number().add(b.number())?.div(&Number::from_i64(2))?,
-    ))
+    // Two dates written with no time are two middays, so their midpoint is a whole day, the later one when the
+    // gap is odd: `halfway between January 1 and March 1` is `January 31`, as the reference app prints it.
+    let half = a.number().add(b.number())?.div(&Number::from_i64(2))?;
+    if a.is_bare_date() && b.is_bare_date() && !half.is_integer() {
+        let up = half.floor() + num_bigint::BigInt::from(1);
+        return Ok(Value::date(Number::from_ratio(
+            up,
+            num_bigint::BigInt::from(1),
+        )?));
+    }
+    Ok(Value::date(half))
 }
 
 /// The first day of `month` in `year`, as a date value.
@@ -392,9 +476,14 @@ fn zone_convert(v: &Value, from: &Value, to: &Value) -> Result<Value, Error> {
     let day = i64::try_from(&there.div(&day_seconds)?.floor()).map_err(|_| Error::Overflow)?;
     if written_day == Some(day) {
         let into_day = there.sub(&Number::from_i64(day).mul(&day_seconds)?)?;
-        return Ok(Value::clock(into_day));
+        // UTC is read on the 24-hour clock (`noon PST in UTC` is `19:00`), as the reference app does.
+        return Ok(if to == Zone::Fixed(0) {
+            Value::clock_24(into_day)
+        } else {
+            Value::clock(into_day)
+        });
     }
-    Ok(Value::date_at(there.div(&day_seconds)?, true))
+    Ok(Value::date(there.div(&day_seconds)?))
 }
 
 /// Frames per second when a timecode does not say.

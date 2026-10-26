@@ -91,6 +91,27 @@ pub fn lex_with_ends(src: &str) -> Result<(Vec<Token>, Vec<usize>), Error> {
     Ok((toks, ends))
 }
 
+/// Pairs of units that make one quantity when joined by `and`: `5 feet and 3 inches`, `2 lb and 4 oz`. Other
+/// pairs (`between 1 km and 500 m`) are items in a list.
+const COMPOUND_QUANTITIES: &[(&str, &str)] = &[
+    ("mi", "ft"),
+    ("mi", "yd"),
+    ("yd", "ft"),
+    ("yd", "in"),
+    ("ft", "in"),
+    ("st", "lb"),
+    ("lb", "oz"),
+    ("gal", "qt"),
+    ("gal", "pint"),
+    ("qt", "pint"),
+    ("pint", "floz"),
+    ("cup", "floz"),
+    ("h", "min"),
+    ("min", "s"),
+    ("day", "h"),
+    ("wk", "day"),
+];
+
 /// `plus`, `minus`, `times`, `multiplied by`, `divided by`, `to the power of` and `mod` are operators.
 fn operator_words(toks: Vec<Token>) -> Vec<Token> {
     let word = |i: usize, w: &str| matches!(toks.get(i).map(|t| &t.tok), Some(Tok::Word(x)) if x.eq_ignore_ascii_case(w));
@@ -108,6 +129,17 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
             |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("for")),
         );
         let next_is_unit = matches!(toks.get(i + 1).map(|t| &t.tok), Some(Tok::Unit(_)));
+        // `5 feet and 3 inches` is `5 feet 3 inches`: between the parts of a compound quantity `and` only joins;
+        // `average of 10 m and 60 m` and `midpoint between 1 km and 500 m` are lists.
+        let joins_a_smaller_unit = word(i, "and")
+            && matches!(
+                (out.last().map(|t| &t.tok), toks.get(i + 1).map(|t| &t.tok), toks.get(i + 2).map(|t| &t.tok)),
+                (Some(Tok::Unit(a)), Some(Tok::Num(_)), Some(Tok::Unit(b))) if COMPOUND_QUANTITIES.contains(&(a.symbol().as_str(), b.symbol().as_str()))
+            );
+        if joins_a_smaller_unit {
+            i += 1;
+            continue;
+        }
         let (tok, used) = if (word(i, "a") || word(i, "an")) && next_is_unit && prev_ends_operand {
             // `$24 a day` is `$24 per day`.
             (Some(Tok::Slash), 1)
@@ -140,12 +172,36 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
     out
 }
 
+/// Two units written one after the other that measure different things are one unit, their product: `3 W s` is
+/// three watt seconds. Two that measure the same thing (`5 feet 3 inches`) stay apart, to be added.
+fn unit_products(toks: Vec<Token>) -> Vec<Token> {
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    for t in toks {
+        if let Tok::Unit(b) = &t.tok
+            && let Some(Token {
+                tok: Tok::Unit(a), ..
+            }) = out.last()
+            && out.len() >= 2
+            && matches!(out[out.len() - 2].tok, Tok::Num(_))
+            && a.dim() != b.dim()
+        {
+            let product = a.times(b);
+            let last = out.len() - 1;
+            out[last].tok = Tok::Unit(product);
+            continue;
+        }
+        out.push(t);
+    }
+    out
+}
+
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
     // `m` is settled first, so that `2m 25s 10 frames at 24 fps` reads its minutes before the frames are gathered.
     lex_raw(src)
         .map(minutes_beside_time)
         .and_then(resolve_timecodes)
         .map(operator_words)
+        .map(unit_products)
         .map(crate::dates::rewrite)
 }
 
@@ -282,6 +338,14 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
             }
             '0'..='9' => {
                 let (n, next) = scan_number(src, &chars, i, false)?;
+                if let Some((v, end)) = feet_inches_at(src, &chars, &n, next)? {
+                    out.push(Token {
+                        tok: Tok::Value(v),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 if multiplier_x_at(&chars, next) {
                     out.push(Token {
                         tok: Tok::Value(Value::multiplier(n)),
@@ -304,6 +368,33 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     at,
                 });
                 i = next;
+                continue;
+            }
+            // `100²` and `(2+3)³`: superscript digits after a number or a bracket are a power.
+            c if crate::units::superscript_digit(c).is_some()
+                && matches!(
+                    out.last().map(|t| &t.tok),
+                    Some(Tok::Num(_) | Tok::RParen | Tok::Value(_))
+                ) =>
+            {
+                let mut exponent = 0i64;
+                let mut j = i;
+                while let Some(d) = chars
+                    .get(j)
+                    .and_then(|(_, ch)| crate::units::superscript_digit(*ch))
+                {
+                    exponent = exponent.saturating_mul(10).saturating_add(i64::from(d));
+                    j += 1;
+                }
+                out.push(Token {
+                    tok: Tok::Caret,
+                    at,
+                });
+                out.push(Token {
+                    tok: Tok::Num(Number::from_i64(exponent)),
+                    at,
+                });
+                i = j;
                 continue;
             }
             '+' => simple(Tok::Plus, &mut out),
@@ -506,6 +597,15 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                         at,
                     });
                 } else {
+                    // A name straight against a bracket (`foo(45)`) is a call of a function that does not
+                    // exist, which the reference app shows no answer for; with a space (`price (5)`) it is prose.
+                    let glued_to_bracket = chars.get(end).is_some_and(|(_, c)| *c == '(');
+                    let connector = ["and", "for", "the", "per", "off", "from", "with"]
+                        .iter()
+                        .any(|w| word.eq_ignore_ascii_case(w));
+                    if glued_to_bracket && !is_call && word.chars().count() >= 3 && !connector {
+                        return Err(Error::UnexpectedWord { word, at });
+                    }
                     let is_as = word.eq_ignore_ascii_case("as");
                     out.push(Token {
                         tok: Tok::Word(word),
@@ -733,6 +833,34 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .div(&Number::from_i64(86_400))
         .ok()
         .map(|days| (Value::date_at(days, pos - i > 10), pos))
+}
+
+/// `5'` and `5' 6"`: feet, with inches after them. The marks are feet (`'`, `’`) and inches (`"`, `″`); the prime
+/// `′` is the arcminute.
+fn feet_inches_at(
+    src: &str,
+    chars: &[(usize, char)],
+    feet: &Number,
+    next: usize,
+) -> Result<Option<(Value, usize)>, Error> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    if !matches!(c(next), Some('\'' | '’')) {
+        return Ok(None);
+    }
+    let mut j = next + 1;
+    while c(j) == Some(' ') {
+        j += 1;
+    }
+    if c(j).is_some_and(|d| d.is_ascii_digit()) {
+        let (inches, after) = scan_number(src, chars, j, false)?;
+        if matches!(c(after), Some('"' | '″')) {
+            return Ok(Some((Value::feet_inches(feet.clone(), inches)?, after + 1)));
+        }
+    }
+    Ok(Some((
+        Value::feet_inches(feet.clone(), Number::from_i64(0))?,
+        next + 1,
+    )))
 }
 
 /// A date written with a two-digit month and day and a four-digit year, joined by `/` or `-`: `04-05-2020`,

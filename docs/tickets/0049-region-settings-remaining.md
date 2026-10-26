@@ -1,6 +1,6 @@
 # 0049 Region settings still to build
 
-Status: half closed
+Status: closed (the reference app)
 Milestone: v1 (row 22)
 Area: settings
 
@@ -21,3 +21,5 @@ To confirm against a real reference app (owner offered): set its volume units to
 If the reference app differs, the constants live in `factor_now` in `crates/babbage-core/src/units.rs`.
 
 The reference app (volume setting seen as US Customary): `1 tbsp in mL` 14.7867647813, `1 tsp` 4.9289215938, `1 fl oz in tbsp` 2, `1 cup` 236.5882365, `1 pint` 473.176473: the US values, unchanged when the setting was changed. Whether an imperial option exists is not yet confirmed (see the session question).
+
+Settled by the reference app (second pass, Sheet B parts 2 and 3): Imperial and Metric both gave the US values for tbsp, tsp, fl oz, cup, pint, quart and gallon, so the volume setting changes none of them. The setting and its `volume_system` key were removed. Explicit imperial units remain (`imperial pint`, `imp pt`, `uk pint`), with the imperial pint at 0.568261 L as the owner's `1 liter in imperial pints` implies (`1.7597547606 pt`).

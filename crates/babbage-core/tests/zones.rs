@@ -65,8 +65,9 @@ fn the_reference_zone_examples() {
         ("Tokyo time", "9:00 PM"),
         ("date in Auckland", "June 16"),
         ("time difference between Sydney and Chicago", "-15 hours"),
-        ("difference between PST & GMT", "8 hours"),
-        ("3pm PST to GMT", "11:00 PM"),
+        // PST is Los Angeles, which is on summer time in June.
+        ("difference between PST & GMT", "7 hours"),
+        ("3pm PST to GMT", "22:00"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }

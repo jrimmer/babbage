@@ -50,11 +50,11 @@ fn two_word_unit_names_join_on_a_space_or_a_hyphen() {
 fn degree_signs_take_the_letters_after_them() {
     assert_eq!(shown("5 °C"), "5 °C");
     assert_eq!(shown("5 ºF"), "5 °F");
-    assert_eq!(shown("5°"), "5 deg");
-    assert_eq!(shown("5 degrees"), "5 deg");
+    assert_eq!(shown("5°"), "5°");
+    assert_eq!(shown("5 degrees"), "5°");
     assert_eq!(shown("30′"), "30 arcmin");
     assert_eq!(shown("30″"), "30 arcsec");
-    assert_eq!(shown("2°²"), "2 deg²");
+    assert_eq!(shown("2°²"), "2 °²");
     assert!(evaluate("5 °X").is_err());
 }
 

@@ -26,7 +26,9 @@ def clock_text(sec):
 
 
 def dated(d, clock, today):
-    """A date with a time: Yesterday or Tomorrow a day either side of today, else the full date with its year."""
+    """A date with a time: just the time today, Yesterday or Tomorrow a day either side, else the full date."""
+    if d == today:
+        return clock
     if d == today - timedelta(1):
         return f"Yesterday at {clock}"
     if d == today + timedelta(1):
