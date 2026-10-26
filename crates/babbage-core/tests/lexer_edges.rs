@@ -213,3 +213,46 @@ fn an_iso_date_is_one_only_when_nothing_number_like_touches_it() {
         ("2019-04-01T12:30+00:59 as iso8601", "2019-04-01T11:31:00Z"),
     ]);
 }
+
+#[test]
+fn comparison_symbols_and_their_lone_prefixes() {
+    all(&[
+        ("1 \u{2264} 2", "true"),
+        ("2 \u{2264} 2", "true"),
+        ("3 \u{2264} 2", "false"),
+        ("2 \u{2265} 2", "true"),
+        ("1 \u{2265} 2", "false"),
+        ("3 \u{2265} 2", "true"),
+        ("1 \u{2260} 2", "true"),
+        ("2 \u{2260} 2", "false"),
+        ("1 ==1", "true"),
+        ("1 != 2", "true"),
+        ("1 != 1", "false"),
+        ("1 <= 1", "true"),
+        ("1 >= 2", "false"),
+    ]);
+    // a lone = or ! is not half of a two-character operator
+    fails(&["1 = 1", "5 =5", "5!", "5 ! = 5", "1 ! 2"]);
+}
+
+#[test]
+fn a_function_name_may_end_in_digits_and_then_needs_no_brackets() {
+    all(&[
+        ("log2 8", "3"),
+        ("log10 1000", "3"),
+        ("log10(1000)", "3"),
+        ("log2(8)", "3"),
+        ("ln1", "0"),
+        ("log 100", "2"),
+    ]);
+    fails(&["log2", "log10", "log"]);
+}
+
+#[test]
+fn a_time_unit_two_places_before_decides_whether_m_is_minutes() {
+    all(&[
+        ("1h 2s 5m", "1.0838888889 h"),
+        ("1h 2 min 5m", "1.1166666667 h"),
+        ("2 s 5 m", "5.0333333333 min"),
+    ]);
+}
