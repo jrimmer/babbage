@@ -6,7 +6,7 @@ Status as of 2026-10-26. Every row ships only after a Python-oracle differential
 |---|---|---|
 | 1 | Arithmetic core: + - × ÷ ^, parentheses, literals, aliases | done |
 | 2 | Display: rounding modes, grouping, exact/rounded flag | done |
-| 3 | Percentages: of, +/-, on/off, reverse forms, ratios, as % | done (sub-forms below are todo) |
+| 3 | Percentages: of, +/-, on/off, reverse forms, ratios, as % | done, including phrase forms inside parentheses |
 | 4 | Units and exact conversion factors (200+) | done (temperatures convert only; radians wait for row 12) |
 | 5 | Currency symbols and money display (no rates) | done (live rates are post-v1; custom rates work) |
 | 6 | Variables | done (global definition sheet is ticket 0022) |
@@ -31,7 +31,7 @@ Status as of 2026-10-26. Every row ships only after a Python-oracle differential
 
 All 24 rows are built. Every row has oracle or reference tests, and the engine rows have a mutation record (`docs/mutation.md`). What is left is filed as tickets: things that need a real reference app to settle (0018, 0030, 0043 to 0046, 0055), shipped data (0035 to 0038, 0047), and app gaps (0052). `bin/check` runs 468 tests across 49 suites over about 634,000 oracle and corpus lines, and `bin/accept` passes 17 of 17 in the nested Hyprland.
 
-Row 3 leftovers: fraction display, multipliers and the proportion forms are built (ticket 0014). Phrase forms inside parentheses are still open (ticket 0013).
+Row 3 leftovers: fraction display, multipliers and the proportion forms are built (ticket 0014). Phrase forms inside parentheses work too (ticket 0013).
 
 Open scope question: PDF and HTML export, Alfred/Raycast, URL schemes and its Studio edition are not in the list. The first two need no outside data, so by your rule they would be v1. I assumed they are not wanted on Linux.
 

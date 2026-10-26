@@ -608,7 +608,12 @@ fn is_operand_start(t: &Tok) -> bool {
 fn is_operand_end(t: &Tok) -> bool {
     matches!(
         t,
-        Tok::Num(_) | Tok::Value(_) | Tok::RParen | Tok::Unit(_) | Tok::Percent { .. }
+        Tok::Num(_)
+            | Tok::Value(_)
+            | Tok::Group(_)
+            | Tok::RParen
+            | Tok::Unit(_)
+            | Tok::Percent { .. }
     )
 }
 

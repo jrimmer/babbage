@@ -348,6 +348,10 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 out.push(Node::Value(v.clone()));
                 want_operand = false;
             }
+            (Tok::Group(e), true) => {
+                out.extend(e.nodes().iter().cloned());
+                want_operand = false;
+            }
             (Tok::Unit(u), false) => out.push(Node::Unit(u.clone())),
             (Tok::Unit(u), true) => {
                 out.push(Node::Num(Number::from_i64(1)));

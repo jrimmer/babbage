@@ -147,17 +147,15 @@ fn undocumented_combinations_are_refused_not_guessed() {
 }
 
 #[test]
-fn phrase_forms_only_apply_to_a_whole_line() {
-    for line in [
-        "(20 as %) × 1",
-        "1 + (20 is what % of 200)",
-        "(3 to 4 as %) + 1",
+fn phrase_forms_work_inside_parentheses() {
+    // Ticket 0013: a form in parentheses is one operand, with the answer the bare form gives.
+    for (line, want) in [
+        ("(20 as %) × 1", "20"),
+        ("1 + (20 is what % of 200)", "1.1"),
+        // 3 to 4 is +1/3, and 1/3 + 1 = 4/3 as a percentage.
+        ("(3 to 4 as %) + 1", "133.3333333333%"),
     ] {
-        assert!(
-            matches!(evaluate(line), Err(Error::UnexpectedWord { .. })),
-            "{line}: {:?}",
-            evaluate(line)
-        );
+        assert_eq!(shown(line), want, "{line}");
     }
 }
 

@@ -140,8 +140,92 @@ pub fn is_vocabulary_word(word: &str) -> bool {
     VOCABULARY.iter().any(|k| word.eq_ignore_ascii_case(k))
 }
 
+/// What one open parenthesis has seen at its own level so far: where it opened in the output, its phrase
+/// keywords and its commas (token indices into the output).
+struct Level {
+    open: usize,
+    keywords: Vec<(usize, &'static str)>,
+    commas: Vec<usize>,
+}
+
+/// Replaces each comma-separated run inside a pair of parentheses that spells a phrase form with one
+/// `Tok::Group` holding its parsed expression, innermost pairs first: `(20 as %) x 2` and
+/// `max(20 as %, 5)`. One pass over the tokens with an explicit stack, so deep nesting cannot overflow.
+fn collapse_groups(toks: &[Token]) -> Result<Vec<Token>, Error> {
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    let mut open: Vec<Level> = Vec::new();
+    for t in toks {
+        match &t.tok {
+            Tok::LParen => open.push(Level {
+                open: out.len(),
+                keywords: Vec::new(),
+                commas: Vec::new(),
+            }),
+            Tok::Comma => {
+                if let Some(level) = open.last_mut() {
+                    level.commas.push(out.len());
+                }
+            }
+            Tok::Word(w) => {
+                if let Some(level) = open.last_mut()
+                    && let Some(k) = VOCABULARY
+                        .iter()
+                        .copied()
+                        .find(|k| w.eq_ignore_ascii_case(k))
+                {
+                    level
+                        .keywords
+                        .push((out.len(), if k == "percent" { "%" } else { k }));
+                }
+            }
+            Tok::Percent { attached: false } => {
+                if let Some(level) = open.last_mut() {
+                    level.keywords.push((out.len(), "%"));
+                }
+            }
+            Tok::RParen => {
+                if let Some(level) = open.pop() {
+                    let mut starts = vec![level.open + 1];
+                    starts.extend(level.commas.iter().map(|c| c + 1));
+                    let mut ends = level.commas.clone();
+                    ends.push(out.len());
+                    for (&from, &to) in starts.iter().zip(&ends).rev() {
+                        let names: Vec<(usize, &str)> = level
+                            .keywords
+                            .iter()
+                            .copied()
+                            .filter(|(i, _)| (from..to).contains(i))
+                            .collect();
+                        if keywords_form_a_phrase(&names) {
+                            let expr = parse_line(&out[from..to])?;
+                            let at = out[from].at;
+                            out.splice(
+                                from..to,
+                                [Token {
+                                    tok: Tok::Group(expr),
+                                    at,
+                                }],
+                            );
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        out.push(t.clone());
+    }
+    Ok(out)
+}
+
 /// Parses one line, recognising the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
+    let grouped;
+    let toks = if toks.iter().any(|t| t.tok == Tok::LParen) {
+        grouped = collapse_groups(toks)?;
+        &grouped[..]
+    } else {
+        toks
+    };
     if let Some(parsed) = crate::words::parse_words(toks) {
         return parsed;
     }

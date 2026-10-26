@@ -33,6 +33,8 @@ pub enum Tok {
     Unit(UnitExpr),
     /// A value already worked out elsewhere: a variable or a reference to another line.
     Value(Value),
+    /// A parenthesised phrase form such as `(20 as %)`, already parsed: it stands where one operand would.
+    Group(crate::parser::Expr),
     /// `attached` is true when `%` directly follows a number or `)`, as in `10%`.
     Percent {
         attached: bool,
@@ -57,7 +59,7 @@ impl Tok {
             Tok::RParen => "')'".into(),
             Tok::Word(w) => format!("word {w:?}"),
             Tok::Unit(u) => format!("unit {:?}", u.symbol()),
-            Tok::Value(_) => "value".into(),
+            Tok::Value(_) | Tok::Group(_) => "value".into(),
             Tok::Percent { .. } => "'%'".into(),
         }
     }
