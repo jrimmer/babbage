@@ -263,6 +263,26 @@ fn the_words_after_a_long_expression_still_find_their_place() {
 }
 
 #[test]
+fn a_huge_number_of_workdays_answers_at_once_or_is_refused() {
+    // Values worked out in Python from the calendar (a Monday plus whole weeks of seven days).
+    all(&[
+        ("June 3, 2024 + 1_000_000 workdays", "June 29, 5857"),
+        ("June 3, 2024 + 1_000_001 workdays", "June 30, 5857"),
+        ("June 3, 2024 - 500_000 workdays", "November 21, 107"),
+        ("June 3, 2024 - 500_001 workdays", "November 18, 107"),
+    ]);
+    for line in [
+        "June 5 + 5_000_000_000_000 workdays",
+        "June 5 - 99_999_999_999_999 workdays",
+    ] {
+        fails(line);
+    }
+    // Large but allowed: it must come back immediately, which the suite's runtime enforces.
+    assert!(run_at(NOW, "June 5 + 99999999999 workdays").is_ok());
+    assert!(run_at(NOW, "June 5 - 99999999999 workdays").is_ok());
+}
+
+#[test]
 fn a_span_of_no_time_has_no_workdays_and_does_not_crash() {
     all(&[
         ("workdays between June 5 and June 5", "0 workday"),

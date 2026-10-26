@@ -747,6 +747,10 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
             ));
         }
         let n = i64::try_from(by.number.numer()).map_err(|_| Error::Overflow)? * sign;
+        // Far enough that the date could not be written down; refused before it can wrap.
+        if n.unsigned_abs() > 1_000_000_000_000 {
+            return Err(Error::Overflow);
+        }
         return Ok(Value::date(
             Number::from_i64(calendar::add_workdays(day, n)).add(&fraction)?,
         ));

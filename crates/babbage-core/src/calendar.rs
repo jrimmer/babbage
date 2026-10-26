@@ -173,10 +173,29 @@ pub fn workdays_between(from: i64, to: i64) -> i64 {
 }
 
 /// The day that is `n` workdays after `from` (Monday to Friday only; before it for negative `n`).
+///
+/// Five workdays from a weekday is exactly seven days, so whole weeks are skipped in one step and only
+/// the last few workdays are walked. A weekend start counts as the Friday before it going forward and the
+/// Monday after it going back, because the first workday in either direction is the same one.
 pub fn add_workdays(from: i64, n: i64) -> i64 {
-    let step = if n < 0 { -1 } else { 1 };
+    if n == 0 {
+        return from;
+    }
+    let forward = n > 0;
     let mut day = from;
-    let mut left = n.abs();
+    let weekday_now = i64::from(weekday(day));
+    if weekday_now >= 5 {
+        day += if forward {
+            4 - weekday_now
+        } else {
+            7 - weekday_now
+        };
+    }
+    let steps = n.unsigned_abs();
+    let weeks = i64::try_from(steps / 5).unwrap_or(i64::MAX / 7);
+    day = day.saturating_add(if forward { weeks } else { -weeks }.saturating_mul(7));
+    let step = if forward { 1 } else { -1 };
+    let mut left = steps % 5;
     while left > 0 {
         day += step;
         if weekday(day) < 5 {
@@ -251,6 +270,50 @@ mod tests {
         assert_eq!(nth_weekday(2024, 11, 3, 4), d(2024, 11, 28));
         assert_eq!(nth_weekday(2023, 11, 3, 4), d(2023, 11, 23));
         assert_eq!(nth_weekday(2024, 5, 0, 5), d(2024, 5, 27));
+    }
+
+    /// The definition, one day at a time: what `add_workdays` must agree with.
+    fn add_workdays_slowly(from: i64, n: i64) -> i64 {
+        let step = if n < 0 { -1 } else { 1 };
+        let (mut day, mut left) = (from, n.abs());
+        while left > 0 {
+            day += step;
+            if weekday(day) < 5 {
+                left -= 1;
+            }
+        }
+        day
+    }
+
+    #[test]
+    fn adding_workdays_agrees_with_walking_one_day_at_a_time() {
+        for from in 19_000..19_030 {
+            for n in -80..=80 {
+                assert_eq!(
+                    add_workdays(from, n),
+                    add_workdays_slowly(from, n),
+                    "{from} {n}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn adding_a_huge_number_of_workdays_is_instant_and_exact() {
+        let monday = 19_723; // 2024-01-01
+        assert_eq!(weekday(monday), 0);
+        assert_eq!(
+            add_workdays(monday, 5_000_000_000_000),
+            monday + 7_000_000_000_000
+        );
+        assert_eq!(
+            add_workdays(monday, -5_000_000_000_000),
+            monday - 7_000_000_000_000
+        );
+        assert_eq!(
+            add_workdays(monday, 5_000_000_000_001),
+            monday + 7_000_000_000_001
+        );
     }
 
     #[test]
