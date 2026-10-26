@@ -189,6 +189,60 @@ for _ in range(700):
         continue
     add(f"{literal(d)} as {pattern}", "text", fmt(d, pattern))
 
+def fmt_time(d, secs, pattern):
+    """Like fmt, with the time letters and 'quoted text'."""
+    h, m, sec = secs // 3600, secs % 3600 // 60, secs % 60
+    out, i = [], 0
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "'":
+            j = pattern.index("'", i + 1)
+            out.append(pattern[i + 1:j])
+            i = j + 1
+            continue
+        if not c.isalpha():
+            out.append(c)
+            i += 1
+            continue
+        run = next(k for k in range(1, len(pattern) - i + 1) if i + k == len(pattern) or pattern[i + k] != c)
+        h12 = h % 12 or 12
+        piece = {
+            ("y", 4): str(d.year).zfill(4), ("y", 2): str(d.year % 100).zfill(2),
+            ("M", 1): str(d.month), ("M", 2): f"{d.month:02}", ("M", 3): MONTHS[d.month - 1][:3], ("M", 4): MONTHS[d.month - 1],
+            ("d", 1): str(d.day), ("d", 2): f"{d.day:02}",
+            ("E", 3): DAYS[d.weekday()][:3], ("E", 4): DAYS[d.weekday()],
+            ("H", 1): str(h), ("H", 2): f"{h:02}", ("h", 1): str(h12), ("h", 2): f"{h12:02}",
+            ("m", 1): str(m), ("m", 2): f"{m:02}", ("s", 1): str(sec), ("s", 2): f"{sec:02}",
+            ("a", 1): "AM" if h < 12 else "PM",
+        }.get((c, run))
+        if piece is None:
+            raise KeyError((c, run))
+        out.append(piece)
+        i += run
+    return "".join(out)
+
+
+TIME_PIECES = ["HH", "H", "hh", "h", "mm", "m", "ss", "s", "a", "yyyy", "yy", "MMMM", "MMM", "MM", "M", "dd", "d", "EEEE", "EEE"]
+WORDS = ["at", "on", "of", "the", "day", "time", "hour"]
+for _ in range(2500):
+    d = rand_date(1100, 2900)
+    secs = rng.randrange(0, 86400)
+    parts = []
+    for k in range(rng.randint(2, 6)):
+        piece = rng.choice(TIME_PIECES)
+        if k:
+            parts.append(rng.choice([":", " ", ", ", "-", "/"]))
+        if rng.random() < 0.2:
+            parts.append("'" + rng.choice(WORDS) + "'")
+            parts.append(" ")
+        parts.append(piece)
+    pattern = "".join(parts)
+    if not any(p in pattern for p in ("yy", "MM", "dd", "EEE", "HH", "hh")) and not (":" in pattern and any(c in pattern for c in "hHms")):
+        continue
+    h, m, sec = secs // 3600, secs % 3600 // 60, secs % 60
+    clock_text = f"{h % 12 or 12}:{m:02}:{sec:02} {'am' if h < 12 else 'pm'}"
+    add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_text} as {pattern}", "text", fmt_time(d, secs, pattern))
+
 weekday_names = {w: i for i, w in enumerate(DAYS)}
 for name, idx in weekday_names.items():
     ahead = lambda n: (idx - TODAY.weekday()) % 7

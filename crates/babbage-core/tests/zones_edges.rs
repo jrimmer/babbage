@@ -127,3 +127,126 @@ fn zone_words_do_not_disturb_other_lines() {
     assert_eq!(shown("3pm to 5pm"), "2 hours");
     assert_eq!(shown("10 inch to cm"), "25.4 cm");
 }
+
+/// A moment given as hours after 00:00 UTC on June 15 (the test clock's day), written as the answer shows it:
+/// a time of day on June 15, or the date, with the time unless it is exactly midnight.
+fn shown_moment(hours_after: i32) -> String {
+    shown_moment_with(hours_after, false)
+}
+
+/// Like `shown_moment`, but with the date written even for June 15 itself.
+fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
+    let (day, hour) = (hours_after.div_euclid(24), hours_after.rem_euclid(24));
+    let clock = format!(
+        "{}:00 {}",
+        if hour % 12 == 0 { 12 } else { hour % 12 },
+        if hour < 12 { "am" } else { "pm" }
+    );
+    match (day, hour) {
+        (0, _) if !with_date => clock,
+        (d, 0) => format!("June {}", 15 + d),
+        (d, _) => format!("June {} at {clock}", 15 + d),
+    }
+}
+
+/// Noon in a zone `offset` hours ahead of UTC means noon on that zone's own date, which the test clock
+/// (12:00 UTC on June 15) puts at `floor((12 + offset) / 24)` days after June 15. The answer is a bare time
+/// of day when it lands on that same date, and a date otherwise.
+fn noon_in_zone_as_utc(offset: i32) -> String {
+    let zone_day = (12 + offset).div_euclid(24);
+    let moment = zone_day * 24 + 12 - offset;
+    if moment.div_euclid(24) == zone_day {
+        shown_moment(moment.rem_euclid(24))
+    } else {
+        shown_moment_with(moment, true)
+    }
+}
+
+#[test]
+fn every_abbreviation_is_the_fixed_offset_it_names() {
+    // Offsets in hours east of UTC, written here independently of the engine's table.
+    for (abbr, hours) in [
+        ("UTC", 0),
+        ("GMT", 0),
+        ("UT", 0),
+        ("Z", 0),
+        ("WET", 0),
+        ("WEST", 1),
+        ("CET", 1),
+        ("CEST", 2),
+        ("EET", 2),
+        ("EEST", 3),
+        ("MSK", 3),
+        ("JST", 9),
+        ("KST", 9),
+        ("AWST", 8),
+        ("AEST", 10),
+        ("AEDT", 11),
+        ("NZST", 12),
+        ("NZDT", 13),
+        ("EST", -5),
+        ("EDT", -4),
+        ("CST", -6),
+        ("CDT", -5),
+        ("MST", -7),
+        ("MDT", -6),
+        ("PST", -8),
+        ("PDT", -7),
+        ("AKST", -9),
+        ("AKDT", -8),
+        ("HST", -10),
+    ] {
+        assert_eq!(
+            shown(&format!("noon {abbr} in UTC")),
+            noon_in_zone_as_utc(hours),
+            "{abbr} to UTC"
+        );
+        assert_eq!(
+            shown(&format!("noon UTC in {abbr}")),
+            shown_moment(12 + hours),
+            "UTC to {abbr}"
+        );
+    }
+}
+
+#[test]
+fn a_place_name_of_four_words_works_and_five_does_not() {
+    assert_eq!(
+        shown("noon united states of america in New York"),
+        "12:00 pm"
+    );
+    assert_eq!(
+        shown("noon new york in united states of america"),
+        "12:00 pm"
+    );
+    for line in [
+        "noon a b c d e in New York",
+        "noon New York in a b c d e",
+        "time in united states of america now",
+        "time difference between united states of america and a b c d e",
+    ] {
+        assert!(run(line).is_err(), "{line}: {:?}", run(line));
+    }
+}
+
+#[test]
+fn zones_loaded_from_files_compare_by_identity() {
+    use babbage_core::zones::{Zone, ZoneSource};
+    let fixtures =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/zoneinfo");
+    let s = Settings {
+        zone_source: ZoneSource::System { dir: fixtures },
+        ..Settings::at(NOW)
+    };
+    scoped(&s, || {
+        let (a, b, tokyo) = (
+            Zone::named("Asia/Tokyo"),
+            Zone::named("Asia/Tokyo"),
+            Zone::named("Europe/Berlin"),
+        );
+        assert!(matches!(a, Some(Zone::Loaded(_))));
+        assert_eq!(a, b);
+        assert_ne!(a, tokyo);
+        assert_ne!(Zone::named("Europe/Berlin"), Zone::named("Asia/Kolkata"));
+    });
+}

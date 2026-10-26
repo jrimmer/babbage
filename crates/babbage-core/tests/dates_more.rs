@@ -503,3 +503,80 @@ fn date_to_date_intervals_and_midpoints_by_function() {
     assert_eq!(shown("March 5 to March 1"), "-4 days");
     assert_eq!(shown("midpoint between March 12 and April 5"), "March 24");
 }
+
+#[test]
+fn a_date_and_a_time_of_day_join_only_when_that_is_what_they_are() {
+    all(&[
+        ("June 5, 2019 at 3pm", "June 5, 2019 at 3:00 pm"),
+        ("June 5, 2019 3pm", "June 5, 2019 at 3:00 pm"),
+        ("2 hours + June 5, 2019 at 3pm", "June 5, 2019 at 5:00 pm"),
+        ("2 hours + June 5, 2019 3pm", "June 5, 2019 at 5:00 pm"),
+        (
+            "1 day + 2 hours + June 5, 2019 3pm",
+            "June 6, 2019 at 5:00 pm",
+        ),
+        ("5 March 2019 at 9:30am", "March 5, 2019 at 9:30 am"),
+        ("June 5, 2019 at 5:30:15 pm", "June 5, 2019 at 5:30:15 pm"),
+    ]);
+    for line in [
+        // a date that already has a time of day takes no second one
+        "now at 3pm",
+        "now 3pm",
+        "June 5, 2019 at 3pm at 4pm",
+        // two dates are not a date and a time
+        "June 5 June 6",
+        "June 5, 2019 at June 6, 2019",
+        // a bare `at` is not a time
+        "June 5 at",
+        "June 5 at 5",
+    ] {
+        fails(line);
+    }
+}
+
+#[test]
+fn a_year_after_a_day_and_month_has_four_digits() {
+    all(&[
+        ("5 March 2019", "March 5, 2019"),
+        ("5 March 1000", "March 5, 1000"),
+    ]);
+    for line in ["5 March 999", "5 March 10000", "5 March 20190"] {
+        fails(line);
+    }
+}
+
+#[test]
+fn a_time_of_day_keeps_its_fraction_of_a_second() {
+    all(&[
+        ("5pm + 0.5 seconds", "5:00:00.5 pm"),
+        ("5pm + 90.25 seconds", "5:01:30.25 pm"),
+        ("5pm + 1 second", "5:00:01 pm"),
+        ("5pm + 60 seconds", "5:01 pm"),
+        ("11:59:59pm + 1.5 seconds", "12:00:00.5 am"),
+    ]);
+}
+
+#[test]
+fn time_letters_and_quoted_text_in_a_date_format() {
+    all(&[
+        ("June 5, 2019 5:30:15 pm as H:mm:ss", "17:30:15"),
+        ("June 5, 2019 5:30:15 pm as HH:mm:ss", "17:30:15"),
+        ("June 5, 2019 5:03:05 am as H:m:s", "5:3:5"),
+        ("June 5, 2019 5:03:05 am as HH:mm:ss", "05:03:05"),
+        ("June 5, 2019 12:00:00 am as h:mm a", "12:00 AM"),
+        ("June 5, 2019 12:30:00 pm as h:mm a", "12:30 PM"),
+        ("June 5, 2019 1:30:00 pm as hh:mm a", "01:30 PM"),
+        ("June 5, 2019 12:30:00 pm as hh 'o''clock'", "12 oclock"),
+        (
+            "June 5, 2019 5:30:15 pm as yyyy 'at' HH:mm",
+            "2019 at 17:30",
+        ),
+    ]);
+    for line in [
+        "June 5, 2019 as yyyy 'unclosed",
+        "June 5, 2019 as yyyy Q",
+        "June 5, 2019 as yyyy z",
+    ] {
+        fails(line);
+    }
+}

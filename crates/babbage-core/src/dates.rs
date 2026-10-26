@@ -79,7 +79,7 @@ impl Bias {
 
 /// The years a yearless date can mean: four either side of this one, so the next or last leap day is in range.
 fn candidate_years(this_year: i64) -> impl Iterator<Item = i64> {
-    this_year - 4..=this_year + 4
+    this_year.saturating_sub(4)..=this_year.saturating_add(4)
 }
 
 /// The day of the year that falls on `month` and `day`, chosen by `bias`.

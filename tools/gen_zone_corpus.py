@@ -54,8 +54,9 @@ COUNTRIES = {
 }
 ABBREVIATIONS = {
     "EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6, "PST": -8, "PDT": -7,
-    "AKST": -9, "AKDT": -8, "HST": -10, "GMT": 0, "UTC": 0, "CET": 1, "CEST": 2, "EET": 2, "EEST": 3,
-    "JST": 9, "AEST": 10, "AEDT": 11, "NZST": 12, "NZDT": 13,
+    "AKST": -9, "AKDT": -8, "HST": -10, "GMT": 0, "UTC": 0, "UT": 0, "Z": 0, "WET": 0, "WEST": 1,
+    "CET": 1, "CEST": 2, "EET": 2, "EEST": 3, "MSK": 3,
+    "JST": 9, "KST": 9, "AWST": 8, "AEST": 10, "AEDT": 11, "NZST": 12, "NZDT": 13,
 }
 REGIONS = {"eastern time": "America/New_York", "central time": "America/Chicago", "mountain time": "America/Denver",
            "pacific time": "America/Los_Angeles", "alaska time": "America/Anchorage", "hawaii time": "Pacific/Honolulu"}

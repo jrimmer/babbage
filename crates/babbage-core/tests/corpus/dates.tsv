@@ -23870,6 +23870,2367 @@ January 27, 1892 as EEEE/MMM	text	Wednesday/Jan
 Jun 3, 2220 as EEE d MM	text	Sat 3 06
 21 October 1731 as MMMM	text	October
 27 June 2664 as MM. d. EEEE	text	06. 27. Monday
+November 19, 1274 3:28:47 am as MMMM-'hour' h/mm:'at' mm	text	November-hour 3/28:at 28
+February 21, 2033 4:19:57 pm as 'of' mm:'day' a-MMMM 'on' ss	text	of 19:day PM-February on 57
+April 4, 2372 11:56:15 pm as 'the' yy:ss 'hour' MM hh	text	the 72:15 hour 04 11
+June 5, 2616 12:46:14 am as MMMM/dd-'day' EEE, 'time' MMM	text	June/05-day Wed, time Jun
+October 8, 1293 5:16:35 am as a, EEEE-H MMM	text	AM, Thursday-5 Oct
+August 28, 2183 6:05:40 pm as m yy-HH EEE-mm	text	5 83-18 Thu-05
+January 26, 2439 1:39:05 am as dd, H MMMM/yyyy h	text	26, 1 January/2439 1
+November 17, 2222 5:22:19 am as dd, M/HH-d:MMMM	text	17, 11/05-17:November
+November 11, 1941 11:55:48 am as hh EEE yy	text	11 Tue 41
+December 29, 2388 7:10:49 pm as M:mm/MMM mm:'of' h/yy	text	12:10/Dec 10:of 7/88
+March 8, 1123 4:53:42 am as m/m, m-h:MMMM	text	53/53, 53-4:March
+October 21, 1881 11:56:52 am as EEE, 'hour' m 'the' d	text	Fri, hour 56 the 21
+January 12, 1672 8:03:39 pm as MM-'on' MMM:m-m a/dd	text	01-on Jan:3-3 PM/12
+June 15, 1149 9:51:29 am as yy ss 'on' hh:hh MMM:H	text	49 29 on 09:09 Jun:9
+March 24, 2429 12:48:22 pm as yyyy d/ss	text	2429 24/22
+September 25, 1736 3:49:53 pm as EEEE/'day' MMMM, yyyy/ss EEEE/'of' hh	text	Tuesday/day September, 1736/53 Tuesday/of 03
+October 29, 1837 5:09:46 pm as MM mm-'time' MMMM/d	text	10 09-time October/29
+December 27, 1920 10:24:44 pm as 'time' EEE, a:yyyy, h	text	time Mon, PM:1920, 10
+December 19, 2468 11:50:47 am as 'of' m, m, hh, m	text	of 50, 50, 11, 50
+February 23, 2752 4:32:03 am as s:MMM:ss-'day' MMM	text	3:Feb:03-day Feb
+July 13, 1357 2:24:06 am as m:m-'day' EEE	text	24:24-day Wed
+March 4, 2695 4:01:02 pm as h/EEEE d, a-mm	text	4/Monday 4, PM-01
+April 12, 1476 3:35:11 pm as yy-'the' EEEE, dd	text	76-the Wednesday, 12
+August 2, 1696 2:26:49 pm as h/'day' MMM, EEE/M-HH-EEE	text	2/day Aug, Thu/8-14-Thu
+March 5, 1571 9:13:08 pm as 'on' d:HH, MMM, a	text	on 5:21, Mar, PM
+June 4, 1652 9:03:13 am as ss/MMMM, s, ss	text	13/June, 13, 13
+May 26, 1698 2:37:16 am as EEEE, MM 'at' mm	text	Monday, 05 at 37
+July 28, 1286 2:38:28 pm as dd/MMM, 'of' MM	text	28/Jul, of 07
+June 14, 1217 5:14:18 am as s-'at' M/M, h-'the' EEEE/EEEE	text	18-at 6/6, 5-the Wednesday/Wednesday
+January 5, 1907 9:52:30 pm as MMMM, yyyy-yy m, MMM	text	January, 1907-07 52, Jan
+July 6, 1462 2:45:26 pm as yyyy-MMM-a, hh	text	1462-Jul-PM, 02
+November 15, 2052 1:38:50 pm as M hh dd-'at' ss-yy	text	11 01 15-at 50-52
+January 12, 2236 1:09:43 am as 'the' MMMM-s	text	the January-43
+January 23, 2147 4:03:36 pm as 'of' EEEE yyyy/hh-m	text	of Monday 2147/04-3
+September 22, 1837 1:02:21 pm as MMMM/s, yyyy	text	September/21, 1837
+March 24, 2813 7:22:47 pm as H/MMMM, mm, dd:'of' EEE:d	text	19/March, 22, 24:of Sun:24
+May 6, 2259 7:44:17 am as ss hh/'of' s	text	17 07/of 17
+August 16, 2677 10:33:38 pm as hh:'the' h:M-s, yy	text	10:the 10:8-38, 77
+November 15, 1724 1:53:31 am as M MMMM:yyyy	text	11 November:1724
+November 13, 1665 8:28:45 am as ss d, m:EEEE	text	45 13, 28:Friday
+September 28, 1276 12:05:58 pm as ss/h-yyyy:M:'hour' a	text	58/12-1276:9:hour PM
+October 21, 2783 10:13:32 am as 'the' MMMM/hh/m/mm, h, 'the' mm	text	the October/10/13/13, 10, the 13
+September 18, 2675 3:22:24 pm as m MMMM hh:EEEE-'on' M	text	22 September 03:Saturday-on 9
+September 22, 2241 6:24:03 am as ss/'the' MM-mm MMM/MM	text	03/the 09-24 Sep/09
+June 1, 2335 7:18:56 am as M/MMMM:H-d/HH-yy	text	6/June:7-1/07-35
+April 20, 2188 2:22:17 pm as MMM/MMM:MMMM-mm	text	Apr/Apr:April-22
+July 17, 2610 2:25:40 am as mm h:'on' ss:yyyy	text	25 2:on 40:2610
+February 17, 1429 10:33:19 pm as a, 'hour' yy-H 'hour' EEEE:'the' EEE	text	PM, hour 29-22 hour Tuesday:the Tue
+March 10, 2405 11:09:18 am as m, 'on' d:yy-'at' EEE/hh	text	9, on 10:05-at Thu/11
+November 19, 1936 9:28:49 am as m/H-'the' MMMM, 'time' M-'day' MMMM-s	text	28/9-the November, time 11-day November-49
+June 18, 1135 12:36:29 pm as dd, EEEE	text	18, Tuesday
+July 12, 1436 12:51:43 pm as MM:mm, H:s	text	07:51, 12:43
+January 26, 1218 8:37:47 am as m:'the' H 'the' MM EEEE	text	37:the 8 the 01 Friday
+July 20, 2733 7:19:43 am as yyyy:EEE	text	2733:Thu
+December 14, 1408 9:27:49 pm as MMMM-H-EEEE	text	December-21-Wednesday
+April 26, 1364 12:24:08 am as 'on' H h/'hour' M, yy 'hour' m	text	on 0 12/hour 4, 64 hour 24
+February 12, 1816 7:32:53 pm as MMMM:MMM	text	February:Feb
+December 21, 1484 3:23:46 am as ss/'on' HH	text	46/on 03
+June 28, 2488 4:35:56 pm as m-EEE, MMMM, MMMM/a, 'time' EEE	text	35-Mon, June, June/PM, time Mon
+April 18, 2682 11:34:51 pm as EEE-s:a, EEE	text	Tue-51:PM, Tue
+October 31, 2102 3:25:24 pm as 'the' hh-s, MMM	text	the 03-24, Oct
+February 23, 2788 8:09:59 pm as 'time' m MM/EEEE:m	text	time 9 02/Tuesday:9
+October 21, 1611 5:37:45 pm as 'of' H hh:'time' hh	text	of 17 05:time 05
+February 27, 1988 7:59:25 pm as MMMM:ss	text	February:25
+February 10, 2293 8:22:30 am as EEE/H-d/M	text	Fri/8-10/2
+April 18, 2231 10:41:19 pm as mm, HH, mm/'time' d M	text	41, 22, 41/time 18 4
+August 19, 2490 7:56:00 pm as 'day' MMMM, a-dd	text	day August, PM-19
+August 16, 1847 9:04:15 am as h:yyyy/'the' HH, H, dd	text	9:1847/the 09, 9, 16
+January 11, 2381 12:35:50 am as MMMM/dd 'hour' HH-HH	text	January/11 hour 00-00
+February 16, 2680 3:07:28 pm as 'the' EEE, m	text	the Mon, 7
+December 9, 1229 1:43:07 am as h:'at' HH-m:a	text	1:at 01-43:AM
+September 4, 2064 3:51:08 am as 'time' MMMM/h, mm, hh 'the' HH	text	time September/3, 51, 03 the 03
+August 27, 2563 2:21:52 am as yyyy, d	text	2563, 27
+November 19, 1703 1:12:04 am as 'of' mm, yy EEEE hh:HH, MM	text	of 12, 03 Monday 01:01, 11
+January 25, 1575 5:26:45 pm as MMM, MMMM-a dd, d-mm	text	Jan, January-PM 25, 25-26
+August 18, 1165 6:55:08 am as 'time' h, MMMM:ss:h-s, EEE	text	time 6, August:08:6-8, Wed
+June 4, 1468 6:06:05 am as EEE, HH dd	text	Thu, 06 04
+December 27, 2821 5:48:31 pm as s/mm M-'hour' MM	text	31/48 12-hour 12
+January 9, 2258 11:06:28 pm as s:yy EEEE-mm-mm	text	28:58 Saturday-06-06
+August 22, 2293 5:05:34 pm as d/s/EEEE-'day' EEEE-dd	text	22/34/Tuesday-day Tuesday-22
+November 12, 1188 10:50:59 pm as EEE:ss-HH, M MMMM-yy	text	Sat:59-22, 11 November-88
+April 26, 1777 2:27:52 pm as HH-MMMM, MMMM, 'time' ss	text	14-April, April, time 52
+October 19, 2346 2:50:05 am as MMMM/H/HH, a/'day' EEEE	text	October/2/02, AM/day Saturday
+October 6, 2545 5:34:28 pm as s 'of' EEE H/MM MMMM	text	28 of Wed 17/10 October
+April 2, 1701 12:30:10 am as ss/MMMM	text	10/April
+December 16, 2531 11:38:43 pm as ss/HH	text	43/23
+April 17, 2458 8:19:49 pm as s/d, HH	text	49/17, 20
+October 29, 2013 3:53:49 pm as yy, MMMM-mm, MMM	text	13, October-53, Oct
+March 21, 1963 11:28:02 am as mm/MM:MMM H	text	28/03:Mar 11
+July 25, 1769 7:04:44 pm as MMMM:MMM:a:'at' a	text	July:Jul:PM:at PM
+May 4, 2745 3:51:31 pm as yy 'of' ss-yy-MMM/MM/mm	text	45 of 31-45-May/05/51
+September 30, 1995 12:14:44 pm as 'of' MMM 'time' ss	text	of Sep time 44
+February 3, 1524 12:09:16 pm as 'on' ss hh:EEE, EEEE	text	on 16 12:Sun, Sunday
+March 15, 2728 11:56:11 pm as yy:H-d	text	28:23-15
+April 4, 2535 2:45:21 pm as MMM d:yy	text	Apr 4:35
+February 14, 2471 9:37:47 am as h-EEE	text	9-Sat
+October 3, 2284 9:27:40 am as a/yyyy 'at' hh/HH-s	text	AM/2284 at 09/09-40
+March 15, 1519 1:58:41 am as a:yyyy-MMMM/d	text	AM:1519-March/15
+May 6, 1531 8:09:50 pm as 'of' H/MMM:m	text	of 20/May:9
+August 7, 1520 8:41:51 pm as h/HH-H, MMM/d	text	8/20-20, Aug/7
+November 12, 2100 2:49:23 am as mm 'time' MMM	text	49 time Nov
+March 13, 1405 4:08:49 am as EEE, ss, M	text	Wed, 49, 3
+July 18, 1718 6:57:30 am as yy:yy:mm/'day' h	text	18:18:57/day 6
+June 29, 2437 2:10:18 am as h-H/a:'on' yyyy	text	2-2/AM:on 2437
+August 15, 2631 11:52:14 am as a/'hour' a-H:EEEE:hh	text	AM/hour AM-11:Monday:11
+February 11, 2040 3:03:46 pm as H, mm, MMMM, m	text	15, 03, February, 3
+August 30, 1235 8:12:39 am as 'at' d, 'of' h-MM EEE	text	at 30, of 8-08 Thu
+June 7, 2511 5:26:50 am as MM MMM H	text	06 Jun 5
+May 2, 1980 8:39:14 am as 'of' EEEE:HH-'hour' MM, hh, 'time' MMM	text	of Friday:08-hour 05, 08, time May
+January 2, 1388 4:43:27 am as MM-'of' EEE/EEE dd	text	01-of Wed/Wed 02
+September 17, 1917 5:20:30 pm as mm/h:yyyy/yy, yyyy	text	20/5:1917/17, 1917
+November 19, 2498 9:30:09 am as HH/s, MM-'day' yyyy-'on' HH	text	09/9, 11-day 2498-on 09
+May 31, 2280 5:38:57 pm as mm-h-HH, yy:HH/'of' MMM	text	38-5-17, 80:17/of May
+November 13, 2566 10:44:56 pm as ss-'on' hh-EEE-m	text	56-on 10-Thu-44
+November 7, 1867 4:24:38 pm as h:HH, MM	text	4:16, 11
+June 16, 2546 1:31:00 am as h/EEE m, yyyy, h/M	text	1/Thu 31, 2546, 1/6
+May 23, 2530 12:35:42 pm as MM a, d, yyyy	text	05 PM, 23, 2530
+February 8, 2176 5:16:30 pm as 'time' a/MMMM-d:hh	text	time PM/February-8:05
+October 12, 1445 1:20:57 pm as 'of' EEEE:yy	text	of Sunday:45
+October 12, 2016 6:11:00 am as yyyy-'time' H, mm 'the' yy	text	2016-time 6, 11 the 16
+September 12, 2339 3:49:37 pm as d, EEEE, 'on' M MMMM MMMM s	text	12, Tuesday, on 9 September September 37
+June 5, 1472 6:00:32 pm as MMM-yyyy-M	text	Jun-1472-6
+January 21, 1851 2:10:10 am as d:MM/MM	text	21:01/01
+September 9, 1101 3:35:14 am as ss:MM, EEEE	text	14:09, Monday
+September 7, 1843 2:20:08 pm as hh/ss/'on' h MM/H	text	02/08/on 2 09/14
+April 20, 1234 9:28:32 am as a d yyyy/s	text	AM 20 1234/32
+October 31, 2840 7:12:26 pm as MM m/HH, dd	text	10 12/19, 31
+April 6, 2438 11:34:00 pm as 'the' yyyy/'of' a/dd-mm, m dd	text	the 2438/of PM/06-34, 34 06
+January 26, 1929 8:05:05 pm as H, 'the' hh/a:yyyy m/'of' d	text	20, the 08/PM:1929 5/of 26
+October 7, 2652 12:33:24 pm as MMM, mm	text	Oct, 33
+May 5, 2262 9:17:32 pm as 'at' hh 'the' H/yy:'the' mm	text	at 09 the 21/62:the 17
+April 11, 2643 9:29:18 am as EEEE:MM-H, yyyy	text	Tuesday:04-9, 2643
+September 13, 1447 10:56:46 pm as m-EEEE/a:yy EEE/H	text	56-Monday/PM:47 Mon/22
+June 21, 2106 3:40:46 pm as 'on' M:h-m-'at' yyyy a	text	on 6:3-40-at 2106 PM
+October 28, 2434 7:40:47 pm as m:s, m/MMMM:yy	text	40:47, 40/October:34
+May 18, 1111 8:51:26 am as EEEE:hh	text	Thursday:08
+October 15, 1173 11:42:01 am as 'time' HH, yy:EEE/'hour' HH	text	time 11, 73:Mon/hour 11
+November 10, 1727 11:05:26 am as EEE-ss/EEE/'day' yyyy a	text	Mon-26/Mon/day 1727 AM
+October 23, 2601 8:50:09 am as ss-MMM, d d, yyyy	text	09-Oct, 23 23, 2601
+October 11, 2519 11:01:24 pm as s, hh MMMM/mm:'on' d:s	text	24, 11 October/01:on 11:24
+November 10, 2737 3:08:53 pm as 'hour' s-EEEE	text	hour 53-Wednesday
+September 4, 1706 8:50:33 am as mm, m, MMMM/mm d	text	50, 50, September/50 4
+October 24, 2761 3:27:41 pm as a/HH-MMMM	text	PM/15-October
+August 10, 2836 11:48:09 pm as m-hh H-ss	text	48-11 23-09
+June 2, 1276 6:26:27 am as 'day' dd MMMM/d-d	text	day 02 June/2-2
+October 12, 1906 2:35:59 pm as MMMM/ss, 'on' M/d/HH	text	October/59, on 10/12/14
+July 20, 1127 7:35:29 pm as EEEE-d	text	Wednesday-20
+August 22, 1392 9:40:41 am as hh:'time' MM	text	09:time 08
+March 19, 1518 12:05:44 am as ss, 'at' MMM	text	44, at Mar
+February 10, 2636 9:39:02 pm as MMM, MM h	text	Feb, 02 9
+May 11, 2445 11:54:23 pm as ss:'day' h s	text	23:day 11 23
+November 10, 1473 9:33:05 pm as a-'the' h yy	text	PM-the 9 73
+August 26, 1100 7:37:40 pm as 'the' MMMM 'at' HH, H EEE/a	text	the August at 19, 19 Sun/PM
+August 10, 1531 4:30:33 pm as m:MM:s/EEEE-s	text	30:08:33/Monday-33
+April 21, 1141 2:51:24 am as mm, yy	text	51, 41
+November 28, 2770 10:06:10 pm as yy-mm:'at' MMMM	text	70-06:at November
+June 24, 2772 11:42:03 am as 'day' mm, M:'time' M yyyy-s	text	day 42, 6:time 6 2772-3
+January 2, 1901 8:08:08 pm as dd/MMM	text	02/Jan
+October 16, 1984 8:11:13 am as MMMM-MMMM, h MM:m-'on' ss	text	October-October, 8 10:11-on 13
+June 29, 1570 5:07:33 am as h, 'of' M-a yy, yy	text	5, of 6-AM 70, 70
+July 13, 2619 3:06:37 am as yy/h/EEE, h	text	19/3/Tue, 3
+February 19, 1951 11:45:25 am as a:yyyy 'hour' yyyy:MM-'at' EEE-'day' MMM	text	AM:1951 hour 1951:02-at Mon-day Feb
+December 23, 1119 11:18:25 pm as mm-'at' EEEE-s:M m	text	18-at Tuesday-25:12 18
+April 21, 2013 5:42:23 pm as EEEE:yy-a:H h	text	Sunday:13-PM:17 5
+June 9, 2618 10:31:45 am as 'at' yyyy/MMMM-H	text	at 2618/June-10
+February 15, 2544 6:43:46 pm as HH, hh-'time' ss/d	text	18, 06-time 46/15
+March 26, 2649 4:10:52 am as MMMM hh	text	March 04
+December 27, 2807 10:24:22 am as h/MMMM, 'time' mm-hh	text	10/December, time 24-10
+July 13, 1109 11:12:24 am as m hh yyyy/s-ss/HH	text	12 11 1109/24-24/11
+January 29, 2641 11:10:22 pm as MMM, yyyy:m	text	Jan, 2641:10
+August 20, 1820 8:00:26 am as H-MMM, ss-ss-a	text	8-Aug, 26-26-AM
+July 9, 1520 2:33:27 am as 'of' H, dd	text	of 2, 09
+May 3, 1709 8:11:53 pm as HH/ss 'hour' hh	text	20/53 hour 08
+July 13, 1347 4:48:55 pm as MM s:mm-HH	text	07 55:48-16
+September 13, 2347 1:10:56 am as 'of' yyyy/HH, MMMM, MMM d	text	of 2347/01, September, Sep 13
+January 29, 2150 6:03:08 am as 'of' a:EEEE	text	of AM:Thursday
+October 6, 2580 3:52:39 pm as dd yyyy 'day' h-'time' HH	text	06 2580 day 3-time 15
+February 24, 2567 6:35:29 am as EEE:a:'at' MMM	text	Tue:AM:at Feb
+November 14, 1431 9:42:33 am as M/'the' MMM ss, h-MM	text	11/the Nov 33, 9-11
+October 11, 1490 6:02:08 pm as hh:MMM, 'on' ss	text	06:Oct, on 08
+June 6, 2071 6:05:18 am as 'time' yy, MMM	text	time 71, Jun
+January 24, 1786 11:44:06 am as dd/MMMM, hh ss-yy-M	text	24/January, 11 06-86-1
+December 16, 2016 1:59:20 pm as HH/HH-M dd-'time' ss, yy	text	13/13-12 16-time 20, 16
+August 11, 1461 7:48:04 am as H:M	text	7:8
+May 23, 2729 11:13:55 am as MM-H, H:ss, mm/MMM	text	05-11, 11:55, 13/May
+December 19, 2380 9:59:25 am as yy/d-MMMM, yy 'on' EEE	text	80/19-December, 80 on Fri
+May 29, 2524 4:34:02 am as h, EEEE, HH/a/a HH	text	4, Monday, 04/AM/AM 04
+April 7, 1927 9:12:43 pm as m-'hour' yyyy, 'day' h:'the' EEE	text	12-hour 1927, day 9:the Thu
+April 26, 2416 2:49:15 am as 'day' hh-d, EEE-mm H, h	text	day 02-26, Tue-49 2, 2
+September 20, 2157 12:58:29 am as hh/EEEE M/h-H, H	text	12/Tuesday 9/12-0, 0
+April 1, 2270 2:24:03 pm as EEE-MMMM-MMMM h, s, yyyy	text	Fri-April-April 2, 3, 2270
+May 22, 1648 10:25:11 pm as s-yyyy	text	11-1648
+September 1, 2379 6:42:12 am as a, hh	text	AM, 06
+March 30, 1744 4:35:10 pm as MM-yy-hh-hh	text	03-44-04-04
+February 8, 2657 12:36:40 pm as M, a-yyyy, 'of' dd	text	2, PM-2657, of 08
+August 6, 2005 3:18:57 pm as ss 'time' d-s, EEEE	text	57 time 6-57, Saturday
+September 28, 2524 12:26:00 am as 'time' m M hh/MMMM, ss-d	text	time 26 9 12/September, 00-28
+November 19, 2258 9:36:49 pm as ss-'day' d:h/yy 'on' s	text	49-day 19:9/58 on 49
+August 27, 1394 10:28:09 am as dd/MMMM	text	27/August
+April 27, 1697 12:54:17 am as 'the' M:MMM	text	the 4:Apr
+April 28, 1192 6:31:21 am as ss:'of' MM	text	21:of 04
+June 13, 1808 2:14:36 am as 'the' MMM-EEE s/'time' H-'time' d	text	the Jun-Mon 36/time 2-time 13
+June 17, 1205 8:00:52 pm as 'of' MMM-M-dd-H	text	of Jun-6-17-20
+October 12, 1461 6:21:24 am as MM, 'hour' ss-H 'time' MMMM s EEEE	text	10, hour 24-6 time October 24 Saturday
+June 26, 1673 4:50:30 pm as a:dd/MM yyyy	text	PM:26/06 1673
+March 22, 1203 10:21:46 pm as MMM, MMMM/yy-s/'hour' h	text	Mar, March/03-46/hour 10
+June 3, 1527 5:37:56 pm as MM:d MM, EEEE	text	06:3 06, Friday
+March 30, 2417 1:15:09 pm as s/M-yy 'at' ss	text	9/3-17 at 09
+March 22, 1893 11:34:37 pm as 'hour' mm:yyyy-'of' MMMM/h, 'on' yyyy	text	hour 34:1893-of March/11, on 1893
+November 19, 2520 11:28:32 am as s-MMMM, MMM MMMM	text	32-November, Nov November
+January 12, 1328 8:04:51 am as 'the' mm/MMMM:H	text	the 04/January:8
+February 2, 1583 6:00:58 pm as EEEE H/s/HH-MM	text	Wednesday 18/58/18-02
+June 8, 2850 9:50:31 am as mm-M:d:HH:'on' HH	text	50-6:8:09:on 09
+October 27, 2605 11:44:38 pm as mm, H:MM, m-'on' s	text	44, 23:10, 44-on 38
+September 13, 1130 8:49:36 pm as ss-MM	text	36-09
+November 4, 1442 12:52:28 pm as HH EEEE:MMMM:MMMM-yyyy	text	12 Friday:November:November-1442
+May 22, 1958 3:51:58 pm as MMMM 'day' MM:'hour' H, MM/a	text	May day 05:hour 15, 05/PM
+February 25, 2279 4:20:09 pm as EEE/H/'at' m	text	Tue/16/at 20
+June 10, 2725 11:13:18 pm as ss/'at' ss s-'day' d EEEE	text	18/at 18 18-day 10 Wednesday
+January 18, 2415 6:27:23 am as yy 'day' yy:m, yyyy	text	15 day 15:27, 2415
+December 26, 1717 1:11:15 pm as m/'on' yy, H, 'of' M-m, a	text	11/on 17, 13, of 12-11, PM
+August 4, 1844 2:51:14 pm as 'the' EEE, d 'day' ss:EEEE dd, s	text	the Sun, 4 day 14:Sunday 04, 14
+June 9, 2891 10:16:46 pm as 'on' d:hh:EEEE	text	on 9:10:Saturday
+December 19, 1796 9:14:36 pm as dd:HH	text	19:21
+February 23, 1157 10:26:34 am as m MMM-M-'the' s/'of' h MMMM	text	26 Feb-2-the 34/of 10 February
+April 21, 1826 9:07:18 am as 'the' m:mm, MMM, MM	text	the 7:07, Apr, 04
+February 6, 1620 7:58:23 pm as 'the' a, EEEE, yyyy/dd, 'the' hh	text	the PM, Thursday, 1620/06, the 07
+December 28, 2404 1:58:46 pm as ss/'time' dd-EEE	text	46/time 28-Tue
+May 8, 1967 9:27:54 am as yy-mm/mm-dd, yy:EEE	text	67-27/27-08, 67:Mon
+January 4, 2665 9:43:19 pm as M/MMMM	text	1/January
+November 28, 1123 3:00:50 am as 'hour' H, d m-'hour' HH	text	hour 3, 28 0-hour 03
+February 19, 2083 4:18:05 pm as MMMM 'at' d:MMM/MM:EEE	text	February at 19:Feb/02:Fri
+August 23, 2332 1:08:06 am as m/s, 'at' EEE:M/h-MM	text	8/6, at Tue:8/1-08
+August 13, 1941 8:47:33 pm as 'of' a:yyyy, a, mm:a	text	of PM:1941, PM, 47:PM
+August 24, 2074 3:11:11 am as HH-ss/yyyy-m	text	03-11/2074-11
+July 6, 2072 5:29:59 am as a, 'of' H/M 'the' MMM:s, MM	text	AM, of 5/7 the Jul:59, 07
+December 12, 1564 8:53:20 am as 'of' yy-EEE H-yy	text	of 64-Sat 8-64
+August 20, 1220 7:35:41 pm as yy-'day' M:HH M-yyyy:'at' yyyy	text	20-day 8:19 8-1220:at 1220
+September 21, 1118 9:26:29 am as EEE, EEE EEE, 'of' dd:hh, mm	text	Sat, Sat Sat, of 21:09, 26
+February 28, 2417 10:55:54 am as 'on' s:mm yyyy-'hour' hh:mm mm	text	on 54:55 2417-hour 10:55 55
+November 1, 2546 12:49:36 am as a-s 'the' H:dd MMMM, 'on' M	text	AM-36 the 0:01 November, on 11
+April 1, 2624 10:31:17 pm as h MMM, h/EEE:'time' dd	text	10 Apr, 10/Thu:time 01
+September 24, 2157 12:24:38 am as M s MM/EEEE:H	text	9 38 09/Saturday:0
+December 5, 2306 3:28:58 pm as MMMM, EEE	text	December, Wed
+March 27, 1700 6:55:56 pm as s:hh-s	text	56:06-56
+September 10, 2358 3:13:41 pm as dd-HH:MMMM, 'time' yyyy, EEEE, 'at' mm	text	10-15:September, time 2358, Wednesday, at 13
+February 3, 1717 1:20:31 am as MMMM-yyyy	text	February-1717
+July 31, 1495 8:15:52 pm as h/M:d/h/ss	text	8/7:31/8/52
+January 18, 2434 11:55:13 am as EEE:yyyy-EEE	text	Wed:2434-Wed
+May 8, 1631 7:35:16 pm as 'of' MMM, 'hour' ss/H/H ss	text	of May, hour 16/19/19 16
+April 19, 2636 7:42:20 pm as MMM-m:m-MMM/h	text	Apr-42:42-Apr/7
+August 3, 1368 3:49:18 am as 'time' MM:yy:'of' yy:EEE-hh	text	time 08:68:of 68:Wed-03
+November 5, 2382 4:26:06 am as h 'of' ss ss/dd	text	4 of 06 06/05
+December 31, 1102 5:59:46 pm as m/m/'the' yyyy, HH	text	59/59/the 1102, 17
+September 4, 2676 10:26:44 am as m MMM, m:'day' MMMM:d	text	26 Sep, 26:day September:4
+January 31, 2671 2:30:58 pm as h:MM/'time' s MMMM	text	2:01/time 58 January
+May 2, 1109 7:05:59 am as 'on' MMM M s MM	text	on May 5 59 05
+August 27, 1204 4:06:10 am as 'of' HH:'time' yyyy:s:MMM, 'day' s:a	text	of 04:time 1204:10:Aug, day 10:AM
+September 22, 1204 11:49:24 pm as yy, ss-MMM, EEE	text	04, 24-Sep, Wed
+November 1, 1973 6:08:34 pm as yy:MM:H, 'day' dd/h	text	73:11:18, day 01/6
+March 11, 1912 10:00:29 pm as EEE-d	text	Mon-11
+March 23, 2053 1:59:35 am as H, yyyy, M	text	1, 2053, 3
+September 15, 1117 1:29:29 pm as d/dd	text	15/15
+August 23, 1469 1:59:52 am as yyyy/h	text	1469/1
+June 28, 1928 5:11:20 pm as 'time' ss/ss-HH:'of' h:'of' H:ss	text	time 20/20-17:of 5:of 17:20
+October 7, 1716 12:05:21 pm as HH:h/'the' yyyy	text	12:12/the 1716
+April 3, 2720 10:14:57 am as MMMM:yyyy/m 'hour' dd	text	April:2720/14 hour 03
+April 4, 1924 3:26:58 am as yy M/d	text	24 4/4
+June 16, 2120 5:15:18 am as 'at' a:m/EEE, ss:MMMM h	text	at AM:15/Sun, 18:June 5
+August 18, 1652 3:24:12 am as 'time' h/'the' hh/MMM	text	time 3/the 03/Aug
+January 6, 2451 4:18:20 pm as MM, yy-M, mm, h, M	text	01, 51-1, 18, 4, 1
+May 30, 2857 8:38:17 am as EEE:yyyy:hh, MM/ss	text	Wed:2857:08, 05/17
+November 13, 2170 5:12:49 pm as MMM:MM EEE	text	Nov:11 Tue
+November 28, 1723 9:08:05 am as yy-d, MMM, 'of' HH	text	23-28, Nov, of 09
+December 18, 2492 8:39:45 am as HH-'hour' h/'at' M, yyyy-mm EEEE	text	08-hour 8/at 12, 2492-39 Thursday
+October 3, 1213 1:29:45 am as ss M-'at' h-'the' HH/'of' H	text	45 10-at 1-the 01/of 1
+October 4, 1339 6:06:52 am as M a-yy:dd-'the' MM	text	10 AM-39:04-the 10
+February 16, 2538 1:54:13 am as 'of' hh:m-dd	text	of 01:54-16
+December 29, 1430 6:57:45 pm as dd mm, 'hour' HH:yyyy-yyyy	text	29 57, hour 18:1430-1430
+July 25, 1334 11:11:26 pm as H-d/ss, 'at' hh:'the' EEEE/h	text	23-25/26, at 11:the Sunday/11
+March 22, 2418 4:10:13 pm as M-MM, d/'day' dd	text	3-03, 22/day 22
+June 15, 2361 11:09:53 pm as s HH	text	53 23
+October 10, 1969 8:45:19 pm as m-mm-yyyy:'hour' MMM-MMMM	text	45-45-1969:hour Oct-October
+June 29, 2657 10:00:44 am as 'time' EEE:d	text	time Mon:29
+December 7, 2721 5:15:29 am as MMMM, 'time' M:m HH	text	December, time 12:15 05
+June 11, 2028 5:06:33 am as MM/'time' h:d:H	text	06/time 5:11:5
+December 4, 2897 11:40:59 am as h/MMMM-s	text	11/December-59
+November 8, 1226 3:01:24 pm as M yyyy, 'hour' MMMM-EEE	text	11 1226, hour November-Sun
+July 30, 1853 8:50:16 pm as MMMM-a:mm	text	July-PM:50
+May 24, 2743 11:16:03 am as 'at' MM, EEEE h, MMMM	text	at 05, Monday 11, May
+May 22, 2342 3:31:00 am as MMMM m H, ss-'of' MMM-mm	text	May 31 3, 00-of May-31
+March 15, 2863 10:58:25 am as yyyy:hh:H d, s	text	2863:10:10 15, 25
+December 18, 2882 12:46:42 pm as MMMM/'on' hh hh, H:d	text	December/on 12 12, 12:18
+September 1, 1482 5:26:53 pm as hh:'day' HH	text	05:day 17
+October 17, 2338 12:59:47 am as EEEE:EEEE/HH:EEEE	text	Monday:Monday/00:Monday
+January 29, 2436 8:45:53 pm as HH-h 'day' h/'of' MMMM	text	20-8 day 8/of January
+July 25, 2001 4:14:55 am as EEEE-EEEE HH/EEE/m	text	Wednesday-Wednesday 04/Wed/14
+April 16, 1888 4:12:04 pm as HH/hh, h/hh/ss	text	16/04, 4/04/04
+June 17, 1782 10:30:01 am as 'on' MMM-MMMM/'of' mm	text	on Jun-June/of 30
+January 12, 1441 3:33:37 am as MMMM/yy 'on' HH	text	January/41 on 03
+April 17, 2279 9:22:02 am as H:'of' d/hh, 'hour' d	text	9:of 17/09, hour 17
+February 2, 2422 1:57:47 pm as MMM/dd/ss	text	Feb/02/47
+October 7, 2574 10:28:39 pm as 'of' yy/dd-'hour' hh-a	text	of 74/07-hour 10-PM
+July 9, 2577 2:42:43 am as EEE, 'day' ss-'at' hh, 'time' m:d	text	Wed, day 43-at 02, time 42:9
+March 30, 1398 7:25:02 am as s-'on' mm-EEE, h	text	2-on 25-Fri, 7
+July 21, 2394 10:43:02 am as 'day' EEEE 'day' yy:MMM:MMMM ss	text	day Thursday day 94:Jul:July 02
+December 14, 1828 4:53:24 pm as 'at' a-d:yy:m	text	at PM-14:28:53
+February 25, 2549 9:35:45 am as yyyy MM-'on' a/MM	text	2549 02-on AM/02
+May 1, 1894 10:09:21 am as 'on' HH/ss a EEEE	text	on 10/21 AM Tuesday
+January 4, 1565 9:50:08 am as 'time' MM-HH	text	time 01-09
+October 27, 2171 2:20:26 am as yyyy, s 'at' MMMM, dd:MM-'hour' mm	text	2171, 26 at October, 27:10-hour 20
+May 4, 2815 5:01:59 pm as H, MMM-ss MMMM h/EEEE	text	17, May-59 May 5/Monday
+December 2, 2444 10:41:57 pm as h:'the' h:'day' HH/'hour' h MMM	text	10:the 10:day 22/hour 10 Dec
+September 2, 2678 4:28:24 am as M m:EEE	text	9 28:Mon
+April 14, 1301 6:57:47 pm as 'the' MMMM-h/'at' HH MM, h	text	the April-6/at 18 04, 6
+August 30, 1548 12:45:03 am as 'hour' ss:d/EEE-H	text	hour 03:30/Mon-0
+February 14, 1723 3:23:46 am as hh/M, M, MM h	text	03/2, 2, 02 3
+December 30, 1628 6:43:50 pm as mm:MMM:EEEE-mm:'on' hh:yy	text	43:Dec:Saturday-43:on 06:28
+January 13, 2571 5:00:28 am as yy/'time' d, 'at' MMMM, yyyy	text	71/time 13, at January, 2571
+December 8, 2293 3:34:00 pm as 'hour' yyyy/HH	text	hour 2293/15
+September 12, 1388 7:09:51 pm as 'of' s yy	text	of 51 88
+July 23, 2878 5:54:01 pm as mm, 'day' a/m:HH-s-h	text	54, day PM/54:17-1-5
+November 25, 1978 1:44:22 pm as M hh:M:'day' EEE hh/dd	text	11 01:11:day Sat 01/25
+November 26, 1692 3:38:37 pm as 'hour' MMMM-ss:EEE	text	hour November-37:Wed
+December 16, 2386 9:25:39 pm as 'on' MMM/EEE, 'on' H/'time' m/'on' d	text	on Dec/Tue, on 21/time 25/on 16
+December 26, 2639 1:21:01 am as mm/EEEE:'time' yyyy	text	21/Thursday:time 2639
+August 28, 1284 6:19:47 am as MM, hh/h:a	text	08, 06/6:AM
+March 6, 2060 5:33:50 pm as EEEE, s-dd/M MM	text	Saturday, 50-06/3 03
+April 1, 1883 8:57:34 pm as m:'hour' MMMM:s	text	57:hour April:34
+February 6, 1473 10:26:42 am as EEEE m	text	Thursday 26
+April 10, 1433 12:29:57 pm as HH:MM:a, HH s:M	text	12:04:PM, 12 57:4
+December 22, 1173 9:39:33 am as 'time' a hh-HH, EEEE	text	time AM 09-09, Saturday
+February 26, 1470 2:04:36 am as 'of' yyyy 'day' H, 'day' yyyy/ss:'on' yyyy	text	of 1470 day 2, day 1470/36:on 1470
+December 27, 2672 5:33:35 pm as dd s/hh	text	27 35/05
+April 2, 2810 5:36:13 pm as 'of' yyyy/hh	text	of 2810/05
+December 2, 2070 4:05:06 pm as MMM-dd/dd	text	Dec-02/02
+September 22, 1900 6:23:15 pm as hh H, 'of' H 'day' d-a	text	06 18, of 18 day 22-PM
+October 14, 1263 7:37:07 am as m m:MMMM, yyyy/'at' d, 'of' MM	text	37 37:October, 1263/at 14, of 10
+February 26, 1484 11:37:54 am as yyyy, a/hh	text	1484, AM/11
+September 28, 2740 8:02:29 pm as a:MMM/m	text	PM:Sep/2
+December 13, 1365 4:21:10 am as MMMM, HH s	text	December, 04 10
+July 28, 2450 1:31:44 pm as 'time' a:EEEE, EEEE	text	time PM:Thursday, Thursday
+May 26, 1122 8:13:05 am as m, a:MM	text	13, AM:05
+August 14, 1720 10:55:10 pm as yyyy, s, 'of' M d-hh:EEE	text	1720, 10, of 8 14-10:Wed
+March 5, 2821 11:34:39 am as MMM, mm	text	Mar, 34
+September 17, 2384 6:08:42 am as MM, ss/yy-MMM	text	09, 42/84-Sep
+April 30, 2027 3:13:30 pm as H-HH, H 'at' mm/s EEE	text	15-15, 15 at 13/30 Fri
+July 28, 1947 4:44:26 pm as EEEE/M-h	text	Monday/7-4
+May 6, 2467 3:58:57 pm as ss, dd m	text	57, 06 58
+April 14, 1745 3:34:29 pm as 'day' HH/m, mm M:MMMM	text	day 15/34, 34 4:April
+December 22, 2536 3:54:47 pm as MMM/hh	text	Dec/03
+July 17, 2632 3:04:45 am as m-'on' yy:EEEE/m:M:yy	text	4-on 32:Tuesday/4:7:32
+December 4, 2215 1:30:52 am as dd 'time' s	text	04 time 52
+April 15, 2766 3:22:38 pm as H/'of' yy yy, s-'at' d	text	15/of 66 66, 38-at 15
+February 27, 2428 3:01:09 pm as HH/yyyy/EEE	text	15/2428/Sun
+June 29, 2501 1:00:41 pm as MMMM a 'hour' m, M-'on' m-H	text	June PM hour 0, 6-on 0-13
+July 4, 1467 4:35:34 pm as 'day' H-MM/MM-h/MM/d	text	day 16-07/07-4/07/4
+November 23, 1791 12:25:20 pm as M:MMM	text	11:Nov
+May 5, 1523 10:54:24 pm as MM-h-dd:h, a	text	05-10-05:10, PM
+August 27, 1893 3:56:31 pm as MMM-'hour' H	text	Aug-hour 15
+August 6, 1613 11:49:56 am as d yyyy-s	text	6 1613-56
+October 8, 2845 5:23:08 pm as m-yy:'of' yy	text	23-45:of 45
+September 10, 2190 1:40:26 am as 'of' dd:H 'at' h, 'at' MMM-'of' h	text	of 10:1 at 1, at Sep-of 1
+June 15, 1762 1:17:20 pm as s/EEEE-yy	text	20/Tuesday-62
+April 7, 2628 12:05:01 pm as yy, yyyy-ss:'the' d	text	28, 2628-01:the 7
+April 9, 1418 6:51:47 pm as mm/'at' h/'day' H a HH	text	51/at 6/day 18 PM 18
+August 19, 2722 7:20:58 am as 'at' yyyy-ss mm	text	at 2722-58 20
+July 28, 1923 9:39:55 am as M-h:H/yy, yy	text	7-9:9/23, 23
+April 15, 2712 10:31:09 am as HH HH, ss/h	text	10 10, 09/10
+October 6, 1625 9:24:21 am as hh-h	text	09-9
+November 3, 2830 6:14:33 am as mm MMMM-m/dd	text	14 November-14/03
+January 19, 1689 7:07:57 pm as yyyy EEE:s/MMM 'at' MMM dd	text	1689 Wed:57/Jan at Jan 19
+June 14, 1389 7:26:51 am as EEEE, MMM	text	Sunday, Jun
+October 9, 2235 9:17:53 pm as HH/'time' M-HH/M	text	21/time 10-21/10
+September 20, 1403 4:34:52 am as h:MM:MMMM-H, HH-EEEE	text	4:09:September-4, 04-Tuesday
+February 25, 2074 9:47:37 pm as 'time' hh:dd/d-MM	text	time 09:25/25-02
+October 27, 1410 7:11:04 pm as MMMM/s MM:'time' h, MMMM, M	text	October/4 10:time 7, October, 10
+January 1, 2674 11:27:05 am as EEE-mm:s 'hour' EEE H	text	Thu-27:5 hour Thu 11
+October 4, 1751 12:24:48 am as EEE a/yyyy, HH	text	Mon AM/1751, 00
+September 27, 2242 5:31:19 pm as mm/'day' a/'time' hh/MMMM:hh, yy	text	31/day PM/time 05/September:05, 42
+May 15, 2753 11:19:34 pm as dd:H	text	15:23
+June 14, 1779 9:50:21 pm as mm/hh-'time' ss-s 'on' EEEE:s	text	50/09-time 21-21 on Monday:21
+June 25, 1454 6:46:21 am as M/mm, dd:mm	text	6/46, 25:46
+August 15, 2209 10:11:41 pm as EEE, 'at' HH	text	Tue, at 22
+August 8, 2061 3:09:19 pm as 'hour' s-'of' yy-'on' yyyy-M, EEE	text	hour 19-of 61-on 2061-8, Mon
+November 1, 1648 5:51:35 pm as m:EEE, MMM/MM ss	text	51:Sun, Nov/11 35
+May 20, 1616 12:26:06 am as M dd/EEE	text	5 20/Fri
+May 5, 1548 8:47:28 am as dd m:'at' MM	text	05 47:at 05
+July 2, 1717 10:48:11 am as hh, h-H:'of' yy-dd	text	10, 10-10:of 17-02
+June 7, 2078 3:07:47 pm as d a, 'on' yy-'day' ss	text	7 PM, on 78-day 47
+July 31, 1114 12:52:36 pm as h/mm, s m/EEEE	text	12/52, 36 52/Friday
+May 7, 2837 8:01:37 am as dd/EEE	text	07/Thu
+November 12, 2424 12:36:59 am as h:EEEE/'hour' H h	text	12:Tuesday/hour 0 12
+September 23, 2013 12:51:55 pm as MMMM, 'at' s/MM, MMM:m:MM	text	September, at 55/09, Sep:51:09
+January 13, 2829 10:18:31 am as 'of' d MM, 'time' mm-dd	text	of 13 01, time 18-13
+June 3, 2663 1:35:54 pm as ss-ss:'on' MMMM	text	54-54:on June
+March 25, 1156 11:42:50 pm as ss MMMM	text	50 March
+March 15, 1866 2:01:29 pm as 'hour' m HH, MMMM	text	hour 1 14, March
+July 21, 1818 10:32:31 am as MMM-'at' yyyy	text	Jul-at 1818
+May 6, 1998 12:18:22 pm as yyyy:H/EEEE:'of' s	text	1998:12/Wednesday:of 22
+April 29, 1369 7:05:27 pm as h, MMMM yy-hh-MM H	text	7, April 69-07-04 19
+February 19, 1475 7:03:01 am as 'hour' m:EEEE:h:yyyy h-'the' yyyy	text	hour 3:Friday:7:1475 7-the 1475
+July 27, 1604 7:50:52 am as 'hour' a/'on' HH:M-'time' hh-m, mm	text	hour AM/on 07:7-time 07-50, 50
+August 25, 1411 1:03:51 am as MM-H/H	text	08-1/1
+June 27, 2133 11:06:42 pm as yy-EEE/yyyy:hh/dd:ss	text	33-Sat/2133:11/27:42
+December 25, 2548 9:55:15 am as hh/s:yyyy-'at' ss 'on' ss, 'on' MM	text	09/15:2548-at 15 on 15, on 12
+November 17, 1778 9:34:52 am as d, a MMM	text	17, AM Nov
+October 22, 2436 4:36:43 pm as 'the' MMM-M	text	the Oct-10
+January 15, 2433 5:22:12 pm as 'time' MM-a	text	time 01-PM
+November 3, 1433 4:16:40 am as EEE:hh	text	Sun:04
+October 17, 1438 8:52:39 am as s:MMM:hh	text	39:Oct:08
+February 11, 2333 7:51:52 pm as M H/MMMM/m-MMM	text	2 19/February/51-Feb
+March 10, 1238 6:47:53 am as HH:'time' HH a 'on' MMMM	text	06:time 06 AM on March
+March 7, 1832 1:28:00 pm as MM:'on' H/dd/ss/HH	text	03:on 13/07/00/13
+December 18, 1433 8:28:31 am as 'day' d, 'on' dd/ss	text	day 18, on 18/31
+March 5, 1479 10:30:52 pm as yy/ss-hh:s	text	79/52-10:52
+March 20, 2139 9:43:08 pm as h/'at' yy	text	9/at 39
+December 5, 1593 2:27:44 pm as d-EEEE H	text	5-Sunday 14
+January 30, 1449 6:54:16 pm as EEE/'time' EEEE H:'time' a-a, MMMM	text	Tue/time Tuesday 18:time PM-PM, January
+April 2, 2580 4:44:52 am as ss HH:MMMM/d/m	text	52 04:April/2/44
+July 18, 1461 1:44:57 am as d MMMM	text	18 July
+November 11, 1741 1:58:21 am as dd-h MM:MMM:MM M	text	11-1 11:Nov:11 11
+April 11, 1190 10:17:41 am as s:hh/MM MMMM	text	41:10/04 April
+January 26, 2640 9:21:50 pm as d, MMM-yy 'of' a	text	26, Jan-40 of PM
+September 5, 1608 4:54:08 am as s/'time' MM	text	8/time 09
+January 7, 1695 6:39:12 am as 'day' a:a M:EEE	text	day AM:AM 1:Fri
+September 27, 2415 1:32:50 pm as HH, yyyy	text	13, 2415
+August 28, 2113 11:45:01 pm as 'day' MMMM, hh, 'the' s	text	day August, 11, the 1
+February 12, 2310 3:45:12 am as d/M a HH	text	12/2 AM 03
+December 22, 2746 4:25:20 am as mm:'the' m M-mm:'day' mm-MM	text	25:the 25 12-25:day 25-12
+March 16, 1465 3:53:39 am as s-'time' yy/H, mm	text	39-time 65/3, 53
+April 26, 2696 4:04:31 am as m:MMM:yy mm:dd	text	4:Apr:96 04:26
+June 8, 2563 10:53:32 pm as EEEE/a, 'on' MM	text	Wednesday/PM, on 06
+April 22, 2388 2:32:38 pm as mm 'of' m, h/'day' yyyy	text	32 of 32, 2/day 2388
+February 8, 1482 5:32:44 pm as EEEE/EEE	text	Wednesday/Wed
+December 30, 2609 1:43:53 pm as H:MMM	text	13:Dec
+November 28, 1484 4:51:51 pm as MMMM, mm a/dd, d	text	November, 51 PM/28, 28
+July 15, 1432 5:54:20 am as h yyyy-M a dd	text	5 1432-7 AM 15
+May 2, 2828 6:13:34 pm as hh, yyyy-s-MMM, M:s	text	06, 2828-34-May, 5:34
+October 27, 1755 1:24:26 am as EEE:yy/hh:a a	text	Mon:55/01:AM AM
+August 3, 2071 9:32:57 pm as hh, dd	text	09, 03
+December 1, 2704 3:14:20 am as M/hh, ss	text	12/03, 20
+October 8, 2049 1:57:27 am as H-H-HH MM	text	1-1-01 10
+June 29, 1157 2:18:15 am as EEEE:HH	text	Saturday:02
+May 19, 1528 6:14:23 pm as h mm/'time' hh 'of' EEEE	text	6 14/time 06 of Saturday
+June 27, 1193 8:05:13 pm as 'time' a-EEEE/yyyy/EEE-EEE	text	time PM-Sunday/1193/Sun-Sun
+September 29, 1781 1:23:45 pm as mm-'time' yy-EEEE, 'at' hh/'day' EEE:MMMM	text	23-time 81-Saturday, at 01/day Sat:September
+May 13, 1860 7:41:21 pm as MM d yyyy:'at' hh:'hour' hh	text	05 13 1860:at 07:hour 07
+January 28, 1581 8:21:53 pm as m, 'of' MMM 'at' EEE-mm	text	21, of Jan at Wed-21
+September 22, 1315 9:17:17 am as ss h/ss:H/M/H	text	17 9/17:9/9/9
+February 5, 2063 6:57:19 pm as s, hh EEE H	text	19, 06 Mon 18
+November 13, 2570 12:06:03 am as hh-MMM 'at' EEEE, a, 'the' MMMM yyyy	text	12-Nov at Tuesday, AM, the November 2570
+May 8, 1319 3:47:09 pm as a-'of' MMMM/'at' mm	text	PM-of May/at 47
+October 10, 2832 10:36:04 am as 'on' EEEE, MMMM, EEEE 'of' s:m-MMMM	text	on Sunday, October, Sunday of 4:36-October
+February 23, 1411 1:46:09 am as m/M:EEE, M-MMM, ss	text	46/2:Sat, 2-Feb, 09
+November 19, 2435 5:03:19 am as EEE:EEEE	text	Mon:Monday
+May 1, 1347 8:13:04 am as mm, 'the' mm:s	text	13, the 13:4
+November 14, 1353 12:53:09 am as mm:'hour' yy, yy	text	53:hour 53, 53
+July 30, 2813 8:57:02 am as yy mm, yyyy/'day' EEEE:'day' hh-'of' s	text	13 57, 2813/day Tuesday:day 08-of 2
+November 14, 1972 3:16:30 am as 'day' mm MMM yy	text	day 16 Nov 72
+June 30, 2254 4:33:26 pm as hh/MMM-s-M/'time' ss:a	text	04/Jun-26-6/time 26:PM
+January 20, 1418 10:45:45 am as s EEEE MMMM-MMMM	text	45 Tuesday January-January
+December 1, 2694 1:40:54 am as dd/MMMM-yy	text	01/December-94
+December 1, 2008 1:59:17 am as d-s, M:EEE-EEEE/EEE	text	1-17, 12:Mon-Monday/Mon
+July 23, 2697 9:57:38 pm as ss d/'day' HH:yy	text	38 23/day 21:97
+November 5, 2060 4:57:34 am as hh-mm	text	04-57
+December 30, 1986 6:12:50 am as H, EEE	text	6, Tue
+May 20, 1260 12:56:36 pm as dd, yy	text	20, 60
+September 2, 1645 6:05:55 pm as 'on' dd, 'time' mm EEEE:a	text	on 02, time 05 Saturday:PM
+August 31, 1964 5:49:31 am as EEE mm-EEEE, h	text	Mon 49-Monday, 5
+December 27, 1416 12:46:27 am as mm:'hour' yyyy, d-EEE-mm	text	46:hour 1416, 27-Fri-46
+December 30, 2391 3:09:44 pm as MM 'of' EEEE	text	12 of Monday
+December 2, 2854 11:47:52 am as m/MMMM-s HH, ss	text	47/December-52 11, 52
+February 11, 1547 2:06:40 am as h/MMM	text	2/Feb
+August 16, 1978 1:05:32 pm as s-EEE/'on' s dd	text	32-Wed/on 32 16
+October 7, 2328 3:53:12 am as mm, m/MM:ss	text	53, 53/10:12
+April 3, 1542 2:57:27 pm as MMM-MM 'on' HH/MM	text	Apr-04 on 14/04
+June 18, 2866 6:55:07 am as 'of' MM ss:'hour' h 'the' H:M-MMM	text	of 06 07:hour 6 the 6:6-Jun
+September 12, 1914 11:31:18 pm as 'hour' HH/dd-M-h	text	hour 23/12-9-11
+February 23, 1574 6:32:35 pm as mm, a, MMMM/H	text	32, PM, February/18
+January 27, 2366 12:48:17 am as HH:'on' yyyy-m	text	00:on 2366-48
+June 2, 1431 12:18:10 pm as 'at' ss:hh-EEEE-a	text	at 10:12-Thursday-PM
+September 2, 2009 1:11:26 am as EEE, EEE/yy, EEE	text	Wed, Wed/09, Wed
+September 22, 2525 9:40:58 am as MMM:'time' mm:ss, h/hh/a	text	Sep:time 40:58, 9/09/AM
+December 25, 2173 9:12:00 pm as 'time' d, MM, 'day' EEEE, m H	text	time 25, 12, day Saturday, 12 21
+October 20, 1308 1:39:36 am as yyyy MMMM-ss	text	1308 October-36
+November 13, 1973 3:39:15 pm as M:MMM	text	11:Nov
+December 8, 1418 7:05:15 am as s:EEEE MMM:d, yyyy	text	15:Tuesday Dec:8, 1418
+February 15, 1538 10:23:41 am as 'the' m/MM	text	the 23/02
+October 27, 1975 11:52:51 am as ss/M m/MMMM	text	51/10 52/October
+July 21, 2290 3:02:54 am as h, hh mm-h	text	3, 03 02-3
+October 21, 2509 1:23:43 am as EEEE:'time' s/EEEE	text	Monday:time 43/Monday
+September 29, 2498 3:05:26 am as MM HH	text	09 03
+April 9, 2165 6:28:32 am as H, yyyy h	text	6, 2165 6
+October 4, 1539 12:45:53 pm as EEEE/a:MMM:mm/'of' yy-'day' a	text	Wednesday/PM:Oct:45/of 39-day PM
+October 4, 2820 2:54:43 am as mm, EEE:'of' EEEE:yy, yy-'on' dd	text	54, Sun:of Sunday:20, 20-on 04
+September 21, 2841 4:30:11 am as H-EEEE-M-ss/hh, dd	text	4-Saturday-9-11/04, 21
+August 20, 2586 6:37:38 pm as EEEE:m-EEEE	text	Sunday:37-Sunday
+January 20, 2539 2:11:03 am as yyyy ss 'at' EEEE 'of' MMM/d-MMM	text	2539 03 at Tuesday of Jan/20-Jan
+May 26, 1281 11:52:20 pm as EEEE/MMMM	text	Monday/May
+March 19, 2705 9:23:04 pm as yyyy:H, MMMM-yyyy-MM	text	2705:21, March-2705-03
+November 11, 2897 1:54:48 pm as 'hour' MMM, yy MMM	text	hour Nov, 97 Nov
+September 21, 2869 3:41:21 pm as ss EEEE-'hour' hh/'day' EEEE/hh-yyyy	text	21 Saturday-hour 03/day Saturday/03-2869
+August 14, 1352 4:28:13 am as m hh:'on' yy, a/MM 'hour' h	text	28 04:on 52, AM/08 hour 4
+July 28, 2275 6:15:53 am as hh-hh hh-h-'time' EEE-MMMM	text	06-06 06-6-time Wed-July
+September 15, 2533 3:08:52 am as s/'hour' yy:ss	text	52/hour 33:52
+March 19, 1345 12:58:25 pm as 'at' HH dd 'at' d/MM/MMM	text	at 12 19 at 19/03/Mar
+July 14, 1607 11:29:31 pm as dd MM-mm/EEE/MMMM	text	14 07-29/Sat/July
+August 19, 2818 8:01:12 pm as h MM-yy	text	8 08-18
+May 30, 2506 1:41:51 am as a:ss/yyyy 'time' EEE/'on' MMMM	text	AM:51/2506 time Sun/on May
+June 24, 2502 1:26:27 am as mm:'of' yyyy	text	26:of 2502
+June 24, 1227 12:05:01 am as EEEE-MM MMMM-MMM/MMMM	text	Thursday-06 June-Jun/June
+May 11, 1124 9:53:34 am as yy/a 'time' M, EEE:'hour' m, a	text	24/AM time 5, Sun:hour 53, AM
+December 12, 1273 5:36:07 pm as d:'the' MMMM-dd, d	text	12:the December-12, 12
+June 5, 1243 6:20:25 am as d/EEE	text	5/Fri
+March 28, 1899 3:31:33 pm as M:EEE:'the' MMMM-h:EEE 'at' MMM	text	3:Tue:the March-3:Tue at Mar
+November 14, 1535 7:07:52 pm as EEEE-ss	text	Thursday-52
+April 23, 2206 6:39:16 am as 'hour' m, m/dd	text	hour 39, 39/23
+April 12, 2784 11:20:54 am as a/yyyy hh:'of' yyyy	text	AM/2784 11:of 2784
+July 18, 1381 3:56:27 pm as m ss, yy, EEEE, MM	text	56 27, 81, Wednesday, 07
+May 12, 2148 5:50:47 pm as dd/yy 'on' EEE	text	12/48 on Sun
+June 30, 1657 8:23:07 pm as 'time' MM/'of' MMMM-hh	text	time 06/of June-08
+January 25, 2715 9:31:47 pm as EEEE:h, yy-EEEE	text	Monday:9, 15-Monday
+November 24, 2409 6:34:25 pm as mm:yy, 'of' h	text	34:09, of 6
+June 18, 1696 11:37:00 pm as yy:yyyy, hh:H/mm	text	96:1696, 11:23/37
+May 23, 2550 6:10:32 am as hh/MMM dd ss	text	06/May 23 32
+July 18, 2358 4:33:37 pm as m s MMM:yy yy	text	33 37 Jul:58 58
+October 19, 2221 9:51:02 am as yy/mm/H	text	21/51/9
+June 23, 1665 5:58:44 pm as m, s-MM-HH/MM	text	58, 44-06-17/06
+May 5, 1277 6:32:12 pm as MMM/EEE	text	May/Wed
+May 15, 2445 9:26:44 am as H-EEE/HH	text	9-Mon/09
+February 5, 2570 6:28:46 pm as 'the' m yyyy	text	the 28 2570
+May 8, 2701 5:17:55 pm as H h:d	text	17 5:8
+January 22, 1204 3:48:22 am as H:hh	text	3:03
+December 24, 2527 11:06:17 pm as hh yy-ss-h, hh, EEE	text	11 27-17-11, 11, Wed
+September 18, 1849 7:18:06 pm as yyyy/hh:MMM:'time' HH/m, 'of' EEE	text	1849/07:Sep:time 19/18, of Tue
+September 29, 1259 9:10:44 pm as H/mm-MMMM	text	21/10-September
+September 7, 2038 5:23:48 pm as hh-dd, MMMM	text	05-07, September
+December 17, 1766 7:51:23 am as yy:M, EEE/yyyy-'at' a	text	66:12, Wed/1766-at AM
+August 11, 2318 4:09:55 pm as d-HH-yy	text	11-16-18
+May 17, 1196 1:14:01 pm as 'of' MM-mm/dd	text	of 05-14/17
+April 16, 2142 9:24:04 pm as 'hour' mm HH, s	text	hour 24 21, 4
+February 25, 2179 5:11:05 pm as a, hh:MMMM H:dd	text	PM, 05:February 17:25
+November 5, 2421 11:35:07 am as dd-h:H hh 'hour' MM/MMM	text	05-11:11 11 hour 11/Nov
+December 2, 2444 10:42:09 am as 'hour' a, MM:a-mm/s, MMM	text	hour AM, 12:AM-42/9, Dec
+October 23, 2749 6:58:58 pm as MM, d:a	text	10, 23:PM
+June 10, 2708 12:09:29 am as yyyy:HH, H:MM	text	2708:00, 0:06
+January 19, 2022 4:20:26 am as dd, M	text	19, 1
+November 4, 1106 9:17:54 pm as EEE 'hour' H-'day' h	text	Sun hour 21-day 9
+July 5, 1180 11:26:42 am as H/'the' MM-hh:dd	text	11/the 07-11:05
+April 7, 2682 8:41:22 pm as yy-MM:'time' ss:'at' mm-MMMM	text	82-04:time 22:at 41-April
+September 26, 2630 10:56:10 am as yy:MM MMMM-'of' MMM-EEE	text	30:09 September-of Sep-Sun
+May 4, 1105 4:40:36 pm as 'on' M/d h/a:MMM:MMM	text	on 5/4 4/PM:May:May
+August 11, 2771 5:46:36 am as yy hh, MM-s/d:H	text	71 05, 08-36/11:5
+July 8, 2713 4:48:20 am as M HH/a/hh-EEEE, hh	text	7 04/AM/04-Tuesday, 04
+January 28, 2248 6:04:58 am as 'time' dd/mm:MMM:MMMM, EEEE	text	time 28/04:Jan:January, Friday
+May 29, 2003 10:51:38 am as MMM/MMMM/m	text	May/May/51
+February 9, 1491 3:16:57 am as mm:m:a H/m	text	16:16:AM 3/16
+August 20, 1284 10:26:46 pm as 'at' HH-m, 'the' yyyy, mm	text	at 22-26, the 1284, 26
+October 10, 1259 8:14:34 pm as 'day' M:'day' M:'on' EEE	text	day 10:day 10:on Fri
+May 12, 2869 4:12:54 pm as 'time' dd, EEE/h-a-EEE	text	time 12, Sun/4-PM-Sun
+March 14, 2216 5:53:03 am as M:MMMM, ss, HH, yy	text	3:March, 03, 05, 16
+November 26, 1477 6:41:48 pm as EEEE 'of' mm	text	Monday of 41
+April 5, 1571 12:55:24 am as 'the' MMMM, hh:'day' M	text	the April, 12:day 4
+November 5, 1552 11:34:41 pm as 'on' hh, d:yy/d:m:MMM	text	on 11, 5:52/5:34:Nov
+February 1, 2017 2:22:52 pm as EEEE/hh/h, MM	text	Wednesday/02/2, 02
+March 21, 2459 4:09:14 pm as hh-M/yy	text	04-3/59
+June 24, 1179 9:35:25 am as yy:h-M/m, ss:'the' HH	text	79:9-6/35, 25:the 09
+June 7, 2638 8:06:27 am as dd yy-d m/h	text	07 38-7 6/8
+October 18, 1540 5:46:01 am as m/EEE	text	46/Fri
+September 22, 1831 5:01:33 am as MMMM-yyyy, s:EEEE, HH/s	text	September-1831, 33:Thursday, 05/33
+August 21, 2323 3:06:08 am as EEE-yy	text	Tue-23
+December 14, 2775 11:12:56 pm as 'time' m, 'the' H, yyyy, MMMM-m	text	time 12, the 23, 2775, December-12
+January 21, 1536 3:48:04 am as MM 'time' h 'on' yy/dd-a-h	text	01 time 3 on 36/21-AM-3
+February 10, 1591 12:55:38 am as yy:'of' EEEE-yy:M, s m	text	91:of Sunday-91:2, 38 55
+June 1, 1611 4:03:51 pm as 'on' MMM, MM/s 'on' EEEE	text	on Jun, 06/51 on Wednesday
+February 19, 2512 4:49:23 pm as yyyy, a	text	2512, PM
+December 19, 2795 10:13:23 am as HH M	text	10 12
+June 10, 2460 10:14:52 am as 'time' H, MM:MM-MMMM:yyyy/'day' s	text	time 10, 06:06-June:2460/day 52
+July 14, 2883 9:20:08 am as mm/MMMM, d	text	20/July, 14
+May 8, 2388 5:27:05 pm as 'day' yyyy 'at' a, a yyyy:yy	text	day 2388 at PM, PM 2388:88
+July 10, 1815 4:15:36 pm as MMMM:EEEE, 'of' ss:EEE hh	text	July:Monday, of 36:Mon 04
+September 30, 2758 9:59:23 am as h-H, d 'time' mm:hh:'at' s	text	9-9, 30 time 59:09:at 23
+March 26, 2408 10:12:02 am as HH-HH-HH-yyyy	text	10-10-10-2408
+June 23, 2528 5:28:31 am as H/yyyy, EEE 'of' dd, 'day' EEEE	text	5/2528, Wed of 23, day Wednesday
+June 25, 1456 1:32:19 am as MMM/M, MM:HH	text	Jun/6, 06:01
+June 12, 2726 2:25:55 pm as 'time' dd-dd	text	time 12-12
+July 11, 2314 3:44:08 pm as ss-MM, H, m	text	08-07, 15, 44
+May 25, 1863 6:05:33 am as MMMM, EEE, mm:EEE/H s	text	May, Mon, 05:Mon/6 33
+April 10, 1601 9:43:51 am as ss hh/'hour' yyyy-HH-mm	text	51 09/hour 1601-09-43
+April 23, 1591 11:58:49 pm as h, 'hour' dd	text	11, hour 23
+February 21, 1558 11:55:41 am as HH, 'of' mm-d/yy	text	11, of 55-21/58
+June 27, 2166 7:49:09 pm as 'day' a MMM:dd-'hour' yy h/MMMM	text	day PM Jun:27-hour 66 7/June
+May 31, 2383 4:46:54 pm as 'at' M, EEEE	text	at 5, Tuesday
+August 15, 2892 2:49:00 pm as 'hour' EEE, s M, EEE, MM	text	hour Fri, 0 8, Fri, 08
+July 27, 2265 9:24:01 am as yyyy 'the' dd:MMM, mm	text	2265 the 27:Jul, 24
+July 13, 2571 2:16:55 am as mm, h 'time' m-MMMM-dd	text	16, 2 time 16-July-13
+November 17, 2259 7:22:24 pm as 'time' EEE yyyy-'of' ss, dd	text	time Thu 2259-of 24, 17
+December 4, 2322 5:32:00 pm as yy/m	text	22/32
+November 4, 2268 8:03:10 pm as 'time' MMMM h, m, hh:mm	text	time November 8, 3, 08:03
+August 10, 2106 4:56:48 pm as dd/dd/dd, a, MMM s	text	10/10/10, PM, Aug 48
+September 5, 2238 2:07:56 am as 'hour' yyyy m	text	hour 2238 7
+April 14, 1507 5:42:45 pm as 'at' mm/ss/HH:h/MM 'at' ss	text	at 42/45/17:5/04 at 45
+December 31, 2049 12:34:59 pm as yy/H	text	49/12
+November 13, 1549 12:39:50 am as a, 'at' h 'hour' yy-dd:d yyyy	text	AM, at 12 hour 49-13:13 1549
+April 9, 2640 6:38:21 am as 'day' HH-h-'day' yyyy-dd/hh, yy	text	day 06-6-day 2640-09/06, 40
+April 30, 1400 8:20:34 pm as EEE/dd/HH/m	text	Wed/30/20/20
+November 29, 1288 7:01:47 pm as yy:'day' EEEE	text	88:day Monday
+April 20, 2500 2:27:43 am as EEE-hh:MMMM	text	Tue-02:April
+February 17, 1660 11:19:03 pm as a HH dd	text	PM 23 17
+June 12, 1271 8:33:30 pm as 'hour' M/m/'time' EEEE	text	hour 6/33/time Friday
+July 28, 2455 11:45:45 pm as s/EEEE-'time' HH-m, ss	text	45/Wednesday-time 23-45, 45
+September 27, 1217 5:25:27 pm as 'time' MM, MMMM, a-MMM	text	time 09, September, PM-Sep
+July 28, 2703 1:39:06 pm as m-'time' HH	text	39-time 13
+April 29, 1386 9:27:02 am as HH/HH:m	text	09/09:27
+February 21, 1747 6:37:28 pm as dd:MMMM:ss, yy	text	21:February:28, 47
+April 7, 2175 10:17:30 pm as m:'at' EEEE-MM-MM M	text	17:at Friday-04-04 4
+February 9, 1409 12:24:16 am as MMMM/'of' yyyy, m	text	February/of 1409, 24
+October 19, 2241 4:24:00 am as 'on' HH-EEEE dd:mm	text	on 04-Tuesday 19:24
+October 25, 1845 4:44:49 am as MMMM, EEEE, h, yyyy-HH-H	text	October, Saturday, 4, 1845-04-4
+November 22, 1811 12:56:36 pm as yyyy-'the' m MMMM	text	1811-the 56 November
+January 23, 2669 5:43:16 am as a-ss:a/H/mm/hh	text	AM-16:AM/5/43/05
+December 31, 2272 12:43:03 pm as yyyy/mm h dd/dd	text	2272/43 12 31/31
+September 26, 1942 11:48:08 am as H, M/a EEEE	text	11, 9/AM Saturday
+September 14, 2235 10:37:59 pm as MMM h dd	text	Sep 10 14
+April 30, 2794 5:42:04 pm as 'on' HH, hh, MMMM:'hour' yy, 'day' MMMM	text	on 17, 05, April:hour 94, day April
+October 3, 2319 11:26:13 am as 'of' a 'the' MMM:MMM MMMM, M	text	of AM the Oct:Oct October, 10
+January 29, 1974 12:57:54 am as m H d:h:EEE	text	57 0 29:12:Tue
+February 23, 2185 7:28:40 am as a/dd 'hour' s/M	text	AM/23 hour 40/2
+January 7, 2294 12:41:20 am as 'day' s/'at' d-HH/h/yy	text	day 20/at 7-00/12/94
+May 9, 2093 8:11:19 pm as hh:MMM	text	08:May
+January 11, 2863 4:59:11 am as 'of' EEEE, 'on' m	text	of Thursday, on 59
+September 11, 1850 9:28:34 pm as dd-M	text	11-9
+March 22, 2846 3:20:36 am as mm MM 'at' a-yy	text	20 03 at AM-46
+May 10, 2733 4:44:56 am as dd/a-MMM	text	10/AM-May
+July 18, 2678 10:44:12 pm as yy ss, M	text	78 12, 7
+November 23, 1220 10:09:25 am as hh/dd MMMM	text	10/23 November
+June 29, 1901 8:10:17 am as yy/d/EEE	text	01/29/Sat
+August 22, 2251 10:15:38 am as ss-M:yyyy	text	38-8:2251
+December 18, 2307 8:31:58 pm as mm/hh 'the' H:H/hh/hh	text	31/08 the 20:20/08/08
+August 21, 1462 12:06:36 am as 'day' yy/yyyy	text	day 62/1462
+June 23, 1664 10:22:39 pm as MMMM-mm-'time' HH/'of' dd M	text	June-22-time 22/of 23 6
+July 13, 2288 9:33:19 pm as HH/EEE/mm MMM, yyyy	text	21/Fri/33 Jul, 2288
+October 15, 1642 6:16:07 am as EEE-EEEE, MMMM 'day' h EEE	text	Wed-Wednesday, October day 6 Wed
+April 2, 2181 7:37:50 pm as h MMMM:d	text	7 April:2
+December 30, 1181 2:56:57 pm as yy/mm HH a:'the' EEEE dd	text	81/56 14 PM:the Wednesday 30
+October 28, 1425 9:06:30 pm as dd-hh 'hour' s/h	text	28-09 hour 30/9
+May 27, 2394 11:45:15 am as s, dd-mm	text	15, 27-45
+February 12, 1688 5:53:03 pm as yyyy, ss:MM mm-'day' HH	text	1688, 03:02 53-day 17
+July 4, 2138 9:47:48 pm as dd/yy, 'of' EEE	text	04/38, of Fri
+March 5, 2147 10:16:22 pm as H-MM-'the' MM	text	22-03-the 03
+November 18, 2466 11:23:42 pm as yyyy-m-mm, 'time' HH/m	text	2466-23-23, time 23/23
+September 28, 1833 11:19:04 am as s/'of' s/d, 'at' a:'the' M	text	4/of 4/28, at AM:the 9
+May 2, 1257 4:32:16 am as M-yy	text	5-57
+March 4, 2393 12:45:03 am as dd 'the' EEE-h	text	04 the Thu-12
+April 8, 2112 1:33:29 am as M/d 'day' MMMM:'at' hh/HH	text	4/8 day April:at 01/01
+May 15, 2027 2:10:19 am as MM:MMMM, 'the' s:'at' HH-m-s	text	05:May, the 19:at 02-10-19
+October 16, 1769 4:35:04 pm as yyyy-mm:H:MM, H	text	1769-35:16:10, 16
+October 7, 2379 9:55:33 am as EEEE EEE	text	Sunday Sun
+May 22, 1418 5:28:04 am as EEE-mm, ss/MM/MMM	text	Fri-28, 04/05/May
+June 18, 1310 7:18:18 am as EEE/m, hh	text	Wed/18, 07
+December 18, 2180 11:20:25 pm as dd/h:EEEE:hh-mm	text	18/11:Monday:11-20
+June 30, 2403 8:41:19 am as HH, yy	text	08, 03
+June 3, 2568 2:49:48 am as MM, HH:MM, EEEE:ss	text	06, 02:06, Friday:48
+May 8, 2021 8:49:10 am as yy yy, MMMM	text	21 21, May
+November 14, 2093 9:08:31 am as h MMMM M/MMMM, 'day' yyyy-'at' h	text	9 November 11/November, day 2093-at 9
+July 6, 2894 2:58:44 pm as H:MMM	text	14:Jul
+December 19, 1143 5:58:24 pm as ss-MM	text	24-12
+June 24, 1175 11:38:29 am as ss:'day' d:'hour' yy	text	29:day 24:hour 75
+February 20, 1661 8:58:28 am as 'on' a yyyy MMMM, dd	text	on AM 1661 February, 20
+January 26, 1859 6:30:22 pm as EEE H, 'time' dd, MM 'day' yy	text	Wed 18, time 26, 01 day 59
+April 24, 2041 10:33:49 am as 'at' h:mm/yyyy:MMM/h	text	at 10:33/2041:Apr/10
+June 1, 2336 4:17:08 am as H-ss 'at' MM M/ss:EEE	text	4-08 at 06 6/08:Mon
+July 8, 1226 6:47:36 am as MMMM-'of' h MMMM/EEE	text	July-of 6 July/Wed
+March 15, 2593 12:15:56 pm as MMMM d-ss, MMMM, 'day' s:m	text	March 15-56, March, day 56:15
+December 24, 2858 3:41:45 pm as dd, 'time' ss ss, EEE-MMM/ss	text	24, time 45 45, Tue-Dec/45
+April 26, 2363 3:59:41 am as 'the' s/HH-s/EEE, MM	text	the 41/03-41/Fri, 04
+December 26, 1184 12:57:01 pm as MMM-ss, HH, mm-'time' HH/MM	text	Dec-01, 12, 57-time 12/12
+September 26, 2519 9:03:02 am as 'day' m:dd 'hour' MM-dd	text	day 3:26 hour 09-26
+July 11, 2558 9:08:24 am as dd:H:MMMM	text	11:9:July
+May 12, 1794 10:06:45 am as a, 'at' HH/d	text	AM, at 10/12
+April 14, 2750 5:44:40 am as MMMM 'time' yy-a, hh m	text	April time 50-AM, 05 44
+March 5, 1678 11:28:25 am as ss-'time' EEE, M	text	25-time Sat, 3
+August 15, 1984 5:40:39 pm as HH/MMM/'hour' a-H:yyyy	text	17/Aug/hour PM-17:1984
+January 27, 1346 11:00:51 am as 'on' ss:'hour' MMM, m/hh MMM, 'hour' a	text	on 51:hour Jan, 0/11 Jan, hour AM
+October 10, 2037 1:47:34 pm as yyyy-mm	text	2037-47
+June 3, 2675 12:34:19 pm as MMM:'on' EEEE:ss/hh, 'on' MM HH	text	Jun:on Thursday:19/12, on 06 12
+March 22, 1421 5:14:41 am as EEE, 'of' yy-mm 'at' EEEE	text	Thu, of 21-14 at Thursday
+January 12, 2596 8:59:47 am as yy a h, 'day' dd	text	96 AM 8, day 12
+December 8, 2240 3:37:02 pm as hh, h:m-MM	text	03, 3:37-12
+July 24, 2565 2:51:47 pm as 'time' h:'on' a-'at' d, MMM d-s	text	time 2:on PM-at 24, Jul 24-47
+October 6, 1534 9:55:30 am as HH/'time' EEEE EEEE-a	text	09/time Saturday Saturday-AM
+June 30, 2366 1:38:41 am as a/'the' yy:yyyy	text	AM/the 66:2366
+August 23, 2296 6:22:32 am as hh-a/mm	text	06-AM/22
+June 29, 1199 1:02:14 am as M:yy d EEEE-MMMM MMM	text	6:99 29 Tuesday-June Jun
+June 29, 1469 12:36:49 am as HH:d-HH 'time' dd	text	00:29-00 time 29
+May 14, 2372 11:37:19 am as m/hh yyyy:MM/MM	text	37/11 2372:05/05
+February 2, 1139 1:07:41 pm as 'at' d/yy-MMMM yyyy	text	at 2/39-February 1139
+May 16, 2866 10:12:10 pm as MMMM/'the' HH, 'day' dd/'day' MMM-s, M	text	May/the 22, day 16/day May-10, 5
+October 19, 2459 9:24:33 am as ss-'hour' mm/a/dd d-EEE	text	33-hour 24/AM/19 19-Sun
+August 6, 1567 8:31:15 pm as MMM M mm-EEE	text	Aug 8 31-Sun
+July 11, 1812 6:30:16 pm as H dd HH-'of' a	text	18 11 18-of PM
+April 11, 1458 5:33:04 pm as d/EEE-M, 'the' h:mm	text	11/Sun-4, the 5:33
+October 31, 2841 12:10:30 am as MM/h EEE	text	10/12 Thu
+August 5, 1161 10:43:00 am as dd, MMM M-yy	text	05, Aug 8-61
+February 26, 1653 3:53:47 pm as H-a, d/h 'the' hh	text	15-PM, 26/3 the 03
+October 13, 2650 8:08:58 pm as 'on' EEE:h-dd	text	on Sun:8-13
+October 9, 2753 7:06:49 pm as MMM:EEE	text	Oct:Fri
+July 31, 1818 12:25:23 pm as s:h a	text	23:12 PM
+January 23, 1233 6:40:59 pm as 'of' mm-m/m, m:'at' m-H	text	of 40-40/40, 40:at 40-18
+March 23, 2677 4:12:32 am as ss 'time' m-'hour' MM:yyyy/M:'the' yyyy	text	32 time 12-hour 03:2677/3:the 2677
+December 22, 1862 1:45:50 am as a-EEE-MMMM, m, yyyy	text	AM-Mon-December, 45, 1862
+July 23, 1999 1:08:39 am as a/mm:MMM/dd:H-hh	text	AM/08:Jul/23:1-01
+December 29, 1399 3:49:50 am as yy, MM	text	99, 12
+January 9, 2341 3:00:44 am as MM/hh, a, a HH	text	01/03, AM, AM 03
+May 11, 1247 4:23:18 pm as s/mm:EEE-HH:d	text	18/23:Sat-16:11
+July 28, 1527 2:57:34 am as yyyy EEEE:m 'on' MMM-h, MMMM	text	1527 Thursday:57 on Jul-2, July
+December 29, 1715 2:41:10 pm as 'the' yyyy/m/'on' EEE	text	the 1715/41/on Sun
+April 25, 2102 6:32:14 am as 'time' EEE EEEE, yy:yy, 'of' yyyy:yy	text	time Tue Tuesday, 02:02, of 2102:02
+April 28, 2340 2:41:19 pm as EEEE/ss, 'time' MMM-H-HH:MMMM	text	Sunday/19, time Apr-14-14:April
+January 18, 2176 1:11:33 am as a MMMM, 'of' MMM, yy 'of' hh	text	AM January, of Jan, 76 of 01
+February 13, 1453 3:34:51 am as m-MMMM/M yyyy, HH/EEE	text	34-February/2 1453, 03/Sun
+November 24, 1745 2:11:29 pm as MMMM, MMMM	text	November, November
+August 21, 2129 10:11:04 pm as h:EEEE:MMM:mm	text	10:Sunday:Aug:11
+April 28, 1731 10:08:48 pm as m, EEE, d	text	8, Sat, 28
+July 6, 2687 4:18:53 am as s-dd/mm	text	53-06/18
+September 17, 2013 11:08:29 pm as a d/MMM-'on' H, 'of' yyyy 'on' MMM	text	PM 17/Sep-on 23, of 2013 on Sep
+January 12, 1675 4:56:38 am as EEE yyyy:'hour' hh, m:EEEE	text	Sat 1675:hour 04, 56:Saturday
+April 7, 1237 2:33:57 pm as hh-a a/a/'hour' EEE	text	02-PM PM/PM/hour Tue
+February 22, 2270 1:25:16 am as ss:a	text	16:AM
+September 21, 2197 2:59:39 pm as 'hour' M/ss yyyy, m 'of' ss-'hour' h	text	hour 9/39 2197, 59 of 39-hour 2
+August 17, 1880 2:06:22 pm as 'hour' m-HH:s h	text	hour 6-14:22 2
+March 13, 2173 8:51:52 am as d d:h/'time' EEEE, MMM, MM	text	13 13:8/time Saturday, Mar, 03
+May 27, 1402 12:36:11 am as M, d/hh	text	5, 27/12
+March 15, 2091 7:36:29 am as d-'the' MMMM:H	text	15-the March:7
+November 28, 1965 5:58:23 am as d dd:M:'at' dd	text	28 28:11:at 28
+July 11, 1958 4:56:54 pm as 'on' dd, yy hh/s EEEE	text	on 11, 58 04/54 Friday
+June 29, 2682 2:21:40 am as MM m HH EEE-yyyy 'time' MMMM	text	06 21 02 Thu-2682 time June
+December 15, 1961 4:40:30 pm as 'the' d/s-mm, 'day' M-'the' yy/hh	text	the 15/30-40, day 12-the 61/04
+April 11, 1229 5:02:09 am as h HH dd-mm, hh-hh	text	5 05 11-02, 05-05
+December 31, 2525 7:36:32 am as 'of' a/'time' MMMM:s:HH	text	of AM/time December:32:07
+September 23, 1665 5:54:23 am as d:MM/HH	text	23:09/05
+November 7, 1950 8:40:15 pm as MMMM:ss/'time' ss:EEE	text	November:15/time 15:Tue
+September 18, 1285 6:42:47 am as MM, hh/MMMM-'day' MM, yy-yyyy	text	09, 06/September-day 09, 85-1285
+November 1, 2508 1:10:37 am as ss, HH M, 'hour' MMMM	text	37, 01 11, hour November
+May 15, 2259 12:19:23 am as MM 'day' M, HH-'the' MMM:'at' h	text	05 day 5, 00-the May:at 12
+November 19, 2876 7:47:01 pm as 'of' EEEE:dd	text	of Thursday:19
+April 18, 2662 9:48:13 pm as ss:ss	text	13:13
+July 24, 2030 6:21:59 pm as MM, M-EEEE-dd-d	text	07, 7-Wednesday-24-24
+August 12, 1654 8:55:00 am as d-'the' EEE:s:yyyy	text	12-the Wed:0:1654
+May 20, 2108 3:53:37 am as HH/'day' M	text	03/day 5
+December 6, 2848 2:36:59 pm as mm, M, d, EEEE, a	text	36, 12, 6, Sunday, PM
+February 11, 2567 10:58:13 pm as 'at' yy, MMMM-M	text	at 67, February-2
+February 22, 2732 1:57:18 am as MMMM:MM:h, 'of' EEEE 'hour' h	text	February:02:1, of Monday hour 1
+July 18, 2004 5:34:15 pm as EEEE:h-yyyy:'of' MM, 'at' m 'the' hh	text	Sunday:5-2004:of 07, at 34 the 05
+March 10, 2257 8:30:35 am as dd, MMMM/m, mm-M-ss	text	10, March/30, 30-3-35
+February 11, 2060 5:23:57 pm as 'the' MMMM/EEEE/EEEE/hh-m, hh	text	the February/Wednesday/Wednesday/05-23, 05
+February 13, 2495 1:12:37 am as MMM:ss, h/MMM, a-s	text	Feb:37, 1/Feb, AM-37
+June 21, 1649 7:11:02 pm as h-EEEE/HH-ss, HH-'of' s	text	7-Monday/19-02, 19-of 2
+June 12, 1836 9:14:48 am as HH, MMMM, ss yy-s	text	09, June, 48 36-48
+November 26, 1184 1:56:49 am as d-EEEE, M, yy	text	26-Monday, 11, 84
+August 12, 2258 4:55:11 pm as M:yyyy:MM/'day' yyyy/h, MM	text	8:2258:08/day 2258/4, 08
+July 15, 1173 3:12:19 am as ss/m-EEEE	text	19/12-Sunday
+August 14, 2299 8:38:15 am as EEE/'of' d, HH dd	text	Mon/of 14, 08 14
+July 23, 1125 2:31:49 pm as H/MMMM, yyyy/s	text	14/July, 1125/49
+June 21, 2239 4:13:48 pm as h, MMMM/m:yyyy/yyyy	text	4, June/13:2239/2239
+September 11, 1275 6:11:57 pm as mm MMMM HH EEEE-M	text	11 September 18 Wednesday-9
+August 7, 2148 3:48:31 pm as 'day' MMMM, hh H-'hour' HH/'hour' HH	text	day August, 03 15-hour 15/hour 15
+March 3, 2206 3:16:34 am as 'hour' yyyy 'on' yyyy EEEE, 'of' yy	text	hour 2206 on 2206 Monday, of 06
+September 11, 1774 2:36:44 pm as MMMM-'hour' yy, 'day' hh, MMMM	text	September-hour 74, day 02, September
+January 15, 1890 3:01:27 am as MMMM/mm:dd	text	January/01:15
+August 14, 1934 3:58:16 pm as MMMM, EEE:yyyy/'of' hh	text	August, Tue:1934/of 03
+July 8, 1667 8:58:36 am as MMMM MMMM m	text	July July 58
+April 18, 1128 12:42:52 pm as M MM-EEEE	text	4 04-Wednesday
+July 11, 2235 4:44:13 pm as yy s:'the' EEEE:d/MMMM:ss	text	35 13:the Saturday:11/July:13
+October 20, 1477 6:57:55 pm as EEEE/HH	text	Saturday/18
+September 23, 2585 5:29:47 am as MMM:'day' h:HH-HH	text	Sep:day 5:05-05
+April 14, 2856 9:29:34 pm as ss:yy:HH d	text	34:56:21 14
+June 27, 1218 4:03:51 am as d d, 'the' yyyy, EEE/MM	text	27 27, the 1218, Wed/06
+March 15, 2557 5:44:03 am as MM:MMMM H 'the' s-'on' d yyyy	text	03:March 5 the 3-on 15 2557
+April 6, 2724 2:17:46 am as EEE/dd HH, MMMM	text	Sun/06 02, April
+June 22, 2167 3:16:27 am as m, 'the' yyyy/HH	text	16, the 2167/03
+December 13, 1551 8:20:40 am as HH 'on' EEEE	text	08 on Thursday
+October 7, 2161 12:46:44 pm as 'of' ss-a EEEE EEE-m:EEEE	text	of 44-PM Wednesday Wed-46:Wednesday
+September 19, 1344 12:00:27 pm as MMM d:h:EEEE	text	Sep 19:12:Saturday
+January 7, 1975 6:56:34 pm as a/MMMM:MM, 'time' ss, yyyy	text	PM/January:01, time 34, 1975
+December 23, 1652 10:48:13 am as dd:H 'time' m/'at' hh-d	text	23:10 time 48/at 10-23
+February 6, 2880 7:09:55 pm as EEE:dd/hh, 'at' dd/yyyy	text	Tue:06/07, at 06/2880
+August 18, 1630 12:04:12 pm as ss:ss-yy, dd/'of' MMMM	text	12:12-30, 18/of August
+August 17, 1605 12:05:56 pm as H, a-m:ss	text	12, PM-5:56
+February 14, 2653 6:04:35 pm as H-MMM, a-'day' m ss	text	18-Feb, PM-day 4 35
+December 16, 1668 8:16:32 pm as 'of' MMM H/'time' MMM-dd	text	of Dec 20/time Dec-16
+November 22, 2535 1:56:51 pm as 'on' EEEE 'hour' ss	text	on Tuesday hour 51
+July 21, 1464 11:01:07 pm as yy-hh 'at' hh hh	text	64-11 at 11 11
+September 16, 2112 5:09:21 pm as 'at' EEE:hh/yyyy/MM, s mm	text	at Fri:05/2112/09, 21 09
+November 9, 1448 5:16:05 pm as mm/MM-a/s	text	16/11-PM/5
+October 28, 1872 11:12:08 am as M/M/MM	text	10/10/10
+June 17, 1531 9:41:06 am as d:s, d, mm hh-ss	text	17:6, 17, 41 09-06
+August 3, 2360 1:08:33 pm as s-'at' ss yy yy	text	33-at 33 60 60
+July 15, 1961 2:54:51 am as HH-'hour' h:ss:'hour' EEE-dd	text	02-hour 2:51:hour Sat-15
+January 6, 2163 3:55:23 pm as 'at' MMMM, ss/MMM:'hour' HH-s	text	at January, 23/Jan:hour 15-23
+July 15, 2307 9:25:13 am as s-yy hh 'at' M, a, mm	text	13-07 09 at 7, AM, 25
+June 23, 1579 1:03:54 am as ss-HH	text	54-01
+September 2, 2109 3:00:03 pm as 'time' ss:a, M/HH	text	time 03:PM, 9/15
+April 8, 1704 6:39:19 pm as dd:HH:ss:'time' m MMMM	text	08:18:19:time 39 April
+December 4, 2359 11:44:51 am as MMMM/m/s	text	December/44/51
+September 24, 1671 12:13:41 am as ss/EEEE-EEE:dd-'the' d-HH	text	41/Thursday-Thu:24-the 24-00
+July 12, 2500 10:45:50 am as EEE/'on' EEE:MMM-m:'at' EEE	text	Mon/on Mon:Jul-45:at Mon
+October 13, 2434 9:29:56 pm as ss 'time' h:mm	text	56 time 9:29
+June 20, 1837 8:38:44 am as mm:a, yy EEEE-h	text	38:AM, 37 Tuesday-8
+February 5, 2501 6:32:58 am as m, m:H, H-'hour' h/mm	text	32, 32:6, 6-hour 6/32
+October 9, 1633 8:54:37 am as H-a/EEE, a, EEEE	text	8-AM/Sun, AM, Sunday
+November 2, 1802 12:33:02 am as h-'at' mm, 'day' yyyy-H	text	12-at 33, day 1802-0
+December 9, 2083 11:19:54 pm as hh, 'day' HH	text	11, day 23
+December 13, 1327 2:26:36 am as m:H-a, M	text	26:2-AM, 12
+April 8, 2659 9:50:12 pm as h/'the' d-yyyy:MM, m	text	9/the 8-2659:04, 50
+September 16, 1543 11:52:25 am as hh HH	text	11 11
+September 23, 2270 12:49:03 am as MMM/dd	text	Sep/23
+May 25, 1541 8:06:16 am as H/s:hh yy	text	8/16:08 41
+December 9, 1301 6:22:05 pm as 'time' a/H, s, MMM:ss 'the' HH	text	time PM/18, 5, Dec:05 the 18
+April 8, 2147 12:12:32 am as 'on' M, 'at' MM-'time' yy/m:yyyy	text	on 4, at 04-time 47/12:2147
+May 24, 2832 12:32:44 am as 'time' mm-MMM, yyyy yyyy:ss-yyyy	text	time 32-May, 2832 2832:44-2832
+December 15, 1724 3:39:01 am as yyyy h/m:'of' mm/EEE, a	text	1724 3/39:of 39/Fri, AM
+July 10, 1266 5:23:59 pm as 'time' d/H:'day' H, dd	text	time 10/17:day 17, 10
+February 22, 1900 9:48:27 am as MMMM, H MMMM, ss/hh, dd	text	February, 9 February, 27/09, 22
+May 1, 1809 6:19:27 am as yy:ss, ss	text	09:27, 27
+December 7, 1238 10:00:32 am as 'time' d/h:d	text	time 7/10:7
+December 1, 2874 5:28:52 am as M:s	text	12:52
+May 7, 1463 11:28:16 pm as ss, yyyy	text	16, 1463
+March 18, 1850 1:35:23 pm as MM, MMMM, 'the' h	text	03, March, the 1
+October 15, 1251 3:12:02 pm as MM/hh	text	10/03
+July 5, 2686 6:29:34 am as d:'time' m, 'of' HH, dd-yyyy:EEEE	text	5:time 29, of 06, 05-2686:Monday
+May 9, 1196 12:31:54 am as d:'of' H h/EEEE/HH/hh	text	9:of 0 12/Thursday/00/12
+September 23, 2160 6:10:53 am as 'at' M-'on' s, 'on' m hh m:MM	text	at 9-on 53, on 10 06 10:09
+December 31, 1574 4:46:43 am as hh, hh	text	04, 04
+March 10, 2431 6:09:06 pm as yyyy 'day' dd/MMMM	text	2431 day 10/March
+December 4, 1273 9:53:29 pm as M HH, dd-M 'on' ss	text	12 21, 04-12 on 29
+August 14, 1435 6:32:51 am as mm:d-s	text	32:14-51
+January 12, 2853 3:05:45 am as yy/EEE	text	53/Sun
+January 6, 2743 9:44:25 pm as dd h	text	06 9
+January 2, 2434 1:57:43 am as yy EEEE-s d, 'time' s EEEE	text	34 Monday-43 2, time 43 Monday
+May 26, 2340 5:38:38 am as yy/mm/mm-m/yy	text	40/38/38-38/40
+May 4, 2109 11:22:07 pm as 'on' MMM:mm H	text	on May:22 23
+August 29, 2468 5:09:01 am as MMMM/'time' MMM, yy, MM, ss	text	August/time Aug, 68, 08, 01
+July 25, 1417 5:25:26 am as EEE:hh/EEEE:'of' s-MM yy	text	Fri:05/Friday:of 26-07 17
+December 13, 2255 3:41:14 pm as 'the' HH:EEEE EEEE	text	the 15:Thursday Thursday
+June 9, 2577 5:12:16 pm as dd, dd-M	text	09, 09-6
+August 8, 1878 10:53:00 am as 'of' mm/'at' H, yyyy	text	of 53/at 10, 1878
+August 27, 2501 3:30:57 am as a, a/yyyy, m:MMMM-d	text	AM, AM/2501, 30:August-27
+June 30, 1601 12:43:51 am as 'time' MMM/H	text	time Jun/0
+June 28, 1191 11:26:58 pm as EEEE/dd, yyyy MM, s	text	Friday/28, 1191 06, 58
+April 13, 2782 3:22:48 am as M-yy/ss, h MMM-yy	text	4-82/48, 3 Apr-82
+November 5, 2166 11:10:39 pm as dd-M	text	05-11
+December 31, 1922 10:51:18 pm as MMM-EEE:a	text	Dec-Sun:PM
+January 16, 2837 6:30:16 pm as MMMM/yy a-d, 'time' MMMM-yyyy	text	January/37 PM-16, time January-2837
+July 5, 2483 10:04:05 am as 'day' MMMM:d:a-MMM	text	day July:5:AM-Jul
+July 6, 1328 7:21:47 pm as EEE, yy/MMMM	text	Tue, 28/July
+October 31, 2455 10:59:18 am as mm yy yyyy	text	59 55 2455
+November 22, 1599 5:21:01 am as s:'day' M ss:'at' MM-s	text	1:day 11 01:at 11-1
+October 24, 2542 6:23:13 pm as MMM mm/'time' d	text	Oct 23/time 24
+April 24, 1164 1:16:35 am as 'day' s hh:MMMM	text	day 35 01:April
+January 24, 2549 12:13:49 pm as a-dd, H, 'time' yy	text	PM-24, 12, time 49
+March 17, 1299 1:47:35 am as H EEEE, h, s, yy m	text	1 Tuesday, 1, 35, 99 47
+October 24, 1351 11:15:22 pm as MMMM, M	text	October, 10
+December 22, 1513 3:55:35 pm as MMM 'hour' H/MMM EEE	text	Dec hour 15/Dec Mon
+December 21, 1613 8:17:56 pm as dd:EEEE 'time' MMMM, 'of' mm	text	21:Saturday time December, of 17
+June 20, 1777 3:28:06 am as EEEE, 'day' MM/MMMM HH	text	Friday, day 06/June 03
+November 26, 2559 11:12:29 am as 'day' yyyy-'day' mm-'at' ss, 'at' mm	text	day 2559-day 12-at 29, at 12
+June 6, 1508 6:41:13 am as MM:'on' a, m	text	06:on AM, 41
+December 30, 2494 6:58:51 am as 'at' HH-s s-dd-a/yy	text	at 06-51 51-30-AM/94
+December 30, 1609 10:14:52 pm as yyyy/'time' hh:H/M	text	1609/time 10:22/12
+April 9, 1996 4:33:16 pm as M H hh 'of' EEEE-dd	text	4 16 04 of Tuesday-09
+April 27, 1774 3:17:42 am as s dd MMMM/s	text	42 27 April/42
+October 3, 1210 2:58:01 am as EEEE, mm:MMM 'hour' h	text	Sunday, 58:Oct hour 2
+September 4, 1149 6:35:00 pm as EEE EEEE	text	Sun Sunday
+October 5, 1633 1:17:47 am as EEE mm, s/h-dd-MMM	text	Wed 17, 47/1-05-Oct
+October 28, 2581 7:57:09 pm as m:d	text	57:28
+December 24, 1371 3:52:22 pm as mm a/dd	text	52 PM/24
+September 15, 2782 6:24:38 am as 'the' yyyy yy, dd/MMM, EEEE	text	the 2782 82, 15/Sep, Wednesday
+October 17, 2526 5:49:30 pm as dd M-mm	text	17 10-49
+February 3, 1827 7:15:37 am as 'at' H, 'day' HH, mm, m, d-'time' s	text	at 7, day 07, 15, 15, 3-time 37
+April 19, 2288 1:36:08 am as MM, yy/M:dd/'at' ss 'time' yy	text	04, 88/4:19/at 08 time 88
+September 22, 2121 3:20:08 pm as MMMM/a, M-ss/MMM	text	September/PM, 9-08/Sep
+September 29, 2466 4:24:08 am as m, 'of' yyyy	text	24, of 2466
+November 20, 1187 2:35:44 pm as h/'time' H-'on' EEEE-hh	text	2/time 14-on Friday-02
+September 23, 1362 6:12:27 am as d, 'hour' mm-yyyy/M/'time' a-MMMM	text	23, hour 12-1362/9/time AM-September
+December 16, 1644 9:14:15 am as 'time' MM-M	text	time 12-12
+March 23, 2178 7:46:41 am as hh m, MMM	text	07 46, Mar
+May 8, 2873 1:08:46 am as MMM-EEEE-M-HH:MMMM	text	May-Monday-5-01:May
+September 19, 2693 1:42:15 pm as m:ss, HH, hh/m, EEEE	text	42:15, 13, 01/42, Tuesday
+April 28, 1485 12:36:25 pm as 'of' EEE:M	text	of Tue:4
+December 23, 1730 4:52:31 am as MM/M:a	text	12/12:AM
+August 18, 1521 1:06:38 pm as mm-'of' H-ss, EEEE m mm	text	06-of 13-38, Thursday 6 06
+July 1, 2606 12:21:41 am as dd/ss m	text	01/41 21
+December 19, 2535 7:39:08 am as m:'on' h/'of' dd-s/H:h	text	39:on 7/of 19-8/7:7
+October 22, 1470 2:26:48 pm as yy/MMMM-hh	text	70/October-02
+June 8, 1809 11:25:19 am as yyyy:d, 'the' a/'the' MM	text	1809:8, the AM/the 06
+August 30, 2729 3:11:03 am as H, MMM	text	3, Aug
+March 7, 1100 3:05:36 am as d-MMMM	text	7-March
+April 18, 1169 12:36:28 pm as s:'the' MMM, ss/m yyyy	text	28:the Apr, 28/36 1169
+March 3, 1545 2:21:33 am as H-MMM 'day' yy	text	2-Mar day 45
+September 15, 1312 2:31:21 pm as s, 'at' HH, 'the' h	text	21, at 14, the 2
+May 29, 2186 1:01:48 am as m-dd	text	1-29
+March 15, 1289 12:46:24 pm as HH m/m:h-yyyy/d	text	12 46/46:12-1289/15
+May 4, 1315 2:20:33 pm as m/s/MMMM	text	20/33/May
+April 27, 1343 7:36:08 am as hh:MM-MMM:hh:'of' yy	text	07:04-Apr:07:of 43
+June 13, 1612 9:06:31 pm as 'hour' yyyy, d	text	hour 1612, 13
+December 14, 1986 2:22:25 pm as ss/'time' EEE	text	25/time Sun
+March 22, 1211 5:53:56 am as mm-M-H:yy	text	53-3-5:11
+February 11, 2569 6:19:22 pm as EEE, H hh, MM/MMM, s	text	Sat, 18 06, 02/Feb, 22
+August 23, 1305 7:17:07 am as s d:MM ss, EEE	text	7 23:08 07, Sun
+June 11, 1369 5:04:50 pm as EEE:MMM:M-'at' MMM-H-s	text	Sun:Jun:6-at Jun-17-50
+June 9, 2211 3:47:56 pm as 'hour' ss, H H-MM mm	text	hour 56, 15 15-06 47
+February 9, 2688 4:24:12 pm as m, h:'time' a/s	text	24, 4:time PM/12
+June 24, 2498 6:08:02 am as H mm/H, hh, yy	text	6 08/6, 06, 98
+September 18, 2212 9:36:32 pm as 'the' MMMM d	text	the September 18
+February 6, 1584 12:32:07 am as 'day' M:mm-EEE MM:dd	text	day 2:32-Mon 02:06
+June 20, 2876 2:11:09 pm as H:mm:HH/'on' H/hh:MMMM	text	14:11:14/on 14/02:June
+November 13, 2809 1:04:58 am as h mm:'on' m	text	1 04:on 4
+April 14, 1207 4:39:02 am as 'the' ss/s:'of' yy, EEEE h-HH	text	the 02/2:of 07, Saturday 4-04
+September 9, 2884 8:05:53 pm as 'day' HH-ss:'time' H, yy:h:'on' s	text	day 20-53:time 20, 84:8:on 53
+May 27, 2116 12:52:48 pm as yy:EEE:a, 'at' MM, HH:hh	text	16:Wed:PM, at 05, 12:12
+September 30, 1624 10:41:56 pm as M:MMM/EEEE, s:HH 'of' d	text	9:Sep/Monday, 56:22 of 30
+October 26, 1827 5:34:06 pm as yy-HH:h-'on' d/HH	text	27-17:5-on 26/17
+October 7, 1531 5:09:21 pm as yyyy:'the' M	text	1531:the 10
+September 13, 1204 8:57:46 am as d:'day' H	text	13:day 8
+June 30, 2626 8:10:20 am as hh:mm	text	08:10
+September 2, 2242 2:49:29 pm as hh:MMM h, 'time' mm MM/yy	text	02:Sep 2, time 49 09/42
+April 22, 1135 6:51:43 am as yy:M-M:H:hh	text	35:4-4:6:06
+February 9, 1389 3:36:10 am as MM/'time' MMM, 'time' a, H:'hour' yyyy, 'the' ss	text	02/time Feb, time AM, 3:hour 1389, the 10
+July 20, 2003 12:20:26 pm as m/dd, 'time' H, EEE:MMMM	text	20/20, time 12, Sun:July
+December 9, 2356 7:21:27 pm as hh:HH/EEEE	text	07:19/Sunday
+August 19, 1465 6:31:05 am as h-HH, 'time' EEE	text	6-06, time Sat
+July 4, 1400 4:30:12 am as hh/m-'at' EEE, dd	text	04/30-at Fri, 04
+January 17, 2276 3:25:18 am as EEEE:EEEE-HH	text	Monday:Monday-03
+February 22, 2135 2:18:33 am as EEEE yy/EEEE:HH, m H	text	Tuesday 35/Tuesday:02, 18 2
+April 17, 1262 9:19:49 pm as MMMM/mm:'of' H	text	April/19:of 21
+November 9, 2179 9:24:50 pm as d/yy, s	text	9/79, 50
+April 22, 1444 1:27:25 am as M, EEEE, dd, 'at' yyyy	text	4, Monday, 22, at 1444
+October 7, 2654 8:48:00 pm as 'the' HH:mm:MMMM	text	the 20:48:October
+January 20, 2135 2:03:54 pm as M:H-M, yyyy	text	1:14-1, 2135
+January 26, 1827 6:00:13 pm as MM, 'of' h:yyyy 'on' HH	text	01, of 6:1827 on 18
+February 10, 2370 10:21:08 pm as dd 'on' s:HH	text	10 on 8:22
+September 12, 2566 10:15:20 pm as ss EEE-dd	text	20 Fri-12
+September 1, 1578 10:59:02 am as 'of' yy ss 'hour' EEE H-'the' s	text	of 78 02 hour Fri 10-the 2
+June 4, 2818 3:33:19 pm as MM/EEEE, H	text	06/Monday, 15
+August 22, 2777 10:21:39 am as dd:'at' MM-mm	text	22:at 08-21
+September 26, 2781 5:31:44 pm as dd:EEE	text	26:Sat
+April 3, 2055 8:16:10 am as HH:EEEE, dd/'time' EEE/s, EEE	text	08:Saturday, 03/time Sat/10, Sat
+October 3, 2086 11:04:28 pm as MMMM m	text	October 4
+July 20, 1315 6:58:56 am as 'day' EEE, d-MM	text	day Sat, 20-07
+July 16, 2562 7:27:37 pm as yyyy H/ss/MM, ss 'hour' HH	text	2562 19/37/07, 37 hour 19
+September 18, 2808 9:39:49 pm as 'hour' MMM, M, HH, d	text	hour Sep, 9, 21, 18
+June 30, 1736 2:09:30 pm as a HH/'day' mm:'day' H/a:MMMM	text	PM 14/day 09:day 14/PM:June
+April 18, 2633 9:26:25 am as m/h hh:EEE-'of' a	text	26/9 09:Thu-of AM
+August 18, 2645 10:09:57 pm as 'day' m MMMM/'at' hh:yy	text	day 9 August/at 10:45
+February 28, 1641 2:05:00 am as m, s-hh	text	5, 0-02
+September 29, 2271 5:54:11 am as h, ss/m 'hour' yy	text	5, 11/54 hour 71
+March 28, 1569 3:59:00 am as MMM 'the' HH	text	Mar the 03
+April 30, 2264 2:09:00 pm as 'hour' dd yyyy, 'of' ss/'at' HH, yy:yy	text	hour 30 2264, of 00/at 14, 64:64
+January 14, 1585 7:16:20 pm as dd, MMMM/'day' EEE EEEE-yyyy	text	14, January/day Mon Monday-1585
+November 13, 1945 7:22:21 pm as 'hour' yyyy, 'time' hh	text	hour 1945, time 07
+October 5, 1728 1:48:21 am as M-MM	text	10-10
+May 6, 2330 4:45:22 am as s/'time' yy EEE	text	22/time 30 Tue
+June 28, 1235 5:06:51 pm as s-MM 'at' HH-mm:'the' EEEE H	text	51-06 at 17-06:the Thursday 17
+September 14, 2896 8:20:31 pm as h-EEE s:ss/'at' hh	text	8-Fri 31:31/at 08
+January 27, 1890 1:38:59 pm as 'day' MMM/EEEE M	text	day Jan/Monday 1
+July 13, 1895 7:25:40 pm as 'on' MMMM:s:s H-'the' dd-MMMM	text	on July:40:40 19-the 13-July
+December 19, 2417 2:03:39 am as H-mm-yyyy/hh, d	text	2-03-2417/02, 19
+May 19, 2564 12:34:59 pm as m-HH 'on' h/m/'hour' EEEE	text	34-12 on 12/34/hour Saturday
+April 30, 2893 10:28:50 am as 'time' yy, H-'at' mm, m, yyyy	text	time 93, 10-at 28, 28, 2893
+March 22, 1343 11:17:40 am as m-yyyy:EEEE	text	17-1343:Friday
+March 10, 1319 8:24:30 pm as s:m/d/h	text	30:24/10/8
+May 5, 1247 11:35:39 pm as ss yy yy-MMMM-MMMM	text	39 47 47-May-May
+December 17, 1291 7:04:37 pm as h/'hour' EEE-MMMM/MMMM:EEEE HH	text	7/hour Mon-December/December:Monday 19
+March 16, 2281 2:26:15 am as s-'at' yy/a/'day' M	text	15-at 81/AM/day 3
+March 4, 2615 10:06:35 am as hh/MMM/yyyy	text	10/Mar/2615
+November 15, 2681 2:46:39 am as 'hour' MMM/a-dd:s	text	hour Nov/AM-15:39
+October 9, 2697 12:46:13 am as HH, EEE EEEE:dd	text	00, Sat Saturday:09
+February 10, 2421 5:17:48 pm as a:ss:s	text	PM:48:48
+June 24, 2469 4:27:51 am as 'day' MMMM-mm	text	day June-27
+June 13, 1883 1:21:05 am as dd, h	text	13, 1
+November 16, 2811 1:50:07 am as H yy	text	1 11
+March 22, 2468 6:32:42 am as ss, d, MMM:mm, HH-a	text	42, 22, Mar:32, 06-AM
+October 10, 2168 3:16:39 pm as h:H, MMM	text	3:15, Oct
+September 15, 1211 6:38:09 pm as 'the' MM, 'time' dd	text	the 09, time 15
+June 27, 2168 6:22:04 pm as 'the' HH-EEE-dd/'time' HH	text	the 18-Mon-27/time 18
+November 10, 2069 5:18:26 pm as m/'of' MMMM 'on' HH, m-MMM	text	18/of November on 17, 18-Nov
+February 27, 2014 11:48:42 pm as 'at' s:'hour' d:dd	text	at 42:hour 27:27
+May 17, 2737 2:07:02 am as MMM-m/hh	text	May-7/02
+May 29, 2729 6:35:44 pm as MM, 'hour' d-h 'at' h	text	05, hour 29-6 at 6
+June 17, 2011 9:36:21 am as h-HH-d, 'day' MMM d	text	9-09-17, day Jun 17
+June 7, 1730 9:06:01 pm as H, MM/EEE-MMMM-hh	text	21, 06/Wed-June-09
+December 5, 1754 11:51:50 am as hh, d:MMMM-d, MMMM	text	11, 5:December-5, December
+February 17, 1618 1:03:42 pm as 'on' yy/d	text	on 18/17
+January 8, 2351 11:06:06 am as 'at' M:m, hh-d:a	text	at 1:6, 11-8:AM
+April 10, 1819 10:49:18 pm as 'time' a-s:s	text	time PM-18:18
+March 31, 2028 12:20:16 am as mm yyyy	text	20 2028
+November 29, 1194 6:59:55 pm as HH:h-dd:'hour' MM	text	18:6-29:hour 11
+October 19, 1436 3:09:28 pm as mm:'time' d-ss MMMM:s 'at' dd	text	09:time 19-28 October:28 at 19
+December 31, 1929 1:59:54 pm as MM MMMM EEE 'on' dd-'on' mm	text	12 December Tue on 31-on 59
+April 5, 1470 4:53:19 pm as yy-'at' EEEE:'on' dd	text	70-at Tuesday:on 05
+September 26, 1344 1:46:27 pm as 'the' d-'at' ss-h:a	text	the 26-at 27-1:PM
+December 1, 1841 11:54:51 am as a, d/hh	text	AM, 1/11
+August 16, 2811 6:42:20 am as HH-'day' EEE	text	06-day Tue
+July 19, 1230 8:02:34 pm as m 'the' yyyy/mm, yy/m yyyy	text	2 the 1230/02, 30/2 1230
+August 9, 2336 6:38:23 pm as m-EEEE	text	38-Sunday
+November 25, 1636 12:55:36 am as MM-a	text	11-AM
+May 14, 2303 3:07:23 am as dd/mm:a	text	14/07:AM
+July 23, 1832 8:15:17 am as h/'on' EEEE	text	8/on Monday
+September 28, 2099 9:08:35 pm as dd:'the' hh/ss 'the' a hh	text	28:the 09/35 the PM 09
+September 21, 1322 9:29:50 pm as HH-hh/H	text	21-09/21
+October 3, 1628 9:54:58 am as mm-yyyy/MMM, a	text	54-1628/Oct, AM
+April 17, 1595 12:30:32 pm as ss-'time' dd-mm MMMM	text	32-time 17-30 April
+April 14, 1166 9:12:59 am as a, EEE/mm/EEE, mm:ss	text	AM, Thu/12/Thu, 12:59
+October 1, 1883 12:46:08 am as hh, a	text	12, AM
+January 12, 2478 1:48:26 am as MM/m/yyyy/MMMM	text	01/48/2478/January
+July 6, 1978 8:45:56 pm as 'of' MMM:h:h MMMM	text	of Jul:8:8 July
+January 11, 1616 1:40:59 am as d 'of' h:M	text	11 of 1:1
+December 27, 2612 2:04:32 am as 'time' h-MM	text	time 2-12
+August 17, 1624 10:29:20 pm as 'the' yyyy:d:M-'hour' EEEE:m	text	the 1624:17:8-hour Saturday:29
+July 12, 1840 1:55:29 am as mm/MMM:'of' EEE 'the' HH/MMM	text	55/Jul:of Sun the 01/Jul
+February 13, 2811 1:50:09 am as m ss-MMMM mm:h hh	text	50 09-February 50:1 01
+May 27, 2229 10:52:25 am as hh:dd	text	10:27
+May 29, 2808 3:50:19 pm as HH H, 'day' dd/yy	text	15 15, day 29/08
+October 6, 1222 10:41:45 am as 'the' h:h/d	text	the 10:10/6
+January 3, 1468 11:54:04 am as yyyy hh:'at' hh/EEEE	text	1468 11:at 11/Friday
+February 17, 1377 12:00:42 pm as hh, ss:MMMM/HH:HH-ss	text	12, 42:February/12:12-42
+December 13, 2646 9:20:31 am as 'on' hh, h, HH 'of' a, ss:'on' HH	text	on 09, 9, 09 of AM, 31:on 09
+March 15, 1357 4:08:04 am as EEE:s/MMM	text	Tue:4/Mar
+June 13, 2252 3:51:55 pm as EEEE-MMM-hh/a	text	Sunday-Jun-03/PM
+February 14, 1627 4:51:43 pm as 'the' hh dd/MM h	text	the 04 14/02 4
+May 20, 1518 1:53:56 am as ss, dd-HH, MMM	text	56, 20-01, May
+March 11, 1490 1:17:19 am as MM, EEEE d-MM/MMMM	text	03, Tuesday 11-03/March
+September 20, 1262 9:43:36 am as EEEE m, MMM	text	Wednesday 43, Sep
+August 9, 2878 4:10:46 pm as m, yy yy:'the' mm-d	text	10, 78 78:the 10-9
+March 14, 1255 5:48:10 pm as 'the' HH:'hour' MMMM	text	the 17:hour March
+February 2, 2137 12:51:18 am as m/yyyy:a, yyyy, 'the' h H	text	51/2137:AM, 2137, the 12 0
+August 30, 2472 12:19:11 am as h-s, 'time' H, ss, 'at' d:hh	text	12-11, time 0, 11, at 30:12
+March 13, 1812 2:48:16 pm as MM/yy:hh:hh-m MM	text	03/12:02:02-48 03
+November 2, 1321 1:44:49 pm as 'time' yyyy:'the' dd 'time' d H	text	time 1321:the 02 time 2 13
+February 14, 2876 5:39:01 pm as MMMM/MMM	text	February/Feb
+August 5, 2014 3:04:11 pm as ss, M/d, s, 'day' mm, yy	text	11, 8/5, 11, day 04, 14
+April 9, 1378 8:32:58 am as h, MMMM/HH/MMMM mm/yy	text	8, April/08/April 32/78
+December 11, 2186 1:56:05 pm as ss/mm:hh-hh	text	05/56:01-01
+June 27, 1130 7:06:04 am as H, EEEE-hh mm	text	7, Friday-07 06
+January 23, 2262 9:34:26 pm as ss, M/dd ss:hh	text	26, 1/23 26:09
+May 10, 1937 5:49:24 am as dd, yy, d H/h:'on' yyyy	text	10, 37, 10 5/5:on 1937
+July 1, 2065 10:54:33 pm as EEE/'day' yy:yy:'of' yyyy	text	Wed/day 65:65:of 2065
+June 7, 2626 3:21:47 pm as MMM, d/yy-h:'the' mm	text	Jun, 7/26-3:the 21
+March 28, 1404 11:39:45 pm as yy:HH, s/hh-MM	text	04:23, 45/11-03
+August 3, 2440 6:55:19 am as d, mm-EEEE-'on' m	text	3, 55-Friday-on 55
+August 18, 1756 2:30:35 pm as mm-'at' MMM, 'the' a	text	30-at Aug, the PM
+July 29, 2746 2:29:26 am as 'the' EEEE:HH 'of' M m-MMMM	text	the Monday:02 of 7 29-July
+June 22, 1764 2:15:07 pm as 'at' EEE, yy/ss-d	text	at Fri, 64/07-22
+August 13, 2526 7:49:33 pm as a:'of' MMMM MMMM	text	PM:of August August
+January 13, 1656 4:52:56 pm as m:'at' MM, MM-'on' h-EEE:MMMM	text	52:at 01, 01-on 4-Thu:January
+October 1, 1654 11:22:38 pm as a/ss-d/m yy/EEE	text	PM/38-1/22 54/Thu
+November 19, 2870 7:40:57 pm as mm yyyy/M-mm	text	40 2870/11-40
+October 2, 1809 2:50:24 am as h yyyy MM/HH	text	2 1809 10/02
+January 3, 2273 7:04:51 pm as s, MM M, 'day' EEEE	text	51, 01 1, day Friday
+September 10, 1209 3:09:20 am as dd:yy/HH, 'of' EEE	text	10:09/03, of Thu
+November 18, 2563 6:16:37 pm as MMM m:ss:a, EEEE h	text	Nov 16:37:PM, Friday 6
+January 3, 2068 4:54:45 am as MMMM M-m:'of' d:yy EEE	text	January 1-54:of 3:68 Tue
+January 12, 1409 2:54:15 am as s:m-'of' dd	text	15:54-of 12
+April 1, 1164 12:28:10 am as H a, 'day' yyyy	text	0 AM, day 1164
+February 6, 2168 8:15:00 am as h/dd, MMM	text	8/06, Feb
+February 7, 2837 11:38:48 pm as HH-ss m, MMM, HH hh	text	23-48 38, Feb, 23 11
+March 25, 1207 6:02:33 am as 'on' MMMM, hh, EEE, 'of' ss-'of' H	text	on March, 06, Sun, of 33-of 6
+May 29, 1895 2:48:54 pm as s-s-'day' ss-hh:dd	text	54-54-day 54-02:29
+April 7, 2327 4:27:22 am as m MMM 'at' m/MMMM/MMMM	text	27 Apr at 27/April/April
+May 31, 2321 8:40:11 pm as MMMM, yy	text	May, 21
+September 22, 1798 9:19:44 am as s:m:m, MMM	text	44:19:19, Sep
+December 27, 1923 2:38:34 pm as h, hh hh, d	text	2, 02 02, 27
+June 1, 1613 11:06:21 am as yy/MM, mm:M-mm	text	13/06, 06:6-06
+November 19, 2347 1:20:50 pm as mm/HH	text	20/13
+December 25, 1186 8:00:21 am as a 'the' d/m/h, HH/d	text	AM the 25/0/8, 08/25
+April 11, 2187 6:20:00 am as yy/dd-MM:MMM	text	87/11-04:Apr
+March 22, 1193 4:13:03 pm as EEEE/mm-MM/EEEE/MMM, HH	text	Monday/13-03/Monday/Mar, 16
+June 16, 1119 6:19:08 pm as m 'the' mm, 'at' dd-'at' d-a	text	19 the 19, at 16-at 16-PM
+July 20, 2301 11:39:30 am as yyyy/s, M 'at' MMMM/s	text	2301/30, 7 at July/30
+September 8, 2899 1:31:22 pm as M:EEE:'on' EEE	text	9:Tue:on Tue
+February 17, 1952 12:28:06 am as 'day' yy MM	text	day 52 02
+February 8, 2070 11:39:37 pm as yyyy-'hour' M/s-hh-M/hh	text	2070-hour 2/37-11-2/11
+September 14, 2406 2:29:55 pm as yy:'at' dd ss-HH:'on' hh/MMM	text	06:at 14 55-14:on 02/Sep
+October 14, 1501 12:07:39 pm as d:EEE/dd, EEE/'of' MM	text	14:Mon/14, Mon/of 10
+February 26, 1867 12:26:28 am as 'at' hh/s M	text	at 12/28 2
+March 21, 2816 3:14:38 am as m-'hour' hh/EEE	text	14-hour 03/Mon
+March 19, 2123 7:20:44 am as 'at' MM:H/MMM 'the' mm MM	text	at 03:7/Mar the 20 03
+December 30, 1197 2:03:55 pm as MMMM, MMM-H	text	December, Dec-14
+January 19, 1574 9:04:32 am as 'of' m d/'on' HH MM	text	of 4 19/on 09 01
+July 18, 1410 10:06:48 am as yyyy 'on' MMM/'at' MMM:'of' HH-MMMM	text	1410 on Jul/at Jul:of 10-July
+November 13, 2210 7:49:10 pm as EEE, EEEE MM, MMMM, EEEE	text	Tue, Tuesday 11, November, Tuesday
+April 19, 2612 4:28:34 am as h, HH:HH	text	4, 04:04
+September 4, 1514 1:03:57 am as 'the' m, EEE/MM 'the' H a	text	the 3, Fri/09 the 1 AM
+July 29, 2324 9:03:49 pm as 'time' MMMM-m/EEE, M:MMM, MM	text	time July-3/Tue, 7:Jul, 07
+May 30, 1875 2:11:56 pm as h:a, 'time' MMM, EEE	text	2:PM, time May, Sun
+June 12, 2767 8:09:47 pm as ss 'the' hh MM-HH	text	47 the 08 06-20
+March 15, 1115 2:47:56 am as M MMMM-EEEE:'of' m ss	text	3 March-Monday:of 47 56
+January 1, 2124 2:29:18 pm as m d-HH-yy	text	29 1-14-24
+October 15, 2451 4:18:41 pm as HH/yyyy-d-yyyy	text	16/2451-15-2451
+April 28, 1705 10:44:08 am as EEEE/ss:hh	text	Tuesday/08:10
+August 18, 2339 3:26:22 am as mm, m m/mm:h:dd	text	26, 26 26/26:3:18
+February 5, 1437 3:10:04 pm as mm/m/'at' H s-'hour' d:mm	text	10/10/at 15 4-hour 5:10
+November 30, 1376 4:44:56 pm as yyyy EEE 'at' m, HH MMM	text	1376 Sat at 44, 16 Nov
+December 6, 1167 11:52:32 am as MMM:M:MMM-'at' hh	text	Dec:12:Dec-at 11
+April 22, 2433 1:04:46 pm as dd 'day' s:MM a	text	22 day 46:04 PM
+January 12, 1600 10:34:53 pm as mm, d, H, 'of' EEEE, d/d	text	34, 12, 22, of Wednesday, 12/12
+July 8, 1911 12:34:23 pm as yyyy H:'at' yy MMM/s	text	1911 12:at 11 Jul/23
+February 1, 2645 2:27:36 pm as s, H/hh	text	36, 14/02
+April 14, 2303 10:29:42 am as mm/a yy	text	29/AM 03
+February 24, 1486 7:29:07 am as EEEE, ss yyyy:H:m	text	Wednesday, 07 1486:7:29
+December 22, 1301 12:08:06 pm as 'on' h/MMMM 'the' yyyy-HH, MMM/'on' yy	text	on 12/December the 1301-12, Dec/on 01
+May 3, 2683 6:53:58 am as H-ss:h, h H:'at' MMM	text	6-58:6, 6 6:at May
+March 30, 2493 3:13:33 am as H:HH-m:'on' EEE-yy yyyy	text	3:03-13:on Mon-93 2493
+August 8, 2295 6:06:36 pm as hh-s:'hour' dd, m, m	text	06-36:hour 08, 6, 6
+August 3, 1919 5:43:15 pm as dd-EEEE M/a-M	text	03-Sunday 8/PM-8
+December 22, 2261 10:07:11 pm as dd ss MMMM:MMMM	text	22 11 December:December
+June 5, 1985 9:46:47 pm as EEEE-MMMM/dd, EEEE	text	Wednesday-June/05, Wednesday
+December 20, 1768 1:55:16 pm as MMM MMMM/hh-HH	text	Dec December/01-13
+November 22, 2672 3:50:59 pm as MM:MMM:MMMM	text	11:Nov:November
+April 22, 1478 3:23:26 pm as MM:ss, EEEE-H	text	04:26, Monday-15
+November 17, 2089 1:45:43 pm as EEEE-'hour' HH-MMMM, HH d-EEEE	text	Thursday-hour 13-November, 13 17-Thursday
+September 7, 2495 2:02:43 pm as 'time' a-hh-MMM, MMM/m:'the' h	text	time PM-02-Sep, Sep/2:the 2
+December 30, 1185 2:21:39 pm as M:H:EEE yyyy	text	12:14:Mon 1185
+February 19, 1162 6:49:57 am as HH:H	text	06:6
+January 25, 1239 11:59:44 am as MM:yyyy s:s	text	01:1239 44:44
+August 14, 1221 11:58:19 am as dd/yyyy M-d, dd, 'hour' M	text	14/1221 8-14, 14, hour 8
+March 29, 1846 7:23:40 pm as yyyy/'at' MM, MM-yy mm-h	text	1846/at 03, 03-46 23-7
+September 9, 2760 2:21:12 pm as m:'day' EEEE d/'time' dd	text	21:day Friday 9/time 09
+March 23, 1191 8:55:47 pm as 'hour' mm EEE/hh:M/d:d	text	hour 55 Sat/08:3/23:23
+August 28, 1601 6:49:25 am as 'hour' mm MMMM	text	hour 49 August
+August 31, 2868 3:30:00 pm as yy H-H	text	68 15-15
+November 11, 1883 12:23:55 am as hh/'time' EEE, 'hour' M:hh ss	text	12/time Sun, hour 11:12 55
+January 16, 2856 3:02:26 am as HH, MM	text	03, 01
+August 25, 1593 9:59:50 pm as d-HH-EEEE/dd/'time' EEEE	text	25-21-Wednesday/25/time Wednesday
+November 10, 1672 5:43:00 pm as 'the' dd/'hour' a/dd	text	the 10/hour PM/10
+August 30, 2589 3:53:56 pm as EEEE/d MMMM, EEE	text	Sunday/30 August, Sun
+October 4, 2648 12:57:59 am as 'day' HH, 'on' MM a/yy, yyyy, yyyy	text	day 00, on 10 AM/48, 2648, 2648
+June 16, 1471 9:27:15 pm as yy dd/MMM, M/'on' h	text	71 16/Jun, 6/on 9
+March 12, 2425 8:09:42 pm as MMM-yyyy, a-'time' yyyy EEE 'at' dd	text	Mar-2425, PM-time 2425 Wed at 12
+February 20, 2335 12:48:21 pm as a:'day' h h/a	text	PM:day 12 12/PM
+August 29, 2269 12:18:59 am as m:'the' EEEE, 'at' MM/'hour' m-H	text	18:the Sunday, at 08/hour 18-0
+October 31, 2016 9:16:39 am as MM, EEE/M, MMMM	text	10, Mon/10, October
+April 30, 2462 6:01:00 am as 'of' dd EEEE:hh/EEEE hh/EEE	text	of 30 Sunday:06/Sunday 06/Sun
+October 23, 1411 8:22:36 pm as 'the' EEEE:m, H ss	text	the Wednesday:22, 20 36
+September 1, 2016 10:05:47 pm as d:M/EEE:mm a	text	1:9/Thu:05 PM
+November 10, 1898 6:37:10 pm as 'of' MMMM, yy MMM	text	of November, 98 Nov
+July 21, 1901 8:41:44 am as MMMM, MMMM-dd, H	text	July, July-21, 8
+May 1, 1686 12:46:56 am as 'on' yyyy:yyyy-HH-'hour' yy	text	on 1686:1686-00-hour 86
+March 15, 2316 10:08:40 pm as 'of' a/'at' yyyy	text	of PM/at 2316
+June 8, 2542 10:55:46 am as h, 'hour' yy	text	10, hour 42
+March 26, 1271 8:42:13 am as yyyy MM, MM/h, MMMM/m	text	1271 03, 03/8, March/42
+August 16, 2453 11:50:09 pm as mm:H, MM, s:'day' MMMM	text	50:23, 08, 9:day August
+July 21, 2119 9:43:30 am as MMMM, MM-'on' hh/EEE-'day' s 'day' EEE	text	July, 07-on 09/Fri-day 30 day Fri
+June 15, 1473 9:11:19 pm as m-EEEE 'day' EEEE-'of' mm/MMMM	text	11-Sunday day Sunday-of 11/June
+June 18, 1671 2:54:02 am as HH:HH-M, 'the' a:EEE, a	text	02:02-6, the AM:Thu, AM
+December 3, 1423 7:25:05 pm as EEE:M, 'time' EEEE/H, mm, s	text	Wed:12, time Wednesday/19, 25, 5
+February 16, 2079 6:48:06 pm as 'time' mm MMM:hh:MMM:h	text	time 48 Feb:06:Feb:6
+August 16, 2457 10:09:06 pm as d, 'the' EEE:MMM	text	16, the Thu:Aug
+June 10, 1940 8:35:11 pm as 'time' a dd	text	time PM 10
+April 5, 2644 8:30:35 am as dd/H, MMM, 'on' MMM, hh/H	text	05/8, Apr, on Apr, 08/8
+November 18, 2055 4:40:13 am as h/yy	text	4/55
+October 30, 1313 2:22:33 am as mm, hh, a, d-MMMM	text	22, 02, AM, 30-October
+February 21, 1727 7:41:39 pm as ss/'day' H:ss 'day' yyyy	text	39/day 19:39 day 1727
+October 20, 1800 12:18:04 pm as yyyy-mm	text	1800-18
+December 22, 2565 2:08:07 am as ss, dd-M	text	07, 22-12
+November 11, 2175 3:23:45 pm as M/MMM-'on' mm, ss	text	11/Nov-on 23, 45
+November 27, 1784 2:15:01 am as MM-s, EEEE:yy	text	11-1, Saturday:84
+August 22, 1214 6:22:36 pm as 'at' yy, m	text	at 14, 22
+May 22, 2541 8:39:36 pm as 'at' ss MMM:'the' dd	text	at 36 May:the 22
+November 23, 2681 1:50:42 pm as hh yyyy, ss	text	01 2681, 42
+September 9, 1950 10:03:17 pm as s/'day' MM-HH/s, 'on' h	text	17/day 09-22/17, on 10
+April 9, 2865 2:26:38 am as dd/MMMM 'at' h 'time' a/d	text	09/April at 2 time AM/9
+January 20, 2896 5:35:42 am as ss/HH	text	42/05
+May 30, 1787 1:19:39 am as mm-'at' dd, s	text	19-at 30, 39
+August 31, 1183 12:49:04 am as ss/yyyy MM	text	04/1183 08
+July 3, 1543 1:28:22 am as M/yy/MMMM, HH MM-MM	text	7/43/July, 01 07-07
+March 31, 2242 10:01:28 am as 'of' h, yy/yyyy	text	of 10, 42/2242
+February 8, 2595 9:41:40 am as MM-M-HH/yy	text	02-2-09/95
+March 18, 2658 12:11:16 am as h-MMMM	text	12-March
+August 19, 1964 12:59:58 pm as EEE-yy:dd	text	Wed-64:19
+September 27, 2264 12:53:03 pm as 'day' M, dd, HH 'time' a MMM	text	day 9, 27, 12 time PM Sep
+January 17, 2223 9:43:05 am as 'of' dd, ss, MMMM m-ss 'day' H	text	of 17, 05, January 43-05 day 9
+September 17, 2188 1:34:00 pm as MM:HH-a/yy	text	09:13-PM/88
+February 6, 2734 12:35:53 pm as 'of' HH:MM/H MMMM	text	of 12:02/12 February
+July 30, 2579 7:34:30 am as ss:MMMM:d:m 'of' EEE:ss	text	30:July:30:34 of Fri:30
+September 8, 2211 11:07:34 am as s-EEE-M	text	34-Sun-9
+February 12, 2814 6:03:54 am as ss/yy d-'time' h/d:EEE	text	54/14 12-time 6/12:Wed
+May 6, 2664 3:11:33 pm as EEEE a-hh, 'day' MM-H dd	text	Friday PM-03, day 05-15 06
+November 12, 1110 6:10:31 am as 'the' EEE-m 'time' ss yy, hh	text	the Sat-10 time 31 10, 06
+December 6, 2600 10:56:06 pm as 'of' s/MMMM/m	text	of 6/December/56
+April 16, 1817 3:09:01 am as MM-yyyy/HH-MMM-'on' h	text	04-1817/03-Apr-on 3
+September 20, 2067 12:46:05 am as MMM/MMM/MMM, ss MM/ss	text	Sep/Sep/Sep, 05 09/05
+February 12, 2842 8:51:15 am as h-s:HH/hh-h ss	text	8-15:08/08-8 15
+October 28, 1920 6:55:07 pm as s/MM-d	text	7/10-28
+December 11, 2611 7:44:14 pm as MMMM, h ss-hh MM	text	December, 7 14-07 12
+December 30, 2282 12:48:43 pm as h hh	text	12 12
+May 24, 1539 12:03:17 am as MM:yyyy	text	05:1539
+November 14, 1761 9:44:29 pm as EEEE/'day' m, MM-MMMM-MMMM	text	Saturday/day 44, 11-November-November
+May 25, 2265 11:38:04 pm as mm, H:mm:h:'the' EEE-EEE	text	38, 23:38:11:the Thu-Thu
+June 16, 2292 12:12:35 am as MMMM EEEE MMMM EEE/M	text	June Thursday June Thu/6
+May 25, 2219 10:07:00 pm as yy, ss M yyyy-'of' HH	text	19, 00 5 2219-of 22
+October 1, 1719 1:58:40 pm as H EEEE	text	13 Sunday
+December 31, 2493 5:21:09 am as ss EEE-hh d:'at' m	text	09 Thu-05 31:at 21
+November 25, 1106 12:16:34 am as m 'at' a 'time' yy-'on' MMMM MMMM, yyyy	text	16 at AM time 06-on November November, 1106
+April 16, 2289 4:03:37 pm as 'at' hh:hh EEEE-s, ss	text	at 04:04 Tuesday-37, 37
+September 4, 1252 9:54:25 am as h:MM H, M	text	9:09 9, 9
+January 23, 1400 4:04:30 am as 'on' MMM:m	text	on Jan:4
+March 27, 2033 6:38:19 pm as 'time' yyyy M:MM yy MMM	text	time 2033 3:03 33 Mar
+February 16, 1251 5:58:50 am as MMMM/d-MMMM/yyyy	text	February/16-February/1251
+November 10, 1444 1:02:27 am as dd, MMMM, a a, MMM hh	text	10, November, AM AM, Nov 01
+June 30, 1209 4:05:41 pm as m/'hour' HH:MM	text	5/hour 16:06
+February 2, 2378 7:09:48 pm as HH, yyyy-hh:yy	text	19, 2378-07:78
+April 21, 2561 4:39:57 am as M-mm/M hh:yy-MMMM	text	4-39/4 04:61-April
+August 4, 2488 6:13:56 pm as d:ss/EEEE, 'time' mm, 'time' M:MM	text	4:56/Wednesday, time 13, time 8:08
+March 6, 1998 7:27:11 am as h, EEEE	text	7, Friday
+May 16, 1957 4:33:44 am as 'hour' dd m, ss:yy	text	hour 16 33, 44:57
+March 3, 2717 12:30:25 pm as MM MMMM 'on' hh-MM, s	text	03 March on 12-03, 25
+March 18, 1749 12:32:20 pm as MMMM-dd-'of' yyyy, MMM	text	March-18-of 1749, Mar
+December 22, 1360 3:22:40 am as yy/H-'at' MM:mm yy:'the' dd	text	60/3-at 12:22 60:the 22
+July 18, 2554 2:52:27 am as m 'at' a m:EEE	text	52 at AM 52:Thu
+July 10, 1596 4:51:37 pm as 'day' M 'at' M-dd, MM	text	day 7 at 7-10, 07
+April 18, 2251 4:53:35 am as MM-s	text	04-35
+June 8, 1258 10:58:15 am as EEE:yyyy	text	Sat:1258
+June 19, 1643 12:41:12 am as EEE d-ss MMMM, yy	text	Fri 19-12 June, 43
+April 6, 2650 10:30:55 am as HH:mm-H:MMM:h	text	10:30-10:Apr:10
+November 14, 2159 10:06:10 pm as mm:m-MMMM	text	06:6-November
+May 2, 2890 2:38:00 am as 'at' MMM:ss-'hour' a-yyyy:'day' h	text	at May:00-hour AM-2890:day 2
+August 17, 2797 8:00:51 am as HH:MMM:ss/ss-MMM s	text	08:Aug:51/51-Aug 51
+January 6, 1378 11:56:39 pm as MM MMMM-EEE	text	01 January-Tue
+July 3, 1496 7:02:04 am as EEEE/MMMM-mm/yy dd-m	text	Friday/July-02/96 03-2
+August 15, 1255 4:13:05 pm as 'day' EEEE/yy/EEE 'the' yy	text	day Sunday/55/Sun the 55
+June 20, 1978 11:24:46 am as MM:M	text	06:6
+July 16, 2089 10:22:54 pm as 'day' H a 'day' yy mm:EEEE/'of' MMM	text	day 22 PM day 89 22:Saturday/of Jul
+April 18, 1664 5:20:04 am as HH:ss:EEE	text	05:04:Fri
+March 9, 1279 6:49:23 am as EEE:hh, yyyy/hh, 'at' ss/yyyy	text	Thu:06, 1279/06, at 23/1279
+February 18, 2698 10:08:38 pm as 'at' yy dd:HH	text	at 98 18:22
+December 27, 1126 11:12:31 pm as MMMM/mm	text	December/12
+December 7, 1938 12:32:39 pm as mm ss, 'on' MM	text	32 39, on 12
+June 21, 1509 12:13:49 pm as yyyy MM/'on' yy	text	1509 06/on 09
+August 17, 2562 1:40:28 pm as MM-yy ss-MMMM, MMMM/'day' H	text	08-62 28-August, August/day 13
+March 22, 1316 4:46:11 pm as 'time' h, MMMM	text	time 4, March
+December 23, 2561 3:12:09 am as mm:HH	text	12:03
+May 7, 2141 6:57:59 am as H, hh	text	6, 06
+August 11, 2900 2:30:21 pm as 'time' MMM:MMMM:h/yy-HH h	text	time Aug:August:2/00-14 2
+August 21, 1600 9:14:02 pm as mm MMMM, EEEE-dd	text	14 August, Monday-21
+March 27, 1484 5:15:13 am as MMMM-HH, EEE:EEEE	text	March-05, Thu:Thursday
+January 4, 2182 6:12:07 pm as m/a MM h	text	12/PM 01 6
+June 8, 1468 2:03:59 pm as m/dd:s-yy:mm-'time' M	text	3/08:59-68:03-time 6
+August 21, 1765 7:35:43 pm as 'of' EEE EEEE:mm	text	of Wed Wednesday:35
+January 24, 1341 6:38:08 am as yyyy, 'the' h/'of' MMMM, HH/'on' mm	text	1341, the 6/of January, 06/on 38
+October 14, 1698 1:02:24 am as dd:MMM, 'of' EEE:yy/yy s	text	14:Oct, of Tue:98/98 24
+December 9, 2078 3:28:55 am as MM:d 'at' h	text	12:9 at 3
+December 31, 1582 5:14:30 pm as EEEE-yy:'day' m	text	Friday-82:day 14
+June 22, 2793 10:15:19 am as yy/ss-'hour' MMM	text	93/19-hour Jun
+September 17, 2614 9:34:06 pm as yyyy, EEE a	text	2614, Sat PM
+December 1, 2732 4:55:56 am as 'on' MMM, a, MMMM	text	on Dec, AM, December
+June 28, 1609 7:24:59 am as 'the' s/'day' yy, HH s	text	the 59/day 09, 07 59
+December 24, 2601 11:11:02 am as MMMM:a:HH, s/'at' yy, m	text	December:AM:11, 2/at 01, 11
+November 8, 2661 3:15:38 pm as dd/ss, h:H:EEE	text	08/38, 3:15:Fri
+April 27, 2899 11:58:15 am as hh-M	text	11-4
+April 12, 2399 3:13:07 am as ss-'on' yyyy	text	07-on 2399
+September 17, 2841 8:59:04 am as 'hour' s:'the' MMMM-MM-HH:M	text	hour 4:the September-09-08:9
+July 4, 2382 8:36:56 am as 'the' HH:d 'at' yyyy	text	the 08:4 at 2382
+January 6, 2799 2:52:07 pm as 'of' s-yy:ss MMM	text	of 7-99:07 Jan
+June 27, 2664 5:49:54 am as dd-M, MM HH, 'at' EEEE	text	27-6, 06 05, at Monday
+January 12, 2810 5:53:37 am as s, MMM-'time' dd:yy:'on' yyyy-h	text	37, Jan-time 12:10:on 2810-5
+December 7, 1668 3:59:07 am as s, M, MM yyyy	text	7, 12, 12 1668
+March 22, 1652 12:16:20 pm as hh MMMM	text	12 March
+April 5, 1383 2:37:54 pm as HH 'the' EEE/MMM:HH, H	text	14 the Sat/Apr:14, 14
+June 2, 2731 2:51:10 pm as mm MMMM:'time' yy	text	51 June:time 31
+June 4, 1960 4:10:04 pm as yy, MM/ss/s, 'of' s	text	60, 06/04/4, of 4
+February 10, 1243 2:29:43 am as hh/hh, yy M yy/M	text	02/02, 43 2 43/2
+December 17, 1954 10:29:57 pm as mm/H-'of' d a:ss	text	29/22-of 17 PM:57
+June 20, 2567 4:52:12 am as 'day' mm, hh, d/'day' EEEE:dd HH	text	day 52, 04, 20/day Saturday:20 04
+December 11, 1222 1:20:01 am as 'day' EEE/EEE dd-'at' HH-'on' h:EEEE	text	day Sun/Sun 11-at 01-on 1:Sunday
+May 3, 1798 1:37:46 am as d:ss, H/MMMM M	text	3:46, 1/May 5
+June 21, 1976 2:30:31 pm as d-dd	text	21-21
+January 28, 1158 5:06:52 am as 'day' dd/EEEE/MMM/yyyy-m	text	day 28/Tuesday/Jan/1158-6
+June 24, 1865 4:34:03 pm as yy:yyyy/yy/yyyy	text	65:1865/65/1865
+July 30, 2553 1:15:50 pm as MMMM h-MMMM	text	July 1-July
+July 12, 2094 9:32:18 am as hh, 'the' yyyy	text	09, the 2094
+January 1, 1443 10:21:45 pm as 'day' M, mm/s:MM	text	day 1, 21/45:01
+August 11, 2752 5:48:24 am as hh-MM/hh/'hour' yy	text	05-08/05/hour 52
+April 20, 2485 8:07:07 am as m/MM mm, 'of' H hh	text	7/04 07, of 8 08
+August 2, 1949 2:41:44 pm as ss MMM, 'time' ss, 'time' H	text	44 Aug, time 44, time 14
+March 17, 1416 2:32:03 am as MM-a/hh-yy:mm:'on' MM	text	03-AM/02-16:32:on 03
+March 11, 1534 10:32:03 am as HH, m EEEE-yyyy	text	10, 32 Sunday-1534
+September 10, 1107 7:46:34 pm as 'the' dd h-H, EEE-m-HH	text	the 10 7-19, Tue-46-19
+February 2, 2025 7:58:42 pm as dd-'at' MM, dd, EEEE-'time' ss	text	02-at 02, 02, Sunday-time 42
+December 7, 1381 2:26:29 am as MM/hh/EEEE	text	12/02/Friday
+October 16, 1155 11:46:12 pm as MMMM hh/h/'day' a	text	October 11/11/day PM
+December 31, 1182 12:11:53 pm as dd 'the' MM	text	31 the 12
+August 11, 2851 1:12:06 pm as 'the' MMMM:EEEE, HH-s, 'day' m:a	text	the August:Friday, 13-6, day 12:PM
+November 27, 1710 3:39:35 am as 'on' M:EEE-m, s 'hour' EEEE, HH	text	on 11:Thu-39, 35 hour Thursday, 03
+April 26, 1574 8:41:42 am as 'of' d, 'of' MMM	text	of 26, of Apr
+September 28, 1793 7:10:19 pm as EEE-h:'time' M/H, EEEE	text	Sat-7:time 9/19, Saturday
+July 30, 1874 10:40:21 am as MMM-s, m, yy	text	Jul-21, 40, 74
+June 3, 1681 6:03:03 am as a/dd:hh	text	AM/03:06
+September 7, 2256 8:17:20 am as 'on' MMMM-'at' h:mm	text	on September-at 8:17
+October 28, 1323 3:31:13 am as 'time' a/EEE/EEE	text	time AM/Thu/Thu
+August 15, 1948 10:30:12 am as yyyy/m/yyyy	text	1948/30/1948
+August 2, 1420 1:42:50 am as m, EEE/mm:dd/EEE H	text	42, Wed/42:02/Wed 1
+March 11, 2115 1:40:55 am as yy/mm HH/H:MM-'of' EEEE	text	15/40 01/1:03-of Monday
+April 20, 1208 7:47:46 pm as MMM, H, yy	text	Apr, 19, 08
+May 16, 2597 10:19:32 am as 'at' dd-EEEE, yyyy	text	at 16-Tuesday, 2597
+March 15, 1592 9:54:19 am as a:'time' yy	text	AM:time 92
+November 24, 2367 2:08:24 am as EEEE-MM	text	Friday-11
+July 10, 2085 12:21:05 pm as yy-H ss/MM	text	85-12 05/07
+January 28, 2836 2:48:31 pm as HH, yyyy/H/'at' H/H	text	14, 2836/14/at 14/14
+May 21, 2219 12:27:32 am as h/'time' ss-M H, EEEE	text	12/time 32-5 0, Friday
+October 26, 2363 11:09:12 am as EEE, yy-HH-m	text	Sat, 63-11-9
+October 30, 1421 3:01:18 am as dd, d EEE/yyyy	text	30, 30 Tue/1421
+July 8, 2831 8:51:04 pm as EEE, EEE-m:'hour' s:a	text	Tue, Tue-51:hour 4:PM
+May 12, 1611 11:47:31 pm as MMMM:m 'hour' dd, ss:dd	text	May:47 hour 12, 31:12
+June 23, 1405 8:18:44 pm as MM 'time' h	text	06 time 8
+February 28, 1868 6:45:04 am as MMM H:MMM:yy-'on' a:mm	text	Feb 6:Feb:68-on AM:45
+September 19, 2209 5:24:53 pm as h/'of' HH	text	5/of 17
+November 9, 1530 6:12:50 am as 'the' MM-EEE yy:MM/H	text	the 11-Sun 30:11/6
+June 16, 2789 10:05:21 pm as 'the' HH/MMMM-a EEE	text	the 22/June-PM Fri
+June 29, 1102 6:28:04 am as h MMM h:EEEE/s	text	6 Jun 6:Sunday/4
+October 2, 1162 3:45:35 pm as MMM-'the' MM yy-yyyy	text	Oct-the 10 62-1162
+August 21, 1714 11:45:12 pm as MMMM/m:HH/MM-M/s	text	August/45:23/08-8/12
+April 23, 2619 12:44:01 pm as ss M, h:yy 'hour' dd	text	01 4, 12:19 hour 23
+January 24, 2619 7:14:19 am as H/EEE:hh/ss-mm:yyyy	text	7/Sun:07/19-14:2619
+January 13, 2446 7:03:42 am as mm yy	text	03 46
+June 6, 1934 9:46:57 pm as 'the' M-yy, d	text	the 6-34, 6
+September 24, 1115 2:28:25 am as mm-'of' HH:'time' M M	text	28-of 02:time 9 9
+February 21, 2612 9:23:48 am as 'on' MMM, HH	text	on Feb, 09
+November 16, 1994 3:54:11 pm as MMMM/EEE	text	November/Wed
+September 2, 1887 6:16:19 pm as 'hour' HH dd, MMMM	text	hour 18 02, September
+September 25, 2507 4:55:50 pm as 'time' MMMM-'at' yy-H-H, s	text	time September-at 07-16-16, 50
+October 15, 2846 1:07:58 pm as 'the' MM/mm	text	the 10/07
+August 17, 2770 10:38:59 am as 'time' EEE/h-yyyy, 'time' EEE 'day' yy	text	time Mon/10-2770, time Mon day 70
+July 25, 1668 7:02:13 pm as EEE EEE/ss/EEEE	text	Wed Wed/13/Wednesday
+January 15, 2649 4:00:38 am as EEE 'day' dd-'hour' M M	text	Mon day 15-hour 1 1
+March 30, 2305 1:17:22 am as EEE/'on' ss, 'of' HH, yyyy	text	Thu/on 22, of 01, 2305
+December 5, 1805 11:44:44 am as h-MM-ss yyyy	text	11-12-44 1805
+December 9, 1602 8:36:47 pm as MMMM-EEE	text	December-Mon
+December 23, 2157 1:52:47 pm as 'on' s:'day' MM	text	on 47:day 12
+March 12, 1281 7:36:27 pm as d-'on' mm/mm, 'on' s-hh:MM	text	12-on 36/36, on 27-07:03
+June 11, 2356 12:52:34 am as 'hour' MMM, d/MMM ss/EEE	text	hour Jun, 11/Jun 34/Mon
+September 14, 1649 4:16:18 am as s/yyyy-EEE dd	text	18/1649-Tue 14
+April 13, 2899 7:31:23 am as 'on' d:hh:'time' dd	text	on 13:07:time 13
+August 28, 2729 4:53:31 am as HH-H:ss h yyyy	text	04-4:31 4 2729
+August 5, 1729 8:59:48 am as 'at' d MMMM	text	at 5 August
+April 21, 2033 4:19:25 pm as HH:'on' EEE s:HH	text	16:on Thu 25:16
+June 16, 2220 3:14:21 pm as 'at' EEEE:h	text	at Friday:3
+August 13, 2689 8:21:22 am as mm, hh:M:d, EEE	text	21, 08:8:13, Tue
+December 10, 2632 11:17:21 am as 'time' a-'the' EEE/EEE s	text	time AM-the Mon/Mon 21
+June 12, 2451 12:02:11 pm as 'of' yyyy/'hour' h	text	of 2451/hour 12
+October 18, 2216 6:44:27 pm as m/mm, MM/mm, 'the' hh	text	44/44, 10/44, the 06
+April 5, 1177 3:03:27 am as 'on' EEE:'at' h:'day' yyyy/MMMM, HH/M	text	on Tue:at 3:day 1177/April, 03/4
+July 29, 2140 1:26:34 am as MM/H hh a:dd	text	07/1 01 AM:29
+July 17, 2448 9:45:01 am as MM, s	text	07, 1
+August 23, 2638 12:45:14 pm as 'on' d:dd HH	text	on 23:23 12
+November 15, 1451 8:21:44 pm as EEE/yy/d 'of' M	text	Sat/51/15 of 11
+November 29, 1161 12:49:25 pm as EEE:MMM:a, H/MM	text	Wed:Nov:PM, 12/11
+July 25, 2265 2:40:03 am as h:yyyy, EEEE dd-m-MMM	text	2:2265, Tuesday 25-40-Jul
+July 14, 1539 6:13:05 am as EEE/MM:hh-h	text	Fri/07:06-6
+June 30, 1138 5:29:10 pm as 'day' H:MM, 'hour' h yyyy	text	day 17:06, hour 5 1138
+March 17, 2764 8:15:38 pm as yyyy:s/'on' yy/ss	text	2764:38/on 64/38
+March 22, 2524 10:07:51 am as ss:hh/m:yy/yy	text	51:10/7:24/24
+December 25, 1544 6:43:37 pm as mm, yy	text	43, 44
+April 23, 1295 7:13:23 pm as hh:d-yy	text	07:23-95
+July 28, 1309 6:42:44 pm as dd, HH	text	28, 18
+June 16, 1561 4:37:34 pm as M, d/H/EEE, m	text	6, 16/16/Fri, 37
+January 6, 1693 6:32:35 am as yy-dd yy:s, yyyy	text	93-06 93:35, 1693
+May 14, 2219 8:55:45 am as h-yyyy:ss, s	text	8-2219:45, 45
+March 26, 2226 7:43:59 am as MMMM:hh/'day' M:HH:H, hh	text	March:07/day 3:07:7, 07
+March 19, 2700 9:52:09 am as mm, HH/hh 'hour' d	text	52, 09/09 hour 19
+February 28, 1764 6:53:31 am as HH, MMMM-'time' ss H:MMMM	text	06, February-time 31 6:February
+January 12, 2838 2:02:06 am as yy:h/MMMM/MM	text	38:2/January/01
+August 4, 2782 11:26:00 pm as yyyy, 'at' hh, hh	text	2782, at 11, 11
+June 12, 1482 5:39:35 am as MMMM, H	text	June, 5
+April 28, 1171 1:10:51 pm as ss/HH	text	51/13
+May 25, 2700 1:34:57 am as HH:EEEE:EEE, 'of' m:'hour' h mm	text	01:Friday:Fri, of 34:hour 1 34
+October 28, 2820 9:27:56 pm as M, yyyy, hh:ss:yyyy-s	text	10, 2820, 09:56:2820-56
+July 12, 1637 7:47:26 pm as s, dd-MMM, HH-d:H	text	26, 12-Jul, 19-12:19
+September 1, 1416 3:46:16 pm as MM:'of' EEE-MM, d-'the' MMM	text	09:of Sun-09, 1-the Sep
+February 12, 2004 9:15:40 pm as h-s, yyyy	text	9-40, 2004
+August 24, 1967 10:04:31 am as 'on' yy:dd:MMM, M	text	on 67:24:Aug, 8
+August 22, 2609 2:24:52 pm as MMM, s MM-'day' H, MMM	text	Aug, 52 08-day 14, Aug
+January 13, 2810 4:37:52 am as 'time' M, hh	text	time 1, 04
+August 23, 2152 12:37:11 pm as d-yyyy, MMMM/d	text	23-2152, August/23
+September 12, 2221 2:08:23 pm as yy/'the' yy	text	21/the 21
+July 1, 1734 8:14:54 am as M:d s:ss:MMM	text	7:1 54:54:Jul
+October 14, 2335 6:02:38 am as s-MMMM, 'at' a-MMMM	text	38-October, at AM-October
+December 11, 2230 1:55:20 am as 'hour' H-ss-EEEE, mm/MMMM	text	hour 1-20-Saturday, 55/December
+November 18, 1206 3:25:08 am as dd 'of' EEEE/MMMM-MMM m-d	text	18 of Saturday/November-Nov 25-18
+May 19, 1767 6:16:17 pm as yy dd/EEE	text	67 19/Tue
+September 2, 2391 10:39:13 am as H/'the' dd, H/m	text	10/the 02, 10/39
+August 12, 1947 8:13:57 pm as 'at' MM, MM:'of' a	text	at 08, 08:of PM
+May 30, 2663 10:52:50 pm as MMMM-'hour' yyyy-'hour' h:'time' mm	text	May-hour 2663-hour 10:time 52
+July 31, 2603 2:47:58 am as yy:'hour' hh	text	03:hour 02
+January 9, 1515 12:29:26 am as mm/H-MM/MM, 'the' mm	text	29/0-01/01, the 29
+August 11, 1790 12:21:41 am as dd/MMM-'hour' EEEE dd, hh/HH	text	11/Aug-hour Wednesday 11, 12/00
+February 24, 1850 12:39:45 am as dd HH-mm, 'of' hh	text	24 00-39, of 12
+October 30, 2770 9:50:43 pm as s:HH/yyyy 'time' MMM	text	43:21/2770 time Oct
+May 4, 2073 2:58:52 pm as MMMM HH	text	May 14
+March 15, 1425 7:03:52 am as dd/yy-MMMM:m-EEE:MMMM	text	15/25-March:3-Tue:March
+March 9, 1908 6:17:03 am as 'hour' h-'at' EEEE:HH, hh:H	text	hour 6-at Monday:06, 06:6
+September 6, 2327 8:18:28 am as a, EEE	text	AM, Tue
+December 29, 2353 11:47:54 pm as EEEE m	text	Tuesday 47
+November 5, 2210 1:59:45 am as yyyy MMM yyyy, h/M	text	2210 Nov 2210, 1/11
+November 26, 1458 11:49:22 pm as EEE-'time' a:'day' M, EEEE:a	text	Fri-time PM:day 11, Friday:PM
+September 14, 1890 11:59:04 pm as mm/yy-d:MMM, MMM	text	59/90-14:Sep, Sep
+March 9, 2643 1:42:41 pm as a-H/M:hh/m-MMMM	text	PM-13/3:01/42-March
+January 13, 1645 9:39:49 pm as ss-HH m	text	49-21 39
+June 18, 2620 1:36:08 am as yyyy/yy m/d	text	2620/20 36/18
+February 21, 2057 7:27:13 am as MMM:HH, 'at' m, 'time' s, EEE/EEE	text	Feb:07, at 27, time 13, Wed/Wed
+December 17, 2725 5:45:51 am as d:'of' d yyyy	text	17:of 17 2725
+March 24, 2613 10:45:07 pm as 'hour' d:HH-m/yy-H:'day' dd	text	hour 24:22-45/13-22:day 24
+October 2, 1539 6:57:26 pm as M, HH	text	10, 18
+February 25, 2551 2:13:40 pm as dd-MMMM:a, H	text	25-February:PM, 14
+March 19, 2266 1:12:02 am as yyyy, m	text	2266, 12
+October 10, 1184 8:46:20 am as dd/'day' mm	text	10/day 46
+October 21, 1189 1:41:46 am as 'the' dd s	text	the 21 46
+October 31, 1462 8:19:23 pm as h, 'on' yy-'hour' yyyy/'time' EEE	text	8, on 62-hour 1462/time Fri
+June 20, 2235 11:43:02 pm as yy, yyyy-M:ss	text	35, 2235-6:02
+July 20, 1376 8:30:56 pm as mm:MMMM	text	30:July
+November 16, 2526 3:37:17 am as h a s-hh/'hour' H	text	3 AM 17-03/hour 3
+June 29, 2684 4:35:51 pm as hh, m	text	04, 35
+January 3, 2597 6:32:19 pm as 'on' MMMM:s/H m:HH	text	on January:19/18 32:18
+October 7, 1420 4:32:44 pm as d:H:h, yyyy-MM:a	text	7:16:4, 1420-10:PM
+July 5, 1503 4:33:14 am as ss-EEEE:ss	text	14-Sunday:14
+March 7, 1947 1:13:07 pm as 'on' MM MM:d, MM-MMMM m	text	on 03 03:7, 03-March 13
+November 28, 2354 7:36:51 am as dd-EEEE	text	28-Sunday
+February 20, 1881 11:32:18 pm as a-EEE-hh	text	PM-Sun-11
+March 9, 1231 2:26:41 pm as ss:ss:HH M	text	41:41:14 3
+September 20, 2726 6:24:46 am as MM-'on' m, 'day' MMMM	text	09-on 24, day September
+October 24, 2742 10:57:59 am as d-h-'time' EEE/s-H/ss	text	24-10-time Sat/59-10/59
+November 13, 2426 9:35:30 am as s:'at' yy a:'time' yy	text	30:at 26 AM:time 26
+July 10, 2440 7:21:36 pm as EEE-'the' dd:EEEE, ss-s	text	Tue-the 10:Tuesday, 36-36
+July 27, 1820 4:49:51 pm as 'at' MM/MM:MMMM d 'time' ss	text	at 07/07:July 27 time 51
+July 18, 2208 2:40:30 pm as a/h-m:yyyy:H	text	PM/2-40:2208:14
+March 13, 1586 9:40:30 am as EEE, H:s:d-d:yy	text	Thu, 9:30:13-13:86
+August 24, 2039 12:30:31 am as HH, M:MMM:d MMM	text	00, 8:Aug:24 Aug
+January 7, 1987 5:39:41 am as 'hour' a-d EEE, MM-yyyy	text	hour AM-7 Wed, 01-1987
+August 27, 2044 10:08:45 am as EEE:EEEE:MMMM, a, yy	text	Sat:Saturday:August, AM, 44
+March 14, 1280 8:48:31 am as M-'hour' h-dd/MMM, yy	text	3-hour 8-14/Mar, 80
+May 27, 2753 11:47:42 pm as 'time' dd-MMM	text	time 27-May
+December 27, 1597 10:47:13 am as HH:M:yyyy	text	10:12:1597
+October 23, 1687 10:30:58 pm as yy 'day' MMM EEEE	text	87 day Oct Thursday
+December 3, 2326 11:50:59 pm as a:MM s/HH/'the' EEEE:d	text	PM:12 59/23/the Friday:3
+May 3, 1306 4:54:21 pm as ss, MM EEEE:MMM, 'the' mm:yy	text	21, 05 Monday:May, the 54:06
+December 24, 1664 9:47:18 am as M-ss:ss, EEEE:dd-'of' ss	text	12-18:18, Wednesday:24-of 18
+February 27, 1468 12:07:37 pm as s/MMM:'at' yy hh	text	37/Feb:at 68 12
+June 8, 1150 1:48:01 pm as HH:HH	text	13:13
+October 28, 2538 1:58:02 am as ss, m, EEEE	text	02, 58, Tuesday
+January 18, 1502 6:35:24 am as 'the' dd/m, EEE/d 'time' MMM:ss	text	the 18/35, Sat/18 time Jan:24
+October 5, 1581 7:13:42 am as dd s	text	05 42
+May 16, 2051 9:06:01 pm as m, ss:EEEE	text	6, 01:Tuesday
+June 1, 1115 10:04:11 am as 'hour' h, d/MM-ss:M	text	hour 10, 1/06-11:6
+April 18, 1249 11:30:33 pm as EEEE/M/ss-yyyy H	text	Sunday/4/33-1249 23
+October 19, 1371 3:55:54 pm as MMMM yyyy-'day' d/MM-ss/'day' HH	text	October 1371-day 19/10-54/day 15
+June 17, 2244 11:31:00 am as d mm-a, 'on' M-'of' yy:'time' ss	text	17 31-AM, on 6-of 44:time 00
+July 8, 1705 12:16:16 am as H/'hour' MMMM, HH	text	0/hour July, 00
+April 26, 1241 8:26:51 pm as hh, MM-MMM, EEE-M H	text	08, 04-Apr, Fri-4 20
+February 27, 2445 11:35:53 pm as dd yy, h 'the' H HH	text	27 45, 11 the 23 23
+January 5, 1246 7:20:01 am as s:mm:a 'at' EEEE	text	1:20:AM at Friday
+February 27, 1645 5:40:51 am as hh, 'at' ss HH EEE	text	05, at 51 05 Mon
+May 12, 1462 6:31:28 pm as 'at' m/MMM-EEE	text	at 31/May-Mon
+June 29, 2848 9:50:26 pm as dd:MMMM	text	29:June
+August 25, 2472 8:59:43 pm as yyyy-a	text	2472-PM
+October 28, 1770 1:41:55 am as a, MMMM-mm	text	AM, October-41
+October 17, 2199 6:26:56 am as EEEE:EEE, EEEE, ss yy-HH	text	Thursday:Thu, Thursday, 56 99-06
+December 13, 1481 9:06:01 am as hh, 'day' hh h, 'the' EEE, 'at' ss	text	09, day 09 9, the Tue, at 01
+January 18, 1705 6:24:25 am as 'at' ss/m 'on' yy, m/MMMM	text	at 25/24 on 05, 24/January
+September 4, 1865 2:22:01 am as ss HH	text	01 02
+September 7, 1596 5:00:54 am as m:a, 'the' MM, 'the' MM	text	0:AM, the 09, the 09
+November 21, 1387 11:37:16 pm as 'day' MMMM:m, h-'of' a:'day' MM, MMMM	text	day November:37, 11-of PM:day 11, November
+May 1, 2639 12:17:04 am as 'of' H, M-ss-'the' H:hh:hh	text	of 0, 5-04-the 0:12:12
+January 31, 2625 8:48:05 pm as MMMM/yy-EEE yy-h	text	January/25-Mon 25-8
+March 7, 2297 11:49:56 pm as mm, mm EEE	text	49, 49 Sun
+July 25, 1617 12:59:07 am as MMMM-s:'time' a-yyyy	text	July-7:time AM-1617
+July 9, 2351 4:44:14 am as EEE/yy HH/h-yyyy:MMM	text	Mon/51 04/4-2351:Jul
+May 27, 2831 2:09:58 am as 'of' hh 'the' MMMM, mm:MMMM	text	of 02 the May, 09:May
+January 4, 1227 9:46:17 am as ss:'day' dd, dd	text	17:day 04, 04
+November 11, 2581 3:21:49 pm as MMMM/'day' mm-dd d	text	November/day 21-11 11
+July 30, 2840 10:04:49 am as a d, EEE, EEEE	text	AM 30, Mon, Monday
+September 14, 1744 2:08:17 am as H/MM	text	2/09
+August 20, 2832 11:38:40 pm as 'the' HH:mm, mm	text	the 23:38, 38
+September 30, 1678 6:57:05 am as ss:d:MM, H	text	05:30:09, 6
+October 9, 2676 3:39:32 pm as 'hour' hh:'of' MMMM	text	hour 03:of October
+October 11, 2837 12:06:30 am as yyyy-ss 'the' EEEE/H	text	2837-30 the Sunday/0
+May 27, 1384 3:35:37 am as yy/MM-'of' d EEE	text	84/05-of 27 Thu
+October 17, 1231 6:04:08 pm as H/MM	text	18/10
+January 25, 2521 5:56:41 pm as MMM s	text	Jan 41
+June 28, 2243 3:15:59 pm as h 'at' EEEE H	text	3 at Wednesday 15
+November 13, 2509 8:17:24 am as EEE 'time' MMM:EEEE/d	text	Wed time Nov:Wednesday/13
+January 6, 1106 6:37:55 pm as MMMM:yy 'day' a 'the' m, ss	text	January:06 day PM the 37, 55
+April 12, 1180 7:13:01 am as M, yy, h/m/yy-MM	text	4, 80, 7/13/80-04
+May 16, 2698 11:43:41 pm as EEEE, a/a	text	Monday, PM/PM
+December 8, 2057 5:57:59 pm as 'of' M, 'of' dd-hh d	text	of 12, of 08-05 8
+January 29, 2367 8:20:16 pm as MMM-h:yy	text	Jan-8:67
+August 15, 2352 4:23:07 am as d-MMM:EEEE, 'of' H	text	15-Aug:Friday, of 4
+June 18, 1610 12:37:21 pm as 'at' H:MM, hh/M	text	at 12:06, 12/6
+November 18, 2353 11:56:07 am as H, 'at' MMMM, a:'of' EEE, m	text	11, at November, AM:of Wed, 56
+May 12, 1440 12:46:43 am as s-'at' M-'at' EEE:s:ss/ss	text	43-at 5-at Tue:43:43/43
+March 5, 1139 7:39:01 am as MMMM/HH	text	March/07
+February 14, 2860 6:15:54 am as 'hour' s EEEE-H:'day' mm h	text	hour 54 Saturday-6:day 15 6
+June 27, 1435 4:28:06 pm as H:s/h HH	text	16:6/4 16
+November 13, 2571 9:48:19 am as 'day' hh:HH:dd, M	text	day 09:09:13, 11
+December 30, 1460 7:05:29 am as dd/d-MMMM/MMMM EEE:MMMM	text	30/30-December/December Sun:December
+January 9, 2084 8:28:03 pm as EEEE EEE/M, d, yy	text	Sunday Sun/1, 9, 84
+December 17, 1366 8:44:27 am as mm/MMMM:EEEE	text	44/December:Wednesday
+December 3, 1698 10:24:07 pm as yyyy/hh, dd:s	text	1698/10, 03:7
+June 20, 1466 9:06:36 am as MM, EEEE, 'day' HH, m-'at' ss	text	06, Wednesday, day 09, 6-at 36
+June 21, 1916 11:51:47 am as m:'time' EEE	text	51:time Wed
+June 4, 1403 12:42:57 am as EEEE, MM	text	Saturday, 06
+May 26, 1168 10:26:23 am as h, dd d/ss	text	10, 26 26/23
+December 12, 2232 12:38:15 pm as 'time' mm, 'on' MMMM 'time' HH:'time' HH	text	time 38, on December time 12:time 12
+October 1, 2456 11:54:56 am as MMMM ss	text	October 56
+January 27, 2547 11:56:49 am as 'day' hh, d:h, mm:hh, 'on' EEE	text	day 11, 27:11, 56:11, on Fri
+January 12, 1401 4:45:51 pm as mm:hh	text	45:04
+September 11, 2723 4:55:17 am as HH-hh	text	04-04
+July 5, 2816 7:04:18 am as a:H	text	AM:7
+May 8, 2396 7:18:01 pm as s yyyy, m-h:EEEE	text	1 2396, 18-7:Wednesday
+September 28, 1525 7:35:15 pm as EEE:dd	text	Mon:28
+August 4, 1245 11:54:17 pm as M, a, EEE/'day' a:a	text	8, PM, Fri/day PM:PM
+May 27, 2336 2:53:31 am as 'at' dd:ss	text	at 27:31
+October 10, 2437 5:15:55 pm as EEEE:'day' dd, ss, MMMM	text	Saturday:day 10, 55, October
+November 10, 1703 4:32:17 pm as M/HH:MM:MM/'day' H:mm	text	11/16:11:11/day 16:32
+November 18, 2526 5:34:34 pm as EEE, HH, s H	text	Mon, 17, 34 17
+June 9, 2532 3:13:20 pm as ss, EEEE-yyyy, hh-MMM	text	20, Monday-2532, 03-Jun
+May 3, 2239 2:47:07 am as yy:mm	text	39:47
+February 3, 2228 2:42:52 pm as a:d hh, 'at' dd	text	PM:3 02, at 03
+February 14, 2497 10:38:25 pm as yyyy-h:HH, hh	text	2497-10:22, 10
+July 20, 1518 4:50:09 pm as 'day' MMMM:'day' mm	text	day July:day 50
+May 11, 2051 4:07:25 am as MMMM-d, m	text	May-11, 7
+December 19, 1471 1:23:55 pm as H m-MMM, EEEE/dd	text	13 23-Dec, Tuesday/19
+February 3, 1470 8:40:06 pm as 'on' hh yyyy	text	on 08 1470
+May 1, 1375 1:35:23 pm as 'the' yyyy, 'the' hh-EEE	text	the 1375, the 01-Mon
+November 11, 1596 12:46:35 am as EEEE:yy-EEE-dd:ss	text	Monday:96-Mon-11:35
+May 20, 1988 1:14:17 am as MM/MMMM/yy, MMMM	text	05/May/88, May
+November 29, 2326 2:29:18 pm as MMM/H 'at' hh yy-d h	text	Nov/14 at 02 26-29 2
+September 3, 1947 3:32:18 pm as EEEE hh 'of' h-MMM	text	Wednesday 03 of 3-Sep
+February 9, 2369 6:53:32 am as s hh-d	text	32 06-9
+October 3, 1760 3:51:50 pm as ss-mm, MMMM	text	50-51, October
+November 25, 1461 11:28:23 am as s, mm:a-HH	text	23, 28:AM-11
+March 29, 1939 11:33:11 pm as dd/H	text	29/23
+October 17, 1647 12:53:06 pm as H-MMM, yy/'of' dd	text	12-Oct, 47/of 17
+April 1, 1904 5:50:53 pm as dd, MM, 'hour' a MMM-h	text	01, 04, hour PM Apr-5
+June 23, 1551 1:27:41 pm as s:yyyy-ss, dd-m, yy	text	41:1551-41, 23-27, 51
+April 19, 2674 12:11:06 am as 'the' s:HH:ss-h:dd	text	the 6:00:06-12:19
+December 12, 1967 10:41:27 pm as 'of' ss:yyyy M	text	of 27:1967 12
+February 20, 2499 7:02:18 am as m, 'on' dd, MMM	text	2, on 20, Feb
+March 14, 1220 8:49:09 am as 'on' EEE-'on' m a:mm, 'hour' MMM	text	on Sat-on 49 AM:49, hour Mar
+December 30, 2139 10:25:00 pm as H, H s, MMMM	text	22, 22 0, December
+June 30, 1878 10:10:45 am as yyyy-yyyy:'day' EEEE	text	1878-1878:day Sunday
+February 11, 1194 4:13:53 am as HH-'on' EEE:EEEE-'day' ss	text	04-on Fri:Friday-day 53
+November 28, 1706 5:40:45 pm as m, EEEE-yy-'hour' EEEE	text	40, Sunday-06-hour Sunday
+April 30, 2637 7:44:54 pm as MMM/EEEE-mm, mm H	text	Apr/Sunday-44, 44 19
+November 7, 2378 10:38:27 pm as MM/MMM d/EEEE-m, EEEE	text	11/Nov 7/Tuesday-38, Tuesday
+August 7, 2294 4:06:55 pm as HH MM, 'time' h/dd, m	text	16 08, time 4/07, 6
+April 6, 2382 3:03:34 pm as a-ss:dd 'day' a	text	PM-34:06 day PM
+October 20, 1448 4:13:31 pm as dd:yyyy-a, 'day' s	text	20:1448-PM, day 31
+January 5, 2255 6:38:21 pm as MMMM dd	text	January 05
+July 10, 1362 3:39:27 pm as MMMM, MMMM/M	text	July, July/7
+June 9, 1925 10:53:29 pm as MMM:mm a	text	Jun:53 PM
+October 31, 2405 5:17:23 pm as 'hour' dd-HH:MMM	text	hour 31-17:Oct
+August 11, 2322 11:07:17 am as MMM:h	text	Aug:11
+October 9, 1115 7:20:36 am as 'hour' MMM, hh-'on' EEE-MM/'hour' a	text	hour Oct, 07-on Sat-10/hour AM
+September 18, 2156 6:52:16 pm as a d/s-HH:'time' a	text	PM 18/16-18:time PM
+August 24, 2039 2:58:06 pm as 'on' MMM/yy:d, h, ss	text	on Aug/39:24, 2, 06
+October 15, 1218 9:12:52 pm as EEEE/yy-'time' hh	text	Monday/18-time 09
+February 16, 1688 1:09:35 pm as H:dd	text	13:16
+June 4, 1970 11:29:18 pm as hh/d	text	11/4
+November 3, 1301 10:40:33 am as HH:yy, M	text	10:01, 11
+January 15, 2494 8:21:32 am as EEEE EEE:'time' HH a	text	Friday Fri:time 08 AM
+September 21, 2551 11:48:13 pm as d/'day' M, MMMM	text	21/day 9, September
+November 5, 1637 11:41:33 pm as MMM, s-EEEE:h	text	Nov, 33-Thursday:11
+March 4, 1197 11:48:08 pm as yy, m:'day' hh/d/MM	text	97, 48:day 11/4/03
+November 10, 1772 4:25:08 am as MMM-'at' yyyy EEE/HH, yy	text	Nov-at 1772 Tue/04, 72
+December 28, 1635 1:04:26 am as M:dd	text	12:28
+March 25, 2157 11:32:10 pm as yy/M/yy-EEE/s	text	57/3/57-Fri/10
+May 4, 1674 2:01:03 pm as yy-MMMM dd	text	74-May 04
+February 19, 2508 5:36:54 am as a, dd	text	AM, 19
+November 21, 2697 3:03:10 pm as EEEE:yy mm, 'on' s	text	Sunday:97 03, on 10
+September 2, 1195 1:43:52 am as d-'hour' H, 'on' H/MMMM, ss	text	2-hour 1, on 1/September, 52
+February 5, 2109 12:23:02 am as dd, EEEE, 'at' m	text	05, Tuesday, at 23
+March 24, 2381 1:26:22 am as 'the' h, m:mm	text	the 1, 26:26
+April 9, 2181 2:49:03 am as MMM 'of' a/h	text	Apr of AM/2
+December 3, 2227 6:08:17 pm as d 'at' hh, 'day' MMM	text	3 at 06, day Dec
+October 2, 2549 6:34:54 pm as a 'hour' a-hh/MM	text	PM hour PM-06/10
+February 10, 1829 9:23:26 pm as 'hour' HH/H, a/m, yy 'time' h	text	hour 21/21, PM/23, 29 time 9
+September 14, 1316 3:26:42 am as ss/mm HH, d	text	42/26 03, 14
+July 25, 2603 6:33:10 am as EEEE, MM, hh/yy h	text	Monday, 07, 06/03 6
+October 14, 1428 5:32:11 am as m:MMM, 'time' d	text	32:Oct, time 14
+September 9, 1189 12:33:56 am as a-H, yyyy	text	AM-0, 1189
+June 9, 2346 3:11:11 am as mm/h mm/EEE, d HH	text	11/3 11/Sun, 9 03
+June 21, 2304 6:04:33 pm as hh/MMMM	text	06/June
+June 9, 2707 11:10:36 pm as a-MMM, mm	text	PM-Jun, 10
+September 7, 2408 8:58:01 am as dd/'time' M/yy:MMM, M/MM	text	07/time 9/08:Sep, 9/09
+August 13, 2860 1:50:59 am as EEEE 'day' M/'hour' hh	text	Friday day 8/hour 01
+January 13, 2069 12:07:32 am as 'hour' hh hh, MM M, HH, hh	text	hour 12 12, 01 1, 00, 12
+June 11, 1421 11:47:24 am as HH-MM, MMMM M	text	11-06, June 6
+December 4, 2689 3:21:45 am as 'the' m-'day' MMM	text	the 21-day Dec
+November 3, 1824 2:40:51 pm as yyyy, 'on' ss MMM, MMM:yy	text	1824, on 51 Nov, Nov:24
+January 22, 1167 6:37:00 pm as dd:M-MM, 'the' MM H	text	22:1-01, the 01 18
+May 6, 2847 9:15:11 am as s-'time' d-HH ss-yy	text	11-time 6-09 11-47
+November 10, 2621 6:04:24 pm as 'day' h-d/s-H ss/yy	text	day 6-10/24-18 24/21
+May 11, 1901 7:01:54 am as 'time' dd:yy-M:'the' H MM	text	time 11:01-5:the 7 05
+April 5, 2592 5:29:38 pm as d, EEE-MM/EEE	text	5, Thu-04/Thu
+May 21, 1885 12:39:32 pm as h-EEEE:EEE	text	12-Thursday:Thu
+March 24, 1832 6:46:48 am as mm dd, s h	text	46 24, 48 6
+August 31, 1995 7:16:25 pm as MMM 'time' m:'day' EEEE	text	Aug time 16:day Thursday
+October 6, 2463 4:00:14 pm as ss:h/MM	text	14:4/10
+November 15, 1959 3:31:20 pm as m mm:ss ss:mm	text	31 31:20 20:31
+October 14, 2631 7:28:11 am as dd:'hour' MMMM/mm:EEE:M	text	14:hour October/28:Fri:10
+November 14, 2310 8:20:51 pm as 'of' dd/HH, HH, H/'day' MMM-'of' a	text	of 14/20, 20, 20/day Nov-of PM
+February 22, 2273 3:04:05 am as h:h-ss 'time' HH	text	3:3-05 time 03
+December 29, 2686 5:34:57 am as dd-EEE MMMM/H, ss	text	29-Wed December/5, 57
+February 8, 2806 9:41:34 pm as MMMM-mm-ss	text	February-41-34
+February 22, 1971 12:24:32 pm as yy/EEEE	text	71/Monday
+February 15, 2686 8:06:02 am as EEEE/mm/'day' EEE-'at' h:'time' d h	text	Monday/06/day Mon-at 8:time 15 8
+April 15, 1953 1:01:35 am as s, dd, yy	text	35, 15, 53
+January 11, 2278 4:44:42 am as MMM MMM MMMM yyyy	text	Jan Jan January 2278
+August 6, 2342 8:26:18 am as 'time' MMM-MMMM/MM, EEEE, 'of' EEEE	text	time Aug-August/08, Thursday, of Thursday
+June 4, 2077 5:01:36 pm as yyyy, MM-dd	text	2077, 06-04
+December 15, 1588 1:18:32 am as hh-d/MMMM 'time' MMMM, h	text	01-15/December time December, 1
+September 12, 2775 9:00:51 pm as hh/H, H	text	09/21, 21
+March 10, 1528 1:10:51 pm as 'on' MMMM s hh	text	on March 51 01
+December 12, 1724 12:13:48 am as MMM, 'on' EEE	text	Dec, on Tue
+December 8, 1207 12:22:31 pm as d/'of' mm-a-yyyy	text	8/of 22-PM-1207
+October 31, 2426 3:47:29 am as 'on' m yy/a/m-mm	text	on 47 26/AM/47-47
+September 30, 1798 10:08:00 pm as s-EEEE h/MM, MMMM	text	0-Sunday 10/09, September
+May 8, 1421 5:32:28 pm as dd/m-ss/'hour' mm	text	08/32-28/hour 32
+September 19, 2404 4:33:17 pm as M, EEEE-'at' m:MMMM:'on' EEEE	text	9, Sunday-at 33:September:on Sunday
+December 2, 1648 5:04:22 am as 'hour' yy-'time' dd HH/ss	text	hour 48-time 02 05/22
+December 7, 2274 9:23:16 pm as h-yy	text	9-74
+April 19, 1671 9:19:28 pm as a-ss/h:a:H 'the' dd	text	PM-28/9:PM:21 the 19
+March 16, 1601 6:08:41 pm as yyyy m, HH-'day' dd MM	text	1601 8, 18-day 16 03
+October 8, 1832 4:34:44 pm as h hh-d	text	4 04-8
+October 30, 2698 6:04:48 am as m:MM:yyyy-MM yy-yyyy	text	4:10:2698-10 98-2698
+February 12, 1408 4:56:03 pm as mm:a M/mm, HH-h	text	56:PM 2/56, 16-4
+May 21, 2820 1:29:39 am as MMMM, ss	text	May, 39
+March 22, 2442 5:02:47 am as MMM/s/HH	text	Mar/47/05
+November 26, 1272 1:56:34 am as EEE/d:'day' MMM	text	Sat/26:day Nov
+August 29, 1939 2:10:44 pm as H:'at' H yy 'time' yyyy-'the' m:'of' a	text	14:at 14 39 time 1939-the 10:of PM
+November 23, 2441 10:27:15 am as 'hour' H/m/H, EEE-MM	text	hour 10/27/10, Sat-11
+March 13, 1452 7:42:53 am as 'at' H, 'the' EEE:'hour' yyyy-d:HH-'of' MMM	text	at 7, the Sat:hour 1452-13:07-of Mar
+September 4, 2529 6:02:17 am as a-s:'hour' a-hh/ss	text	AM-17:hour AM-06/17
+April 3, 2371 11:45:35 am as m:mm-a, a m	text	45:45-AM, AM 45
+March 22, 1948 9:51:06 am as hh ss-'day' MMMM dd-m	text	09 06-day March 22-51
+August 2, 1965 12:19:23 pm as m, H/dd/dd	text	19, 12/02/02
+November 29, 1779 7:40:18 pm as HH hh	text	19 07
+November 8, 2478 1:31:57 pm as mm, 'at' dd, mm/EEEE/'time' a	text	31, at 08, 31/Tuesday/time PM
+May 21, 2063 7:44:53 pm as h m/a dd	text	7 44/PM 21
+August 19, 1386 11:23:00 am as 'at' dd:ss:'hour' ss-yy	text	at 19:00:hour 00-86
+May 24, 2034 1:15:04 am as hh-'day' yyyy, M	text	01-day 2034, 5
+April 16, 2662 2:16:34 am as ss, mm/h/H, EEE-MMMM	text	34, 16/2/2, Wed-April
+January 13, 2238 11:58:33 am as d MM:'at' H	text	13 01:at 11
+July 27, 1413 7:56:25 pm as MMMM yyyy h:M:mm-ss	text	July 1413 7:7:56-25
+April 12, 1393 8:43:22 pm as ss-M-EEEE hh	text	22-4-Friday 08
+November 27, 2377 10:49:48 am as MM/yy/'on' MMMM	text	11/77/on November
+October 5, 1526 11:26:57 am as HH-'at' hh/h-EEEE, mm	text	11-at 11/11-Tuesday, 26
+May 9, 2657 7:55:56 am as MM/MMM, MM/ss-d:'at' EEE	text	05/May, 05/56-9:at Sat
+March 1, 1746 8:45:41 am as yy-yy, 'on' HH	text	46-46, on 08
+February 17, 2799 3:30:27 pm as h-M, a, dd	text	3-2, PM, 17
+December 9, 1577 8:41:17 pm as HH m, hh:MMM	text	20 41, 08:Dec
+December 8, 1630 6:43:28 am as a:yyyy-yy	text	AM:1630-30
+July 20, 1948 2:29:49 pm as M:ss:'the' yyyy-MM:H-'day' M	text	7:49:the 1948-07:14-day 7
+October 6, 1596 8:47:27 am as h/h, HH, 'of' yyyy/ss	text	8/8, 08, of 1596/27
+July 30, 2532 7:43:54 pm as 'time' dd-MMM-'day' H	text	time 30-Jul-day 19
+August 23, 1798 6:13:53 am as EEE 'hour' MMMM	text	Thu hour August
+September 21, 1792 8:28:21 am as H/'hour' ss/hh EEE MM	text	8/hour 21/08 Fri 09
+June 1, 2029 4:47:38 pm as EEEE EEE	text	Friday Fri
+September 29, 1541 12:22:26 am as s/MM-a, EEEE, h:a	text	26/09-AM, Monday, 12:AM
+April 21, 2351 1:59:23 pm as MMM:h:dd	text	Apr:1:21
+June 9, 1139 2:18:53 pm as H-'on' yyyy-m, s, EEE/s	text	14-on 1139-18, 53, Fri/53
+May 8, 2798 10:27:19 pm as dd/'at' a/a/MMM/'the' a	text	08/at PM/PM/May/the PM
+April 14, 2804 9:12:28 am as EEEE-MMM, 'the' M:'of' EEEE	text	Wednesday-Apr, the 4:of Wednesday
+April 11, 2017 12:05:11 am as M-s 'day' mm/M/MM	text	4-11 day 05/4/04
+August 9, 1370 7:43:52 am as s:'of' HH	text	52:of 07
+April 5, 2371 3:15:10 am as h hh, 'of' M/EEEE	text	3 03, of 4/Monday
+August 2, 2394 8:37:23 am as H-MMMM, MMMM	text	8-August, August
+April 9, 1593 10:34:10 am as MM/mm, MM/yyyy:MMM	text	04/34, 04/1593:Apr
+October 20, 1742 9:34:34 am as M/'of' dd:M/EEE	text	10/of 20:10/Sat
+June 23, 1394 3:19:19 pm as h/d, 'day' a-m-MMM	text	3/23, day PM-19-Jun
+April 12, 1466 9:28:33 am as EEEE:MM	text	Thursday:04
+October 7, 2197 11:45:57 pm as 'of' MMMM, 'day' H 'the' MMMM:EEEE-'the' ss, 'time' EEEE	text	of October, day 23 the October:Saturday-the 57, time Saturday
+April 29, 2597 10:35:37 am as m EEE, M/m	text	35 Sat, 4/35
+November 8, 2265 5:29:48 pm as MMM/h/yy/MMMM	text	Nov/5/65/November
+June 3, 1676 12:48:43 pm as yyyy EEEE	text	1676 Wednesday
+February 1, 2245 11:46:11 pm as 'the' d, dd, H:MM, 'hour' yy	text	the 1, 01, 23:02, hour 45
+October 24, 2388 5:00:47 am as h H:a mm:'the' hh/'at' HH	text	5 5:AM 00:the 05/at 05
+March 17, 2120 4:16:06 am as 'day' yy, 'the' MMMM ss	text	day 20, the March 06
+September 17, 1546 8:33:57 am as H, h M/'the' EEE	text	8, 8 9/the Tue
+June 8, 1423 9:23:56 am as hh, EEE	text	09, Sun
+April 7, 1947 4:33:20 pm as yyyy:s/hh/d	text	1947:20/04/7
+July 21, 1147 5:40:07 am as EEE, 'hour' H, MMM ss, 'the' MM mm	text	Mon, hour 5, Jul 07, the 07 40
+August 29, 2413 8:08:44 pm as EEE/h:EEE/M:EEE	text	Thu/8:Thu/8:Thu
+December 22, 2231 4:49:16 am as MMMM:'day' EEEE:d:'hour' h-h, 'day' EEEE	text	December:day Thursday:22:hour 4-4, day Thursday
+December 13, 2718 9:19:02 pm as h/EEE	text	9/Fri
+October 9, 1994 6:41:03 am as hh-'of' yy:H, MMM	text	06-of 94:6, Oct
+January 19, 1269 7:17:18 am as m, ss/s/'day' yyyy:M, 'time' ss	text	17, 18/18/day 1269:1, time 18
+April 16, 2622 5:44:41 pm as HH/hh-MMMM:yyyy	text	17/05-April:2622
+July 12, 1762 12:21:20 pm as yy-dd	text	62-12
+September 17, 1995 5:47:43 am as 'on' MMM, EEEE/EEEE mm, EEE	text	on Sep, Sunday/Sunday 47, Sun
+July 11, 2525 5:15:54 pm as MMMM, s yyyy	text	July, 54 2525
+June 3, 1205 5:30:24 am as m-'hour' hh	text	30-hour 05
+October 2, 2158 5:09:15 am as s:ss/EEE:ss:yy EEEE	text	15:15/Mon:15:58 Monday
+June 25, 2868 4:45:28 pm as MMM HH yyyy:ss H-'hour' a	text	Jun 16 2868:28 16-hour PM
+October 23, 2467 12:14:11 am as a:hh hh:'day' EEE hh/MM	text	AM:12 12:day Sun 12/10
+February 15, 1624 11:58:14 am as 'at' yy/EEEE/MMMM/a-'on' dd	text	at 24/Thursday/February/AM-on 15
+November 10, 2538 10:17:37 pm as m/'time' h-MMM, yyyy, 'of' EEE, 'of' H	text	17/time 10-Nov, 2538, of Mon, of 22
+January 1, 2261 6:18:38 am as d/HH, MM	text	1/06, 01
+September 20, 1983 11:52:47 am as 'the' EEEE/MMMM s	text	the Tuesday/September 47
+June 8, 1465 4:17:56 am as d/MMM	text	8/Jun
+August 11, 2877 6:12:17 pm as a-M, H:MM	text	PM-8, 18:08
+December 14, 2822 5:16:11 am as yyyy, EEE-M, hh hh	text	2822, Wed-12, 05 05
+April 11, 1497 9:07:14 pm as MMMM:h, M	text	April:9, 4
+April 29, 2614 6:31:48 am as mm:HH	text	31:06
+May 12, 1914 3:48:40 am as M, 'day' H, 'the' H, HH	text	5, day 3, the 3, 03
+November 28, 1309 5:58:59 pm as 'of' m:'day' dd:M-'day' MM/s	text	of 58:day 28:11-day 11/59
+September 3, 1888 5:35:13 am as yyyy/'the' HH/ss	text	1888/the 05/13
+February 22, 2062 9:28:09 am as MMM-'the' H-MM:dd	text	Feb-the 9-02:22
+May 9, 2828 11:54:19 am as 'at' dd-mm	text	at 09-54
+December 1, 1178 2:09:02 am as MMMM-yyyy	text	December-1178
+March 29, 1554 10:58:40 am as yy:ss-H s:a	text	54:40-10 40:AM
+September 13, 1160 7:27:09 am as M M/yy:MMMM, d	text	9 9/60:September, 13
+March 1, 2768 1:44:54 pm as 'time' ss, MMM/mm MMM, m 'of' a	text	time 54, Mar/44 Mar, 44 of PM
+May 29, 2882 8:26:52 am as ss/MMM, yyyy, yyyy	text	52/May, 2882, 2882
+September 9, 2896 5:35:19 pm as yyyy HH-MM	text	2896 17-09
+August 2, 1153 12:43:51 am as dd-hh dd	text	02-12 02
+February 6, 1889 6:30:52 pm as m:s:MMM:yy m	text	30:52:Feb:89 30
+November 5, 1418 10:46:14 pm as a-MMM:yyyy-'day' MMM/d	text	PM-Nov:1418-day Nov/5
+March 27, 1814 8:59:14 am as 'day' m:EEE/HH, yyyy	text	day 59:Sun/08, 1814
+December 23, 2428 8:37:29 am as HH:M-dd 'day' EEEE	text	08:12-23 day Saturday
+January 27, 2315 4:14:07 am as d/HH:'time' h, EEE	text	27/04:time 4, Wed
+July 13, 1187 6:04:45 pm as d-yy/yy-dd	text	13-87/87-13
+July 20, 1230 5:26:52 pm as EEEE:HH-MMM-MM ss	text	Saturday:17-Jul-07 52
+May 5, 1709 11:12:59 am as EEE:yyyy/ss	text	Sun:1709/59
+October 24, 2475 5:55:14 pm as 'the' yy-'hour' MMMM	text	the 75-hour October
+August 18, 1850 10:15:35 am as 'the' ss dd/'the' ss	text	the 35 18/the 35
+August 10, 1708 5:57:58 am as 'at' d-EEE, 'the' MMMM	text	at 10-Fri, the August
+January 30, 2425 8:27:15 am as ss h HH/dd	text	15 8 08/30
+June 6, 1529 8:35:52 am as mm, yy h, H-HH-HH	text	35, 29 8, 8-08-08
+June 29, 2723 11:48:52 am as 'hour' m/ss/'on' HH, EEE, s	text	hour 48/52/on 11, Fri, 52
+May 24, 1751 3:00:10 pm as s-'hour' hh/a:d-HH/hh	text	10-hour 03/PM:24-15/03
+July 23, 2630 9:45:34 am as ss 'the' HH:'the' m-M	text	34 the 09:the 45-7
+January 18, 2481 7:33:21 am as HH-hh, yy/yyyy-'the' H, EEE	text	07-07, 81/2481-the 7, Sat
+December 22, 1105 4:36:27 pm as yy-h, 'the' s:'the' MMM	text	05-4, the 27:the Dec
+February 21, 1499 6:26:09 am as MMMM:M/'day' EEEE	text	February:2/day Tuesday
+November 21, 2066 12:17:47 am as dd:HH hh	text	21:00 12
+September 21, 1423 11:42:20 pm as EEE/s, MM, s-'day' M:HH	text	Sun/20, 09, 20-day 9:23
+June 13, 1639 3:51:24 pm as MMMM, yyyy/a:a:'on' m	text	June, 1639/PM:PM:on 51
+October 10, 1603 8:40:40 am as MM yy-'the' hh, HH	text	10 03-the 08, 08
+April 28, 1361 6:42:33 pm as mm, HH 'on' dd	text	42, 18 on 28
+July 4, 1516 9:58:41 am as 'day' H 'on' h-'hour' MM	text	day 9 on 9-hour 07
+April 15, 1344 3:25:38 pm as m, yy/h-a	text	25, 44/3-PM
+September 19, 2775 1:04:54 pm as MM, 'time' a, ss-yyyy 'time' ss	text	09, time PM, 54-2775 time 54
+January 16, 1361 8:26:57 am as a, 'the' EEE a:M:MM	text	AM, the Fri AM:1:01
+August 15, 1945 9:35:54 am as yy:'at' dd yy d dd m	text	45:at 15 45 15 15 35
+February 12, 2677 11:23:46 am as EEEE:mm-mm:hh	text	Monday:23-23:11
+December 18, 1503 8:21:03 am as m, 'day' yyyy, s-yyyy:MMMM, 'on' d	text	21, day 1503, 3-1503:December, on 18
+August 20, 2855 7:59:58 am as EEE-'time' MMMM:s EEE	text	Fri-time August:58 Fri
+February 15, 1379 9:50:21 pm as H, m mm:yyyy:M	text	21, 50 50:1379:2
+October 21, 1206 2:21:45 pm as 'of' EEEE-H-yyyy, dd	text	of Saturday-14-1206, 21
+December 8, 1314 8:03:57 am as HH ss-a-ss-HH	text	08 57-AM-57-08
+December 5, 2415 6:53:08 am as dd, EEEE-yyyy/ss:H:m	text	05, Saturday-2415/08:6:53
+September 29, 1613 10:53:41 pm as M/MMMM	text	9/September
+November 26, 2812 9:54:07 am as s/'the' M/hh 'hour' d-s/hh	text	7/the 11/09 hour 26-7/09
+July 1, 1827 6:35:09 pm as M mm, hh/hh 'hour' h	text	7 35, 06/06 hour 6
+September 24, 2705 4:35:06 am as M-s-HH:hh-'the' hh	text	9-6-04:04-the 04
+April 11, 2845 12:33:27 am as H MM, 'at' M, EEEE/'the' M	text	0 04, at 4, Tuesday/the 4
+December 22, 2592 2:07:03 pm as 'at' h:s, yy yy	text	at 2:3, 92 92
+November 12, 2833 12:50:18 pm as m, EEEE:MMMM 'the' a-hh:M	text	50, Saturday:November the PM-12:11
+November 29, 1692 3:21:01 am as MM s, mm, s:MMM, yyyy	text	11 1, 21, 1:Nov, 1692
+October 31, 1997 6:40:33 am as h/HH	text	6/06
+February 15, 1488 8:44:14 am as h, ss mm:h/EEEE	text	8, 14 44:8/Wednesday
+November 10, 2234 1:25:10 am as MM yy-'at' mm/m	text	11 34-at 25/25
+October 23, 2555 12:01:36 pm as 'on' yy M	text	on 55 10
+June 25, 2207 2:39:53 am as H/'hour' MMM s-d-h hh	text	2/hour Jun 53-25-2 02
+April 3, 2451 11:22:42 am as EEEE, 'time' ss	text	Monday, time 42
+September 27, 1966 11:34:02 pm as MMM:mm	text	Sep:34
+August 20, 2825 6:35:25 pm as hh/yy/'on' MMMM/'hour' d-H	text	06/25/on August/hour 20-18
+November 4, 1962 3:04:54 pm as dd MMMM/s/dd	text	04 November/54/04
+August 22, 1197 11:23:56 am as M:'on' s	text	8:on 56
+June 14, 2380 12:13:16 am as H:dd, ss/s:MM	text	0:14, 16/16:06
+July 4, 2465 2:16:04 am as 'at' m/HH	text	at 16/02
+June 27, 1438 9:00:26 am as 'hour' MM, EEEE	text	hour 06, Wednesday
+December 11, 1980 8:39:14 am as MMM/ss	text	Dec/14
+March 4, 2116 5:36:35 pm as 'of' EEEE, MMM, d	text	of Wednesday, Mar, 4
+December 18, 1134 12:10:40 pm as hh/yyyy, 'the' MMM-'at' MM	text	12/1134, the Dec-at 12
+September 20, 2195 6:25:19 pm as m, MM/'the' yyyy:s	text	25, 09/the 2195:19
+August 21, 1257 2:13:45 pm as 'on' hh 'day' s hh	text	on 02 day 45 02
+October 20, 1241 4:07:17 pm as HH, MMM:yyyy ss	text	16, Oct:1241 17
+July 27, 1845 3:43:30 pm as H, MMM yy-EEEE:MMMM:'hour' EEEE	text	15, Jul 45-Sunday:July:hour Sunday
+April 15, 2344 3:54:31 pm as HH:EEE, MMMM, MMM-MM d	text	15:Sat, April, Apr-04 15
+February 2, 2459 2:56:01 pm as dd-ss:m/M:HH 'of' h	text	02-01:56/2:14 of 2
+July 19, 1180 8:48:18 pm as h, 'time' MM EEEE HH	text	8, time 07 Saturday 20
+December 9, 2303 1:35:54 am as MMM:dd:'day' a-d-H	text	Dec:09:day AM-9-1
+June 6, 1534 5:02:25 pm as h EEEE-MMMM	text	5 Wednesday-June
+March 14, 1440 7:35:25 pm as yy, 'at' hh, H, yyyy, ss	text	40, at 07, 19, 1440, 25
+May 16, 1861 6:08:51 am as H/yyyy:MMM-MMM/a-h	text	6/1861:May-May/AM-6
+December 7, 1843 10:30:21 am as EEEE 'time' MM, 'time' yy	text	Thursday time 12, time 43
+February 9, 2753 6:48:26 am as 'hour' HH/MM H HH	text	hour 06/02 6 06
+November 13, 1441 10:59:02 pm as hh, hh-dd	text	10, 10-13
+May 20, 2068 3:34:24 pm as 'of' EEEE-'on' MMM/EEE	text	of Sunday-on May/Sun
+January 26, 2569 10:30:39 pm as m, 'the' ss:EEEE/H HH-h	text	30, the 39:Thursday/22 22-10
+January 17, 1555 4:09:34 pm as MM-HH	text	01-16
+February 15, 1805 12:23:13 am as m 'at' h, 'at' H, d:hh	text	23 at 12, at 0, 15:12
+May 19, 2839 1:17:41 am as a/'time' mm-yyyy-'the' m	text	AM/time 17-2839-the 17
+November 19, 2048 5:45:44 pm as 'day' dd/'hour' m, MMM, 'time' EEE MM yy	text	day 19/hour 45, Nov, time Thu 11 48
+August 20, 2849 7:02:53 pm as dd:h	text	20:7
+October 18, 1592 6:16:14 pm as HH/MM:M-'hour' a	text	18/10:10-hour PM
+November 29, 2681 12:09:25 am as h:'time' MMMM:a EEE:'day' MMMM	text	12:time November:AM Tue:day November
+September 3, 2616 1:59:17 am as EEEE/ss/a	text	Tuesday/17/AM
+October 31, 2281 8:48:11 pm as MM:HH/d-s-s:'on' m	text	10:20/31-11-11:on 48
+June 9, 1592 3:52:06 am as yyyy:mm-dd 'hour' H	text	1592:52-09 hour 3
+May 5, 2372 7:20:38 am as MMMM:dd 'day' mm-H, h-EEEE	text	May:05 day 20-7, 7-Friday
+July 18, 1611 12:01:12 am as 'on' MM:MMM-'on' dd	text	on 07:Jul-on 18
+September 8, 1889 3:09:28 pm as MM:MM/dd:a dd/yy	text	09:09/08:PM 08/89
+June 3, 2831 9:37:33 pm as 'day' s 'day' MMMM-MMMM, d/yyyy/'hour' H	text	day 33 day June-June, 3/2831/hour 21
+July 8, 1754 1:12:39 am as d:hh/m:M-d	text	8:01/12:7-8
+May 15, 1164 3:49:40 am as m HH dd-H	text	49 03 15-3
+August 21, 2337 12:31:00 pm as a, yy d, ss s/'the' ss	text	PM, 37 21, 00 0/the 00
+April 4, 1809 8:24:03 pm as MM/s M	text	04/3 4
+March 26, 1548 1:10:35 pm as 'hour' s:yyyy:a, ss-hh, MM	text	hour 35:1548:PM, 35-01, 03
+January 1, 1399 3:06:10 am as mm 'time' hh/'on' h:'of' s dd	text	06 time 03/on 3:of 10 01
+October 12, 2803 9:51:39 pm as MMM/MMM:h 'day' EEE	text	Oct/Oct:9 day Sun
+March 25, 1907 8:07:05 am as d s:hh-MMM	text	25 5:08-Mar
+April 27, 2552 8:14:55 am as 'hour' M:yyyy, yy:s:mm:yy	text	hour 4:2552, 52:55:14:52
+October 7, 2867 2:35:27 am as 'at' h, yyyy a 'day' a	text	at 2, 2867 AM day AM
+July 25, 2030 12:38:58 pm as EEE-mm, 'the' m-EEE 'day' MMMM	text	Thu-38, the 38-Thu day July
+December 21, 1272 2:44:53 am as 'time' EEEE 'at' mm-H/yy-'on' a	text	time Wednesday at 44-2/72-on AM
+December 25, 1809 2:06:24 pm as 'time' yy/hh	text	time 09/02
+June 27, 2774 6:42:38 am as yyyy, yyyy, M, 'the' EEEE-dd	text	2774, 2774, 6, the Thursday-27
+March 26, 2677 10:33:32 am as EEE-h	text	Mon-10
+January 3, 2322 3:30:07 pm as dd yyyy	text	03 2322
+October 4, 1134 6:21:59 pm as s-EEEE/'on' HH	text	59-Thursday/on 18
+May 15, 1536 8:52:14 am as MMMM-mm:MMMM, MM/M-'time' hh	text	May-52:May, 05/5-time 08
+August 15, 2305 4:05:27 am as 'the' yyyy/'day' EEEE EEE, 'on' MM-ss	text	the 2305/day Tuesday Tue, on 08-27
+September 1, 2480 1:21:14 am as MM/hh-H:EEEE a:a	text	09/01-1:Sunday AM:AM
+July 30, 2474 12:48:12 pm as dd:MM-EEE	text	30:07-Mon
+December 27, 1143 9:24:56 pm as MMM:'on' dd:M	text	Dec:on 27:12
+June 1, 2157 12:51:45 pm as M HH/yy:ss:dd, ss	text	6 12/57:45:01, 45
+March 14, 2456 3:54:38 pm as a, MMM ss	text	PM, Mar 38
+August 24, 2295 2:35:24 am as 'day' mm MMM, m	text	day 35 Aug, 35
+November 24, 2522 8:56:50 pm as 'on' HH, hh-mm/yy	text	on 20, 08-56/22
+November 18, 2119 11:36:31 pm as 'on' yyyy 'hour' s, h-M	text	on 2119 hour 31, 11-11
+December 3, 2844 11:20:34 am as d:dd-HH	text	3:03-11
+March 17, 2599 6:47:09 pm as d:s/m-EEE	text	17:9/47-Sun
+September 5, 2706 8:18:14 pm as MMMM-M-s-'of' mm-EEEE	text	September-9-14-of 18-Wednesday
+June 22, 2380 1:47:42 pm as HH/s	text	13/42
+June 18, 1453 12:07:54 am as yy-ss/mm/s-yy	text	53-54/07/54-53
+May 12, 1462 5:04:17 am as yyyy-EEE, EEE h, EEE/EEE	text	1462-Mon, Mon 5, Mon/Mon
+June 3, 2213 12:37:23 am as M, 'of' hh, hh, hh-'of' hh	text	6, of 12, 12, 12-of 12
+November 5, 2676 4:35:20 pm as HH, dd:MMMM, M MMM	text	16, 05:November, 11 Nov
+July 9, 1723 9:02:43 am as EEE/d-MMMM	text	Fri/9-July
+September 13, 2696 9:08:21 am as mm:H:M, 'day' MM	text	08:9:9, day 09
+June 11, 2506 4:15:13 pm as 'day' hh, HH, 'day' yyyy-MMMM-h	text	day 04, 16, day 2506-June-4
+November 22, 2391 5:05:15 pm as EEE, 'on' d:h, dd MMM	text	Fri, on 22:5, 22 Nov
+December 16, 1202 12:50:14 pm as s/MMMM	text	14/December
+June 4, 1503 8:48:03 am as M MMMM MMMM 'day' EEEE, dd	text	6 June June day Thursday, 04
+December 24, 2747 6:49:42 am as HH, 'at' dd, yyyy:HH/MMM	text	06, at 24, 2747:06/Dec
+October 22, 1264 3:10:09 am as ss, m:H, a, MMM-'day' H	text	09, 10:3, AM, Oct-day 3
+November 22, 2246 2:45:10 pm as m-EEE, s, ss yyyy	text	45-Sun, 10, 10 2246
+May 3, 2148 7:11:08 pm as 'on' s 'hour' yyyy:EEE	text	on 8 hour 2148:Fri
+August 26, 1666 6:15:10 am as 'on' MMMM EEE/HH h:m	text	on August Thu/06 6:15
+November 13, 1883 8:44:10 am as M-a, 'at' a/MM, MMMM	text	11-AM, at AM/11, November
+April 10, 1661 2:32:48 am as m:MMM yyyy-s	text	32:Apr 1661-48
+September 17, 1428 9:58:36 am as mm:s:'hour' mm/m:m-hh	text	58:36:hour 58/58:58-09
+January 14, 2675 7:11:45 am as 'at' yyyy 'day' ss-hh, EEEE	text	at 2675 day 45-07, Thursday
+July 6, 1419 3:45:54 am as h, MMM, 'the' hh	text	3, Jul, the 03
+March 16, 1922 12:27:50 am as MMM, s-h 'of' H	text	Mar, 50-12 of 0
+August 29, 1975 5:45:44 pm as MMMM, d MMM/mm/a	text	August, 29 Aug/45/PM
+July 15, 2514 2:06:48 pm as yyyy-'time' M-h	text	2514-time 7-2
+August 9, 2670 9:54:34 pm as s:MMM	text	34:Aug
+June 13, 2484 5:25:55 am as MMM:'of' h 'time' M, yy:H/EEE	text	Jun:of 5 time 6, 84:5/Tue
+February 28, 1147 4:58:31 pm as 'the' MMM h, H, yy, EEE	text	the Feb 4, 16, 47, Fri
+October 26, 2143 9:17:07 am as h, EEE, yy	text	9, Sat, 43
+January 1, 2435 10:33:39 am as hh:ss:MMM hh	text	10:39:Jan 10
+July 17, 1949 5:33:40 pm as EEEE EEE yy:s/HH-EEEE	text	Sunday Sun 49:40/17-Sunday
+September 28, 1587 9:16:13 am as m:yy	text	16:87
+July 9, 1433 7:30:17 am as m:MMM/MMM/yyyy yy	text	30:Jul/Jul/1433 33
+September 3, 2730 8:00:01 pm as dd-yy m	text	03-30 0
+March 17, 1180 3:26:33 pm as 'of' dd-h-a/'of' EEE:ss	text	of 17-3-PM/of Mon:33
+March 20, 1328 5:41:37 pm as MM/'hour' M-M M yy	text	03/hour 3-3 3 28
+January 4, 2592 10:57:58 am as 'time' m a 'hour' yyyy	text	time 57 AM hour 2592
+May 8, 1774 4:57:22 pm as 'at' EEE/ss:HH 'hour' dd, H	text	at Sun/22:16 hour 08, 16
+June 8, 2900 11:55:05 pm as 'on' m:HH, ss 'the' yyyy, yy-yyyy	text	on 55:23, 05 the 2900, 00-2900
+January 20, 1445 12:43:08 pm as d/'hour' h-MMM	text	20/hour 12-Jan
+December 20, 1423 10:28:42 am as 'on' MMMM MMM:EEEE d, a yyyy	text	on December Dec:Saturday 20, AM 1423
+February 4, 2805 5:50:32 pm as 'hour' yy-mm	text	hour 05-50
+October 18, 2356 5:27:17 pm as yy-a	text	56-PM
+February 11, 2626 3:52:31 pm as dd a:'time' EEEE	text	11 PM:time Saturday
+December 12, 2120 12:03:04 pm as s EEEE:m/'of' H, a	text	4 Thursday:3/of 12, PM
+February 17, 1462 4:36:32 am as 'hour' dd:MM-HH 'day' H	text	hour 17:02-04 day 4
+November 18, 1734 6:38:47 am as H-hh	text	6-06
+August 14, 2473 6:49:40 pm as s:yy:a, MM, s	text	40:73:PM, 08, 40
+April 15, 2798 10:45:12 am as 'time' MMMM-d d	text	time April-15 15
+May 17, 2497 5:18:11 pm as a:dd:H/a	text	PM:17:17/PM
+September 5, 1297 10:36:16 pm as a/MMM	text	PM/Sep
+January 15, 2705 10:59:39 pm as yy/a	text	05/PM
+January 18, 1534 11:30:01 pm as ss:ss, 'at' yy-yy	text	01:01, at 34-34
+September 5, 2271 12:22:46 am as M:'day' H/mm:h	text	9:day 0/22:12
+September 2, 2766 11:00:03 pm as 'of' MM-m	text	of 09-0
+December 30, 2750 10:55:04 am as ss 'day' h, a hh-hh	text	04 day 10, AM 10-10
+July 24, 2575 2:31:55 pm as MM 'of' s	text	07 of 55
+September 30, 2695 4:10:37 pm as MMM-s, MM-hh, hh	text	Sep-37, 09-04, 04
+August 3, 1686 7:08:47 am as m, EEEE-'at' yyyy-MMM a, d	text	8, Saturday-at 1686-Aug AM, 3
+January 29, 2832 1:28:57 pm as m/ss yyyy/'of' HH/dd	text	28/57 2832/of 13/29
+October 24, 2838 8:42:29 am as a-HH yyyy-EEE-EEE, yy	text	AM-08 2838-Sun-Sun, 38
+July 15, 2776 9:45:14 am as 'hour' d:'on' yyyy-'hour' h	text	hour 15:on 2776-hour 9
+January 21, 2877 5:52:50 pm as d/HH:MMMM/d MM H	text	21/17:January/21 01 17
+May 1, 2026 8:59:33 am as 'on' m:a, MMM, HH	text	on 59:AM, May, 08
+October 15, 2272 2:44:21 am as MM MMMM/MMM-dd, mm	text	10 October/Oct-15, 44
+April 16, 2222 10:57:29 am as yy:yy/a yy:a	text	22:22/AM 22:AM
+June 11, 2094 12:27:54 pm as 'of' dd:MM:'hour' s	text	of 11:06:hour 54
+March 17, 1561 9:55:49 pm as MMMM/EEE-mm 'day' d/s m	text	March/Fri-55 day 17/49 55
+June 1, 2266 10:01:30 pm as EEE/HH	text	Fri/22
+November 24, 2457 2:09:35 am as a yyyy/yy-dd-MM	text	AM 2457/57-24-11
+September 7, 2340 7:50:48 pm as H, MMMM, m 'hour' h	text	19, September, 50 hour 7
+March 26, 1270 12:40:43 am as MMM/h 'of' yy, s	text	Mar/12 of 70, 43
+September 9, 1116 1:37:34 am as 'the' dd:MMMM-'of' ss-'day' H:h, M	text	the 09:September-of 34-day 1:1, 9
+April 4, 2795 8:15:28 pm as yy hh-M, MMM/yyyy-mm	text	95 08-4, Apr/2795-15
+January 26, 2209 5:50:40 am as M/dd-HH-m, m-EEEE	text	1/26-05-50, 50-Thursday
+August 4, 1135 3:14:04 am as dd, s-h/dd-M/m	text	04, 4-3/04-8/14
+April 23, 1757 7:18:54 am as dd-hh-yyyy/a, 'hour' m-HH	text	23-07-1757/AM, hour 18-07
+May 28, 2353 12:43:28 am as EEEE-MMMM-m, 'hour' d-'day' yyyy	text	Thursday-May-43, hour 28-day 2353
+October 14, 1874 12:25:47 pm as MMMM-'the' h	text	October-the 12
+November 8, 2673 12:19:27 am as 'day' MMMM/'the' EEE-'the' yy, MMMM:a	text	day November/the Sat-the 73, November:AM
+January 25, 1779 12:53:37 pm as MMMM-dd/MMMM yy, HH m	text	January-25/January 79, 12 53
+May 26, 1953 9:02:40 pm as EEE-'the' dd H, ss:MMMM:'hour' m	text	Tue-the 26 21, 40:May:hour 2
+August 31, 2076 10:14:22 pm as 'on' EEEE, yyyy a:H	text	on Monday, 2076 PM:22
+June 24, 2130 7:16:25 am as a, MMM	text	AM, Jun
+September 20, 2357 8:22:27 pm as 'of' h, yy	text	of 8, 57
+September 23, 1839 10:15:35 pm as yyyy 'of' yyyy	text	1839 of 1839
+March 14, 1492 9:57:26 pm as a/M:EEE	text	PM/3:Mon
+February 10, 1876 9:31:35 pm as d/h:hh 'time' hh	text	10/9:09 time 09
+January 17, 2687 9:01:57 am as s:H-EEE-MMMM:s/m	text	57:9-Mon-January:57/1
+July 7, 2043 1:44:43 pm as a:mm, s	text	PM:44, 43
+April 19, 2113 9:01:37 am as hh-h	text	09-9
+March 16, 2655 10:20:52 am as mm:MM	text	20:03
+June 16, 2465 2:31:55 am as mm, hh-hh dd-'time' MM/'of' d	text	31, 02-02 16-time 06/of 16
+October 16, 2532 2:14:13 am as EEEE, hh-h MMM 'on' yy H	text	Thursday, 02-2 Oct on 32 2
+November 15, 1850 4:48:04 am as 'day' MMMM:'hour' yyyy	text	day November:hour 1850
+November 7, 2167 6:41:14 am as 'time' a-EEEE yy yy:EEE/dd	text	time AM-Saturday 67 67:Sat/07
+January 17, 2573 8:27:25 am as MM MMM-EEE/mm/HH:'the' EEE	text	01 Jan-Sun/27/08:the Sun
+February 17, 1777 11:35:55 am as MM-m-yy	text	02-35-77
+May 21, 1746 11:34:33 pm as 'at' yyyy 'on' yy-m	text	at 1746 on 46-34
+February 22, 2129 7:01:06 pm as 'at' MMM/MM	text	at Feb/02
+June 8, 2553 1:42:57 pm as H, ss, ss EEE:MM	text	13, 57, 57 Fri:06
+March 24, 2735 2:46:50 pm as EEE, d-mm:hh, dd/MM	text	Sun, 24-46:02, 24/03
+April 15, 1411 10:24:24 am as 'hour' MM EEEE:dd	text	hour 04 Monday:15
+May 31, 2736 4:13:29 pm as H-'hour' EEE/s:M-EEEE	text	16-hour Sun/29:5-Sunday
+July 27, 2703 10:18:44 pm as MMMM/EEE	text	July/Mon
+January 13, 2680 5:22:31 pm as s-'on' m:'at' MMMM MMM	text	31-on 22:at January Jan
+June 24, 2173 9:09:10 pm as MMMM a, HH, M-d	text	June PM, 21, 6-24
+April 12, 2509 12:24:15 pm as hh, yyyy:MM EEE:ss:'the' HH	text	12, 2509:04 Fri:15:the 12
+April 28, 1902 7:13:05 pm as s, mm-H yyyy, yy	text	5, 13-19 1902, 02
+October 1, 1882 5:17:55 am as dd-M:'at' ss-yyyy, MM	text	01-10:at 55-1882, 10
+April 18, 1592 4:53:01 pm as MM m, yy/M	text	04 53, 92/4
+April 11, 1369 9:13:57 am as HH:yy s:'of' hh/M:'hour' mm	text	09:69 57:of 09/4:hour 13
+October 7, 1177 12:36:47 pm as d/'on' M/HH	text	7/on 10/12
+December 13, 2470 11:43:17 am as 'of' hh HH	text	of 11 11
+October 25, 1609 5:20:16 pm as m hh-ss:d	text	20 05-16:25
+September 28, 2438 6:35:36 pm as HH-ss-MM-'hour' yy, yy/hh	text	18-36-09-hour 38, 38/06
+September 14, 2449 3:19:15 pm as h-a:MMMM-mm	text	3-PM:September-19
+November 1, 2708 2:05:21 pm as h EEE-'time' yyyy	text	2 Sun-time 2708
+May 12, 2828 1:03:37 am as h:MMM	text	1:May
+August 2, 2266 12:34:15 am as 'of' HH EEE, ss/mm	text	of 00 Thu, 15/34
+December 9, 1688 3:17:26 am as yyyy m:a hh, 'of' yyyy-EEEE	text	1688 17:AM 03, of 1688-Thursday
+March 28, 1364 6:22:51 am as m-d EEE/'time' MMMM:MMMM-EEEE	text	22-28 Wed/time March:March-Wednesday
+January 30, 1459 8:43:03 am as hh/yyyy, EEEE:HH:mm	text	08/1459, Sunday:08:43
+April 14, 1928 5:38:03 am as M/s:'day' d	text	4/3:day 14
+March 1, 1930 9:03:00 am as MMM, MMM-'time' dd, a	text	Mar, Mar-time 01, AM
+July 19, 1872 10:25:55 am as mm-EEEE/yy-'day' MM	text	25-Friday/72-day 07
+July 28, 1230 2:00:32 pm as EEEE-m, EEEE/dd	text	Sunday-0, Sunday/28
+September 30, 2797 2:21:03 am as 'day' hh, MM:s	text	day 02, 09:3
+April 13, 2192 9:12:09 pm as mm:m	text	12:12
+January 8, 2395 2:03:45 pm as a d-yyyy 'the' h, MM	text	PM 8-2395 the 2, 01
+July 17, 1132 4:13:15 am as s/EEEE:ss, MM:m	text	15/Sunday:15, 07:13
+July 15, 2718 11:16:47 pm as M-MM:M, a-s, EEEE	text	7-07:7, PM-47, Monday
+July 22, 2202 3:59:41 pm as dd, EEE	text	22, Thu
+April 25, 2226 12:15:32 am as H, yy, 'hour' mm-MM	text	0, 26, hour 15-04
+June 1, 1275 2:07:18 am as yyyy/yyyy a	text	1275/1275 AM
+September 12, 1294 8:26:43 am as H/yy-dd 'the' yy:H	text	8/94-12 the 94:8
+July 21, 2744 4:15:56 am as MM-MMM/dd-MM:H	text	07-Jul/21-07:4
+February 24, 2541 2:28:55 pm as 'time' HH/EEEE/'on' H, 'hour' mm, h	text	time 14/Friday/on 14, hour 28, 2
+November 30, 2678 2:23:02 pm as EEE h hh, dd	text	Sat 2 02, 30
+June 15, 1698 12:54:15 pm as m:hh-yy 'of' EEEE-EEE/d	text	54:12-98 of Sunday-Sun/15
+December 29, 2171 1:48:00 am as 'at' ss, MMMM	text	at 00, December
+June 23, 2662 6:44:13 am as ss-dd-EEEE	text	13-23-Monday
+March 2, 2358 3:43:58 pm as H, s-'hour' HH yy 'at' s, d	text	15, 58-hour 15 58 at 58, 2
+January 4, 1653 11:38:24 am as MM, yy-h	text	01, 53-11
+August 15, 2049 9:07:36 pm as 'of' yyyy-MMMM	text	of 2049-August
+October 5, 1200 6:29:31 am as MMM 'time' hh, MM-MMM	text	Oct time 06, 10-Oct
+June 8, 1726 11:01:51 pm as s-'of' MMMM, 'time' h-M	text	51-of June, time 11-6
+December 1, 2320 2:44:32 am as yy a, MMMM:'time' ss/d:MMMM	text	20 AM, December:time 32/1:December
+July 28, 1985 8:47:14 am as MM, ss h MMMM/'time' h	text	07, 14 8 July/time 8
+December 16, 1346 6:29:09 am as m/EEEE a/'the' ss	text	29/Friday AM/the 09
+April 25, 1574 5:52:28 pm as 'at' ss-ss:'the' MM, HH 'of' h:H	text	at 28-28:the 04, 17 of 5:17
+October 6, 1354 12:17:47 pm as MMMM 'the' a:EEE-d 'of' h/'the' EEE	text	October the PM:Sun-6 of 12/the Sun
+September 10, 2815 9:16:04 pm as H/EEE d, 'the' s-a	text	21/Thu 10, the 4-PM
+July 24, 1456 10:17:06 pm as a/MMMM dd:'the' hh-'at' dd-MM	text	PM/July 24:the 10-at 24-07
+December 21, 2450 4:44:11 am as d, EEE d:MMM, 'of' ss	text	21, Wed 21:Dec, of 11
+May 7, 1150 9:52:49 am as a:a/EEEE 'at' s:s	text	AM:AM/Sunday at 49:49
+August 10, 2281 2:24:14 am as MMMM-yy, 'on' MMM:d	text	August-81, on Aug:10
+July 8, 1468 9:43:28 am as EEEE:'day' dd	text	Wednesday:day 08
+October 7, 2438 7:52:19 pm as 'time' EEEE:'hour' EEE	text	time Thursday:hour Thu
+April 10, 2000 11:02:11 pm as EEEE/MMM	text	Monday/Apr
+November 11, 1308 11:57:06 pm as H-MMMM, h m	text	23-November, 11 57
+October 11, 2601 12:13:43 pm as 'the' H/yy/HH:H	text	the 12/01/12:12
+August 26, 2725 10:53:09 am as dd:'at' HH/HH-M, ss/MMMM	text	26:at 10/10-8, 09/August
+February 16, 1729 3:21:25 am as yyyy:MMM	text	1729:Feb
+October 14, 1839 1:26:29 pm as EEEE:h-h:ss/dd	text	Monday:1-1:29/14
+March 12, 2836 11:23:55 am as yyyy-mm ss, H/m, 'on' HH	text	2836-23 55, 11/23, on 11
+May 21, 2299 4:19:42 pm as m/'hour' hh-d, MMM:'day' dd	text	19/hour 04-21, May:day 21
+October 20, 1752 3:04:01 pm as yyyy-mm-dd/yyyy:EEE	text	1752-04-20/1752:Fri
+November 7, 2624 12:12:54 pm as hh/MMMM-a-mm	text	12/November-PM-12
+February 1, 1745 8:52:26 pm as MMMM-d/m	text	February-1/52
+November 27, 1542 6:28:52 am as 'of' H:MMM	text	of 6:Nov
+July 28, 2841 4:26:13 pm as 'on' EEE:d:MM-MMM	text	on Sun:28:07-Jul
+February 17, 1991 11:34:16 am as ss, yyyy, dd	text	16, 1991, 17
+December 26, 1458 7:42:23 pm as M:MMMM/M-MMMM/s	text	12:December/12-December/23
+April 6, 2588 1:57:28 am as EEEE:s, 'the' d	text	Sunday:28, the 6
+October 27, 1969 6:33:17 am as M-'on' EEEE/mm-m, H	text	10-on Monday/33-33, 6
+December 21, 2715 5:30:40 am as h:'on' h	text	5:on 5
+April 12, 1517 4:22:09 am as mm EEEE	text	22 Thursday
+May 19, 1365 7:41:15 pm as mm-yy:mm hh	text	41-65:41 07
+September 15, 2330 11:55:01 pm as s h, h, M hh-yyyy	text	1 11, 11, 9 11-2330
+May 16, 1327 4:08:27 pm as hh yyyy, a dd	text	04 1327, PM 16
+November 1, 1168 9:02:23 pm as 'hour' yy-'at' dd-h, 'the' m/hh, s	text	hour 68-at 01-9, the 2/09, 23
+December 6, 2206 3:53:24 am as yy, EEE/d:m	text	06, Sat/6:53
+August 31, 1227 5:27:56 am as h/'time' ss-H 'day' HH	text	5/time 56-5 day 05
+October 7, 1671 3:44:28 pm as hh:dd/mm-hh/'hour' a, 'at' M	text	03:07/44-03/hour PM, at 10
+October 6, 1442 6:34:58 pm as 'at' MM 'on' h, 'the' M, 'time' M-HH/mm	text	at 10 on 6, the 10, time 10-18/34
+June 4, 1322 2:28:55 pm as yyyy:hh:'time' H-'of' MMMM/yy-yyyy	text	1322:02:time 14-of June/22-1322
+January 28, 2896 11:56:35 pm as 'day' H, 'day' MMM:H:yy-HH	text	day 23, day Jan:23:96-23
+April 22, 2160 7:14:06 pm as H:M	text	19:4
+June 2, 1325 8:45:05 pm as mm HH dd	text	45 20 02
+October 2, 2620 12:55:24 pm as M, MMMM	text	10, October
+November 27, 2194 2:10:53 am as yyyy/h:dd, 'hour' MM-H MM	text	2194/2:27, hour 11-2 11
+December 17, 2294 7:48:43 am as d:s/'on' MMM, 'at' EEE dd, 'the' EEE	text	17:43/on Dec, at Mon 17, the Mon
+March 16, 2427 7:39:57 pm as MM-yy/M-MMMM/M:'on' H	text	03-27/3-March/3:on 19
+May 8, 2810 1:20:09 pm as yy, a:MM	text	10, PM:05
+January 23, 2305 12:32:21 am as s, 'day' EEEE hh	text	21, day Monday 12
+June 23, 2124 3:05:44 am as h:'hour' ss:s:H	text	3:hour 44:44:3
+February 23, 1148 9:10:20 am as EEE-M-ss, yy	text	Mon-2-20, 48
+November 20, 1649 4:22:17 pm as m, 'day' mm-EEEE m	text	22, day 22-Saturday 22
+January 30, 1369 9:25:36 am as 'at' a, a-H/EEE	text	at AM, AM-9/Mon
+February 8, 2713 11:07:36 am as MM-HH MMM	text	02-11 Feb
+February 7, 1436 1:26:01 am as d, HH:'on' dd/'on' EEE:mm	text	7, 01:on 07/on Sun:26
+March 22, 2234 8:22:44 am as a/m-'on' yy, 'day' HH	text	AM/22-on 34, day 08
+March 12, 1912 11:22:21 am as hh, MMMM MMM/'on' yy	text	11, March Mar/on 12
+April 18, 1275 3:03:23 am as 'of' MMM:'hour' MMMM:a:a/'on' m/'at' yy	text	of Apr:hour April:AM:AM/on 3/at 75
+May 27, 2137 6:50:23 pm as yyyy H, mm:mm/MMM	text	2137 18, 50:50/May
+September 30, 2872 10:01:54 am as EEE-mm/ss/MM EEE:yy	text	Fri-01/54/09 Fri:72
+April 28, 2305 5:39:34 am as 'of' yy/'day' d 'on' ss, 'at' MMMM/EEE	text	of 05/day 28 on 34, at April/Fri
+May 13, 1185 12:17:55 am as 'day' EEE yyyy-s	text	day Mon 1185-55
+November 17, 1203 9:51:34 pm as mm-MM	text	51-11
+March 16, 1648 6:46:36 am as M/a-dd dd	text	3/AM-16 16
+January 8, 1997 12:18:35 am as EEEE-d dd HH-MMM:H	text	Wednesday-8 08 00-Jan:0
+December 12, 2021 10:51:46 am as hh:'on' hh	text	10:on 10
+October 10, 2553 2:46:44 am as 'time' M yyyy mm/yyyy	text	time 10 2553 46/2553
+January 28, 2342 6:02:04 pm as 'of' dd EEEE/d	text	of 28 Wednesday/28
+October 17, 1187 7:34:12 am as MMMM:H:HH, yy MMM s	text	October:7:07, 87 Oct 12
+March 7, 1560 5:30:26 pm as yyyy-MMMM	text	1560-March
+April 22, 1919 1:49:25 pm as MMM-yy/'day' yyyy h/h	text	Apr-19/day 1919 1/1
+December 11, 2660 6:59:18 pm as h m, 'hour' MMM:'on' EEEE-d	text	6 59, hour Dec:on Tuesday-11
+February 20, 1187 11:58:16 pm as EEEE/dd H/'day' H	text	Friday/20 23/day 23
+January 26, 2637 7:20:43 pm as 'at' MMM MMMM/HH-MMM	text	at Jan January/19-Jan
+September 13, 1650 9:44:07 pm as h yyyy MMM/H/hh, dd	text	9 1650 Sep/21/09, 13
+December 24, 2002 1:27:49 pm as MMM h, d-'on' m-M/EEEE	text	Dec 1, 24-on 27-12/Tuesday
+December 15, 1754 6:26:56 am as dd-H-'the' mm/'of' dd:yy dd	text	15-6-the 26/of 15:54 15
+January 10, 2770 1:23:56 am as yyyy 'the' EEE/m d	text	2770 the Sat/23 10
+August 18, 1906 2:47:19 am as 'at' yy/EEEE:MMMM, a, s	text	at 06/Saturday:August, AM, 19
+December 16, 1499 6:02:39 am as HH/EEEE:hh	text	06/Saturday:06
+June 21, 2522 6:34:08 pm as s, hh, 'the' yyyy	text	8, 06, the 2522
+March 28, 2447 9:25:17 pm as a 'on' dd/'hour' MMMM/yyyy	text	PM on 28/hour March/2447
+November 14, 2370 11:28:47 am as h-M:H	text	11-11:11
+October 20, 2073 2:42:20 pm as hh, d/mm	text	02, 20/42
+April 24, 2495 4:23:06 pm as hh:h yyyy/dd:d-EEEE	text	04:4 2495/24:24-Sunday
+January 15, 1582 6:23:59 pm as m-'on' ss/ss/'day' HH d/dd	text	23-on 59/59/day 18 15/15
+August 23, 1588 2:51:56 am as yyyy:'on' yy 'day' yyyy	text	1588:on 88 day 1588
+September 7, 2621 10:21:18 pm as 'of' a-d, MM, d	text	of PM-7, 09, 7
+March 17, 2184 9:57:28 pm as mm:HH-s-'at' EEEE	text	57:21-28-at Wednesday
+August 13, 2886 5:37:59 am as EEEE:d:dd-dd, HH	text	Tuesday:13:13-13, 05
+April 13, 2667 6:28:22 am as s:mm, a/hh	text	22:28, AM/06
+March 10, 1106 10:06:31 am as a, 'hour' m:H, 'time' h-MMMM:'at' yyyy	text	AM, hour 6:10, time 10-March:at 1106
+August 19, 2506 3:54:58 am as M/EEEE	text	8/Thursday
+May 7, 1652 3:52:58 pm as H 'of' mm, dd/dd:H/hh	text	15 of 52, 07/07:15/03
+April 17, 1224 5:56:58 pm as m, 'of' MM:EEEE	text	56, of 04:Wednesday
+January 14, 2474 7:49:12 am as MM:mm	text	01:49
+March 6, 1640 9:33:50 pm as EEE/MM:H EEEE	text	Tue/03:21 Tuesday
+December 26, 2443 4:51:23 pm as H/ss-s, EEE	text	16/23-23, Sat
+August 7, 1525 10:07:11 pm as h-'at' m 'the' MMMM-yyyy	text	10-at 7 the August-1525
+March 28, 1877 1:25:23 pm as MMMM/MMM, 'day' yy	text	March/Mar, day 77
+February 16, 1149 8:58:10 pm as ss-a/'on' MMMM, MMMM mm MM	text	10-PM/on February, February 58 02
+November 19, 2281 10:23:38 pm as 'day' EEE 'on' yy	text	day Sat on 81
+September 16, 1621 7:39:41 am as yyyy:EEE/mm	text	1621:Thu/39
+May 13, 1132 9:40:03 pm as dd:'time' yy/'day' h:MMM:m 'day' M	text	13:time 32/day 9:May:40 day 5
+October 3, 1499 6:00:17 am as EEE:EEEE, m/m, MM	text	Tue:Tuesday, 0/0, 10
+November 13, 2743 5:39:58 pm as MMM 'the' dd, dd	text	Nov the 13, 13
+June 12, 2009 12:59:07 pm as MMMM h MM	text	June 12 06
+June 3, 1921 2:51:13 am as MMM-d MMM	text	Jun-3 Jun
+August 18, 2096 1:50:17 pm as MMM, m, EEEE	text	Aug, 50, Saturday
+June 9, 2429 11:41:52 am as h-hh	text	11-11
+November 9, 2684 10:41:32 pm as hh, 'of' h-d	text	10, of 10-9
+November 7, 2309 1:00:53 pm as EEEE/hh/dd	text	Sunday/01/07
+December 4, 1753 1:51:56 pm as 'time' H yy/'day' h	text	time 13 53/day 1
+June 23, 2669 4:12:12 am as yyyy-'the' EEEE, d	text	2669-the Wednesday, 23
+May 3, 2195 7:42:50 am as yy/h, MM MMMM	text	95/7, 05 May
+March 14, 1879 8:06:45 pm as MMM-HH EEEE-dd, HH	text	Mar-20 Friday-14, 20
+March 27, 1738 11:32:25 pm as MMM m, m/EEEE:M	text	Mar 32, 32/Thursday:3
+November 4, 2514 8:37:41 am as 'of' EEEE, a-d	text	of Sunday, AM-4
+December 4, 1151 4:46:23 am as EEE EEEE	text	Tue Tuesday
+February 23, 2237 11:58:15 am as mm MM hh/H 'of' hh s	text	58 02 11/11 of 11 15
+March 6, 1623 4:01:25 pm as MMM-H 'of' MMMM, m/d-s	text	Mar-16 of March, 1/6-25
+November 13, 2522 7:25:01 pm as d M, yyyy:EEE, yyyy	text	13 11, 2522:Fri, 2522
+January 30, 1462 6:00:51 am as 'day' yyyy, M	text	day 1462, 1
+October 6, 1116 2:40:06 pm as ss, ss/MMMM	text	06, 06/October
+November 30, 2528 9:56:00 pm as h/MM:H EEE	text	9/11:21 Tue
+September 9, 2846 1:55:25 am as dd mm-'on' yyyy s, hh HH	text	09 55-on 2846 25, 01 01
+October 7, 2166 10:03:13 am as yyyy-h-ss, 'at' mm-EEE HH	text	2166-10-13, at 03-Tue 10
+September 15, 2155 4:38:23 am as 'at' M-'the' MM:ss	text	at 9-the 09:23
+November 17, 1913 9:49:33 pm as M-H s 'day' MM-ss	text	11-21 33 day 11-33
+April 23, 2595 11:57:31 am as dd/'at' M H/dd:yyyy	text	23/at 4 11/23:2595
+June 20, 2400 7:24:50 am as 'at' MM a 'of' H/H-m	text	at 06 AM of 7/7-24
+August 5, 2555 4:20:59 am as HH/m 'of' yy-m:ss	text	04/20 of 55-20:59
+February 19, 1412 10:32:18 pm as 'day' h:MM	text	day 10:02
+September 29, 1301 1:05:10 pm as EEE-'time' m, d:HH, EEEE EEE	text	Thu-time 5, 29:13, Thursday Thu
+April 20, 2424 11:51:51 am as 'at' m:MMMM M-H:H-'time' s	text	at 51:April 4-11:11-time 51
+February 21, 1702 5:33:06 pm as s d:d	text	6 21:21
+October 15, 2125 3:22:46 am as yy, s	text	25, 46
+December 1, 1428 7:57:57 am as d MMMM/ss-MMM, MM:MMMM	text	1 December/57-Dec, 12:December
+January 2, 1915 3:39:58 am as EEEE/s, yy:'of' HH/m-'hour' yy	text	Saturday/58, 15:of 03/39-hour 15
+November 17, 1498 10:08:55 am as HH-m/'the' h-m/M s	text	10-8/the 10-8/11 55
+February 7, 1945 4:08:40 pm as MMM EEE hh	text	Feb Wed 04
+April 15, 2202 5:11:57 pm as 'on' yyyy-M	text	on 2202-4
+February 6, 2129 9:40:36 am as 'time' M-MM:'at' EEE/a	text	time 2-02:at Sun/AM
+March 6, 2617 1:38:52 am as yy MM	text	17 03
+November 12, 2429 3:26:16 pm as MM, EEEE mm s	text	11, Monday 26 16
+April 19, 1598 10:18:19 am as yyyy, MMMM-d	text	1598, April-19
+May 1, 1904 4:05:35 pm as ss, 'at' EEEE-mm	text	35, at Sunday-05
+March 3, 1378 9:06:11 am as h 'the' MM-MMM-'the' ss	text	9 the 03-Mar-the 11
+May 25, 2333 11:53:53 am as M-hh, EEEE/hh	text	5-11, Thursday/11
+August 17, 1915 5:43:10 am as EEEE:mm 'time' EEE, HH, hh EEE	text	Tuesday:43 time Tue, 05, 05 Tue
+April 13, 1538 4:29:44 pm as M:H yyyy	text	4:16 1538
+November 1, 1378 3:21:15 pm as HH/'time' dd, dd m	text	15/time 01, 01 21
+September 22, 1860 10:19:36 am as h/'the' d, s:M	text	10/the 22, 36:9
+April 17, 2180 2:16:57 pm as s:mm-s, yyyy	text	57:16-57, 2180
+March 8, 2688 1:28:17 am as dd, MMMM, ss	text	08, March, 17
+June 26, 2645 2:25:15 pm as 'time' s:'time' ss-MM-yy, a	text	time 15:time 15-06-45, PM
+August 25, 1934 2:16:59 am as 'of' yy M:MM, 'the' M 'of' EEE	text	of 34 8:08, the 8 of Sat
+August 22, 2070 4:34:36 pm as 'time' h:d 'of' dd:m	text	time 4:22 of 22:34
+September 29, 1684 12:31:07 pm as 'of' h mm/MM-MMM	text	of 12 31/09-Sep
+September 1, 2520 11:41:56 am as a/MMM	text	AM/Sep
+February 4, 2163 8:31:39 pm as dd, 'time' H	text	04, time 20
+April 12, 2489 11:42:32 am as mm HH:MMMM h, M-H	text	42 11:April 11, 4-11
+June 18, 1859 12:08:16 am as s, 'of' MM	text	16, of 06
+February 23, 1261 2:11:24 am as 'day' H ss HH	text	day 2 24 02
+February 4, 2592 7:00:18 am as s:dd, s EEEE HH	text	18:04, 18 Saturday 07
+May 18, 1329 8:44:21 pm as EEEE:M, MMM/M:MM	text	Wednesday:5, May/5:05
+January 2, 2012 8:10:26 am as yyyy, hh:'at' MMM	text	2012, 08:at Jan
+October 2, 2228 12:53:38 am as 'on' d/MMMM:'at' H-M	text	on 2/October:at 0-10
+August 29, 2880 9:28:37 am as s s-'of' MMMM-a, hh	text	37 37-of August-AM, 09
+September 2, 1684 4:41:41 am as dd, ss/'at' mm	text	02, 41/at 41
+August 12, 1896 4:30:11 am as H, HH-hh	text	4, 04-04
+October 6, 1608 2:45:52 am as M, 'at' MMM EEEE 'the' MMMM, MM EEEE	text	10, at Oct Monday the October, 10 Monday
+January 27, 2698 7:40:57 am as EEEE EEEE/MMM:EEEE/dd	text	Thursday Thursday/Jan:Thursday/27
+June 29, 1652 8:36:17 pm as M, 'on' HH/s, dd	text	6, on 20/17, 29
+March 18, 2332 9:33:26 am as hh/a, mm a d	text	09/AM, 33 AM 18
+October 25, 1997 9:57:51 am as hh m/yyyy, a:s, EEEE	text	09 57/1997, AM:51, Saturday
+May 15, 2203 2:21:05 pm as hh:s:h:MM:HH	text	02:5:2:05:14
+February 9, 1511 12:48:05 am as s, a 'time' yyyy:MMMM MMM	text	5, AM time 1511:February Feb
+December 25, 1508 6:12:52 pm as mm/s-MM:s-MM/dd	text	12/52-12:52-12/25
+September 3, 1759 12:21:26 pm as m dd/dd-EEE	text	21 03/03-Mon
+September 22, 1563 10:36:29 pm as 'time' H:dd, dd-H:MMMM:MM	text	time 22:22, 22-22:September:09
+February 18, 1849 4:13:01 pm as M ss/MM	text	2 01/02
+September 17, 2015 1:23:51 am as 'on' EEE 'time' a-yy/h mm	text	on Thu time AM-15/1 23
+May 15, 1131 8:53:09 am as HH:h-'day' m:MMMM-yyyy	text	08:8-day 53:May-1131
+February 23, 1954 12:41:07 am as MMM:hh-a, yyyy	text	Feb:12-AM, 1954
+June 20, 2162 4:53:44 pm as m, MM:HH	text	53, 06:16
+August 8, 1294 11:00:39 am as s s, hh:hh	text	39 39, 11:11
+October 28, 2111 8:43:14 pm as m, dd EEE:'at' EEE-H	text	43, 28 Wed:at Wed-20
+July 29, 2501 6:58:20 am as dd/yyyy:MMMM	text	29/2501:July
+May 20, 1500 5:11:36 am as hh:hh/hh/d/yy	text	05:05/05/20/00
+March 30, 2636 5:41:55 am as 'day' h:hh, yyyy:ss-yyyy	text	day 5:05, 2636:55-2636
+October 2, 1468 11:58:59 am as h:MM MM	text	11:10 10
+February 4, 2083 8:03:44 am as MM, dd a/EEEE-H	text	02, 04 AM/Thursday-8
+March 17, 1451 11:35:19 pm as MMMM hh	text	March 11
+December 21, 1692 5:19:01 pm as s MMMM-'at' mm	text	1 December-at 19
+September 11, 2844 5:19:35 am as EEEE, 'on' EEE	text	Sunday, on Sun
+August 25, 2324 6:42:29 pm as m, yyyy 'at' h/yy	text	42, 2324 at 6/24
+June 24, 1765 7:47:06 pm as EEEE:m	text	Monday:47
+January 14, 2086 7:01:41 am as dd M h/yy, M	text	14 1 7/86, 1
+February 8, 2793 8:19:21 am as 'at' EEE:yy-d 'at' a	text	at Mon:93-8 at AM
+January 31, 2205 4:41:31 am as mm:M/MMMM:'on' yyyy, h	text	41:1/January:on 2205, 4
+June 12, 1587 6:07:33 am as 'day' MMM, hh	text	day Jun, 06
+May 28, 2521 8:50:58 pm as HH, MMM-HH, 'of' M	text	20, May-20, of 5
+September 8, 1191 5:19:21 pm as 'hour' d EEEE	text	hour 8 Sunday
+October 30, 2135 11:08:42 am as m:yy	text	8:35
+December 9, 2802 5:53:21 am as MMMM-EEEE/MMM s/a:'the' MMM	text	December-Monday/Dec 21/AM:the Dec
+October 3, 2550 4:21:13 am as H/EEE, M	text	4/Sat, 10
+August 20, 1324 6:31:15 am as s:d-MMMM H 'day' EEEE, EEEE	text	15:20-August 6 day Sunday, Sunday
+March 19, 1232 12:13:31 pm as 'time' EEE/a s:'of' hh/M, 'day' a	text	time Fri/PM 31:of 12/3, day PM
+May 25, 2518 1:32:11 am as MM-d, 'of' m:'hour' d, H	text	05-25, of 32:hour 25, 1
+May 6, 2005 2:40:16 pm as M EEEE	text	5 Friday
+March 31, 1485 2:56:29 pm as 'on' d:MMM, hh-HH:HH-EEE	text	on 31:Mar, 02-14:14-Tue
+February 26, 1587 4:36:32 am as hh/'on' MMMM-HH:h 'on' H	text	04/on February-04:4 on 4
+July 29, 1186 6:04:24 am as EEE, mm:EEE/yy, dd dd	text	Tue, 04:Tue/86, 29 29
+November 24, 1154 9:59:30 am as yyyy:mm EEE:EEE-HH	text	1154:59 Wed:Wed-09
+August 16, 2229 4:52:42 pm as a:'day' yyyy:dd/EEEE/M 'the' h	text	PM:day 2229:16/Sunday/8 the 4
+August 18, 2158 5:21:39 am as H-yyyy, H, HH:'the' yyyy	text	5-2158, 5, 05:the 2158
+September 25, 2421 12:50:50 am as HH-MMMM-M/MM	text	00-September-9/09
+October 1, 1782 10:32:07 am as 'day' d, h/H EEE	text	day 1, 10/10 Tue
+March 22, 2043 7:36:29 pm as M:m:m:EEEE:'time' dd	text	3:36:36:Sunday:time 22
+May 16, 1743 1:08:17 pm as dd/'time' m/EEEE 'the' m	text	16/time 8/Thursday the 8
+March 22, 2531 12:29:19 am as EEE-a-s M, s	text	Thu-AM-19 3, 19
+December 7, 1467 12:33:51 am as 'on' ss-H:HH	text	on 51-0:00
+October 18, 1217 10:43:50 pm as d 'of' EEE-HH:m 'day' EEE	text	18 of Wed-22:43 day Wed
+May 14, 2021 6:34:37 am as 'day' M/M:'on' d/ss, ss	text	day 5/5:on 14/37, 37
+May 12, 1801 2:02:58 am as ss-'of' yyyy/mm, EEE-mm, MMMM	text	58-of 1801/02, Tue-02, May
+March 23, 1323 8:19:54 pm as HH 'time' mm-'of' hh:hh/m/mm	text	20 time 19-of 08:08/19/19
+October 24, 1224 11:00:46 am as 'on' MMMM/dd 'day' yyyy/d ss, HH	text	on October/24 day 1224/24 46, 11
+May 31, 2163 12:18:42 am as H 'hour' dd	text	0 hour 31
+November 27, 1493 4:10:02 pm as mm, yyyy-EEEE/H/h	text	10, 1493-Monday/16/4
+March 13, 1565 8:47:21 pm as 'hour' dd, 'of' M	text	hour 13, of 3
+February 20, 1178 2:05:26 pm as M:MM, hh H	text	2:02, 02 14
+October 14, 1310 1:48:34 am as 'hour' a/s:ss:ss yy 'the' h	text	hour AM/34:34:34 10 the 1
+November 12, 2010 7:40:47 pm as hh 'of' mm	text	07 of 40
+September 25, 2237 3:04:58 pm as 'on' mm:'at' s:M/yyyy/a/EEE	text	on 04:at 58:9/2237/PM/Mon
+October 26, 2502 11:39:44 pm as s:EEEE yyyy	text	44:Thursday 2502
+December 29, 2476 7:28:53 am as EEE/'of' MMM, ss:M, yy/H	text	Tue/of Dec, 53:12, 76/7
+April 23, 1446 5:26:50 am as 'at' m, 'on' MMMM	text	at 26, on April
+August 19, 2124 11:12:22 pm as h, MMMM	text	11, August
+April 3, 1314 1:17:58 am as yy-'hour' h	text	14-hour 1
+February 4, 1374 1:45:28 am as a:s, MM-h:h	text	AM:28, 02-1:1
+February 9, 2156 1:07:08 am as MM mm-M, s MM yy	text	02 07-2, 8 02 56
+December 24, 1928 12:59:31 pm as yy/MMM, MMM:yy-EEEE, h	text	28/Dec, Dec:28-Monday, 12
+June 20, 1805 9:13:09 am as d/M, d-yy ss	text	20/6, 20-05 09
+April 23, 1105 3:06:15 pm as EEEE/h/hh/H:ss	text	Sunday/3/03/15:15
+June 13, 1168 3:29:58 pm as 'hour' yyyy 'at' a/MMMM/hh-a	text	hour 1168 at PM/June/03-PM
+January 30, 1638 5:45:50 am as H/EEE a	text	5/Sat AM
+January 15, 1663 1:17:47 am as 'time' yyyy, yy	text	time 1663, 63
+May 30, 1780 5:56:33 am as dd MMMM/m, hh, 'hour' MMM/HH	text	30 May/56, 05, hour May/05
+April 21, 1780 4:16:51 pm as H, yyyy	text	16, 1780
+September 22, 2382 3:42:07 pm as HH-h, 'of' m/'of' a	text	15-3, of 42/of PM
+April 10, 2873 11:27:22 am as dd, mm/EEEE/H/'time' M:MMM	text	10, 27/Monday/11/time 4:Apr
+September 30, 1336 6:14:07 pm as ss 'the' yy 'at' M-HH/h	text	07 the 36 at 9-18/6
+December 29, 2372 11:38:51 am as 'on' MMM M/hh	text	on Dec 12/11
+April 11, 1869 11:52:49 pm as MM m	text	04 52
+May 9, 1875 4:36:16 am as 'of' yyyy h	text	of 1875 4
+July 26, 1859 4:59:49 am as yyyy/MM:MMMM:s hh	text	1859/07:July:49 04
+June 13, 1796 4:53:17 pm as MMMM/EEEE-hh:a, EEEE s	text	June/Monday-04:PM, Monday 17
+August 10, 1399 9:49:01 am as MMMM, m-'time' a/a/h:MMM	text	August, 49-time AM/AM/9:Aug
+August 16, 1699 3:25:34 am as HH:mm-a-'time' m:'day' MM/yy	text	03:25-AM-time 25:day 08/99
+January 22, 2483 1:20:31 am as 'time' yy:dd, a:d, m yyyy	text	time 83:22, AM:22, 20 2483
+March 15, 1778 8:11:29 pm as 'of' m, d EEEE-hh	text	of 11, 15 Sunday-08
+July 27, 1963 5:51:36 am as 'of' EEE/MMM/'time' yy	text	of Sat/Jul/time 63
+September 12, 1537 8:34:56 pm as a dd/MMM	text	PM 12/Sep
+April 22, 2520 3:16:36 am as HH:MMMM-EEE, h d	text	03:April-Mon, 3 22
+November 5, 2751 8:12:49 am as yyyy HH-h-yyyy-H	text	2751 08-8-2751-8
+July 5, 2034 5:43:50 am as m/MMM	text	43/Jul
+February 13, 2701 11:35:52 am as 'day' d-EEE:h:s:dd, EEEE	text	day 13-Wed:11:52:13, Wednesday
+September 21, 1848 5:02:46 pm as dd:dd	text	21:21
+July 25, 2578 1:57:40 pm as dd, ss:h, EEE:H	text	25, 40:1, Sat:13
+January 8, 2315 9:10:32 am as EEEE:yyyy, MMM yy	text	Friday:2315, Jan 15
+June 23, 1949 8:38:17 am as s m 'the' m dd:MMMM	text	17 38 the 38 23:June
+September 7, 2610 7:12:44 pm as MMM/M-H	text	Sep/9-19
+December 7, 1100 7:58:20 pm as MMM/hh-yyyy d/mm H	text	Dec/07-1100 7/58 19
+October 30, 1200 9:20:30 am as MMMM ss	text	October 30
+April 10, 1695 6:32:14 am as m:EEE/MM:EEE	text	32:Sun/04:Sun
+August 11, 2257 4:41:26 pm as 'time' dd, hh	text	time 11, 04
+April 26, 2835 3:38:37 pm as mm-dd-'of' h, s	text	38-26-of 3, 37
+October 17, 1771 12:10:33 pm as EEEE, hh, MMM-'day' EEE, 'time' ss-mm	text	Thursday, 12, Oct-day Thu, time 33-10
+June 20, 2296 6:49:13 pm as ss:d/m	text	13:20/49
+February 6, 1515 5:07:33 pm as 'of' s, h:MMM:MM:yyyy	text	of 33, 5:Feb:02:1515
+April 22, 2566 12:23:23 pm as 'the' yy, mm-M	text	the 66, 23-4
+August 8, 1157 5:54:01 pm as hh/d, ss, 'the' h-MM	text	05/8, 01, the 5-08
+August 1, 1953 12:25:18 am as hh:'of' h/mm, M, 'day' ss	text	12:of 12/25, 8, day 18
+December 19, 1481 5:02:58 am as 'on' ss HH, ss:h:MMMM	text	on 58 05, 58:5:December
+October 26, 2856 2:20:52 am as MM, 'time' a, MMM	text	10, time AM, Oct
+April 26, 2520 5:33:43 am as EEE/mm/ss, HH	text	Fri/33/43, 05
+September 26, 2090 3:40:36 pm as EEE, 'the' ss	text	Tue, the 36
+June 23, 1102 4:18:01 am as d H-M-m, EEE M	text	23 4-6-18, Mon 6
+November 1, 2209 4:35:50 am as s/yyyy-'hour' yy:hh-'at' M-HH	text	50/2209-hour 09:04-at 11-04
+March 24, 1738 12:45:50 am as 'on' H:EEEE	text	on 0:Monday
+January 31, 1982 12:52:12 pm as MMM-'at' yy:dd/EEEE-yyyy-HH	text	Jan-at 82:31/Sunday-1982-12
+October 22, 2882 3:45:59 am as MMMM-h	text	October-3
+February 8, 2628 3:50:38 pm as HH, 'of' m	text	15, of 50
+December 29, 1525 5:21:36 am as MM-MMMM	text	12-December
+June 21, 2066 7:55:09 am as EEEE:dd-'of' yyyy-yyyy:hh	text	Monday:21-of 2066-2066:07
+July 8, 1714 6:44:46 pm as yyyy, 'time' a, 'time' EEEE/H, M/'hour' H	text	1714, time PM, time Sunday/18, 7/hour 18
+March 1, 2010 10:04:58 am as M:dd/'on' hh/'hour' EEE, MMM	text	3:01/on 10/hour Mon, Mar
+June 21, 2397 3:41:04 pm as hh, EEE	text	03, Sat
+January 22, 2587 12:49:48 am as h, M-yyyy ss, EEEE dd	text	12, 1-2587 48, Monday 22
+May 24, 2037 11:57:48 am as MMM yyyy-MMMM, EEE	text	May 2037-May, Sun
+March 27, 1497 11:32:52 pm as EEEE/hh	text	Saturday/11
+August 19, 2850 9:46:44 am as yy-M	text	50-8
+November 19, 2325 11:17:06 pm as HH-MMMM-EEEE a	text	23-November-Thursday PM
+January 7, 1272 12:54:34 pm as EEEE-m:mm, yy-HH:EEE	text	Thursday-54:54, 72-12:Thu
+March 23, 1877 8:56:53 pm as MMM/'day' s/H-'the' ss:EEEE, yyyy	text	Mar/day 53/20-the 53:Friday, 1877
+January 21, 1219 4:29:15 am as m, MM	text	29, 01
+September 1, 1705 3:33:58 am as 'time' H:mm	text	time 3:33
+January 16, 2137 11:13:02 am as H 'on' yyyy:yyyy/yy	text	11 on 2137:2137/37
+March 15, 1366 10:20:57 pm as 'of' dd:'time' yy:mm	text	of 15:time 66:20
+July 7, 2375 1:36:21 am as yy:'of' a	text	75:of AM
+October 30, 1521 6:33:59 am as H/HH/m	text	6/06/33
+August 23, 1367 3:52:38 am as MM s/dd, m, a	text	08 38/23, 52, AM
+April 6, 1499 4:38:56 pm as h:d, d/m-d, d	text	4:6, 6/38-6, 6
+June 17, 2470 8:59:53 pm as yy MMMM M	text	70 June 6
+April 7, 2684 5:58:59 am as mm 'day' M, H:EEE	text	58 day 4, 5:Mon
+October 18, 2368 10:44:54 pm as yy-mm/'of' EEE	text	68-44/of Fri
+July 31, 2875 2:15:50 pm as dd-a/'time' H dd	text	31-PM/time 14 31
+March 12, 2318 8:31:02 am as dd:s-MMMM dd	text	12:2-March 12
+April 22, 2158 10:43:19 am as h:h, s/hh, a	text	10:10, 19/10, AM
+December 13, 1481 8:32:58 am as EEEE:MM 'on' yyyy-EEEE, 'hour' MMM	text	Tuesday:12 on 1481-Tuesday, hour Dec
+August 28, 2517 4:01:02 pm as 'the' EEE, m:'day' M, M	text	the Sat, 1:day 8, 8
+February 22, 1787 7:33:25 am as EEEE/hh:MMMM	text	Thursday/07:February
+February 10, 2427 2:22:30 pm as m:EEEE, m h	text	22:Wednesday, 22 2
+February 3, 1790 4:37:52 am as HH/EEEE HH-hh:'the' dd/d	text	04/Wednesday 04-04:the 03/3
+September 8, 1168 8:29:01 pm as 'hour' MMM/mm EEE:yyyy	text	hour Sep/29 Sun:1168
+August 13, 1594 5:47:38 pm as M, MMMM mm, s	text	8, August 47, 38
+November 24, 2569 6:05:57 pm as MMM, 'hour' mm:yy:MMMM HH	text	Nov, hour 05:69:November 18
+December 6, 2613 8:17:28 am as mm-h/MMMM-ss, 'time' a	text	17-8/December-28, time AM
+January 17, 2547 9:25:34 am as yyyy-yyyy	text	2547-2547
+December 11, 1778 1:28:18 pm as mm-'the' hh	text	28-the 01
+October 31, 2425 6:57:36 pm as mm:EEEE HH/h:m-yyyy	text	57:Friday 18/6:57-2425
+July 17, 2152 3:50:37 pm as yyyy, M-h MM/EEEE/ss	text	2152, 7-3 07/Monday/37
+July 7, 1893 2:20:54 am as s/d:MMM	text	54/7:Jul
+May 9, 2824 11:56:11 pm as HH:MM:a-H	text	23:05:PM-23
+December 29, 1866 12:16:16 pm as H, MMM, EEEE	text	12, Dec, Saturday
+August 29, 2838 7:52:33 am as 'at' HH:mm, yy	text	at 07:52, 38
+July 20, 2114 7:02:27 am as s:'hour' mm	text	27:hour 02
+March 4, 2099 6:20:57 pm as dd ss-MMM, EEEE 'day' hh-a	text	04 57-Mar, Wednesday day 06-PM
+June 16, 2753 11:48:02 pm as MMMM HH, mm	text	June 23, 48
+November 26, 2316 2:01:54 pm as 'time' h/a, HH/d	text	time 2/PM, 14/26
+June 13, 1667 3:48:59 am as MMM-HH s	text	Jun-03 59
+March 29, 2305 11:20:20 pm as a 'at' yyyy-'on' HH	text	PM at 2305-on 23
+October 14, 2217 4:30:03 am as M-'time' MM/m, MM	text	10-time 10/30, 10
+October 19, 2874 5:32:49 pm as h:yyyy-m	text	5:2874-32
+July 19, 1615 5:36:15 am as 'of' hh yy, hh, h	text	of 05 15, 05, 5
+April 14, 1214 2:38:32 pm as EEEE/'on' EEE/'on' ss-mm:hh	text	Monday/on Mon/on 32-38:02
+August 29, 2057 2:29:42 pm as ss, HH/s	text	42, 14/42
+August 24, 1855 9:46:05 am as MMMM 'day' yyyy-h	text	August day 1855-9
+December 6, 1998 5:30:18 am as 'the' hh m-MM-hh-MMMM-M	text	the 05 30-12-05-December-12
+October 19, 2743 2:58:31 am as 'hour' M/d:mm/M	text	hour 10/19:58/10
+August 15, 2138 3:31:24 pm as H/MMMM	text	15/August
+December 19, 1251 10:43:40 pm as 'hour' d, a-d, MMM yy:ss	text	hour 19, PM-19, Dec 51:40
+July 6, 1495 5:45:55 am as EEE/'the' m-mm/yyyy-ss 'at' HH	text	Sat/the 45-45/1495-55 at 05
+July 18, 1255 12:13:10 pm as 'at' mm-'the' MMMM-yyyy, mm, 'day' dd:EEEE	text	at 13-the July-1255, 13, day 18:Sunday
+August 21, 2127 3:39:41 pm as HH/s-EEEE	text	15/41-Thursday
+May 15, 2446 7:26:03 pm as 'time' h-MMM:EEEE:d, ss	text	time 7-May:Tuesday:15, 03
+April 9, 2866 2:05:04 am as 'on' h:'of' m:mm:yy/HH	text	on 2:of 5:05:66/02
+November 21, 2110 12:01:32 pm as d, ss-HH:'at' hh:MM 'the' m	text	21, 32-12:at 12:11 the 1
+April 9, 1133 2:22:32 pm as yy MM h	text	33 04 2
+October 3, 1203 3:14:54 pm as yy-d, 'at' MMM	text	03-3, at Oct
+March 26, 2643 8:47:21 am as H, s/h-HH	text	8, 21/8-08
+April 8, 2539 4:45:35 pm as EEE/dd a	text	Wed/08 PM
+November 18, 2332 2:24:03 pm as EEEE-H-ss	text	Friday-14-03
+June 25, 2401 6:14:10 am as 'of' EEEE, MMM/MMM	text	of Monday, Jun/Jun
+August 4, 2401 4:10:08 pm as MMM, yy:a:'at' MMM	text	Aug, 01:PM:at Aug
+August 17, 1507 2:59:28 pm as s/'on' yy s	text	28/on 07 28
 next Monday	text	June 17
 this Monday	text	June 17
 last Monday	text	June 10
