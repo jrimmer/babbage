@@ -182,6 +182,7 @@ pub fn report(v: &SheetView) -> Value {
         "scale": layout.map(|l| l.scale),
         "text_x": layout.map(|l| f32::from(l.text_x)),
         "answer_x": layout.map(|l| f32::from(l.answer_x)),
+        "answer_w": layout.map(|l| f32::from(l.answer_w)),
         "window": layout.map(|l| json!({
             "x": f32::from(l.bounds.origin.x), "y": f32::from(l.bounds.origin.y),
             "w": f32::from(l.bounds.size.width), "h": f32::from(l.bounds.size.height)})),

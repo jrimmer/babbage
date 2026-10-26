@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use babbage_store::{Autosaver, SheetBook, SheetId, SheetInfo};
 use gpui::{
-    App, Bounds, ClipboardItem, Context, Entity, EntityInputHandler, FocusHandle, Focusable,
-    FontWeight, Hsla, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    Pixels, Point, ScrollWheelEvent, ShapedLine, SharedString, Size, TextRun, UTF16Selection,
-    UnderlineStyle, Window, div, point, prelude::*, px, size,
+    App, Bounds, ClipboardItem, Context, EntityInputHandler, FocusHandle, Focusable, FontWeight,
+    Hsla, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point,
+    ScrollWheelEvent, ShapedLine, SharedString, TextRun, UTF16Selection, UnderlineStyle, Window,
+    div, point, prelude::*, px, size,
 };
 
 use crate::computed::{Answer, Computed, compute};
@@ -17,11 +17,10 @@ use crate::syntax::{Class, Span};
 use crate::theme::Colors;
 use crate::timefmt::describe_time;
 
-pub const ROW_H: f32 = 32.;
-pub const FONT_PX: f32 = 19.;
+pub const ROW_H: f32 = 36.;
+pub const FONT_PX: f32 = 21.;
 pub const GUTTER_W: f32 = 64.;
 pub const TOP_PAD: f32 = 22.;
-const TEXT_PAD: f32 = 4.;
 const SIDEBAR_W: f32 = 250.;
 const ANSWER_MIN_W: f32 = 300.;
 /// How long a pause in typing is before the sheet is written.
@@ -92,10 +91,6 @@ impl Focusable for SheetView {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus.clone()
     }
-}
-
-fn utf16_len(s: &str) -> usize {
-    s.chars().map(char::len_utf16).sum()
 }
 
 impl SheetView {
@@ -571,11 +566,12 @@ impl SheetView {
     }
 
     fn on_mouse_move(&mut self, ev: &MouseMoveEvent, window: &mut Window, cx: &mut Context<Self>) {
-        if self.selecting && ev.pressed_button == Some(MouseButton::Left) {
-            if let Some((pos, _)) = self.position_at(ev.position) {
-                self.ed.set_caret(pos, true);
-                self.moved(window, cx);
-            }
+        if self.selecting
+            && ev.pressed_button == Some(MouseButton::Left)
+            && let Some((pos, _)) = self.position_at(ev.position)
+        {
+            self.ed.set_caret(pos, true);
+            self.moved(window, cx);
         }
     }
 
@@ -708,9 +704,9 @@ impl SheetView {
 
     fn total_chip(&self, c: Colors) -> Option<impl IntoElement + use<>> {
         let t = self.computed.total.as_ref()?;
-        let value = match (&t.text, &t.error) {
-            (Some(v), _) => format!("{}{v}", if t.exact { "" } else { "≈ " }),
-            (None, Some(_)) => return None,
+        let (value, failed) = match (&t.text, &t.error) {
+            (Some(v), _) => (format!("{}{v}", if t.exact { "" } else { "≈ " }), false),
+            (None, Some(e)) => (e.clone(), true),
             _ => return None,
         };
         Some(
@@ -732,6 +728,7 @@ impl SheetView {
                 .child(
                     div()
                         .font_weight(FontWeight::MEDIUM)
+                        .when(failed, |d| d.text_color(c.warn).text_size(px(13.)))
                         .child(SharedString::from(value)),
                 ),
         )
@@ -1012,23 +1009,9 @@ pub fn runs_for(
     out
 }
 
-pub fn answer_size() -> Size<Pixels> {
-    size(px(ANSWER_MIN_W), px(ROW_H))
-}
-
 pub fn answer_min_w() -> f32 {
     ANSWER_MIN_W
 }
-
-pub fn gutter_w() -> f32 {
-    GUTTER_W
-}
-
-pub fn text_pad() -> f32 {
-    TEXT_PAD
-}
-
-pub type SheetEntity = Entity<SheetView>;
 
 impl SheetView {
     pub fn answer_for(&self, line: usize) -> Option<&Answer> {

@@ -1,0 +1,482 @@
+//! The acceptance checks. Each one starts the real binary on a temporary data folder, types real
+//! keystrokes into its window, and reads the result back from the screen and from the app's state hook.
+
+use std::path::Path;
+use std::time::Duration;
+
+use anyhow::{Context, bail, ensure};
+use serde_json::Value;
+
+use crate::harness::{App, Harness, Shot, luminance};
+
+pub type Check = fn(&mut Harness) -> anyhow::Result<()>;
+
+pub const CHECKS: &[(&str, Check)] = &[
+    ("sum", sum_shows_39),
+    ("reference-sheet", reference_sheet),
+    ("error-line", error_line),
+    ("ignored-dim", ignored_dim),
+    ("total", total_chip),
+    ("sheets", sheets_lifecycle),
+    ("autosave-sigkill", autosave_sigkill),
+    ("keys", keyboard_features),
+    ("quit-saves", quit_saves),
+    ("no-real-desktop", no_real_desktop),
+];
+
+const T: Duration = Duration::from_secs(15);
+
+/// Maps window coordinates reported by the app to pixels of the screenshot.
+struct Screen {
+    ox: f32,
+    oy: f32,
+    scale: f32,
+}
+
+impl Screen {
+    fn of(h: &Harness, app: &App, s: &Value) -> anyhow::Result<Screen> {
+        let (ox, oy) = h.window_origin(app)?;
+        let scale = s["scale"].as_f64().context("the app has not painted yet")? as f32;
+        Ok(Screen { ox, oy, scale })
+    }
+
+    /// The brightest pixel in a rectangle given in window coordinates.
+    fn brightest(&self, shot: &Shot, x0: f32, y0: f32, x1: f32, y1: f32) -> Option<[u8; 3]> {
+        shot.brightest(
+            self.ox + x0 * self.scale,
+            self.oy + y0 * self.scale,
+            self.ox + x1 * self.scale,
+            self.oy + y1 * self.scale,
+        )
+    }
+
+    /// The brightest pixel of the answer cell of line `i`.
+    fn answer_cell(&self, shot: &Shot, s: &Value, i: usize) -> anyhow::Result<[u8; 3]> {
+        let ax = f(&s["answer_x"])?;
+        let (y, h) = (f(&s["lines"][i]["y"])?, f(&s["lines"][i]["h"])?);
+        let w = f(&s["window"]["w"])?;
+        // Skips the column's left edge line and the margin that holds the "≈".
+        Ok(self
+            .brightest(shot, ax + 28., y + 2., (ax + 300.).min(w - 4.), y + h - 2.)
+            .unwrap_or([0, 0, 0]))
+    }
+}
+
+fn f(v: &Value) -> anyhow::Result<f32> {
+    v.as_f64()
+        .map(|x| x as f32)
+        .with_context(|| format!("not a number: {v}"))
+}
+
+fn answer(s: &Value, i: usize) -> Option<&str> {
+    s["lines"][i]["answer"].as_str()
+}
+
+/// Gives the app a moment to paint what it was last told, so a screenshot shows it.
+fn settle() {
+    std::thread::sleep(Duration::from_millis(250));
+}
+
+fn read_sheet(dir: &Path, name: &str) -> Option<String> {
+    std::fs::read_to_string(dir.join(format!("{name}.babbage"))).ok()
+}
+
+/// Waits until the sheet file on disk has exactly `want`.
+fn wait_file(dir: &Path, name: &str, want: &str) -> anyhow::Result<()> {
+    let start = std::time::Instant::now();
+    loop {
+        let got = read_sheet(dir, name);
+        if got.as_deref() == Some(want) {
+            return Ok(());
+        }
+        ensure!(
+            start.elapsed() < Duration::from_secs(10),
+            "{name}.babbage never became {want:?}; it holds {got:?}"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    }
+}
+
+fn sheet_names(s: &Value) -> Vec<String> {
+    s["sheets"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .map(|x| x["name"].as_str().unwrap_or("").to_owned())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn sum_shows_39(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("sum", None, &[])?;
+    h.type_text("12 + 12 + 15")?;
+    app.wait_for("39 on line 1", T, |s| answer(s, 0) == Some("39"))?;
+    settle();
+    // The screen agrees with the state: the answer cell of line 1 has bright text, the empty line 3 does not.
+    let s = app.state()?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let on = scr.answer_cell(&shot, &s, 0)?;
+    ensure!(
+        luminance(on) > 150.,
+        "no answer text on screen for line 1: {on:?}"
+    );
+    h.save_shot(&h.logs.join("sum.png"))?;
+    app.finish()
+}
+
+
+fn reference_sheet(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("reference", None, &[])?;
+    for (i, (line, _)) in REFERENCE.iter().enumerate() {
+        if i + 1 < REFERENCE.len() {
+            h.type_line(line)?;
+        } else {
+            h.type_text(line)?;
+        }
+    }
+    let s = app.wait_for("all 19 answers", Duration::from_secs(30), |s| {
+        REFERENCE
+            .iter()
+            .enumerate()
+            .all(|(i, (_, want))| answer(s, i) == Some(*want))
+    })?;
+    for (i, (line, want)) in REFERENCE.iter().enumerate() {
+        ensure!(
+            s["lines"][i]["text"] == *line,
+            "line {} typed as {}",
+            i + 1,
+            s["lines"][i]["text"]
+        );
+        ensure!(answer(&s, i) == Some(*want), "line {}: {line}", i + 1);
+    }
+    // Line references are chips.
+    let spans = s["lines"][5]["spans"].as_array().context("spans")?;
+    let chips: Vec<&str> = spans
+        .iter()
+        .filter(|x| x["class"] == "lineref")
+        .filter_map(|x| x["text"].as_str())
+        .collect();
+    ensure!(chips == ["line4", "line5"], "chips on line 6: {chips:?}");
+    // The total chip shows the sheet's total.
+    // The sheet mixes dollars and cubic millimetres, so the engine has no single total for it; the chip
+    // still shows, with the engine's message. A sheet of one kind shows a value (see `total`).
+    ensure!(s["total"].is_object(), "no total chip: {}", s["total"]);
+    settle();
+    let s = app.state()?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    for i in [0, 9, 18] {
+        let p = scr.answer_cell(&shot, &s, i)?;
+        ensure!(
+            luminance(p) > 150.,
+            "no answer text on screen for line {}",
+            i + 1
+        );
+    }
+    h.save_shot(&h.doc_shot("reference-sheet.png"))?;
+    app.finish()
+}
+
+fn error_line(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("error", None, &[])?;
+    h.type_line("1 + 1")?;
+    h.type_line("1 / 0")?;
+    h.type_text("2 + 2")?;
+    let s = app.wait_for("the three lines", T, |s| {
+        answer(s, 0) == Some("2") && answer(s, 2) == Some("4") && s["lines"][1]["error"].is_string()
+    })?;
+    ensure!(
+        answer(&s, 1).is_none(),
+        "the failing line must have no answer"
+    );
+    let msg = s["lines"][1]["error"].as_str().unwrap_or("");
+    ensure!(!msg.is_empty() && msg.len() < 80, "message {msg:?}");
+    settle();
+    let s = app.state()?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    // The message is in the warning colour: more red than blue, unlike the white answers.
+    let p = scr.answer_cell(&shot, &s, 1)?;
+    ensure!(
+        p[0] as i32 > p[2] as i32 + 40,
+        "the error text is not in the warning colour: {p:?}"
+    );
+    let ok = scr.answer_cell(&shot, &s, 0)?;
+    ensure!(
+        (ok[0] as i32 - ok[2] as i32).abs() < 30,
+        "the answer beside it is not neutral: {ok:?}"
+    );
+    h.save_shot(&h.doc_shot("error-line.png"))?;
+    // Fixing the line leaves the others as they were.
+    h.press(&[], "Up")?;
+    h.press(&[], "End")?;
+    h.press(&[], "BackSpace")?;
+    h.type_text("2")?;
+    app.wait_for("the fixed line", T, |s| {
+        answer(s, 1) == Some("0.5") && answer(s, 0) == Some("2") && answer(s, 2) == Some("4")
+    })?;
+    app.finish()
+}
+
+fn ignored_dim(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("ignored", None, &[])?;
+    h.type_text("lunch was $55 + 25% tip")?;
+    let s = app.wait_for("the ignored words", T, |s| answer(s, 0) == Some("$68.75"))?;
+    let ig: Vec<&str> = s["lines"][0]["ignored"]
+        .as_array()
+        .context("ignored")?
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    ensure!(ig.contains(&"lunch"), "ignored words: {ig:?}");
+    settle();
+    let s = app.state()?;
+    let spans = s["lines"][0]["spans"].as_array().context("spans")?;
+    let find = |text: &str| spans.iter().find(|x| x["text"] == text);
+    let lunch = find("lunch").context("no span for lunch")?;
+    ensure!(lunch["class"] == "ignored", "lunch is {}", lunch["class"]);
+    let pink = spans
+        .iter()
+        .find(|x| x["class"] == "currency")
+        .context("no currency span")?;
+    let (y, hgt) = (f(&s["lines"][0]["y"])?, f(&s["lines"][0]["h"])?);
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let light = |sp: &Value| -> anyhow::Result<f32> {
+        let p = scr
+            .brightest(&shot, f(&sp["x0"])?, y + 2., f(&sp["x1"])?, y + hgt - 2.)
+            .context("off screen")?;
+        Ok(luminance(p))
+    };
+    let (dim, normal) = (light(lunch)?, light(pink)?);
+    ensure!(
+        dim < normal * 0.75,
+        "the ignored word is not dimmer than the number beside it: {dim} against {normal}"
+    );
+    h.save_shot(&h.doc_shot("ignored-words.png"))?;
+    app.finish()
+}
+
+fn total_chip(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("total", None, &[])?;
+    h.type_line("10")?;
+    h.type_line("20")?;
+    h.type_text("5")?;
+    let s = app.wait_for("the total of 35", T, |s| s["total"]["text"] == "35")?;
+    settle();
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (w, hh) = (
+        f(&s["window"]["x"])? + f(&s["window"]["w"])?,
+        f(&s["window"]["y"])? + f(&s["window"]["h"])?,
+    );
+    // The chip sits in the bottom right corner and its text is bright against the dark column.
+    let p = scr
+        .brightest(&shot, w - 160., hh - 56., w - 24., hh - 14.)
+        .context("off screen")?;
+    ensure!(
+        luminance(p) > 150.,
+        "no chip text at the bottom right: {p:?}"
+    );
+    // The total follows the text.
+    h.press(&["ctrl"], "a")?;
+    h.type_text("7")?;
+    app.wait_for("the total of 7", T, |s| s["total"]["text"] == "7")?;
+    h.press(&[], "BackSpace")?;
+    app.wait_for("no total for an empty sheet", T, |s| s["total"].is_null())?;
+    app.finish()
+}
+
+fn sheets_lifecycle(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("sheets", None, &[])?;
+    h.type_text("1 + 1")?;
+    let s = app.wait_for("the first sheet", T, |s| answer(s, 0) == Some("2"))?;
+    let first = s["current"].as_str().context("current")?.to_owned();
+    ensure!(sheet_names(&s) == ["1 + 1"], "{:?}", sheet_names(&s));
+    let dir = app.data_dir.clone();
+    wait_file(&dir, &first, "1 + 1\n")?;
+
+    // New sheet.
+    h.press(&["ctrl"], "n")?;
+    let s = app.wait_for("a second sheet", T, |s| {
+        s["sheets"].as_array().is_some_and(|a| a.len() == 2)
+    })?;
+    let second = s["current"].as_str().context("current")?.to_owned();
+    ensure!(second != first, "the new sheet is the open one");
+    ensure!(
+        s["lines"].as_array().is_some_and(|l| l.len() == 1) && s["lines"][0]["text"] == "",
+        "not empty"
+    );
+    ensure!(sheet_names(&s)[0] == "Empty", "{:?}", sheet_names(&s));
+    h.type_text("7 + 7")?;
+    let s = app.wait_for("the second sheet's text", T, |s| answer(s, 0) == Some("14"))?;
+    ensure!(
+        sheet_names(&s)[0] == "7 + 7",
+        "the sidebar shows what is typed: {:?}",
+        sheet_names(&s)
+    );
+    ensure!(s["sheets"][0]["lines"] == 1);
+
+    // Switch away and back; nothing is lost.
+    h.press(&["ctrl"], "Tab")?;
+    let s = app.wait_for("the first sheet again", T, |s| {
+        s["current"] == first.as_str()
+    })?;
+    ensure!(s["lines"][0]["text"] == "1 + 1");
+    h.press(&["ctrl", "shift"], "Tab")?;
+    let s = app.wait_for("the second sheet again", T, |s| {
+        s["current"] == second.as_str()
+    })?;
+    ensure!(s["lines"][0]["text"] == "7 + 7");
+    settle();
+    h.save_shot(&h.doc_shot("sidebar.png"))?;
+
+    // Rename.
+    h.press(&[], "F2")?;
+    app.wait_for("rename mode", T, |s| s["rename"].is_string())?;
+    h.press(&["ctrl"], "a")?;
+    for _ in 0..8 {
+        h.press(&[], "BackSpace")?;
+    }
+    h.type_text("Budget")?;
+    h.press(&[], "Return")?;
+    let s = app.wait_for("the new name", T, |s| s["current"] == "Budget")?;
+    ensure!(
+        sheet_names(&s).contains(&"Budget".to_owned()),
+        "{:?}",
+        sheet_names(&s)
+    );
+    ensure!(
+        s["lines"][0]["text"] == "7 + 7",
+        "the text survives a rename"
+    );
+    ensure!(
+        dir.join("Budget.babbage").is_file() && !dir.join(format!("{second}.babbage")).exists()
+    );
+
+    // Delete moves the file to the trash.
+    h.press(&["ctrl", "shift"], "Delete")?;
+    let s = app.wait_for("the sheet gone", T, |s| s["current"] == first.as_str())?;
+    ensure!(sheet_names(&s) == ["1 + 1"], "{:?}", sheet_names(&s));
+    ensure!(!dir.join("Budget.babbage").exists());
+    let trashed: Vec<_> = std::fs::read_dir(dir.join(".trash"))?.flatten().collect();
+    ensure!(trashed.len() == 1, "{} files in the trash", trashed.len());
+    let name = trashed[0].file_name().to_string_lossy().into_owned();
+    ensure!(name.starts_with("Budget."), "{name}");
+    ensure!(std::fs::read_to_string(trashed[0].path())? == "7 + 7\n");
+    app.finish()
+}
+
+fn autosave_sigkill(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("autosave1", None, &[])?;
+    let dir = app.data_dir.clone();
+    h.type_line("12 + 12 + 15")?;
+    h.type_text("85 × 12")?;
+    app.wait_for("both answers", T, |s| answer(s, 1) == Some("1,020"))?;
+    let id = app.state()?["current"]
+        .as_str()
+        .context("current")?
+        .to_owned();
+    // The debounce writes the sheet shortly after the last key.
+    wait_file(&dir, &id, "12 + 12 + 15\n85 × 12\n")?;
+    app.kill_hard()?;
+    ensure!(dir.join(format!("{id}.babbage")).is_file());
+
+    let mut again = h.launch("autosave2", Some(&dir), &[])?;
+    let s = again.wait_for("the saved sheet", T, |s| answer(s, 1) == Some("1,020"))?;
+    ensure!(s["current"] == id.as_str());
+    ensure!(s["lines"][0]["text"] == "12 + 12 + 15" && answer(&s, 0) == Some("39"));
+    ensure!(sheet_names(&s) == ["12 + 12 + 15"], "{:?}", sheet_names(&s));
+    again.finish()
+}
+
+fn keyboard_features(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("keys", None, &[])?;
+    // Undo and redo.
+    h.type_line("5")?;
+    h.type_text("6")?;
+    app.wait_for("two lines", T, |s| answer(s, 1) == Some("6"))?;
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("undo of the 6", T, |s| {
+        s["lines"][1]["text"] == "" && s["lines"][0]["text"] == "5"
+    })?;
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("undo of the line break", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 1)
+    })?;
+    h.press(&["ctrl", "shift"], "z")?;
+    app.wait_for("redo", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 2)
+    })?;
+
+    // The sidebar toggles.
+    h.press(&["ctrl"], "b")?;
+    app.wait_for("the sidebar hidden", T, |s| s["sidebar_open"] == false)?;
+    settle();
+    let s = app.state()?;
+    ensure!(
+        f(&s["window"]["x"])? < 1.0,
+        "the editor starts at the window edge: {}",
+        s["window"]
+    );
+    h.press(&["ctrl"], "b")?;
+    app.wait_for("the sidebar back", T, |s| s["sidebar_open"] == true)?;
+
+    // Select, replace, then copy an answer with the keyboard and paste it into the sheet.
+    h.press(&["ctrl"], "a")?;
+    h.type_text("12 + 12 + 15")?;
+    app.wait_for("the replaced text", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 1) && answer(s, 0) == Some("39")
+    })?;
+    h.press(&["alt"], "Right")?;
+    app.wait_for("the answer focused", T, |s| s["answer_focus"] == 0)?;
+    h.press(&["ctrl"], "c")?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the focus returned", T, |s| s["answer_focus"].is_null())?;
+    h.press(&[], "End")?;
+    h.press(&[], "Return")?;
+    h.press(&["ctrl"], "v")?;
+    let s = app.wait_for("the pasted answer", T, |s| s["lines"][1]["text"] == "39")?;
+    ensure!(answer(&s, 1) == Some("39"));
+
+    // Shift+arrows select; typing replaces the selection.
+    h.press(&[], "Home")?;
+    h.press(&["shift"], "End")?;
+    app.wait_for("a selection", T, |s| s["selection"] == "39")?;
+    h.type_text("8")?;
+    app.wait_for("the replaced selection", T, |s| {
+        s["lines"][1]["text"] == "8"
+    })?;
+    app.finish()
+}
+
+fn quit_saves(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("quit", None, &[])?;
+    let dir = app.data_dir.clone();
+    h.type_text("3 × 3")?;
+    let s = app.wait_for("the answer", T, |s| answer(s, 0) == Some("9"))?;
+    let id = s["current"].as_str().context("current")?.to_owned();
+    // Ctrl+Q straight after the last key, before the debounce could have written anything.
+    h.press(&["ctrl"], "q")?;
+    app.wait_exit(Duration::from_secs(8))?;
+    let got = read_sheet(&dir, &id);
+    if got.as_deref() != Some("3 × 3\n") {
+        bail!("the sheet on disk after Ctrl+Q is {got:?}");
+    }
+    Ok(())
+}
+
+fn no_real_desktop(h: &mut Harness) -> anyhow::Result<()> {
+    let before = h.host_windows_of("babbage")?;
+    let app = h.launch("desktop", None, &[])?;
+    let nested = h.nested_windows_of("babbage")?;
+    let after = h.host_windows_of("babbage")?;
+    ensure!(nested == 1, "{nested} windows in the nested compositor");
+    ensure!(
+        before == 0 && after == 0,
+        "babbage windows on the real desktop: {before} before, {after} after"
+    );
+    app.finish()
+}

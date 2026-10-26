@@ -524,7 +524,6 @@ dependencies = [
  "futures",
  "gpui",
  "libc",
- "serde",
  "serde_json",
  "tempfile",
  "unicode-segmentation",

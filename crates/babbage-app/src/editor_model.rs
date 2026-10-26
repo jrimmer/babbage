@@ -149,10 +149,6 @@ impl Editor {
         self.lines.len()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.lines.len() == 1 && self.lines[0].is_empty()
-    }
-
     pub fn head(&self) -> Pos {
         self.head
     }
@@ -163,14 +159,6 @@ impl Editor {
 
     pub fn text(&self) -> String {
         self.lines.join("\n")
-    }
-
-    pub fn can_undo(&self) -> bool {
-        !self.undo.is_empty()
-    }
-
-    pub fn can_redo(&self) -> bool {
-        !self.redo.is_empty()
     }
 
     /// The selection as an ordered pair.
@@ -227,11 +215,6 @@ impl Editor {
         self.goal = None;
         self.marked = None;
         self.last = Kind::Other;
-    }
-
-    /// Replaces the whole text (a different sheet), clearing history.
-    pub fn set_lines<S: AsRef<str>>(&mut self, lines: &[S]) {
-        *self = Editor::new(lines);
     }
 
     pub fn undo(&mut self) -> bool {
@@ -293,6 +276,7 @@ impl Editor {
     }
 
     /// Types `text` over the selection.
+    #[cfg(test)]
     pub fn insert(&mut self, text: &str) {
         let (a, b) = self.selection();
         self.replace(a, b, text, Kind::Typing);

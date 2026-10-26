@@ -2,6 +2,8 @@
 # The gate: formatting, clippy, tests, and the architecture guards.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# This is a shared workstation: the whole gate runs at the lowest priority.
+renice -n 19 $$ >/dev/null 2>&1 || true
 step() { printf '\n== %s\n' "$*"; }
 
 step "rustfmt"
@@ -10,15 +12,48 @@ step "clippy"
 cargo clippy --workspace --all-targets --locked -- -D warnings
 step "tests"
 cargo test --workspace --locked
-step "guard: the engine stays free of any UI toolkit"
-if cargo tree --locked -p babbage-core -e normal,build --prefix none | grep -E '^(gpui|iced|egui|qt)' >/dev/null; then
-  echo "babbage-core depends on a UI crate" >&2
+step "guard: the engine and the store stay free of any UI toolkit"
+for crate in babbage-core babbage-store; do
+  if cargo tree --locked -p "$crate" -e normal,build --prefix none | grep -E '^(gpui|iced|egui|qt)' >/dev/null; then
+    echo "$crate depends on a UI crate" >&2
+    exit 1
+  fi
+done
+echo ok
+step "guard: the store and the engine do not depend on each other"
+if cargo tree --locked -p babbage-store -e normal,build --prefix none | grep -E '^babbage-core ' >/dev/null; then
+  echo "babbage-store depends on babbage-core" >&2
   exit 1
 fi
+if cargo tree --locked -p babbage-core -e normal,build --prefix none | grep -E '^babbage-store ' >/dev/null; then
+  echo "babbage-core depends on babbage-store" >&2
+  exit 1
+fi
+echo ok
+step "guard: no copyleft-only licence in the app's tree"
+# A dual licence such as "Apache-2.0 OR GPL-2.0-only" is used under its permissive side.
+if cargo tree --locked -p babbage-app -e normal,build --prefix none -f '{p}|{l}' | grep -iE 'gpl' | grep -viE 'MIT|Apache|BSD|ISC|Unlicense|Zlib'; then
+  echo "a copyleft-only crate is in the app's tree" >&2
+  exit 1
+fi
+echo ok
+step "guard: libc stays at 0.2.186"
+# gpui's xattr dependency does not build with a newer libc.
+grep -A1 '^name = "libc"$' Cargo.lock | grep -qx 'version = "0.2.186"' || {
+  echo "Cargo.lock does not pin libc 0.2.186" >&2
+  exit 1
+}
 echo ok
 step "guard: the engine never uses floating point"
 if grep -rnE '\b(f32|f64)\b' crates/babbage-core/src; then
   echo "floating point found in the engine" >&2
+  exit 1
+fi
+echo ok
+step "guard: the store never touches the user's home except through its data folder rule"
+# Tests must set BABBAGE_DATA_DIR or use temp folders; only data_dir() may name HOME.
+if grep -rn 'HOME' crates/babbage-store/src | grep -v 'src/book.rs'; then
+  echo "the store reads HOME outside data_dir()" >&2
   exit 1
 fi
 echo ok

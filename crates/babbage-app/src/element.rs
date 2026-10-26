@@ -142,6 +142,7 @@ impl SheetElement {
 
         let n = view.ed.len();
         let mut shaped: Vec<Option<ShapedLine>> = vec![None; n];
+        let mut drawn: Vec<(usize, Option<ShapedLine>)> = Vec::new();
         let (sel_a, sel_b) = view.ed.selection();
         let has_sel = view.ed.has_selection();
         let head = view.ed.head();
@@ -293,10 +294,13 @@ impl SheetElement {
                         let _ = l.paint(point(ax, ty), lh, window, cx);
                     }
                 }
-                shaped[i] = text_line;
+                drawn.push((i, text_line));
             }
         });
 
+        for (i, l) in drawn {
+            shaped[i] = l;
+        }
         window.handle_input(&focus, ElementInputHandler::new(bounds, cx.entity()), cx);
         let scale = window.scale_factor();
         view.set_layout(Layout {
