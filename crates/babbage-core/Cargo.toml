@@ -1,0 +1,17 @@
+[package]
+name = "babbage-core"
+version = "0.0.1"
+edition.workspace = true
+license.workspace = true
+description = "Exact-arithmetic calculation engine for Babbage"
+
+[dependencies]
+num-bigint = "0.4"
+num-integer = "0.1"
+num-rational = "0.4"
+num-traits = "0.2"
+
+[dev-dependencies]
+proptest = "1"
+num-bigint = "0.4"
+num-traits = "0.2"
