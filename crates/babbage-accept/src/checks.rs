@@ -29,6 +29,10 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("sheet-functions", sheet_functions),
     ("everyday-lines", everyday_lines),
     ("number-format", number_format),
+    ("scrolling", scrolling),
+    ("mouse-editing", mouse_editing),
+    ("comment-toggle", comment_toggle),
+    ("clipboard-lines", clipboard_lines),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -933,6 +937,176 @@ fn keyboard_features(h: &mut Harness) -> anyhow::Result<()> {
     h.type_text("8")?;
     app.wait_for("the replaced selection", T, |s| {
         s["lines"][1]["text"] == "8"
+    })?;
+    app.finish()
+}
+
+/// The row of line `line` lies inside the window's editor.
+fn row_visible(s: &Value, line: usize) -> anyhow::Result<()> {
+    let (y, h) = (f(&s["lines"][line]["y"])?, f(&s["lines"][line]["h"])?);
+    let window_h = f(&s["window"]["h"])?;
+    ensure!(
+        y >= -1. && y + h <= window_h + 1.,
+        "line {} is off the window: y {y}, row {h}, window {window_h}",
+        line + 1
+    );
+    Ok(())
+}
+
+/// A long sheet: the window scrolls to keep the caret in view, Ctrl+Home and Ctrl+End jump to the ends, Page Down
+/// moves a screen, and a click puts the caret on the line it lands on.
+fn scrolling(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("scrolling", None, &[])?;
+    for i in 1..=80 {
+        h.type_line(&format!("{i} + 1"))?;
+    }
+    let s = app.wait_for("eighty answered lines", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 81) && answer(s, 79) == Some("81")
+    })?;
+    ensure!(
+        f(&s["scroll"])? > 0.,
+        "the window did not scroll with the caret: {}",
+        s["scroll"]
+    );
+    ensure!(s["cursor"]["line"] == 80, "the caret is on the last line");
+    row_visible(&s, 80)?;
+
+    h.press(&["ctrl"], "Home")?;
+    let s = app.wait_for("the top of the sheet", T, |s| {
+        s["cursor"]["line"] == 0 && s["scroll"].as_f64() == Some(0.)
+    })?;
+    row_visible(&s, 0)?;
+
+    h.press(&[], "Page_Down")?;
+    let s = app.wait_for("a screen down", T, |s| {
+        s["cursor"]["line"].as_u64().is_some_and(|l| l > 5)
+    })?;
+    let line = s["cursor"]["line"].as_u64().context("line")? as usize;
+    row_visible(&s, line)?;
+    h.press(&[], "Page_Up")?;
+    app.wait_for("a screen back up", T, |s| s["cursor"]["line"] == 0)?;
+
+    h.press(&["ctrl"], "End")?;
+    let s = app.wait_for("the end of the sheet", T, |s| {
+        s["cursor"]["line"] == 80 && s["scroll"].as_f64().is_some_and(|v| v > 0.)
+    })?;
+    row_visible(&s, 80)?;
+
+    // Clicking a visible line puts the caret there, at the end when the click is past its text.
+    h.press(&["ctrl"], "Home")?;
+    let s = app.wait_for("the top again", T, |s| s["scroll"].as_f64() == Some(0.))?;
+    let (y, rh) = (f(&s["lines"][4]["y"])?, f(&s["lines"][4]["h"])?);
+    h.click(&app, f(&s["text_x"])? + 120., y + rh / 2., "left", 1)?;
+    let s = app.wait_for("the caret moved by the click", T, |s| {
+        s["cursor"]["line"] == 4
+    })?;
+    ensure!(
+        s["cursor"]["col"] == s["lines"][4]["text"].as_str().unwrap_or("").len(),
+        "a click past the text is at its end: {}",
+        s["cursor"]
+    );
+    app.finish()
+}
+
+/// The mouse in the text: a double click selects a word, a triple click a line, a click moves the caret.
+fn mouse_editing(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("mouse-editing", None, &[])?;
+    h.type_line("12 + 345 apples")?;
+    h.type_text("second")?;
+    let s = app.wait_for("both lines", T, |s| {
+        answer(s, 0) == Some("357") && s["lines"][1]["text"] == "second"
+    })?;
+    let spans = s["lines"][0]["spans"].as_array().context("spans")?;
+    let number = spans
+        .iter()
+        .find(|x| x["text"] == "345")
+        .context("a span for 345")?;
+    let x = (f(&number["x0"])? + f(&number["x1"])?) / 2.;
+    let (y, rh) = (f(&s["lines"][0]["y"])?, f(&s["lines"][0]["h"])?);
+
+    h.click(&app, x, y + rh / 2., "left", 2)?;
+    app.wait_for("the word selected by a double click", T, |s| {
+        s["selection"] == "345"
+    })?;
+    h.click(&app, x, y + rh / 2., "left", 3)?;
+    app.wait_for("the line selected by a triple click", T, |s| {
+        s["selection"] == "12 + 345 apples"
+    })?;
+    // A single click clears the selection and moves the caret to the second line.
+    let (y2, rh2) = (f(&s["lines"][1]["y"])?, f(&s["lines"][1]["h"])?);
+    h.click(&app, f(&s["text_x"])? + 10., y2 + rh2 / 2., "left", 1)?;
+    let s = app.wait_for("the caret on the second line", T, |s| {
+        s["cursor"]["line"] == 1 && s["selection"] == ""
+    })?;
+    ensure!(s["cursor"]["col"].as_u64().is_some_and(|c| c <= 3));
+    // Typing goes where the caret was put.
+    h.type_text("X")?;
+    app.wait_for("the typed letter", T, |s| {
+        s["lines"][1]["text"]
+            .as_str()
+            .is_some_and(|t| t.contains('X') && t.len() == 7)
+    })?;
+    app.finish()
+}
+
+/// Ctrl+/ comments a line out and back in, and works on a whole selection, and one undo takes it back.
+fn comment_toggle(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("comment-toggle", None, &[])?;
+    h.type_line("1 + 1")?;
+    h.type_text("2 + 2")?;
+    app.wait_for("two answers", T, |s| {
+        answer(s, 0) == Some("2") && answer(s, 1) == Some("4")
+    })?;
+    h.press(&["ctrl"], "slash")?;
+    let s = app.wait_for("the second line commented out", T, |s| {
+        s["lines"][1]["text"] == "// 2 + 2"
+    })?;
+    ensure!(s["lines"][1]["kind"] == "comment", "{}", s["lines"][1]);
+    ensure!(answer(&s, 1).is_none(), "a comment has no answer");
+    ensure!(answer(&s, 0) == Some("2"), "the other line is untouched");
+    h.press(&["ctrl"], "slash")?;
+    app.wait_for("the comment taken off", T, |s| {
+        s["lines"][1]["text"] == "2 + 2" && answer(s, 1) == Some("4")
+    })?;
+    h.press(&["ctrl"], "a")?;
+    h.press(&["ctrl"], "slash")?;
+    app.wait_for("both lines commented out", T, |s| {
+        s["lines"][0]["text"] == "// 1 + 1" && s["lines"][1]["text"] == "// 2 + 2"
+    })?;
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("one undo takes both back", T, |s| {
+        s["lines"][0]["text"] == "1 + 1" && s["lines"][1]["text"] == "2 + 2"
+    })?;
+    app.finish()
+}
+
+/// Copy, cut and paste of several lines, between sheets: the answers are worked out again where they land.
+fn clipboard_lines(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("clipboard-lines", None, &[])?;
+    h.type_line("5 + 5")?;
+    h.type_line("10 × 2")?;
+    h.type_text("$3 + $4")?;
+    app.wait_for("three answers", T, |s| answer(s, 2) == Some("$7.00"))?;
+    h.press(&["ctrl"], "a")?;
+    h.press(&["ctrl"], "c")?;
+    h.press(&["ctrl"], "n")?;
+    app.wait_for("a new empty sheet", T, |s| {
+        s["sheets"].as_array().is_some_and(|a| a.len() == 2) && s["lines"][0]["text"] == ""
+    })?;
+    h.press(&["ctrl"], "v")?;
+    let s = app.wait_for("the pasted lines and their answers", T, |s| {
+        answer(s, 0) == Some("10") && answer(s, 1) == Some("20") && answer(s, 2) == Some("$7.00")
+    })?;
+    ensure!(s["lines"].as_array().is_some_and(|l| l.len() == 3));
+    // Cut empties the sheet; paste brings every line back.
+    h.press(&["ctrl"], "a")?;
+    h.press(&["ctrl"], "x")?;
+    app.wait_for("the sheet emptied by the cut", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 1) && s["lines"][0]["text"] == ""
+    })?;
+    h.press(&["ctrl"], "v")?;
+    app.wait_for("the lines back", T, |s| {
+        answer(s, 1) == Some("20") && answer(s, 2) == Some("$7.00")
     })?;
     app.finish()
 }

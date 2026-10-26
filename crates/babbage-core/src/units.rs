@@ -136,7 +136,9 @@ ftm | ftm,fathom,fathoms | L | 1.8288
 NM | NM,nmi,nautical mile,nautical miles | L | 1852
 ly | ly,light year,light years | L | 9460730472580800
 px | px,pixel,pixels | L | 0.0254/96
-pt | pt,point,points | L | 0.0254/72
+em | em,ems | L | 16*0.0254/96
+rem | rem,rems | L | 16*0.0254/96
+pt | pt,Pt,point,points | L | 0.0254/72
 # area and volume that are not powers of a length unit
 ac | ac,acre,acres | L2 | 4046.8564224
 ha | ha,hectare,hectares | L2 | 10000
@@ -198,7 +200,7 @@ ozf | ozf | M L T-2 | 0.45359237*9.80665/16
 Pa | Pa,pascal,pascals | M L-1 T-2 | 1
 +h,k,M,G
 bar | bar,bars | M L-1 T-2 | 100000
-mbar | mbar | M L-1 T-2 | 100
+mbar | mbar,millibar,millibars | M L-1 T-2 | 100
 atm | atm,atmosphere,atmospheres | M L-1 T-2 | 101325
 psi | psi | M L-1 T-2 | 0.45359237*9.80665/(0.0254^2)
 ksi | ksi | M L-1 T-2 | 1000*0.45359237*9.80665/(0.0254^2)
@@ -258,6 +260,8 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 # compound aliases
 @ mph = mi/h
 @ kohm,kohms = kΩ
+@ khz = kHz
+@ ghz = GHz
 @ Mohm,megohm,megohms = MΩ
 @ mohm = mΩ
 @ uohm,µohm = µΩ
@@ -986,6 +990,46 @@ impl UnitExpr {
     }
 
     /// True for one unit of time over another, such as `hours/day`.
+    /// A target the conversion can use when the one asked for measures something else: `3 mph to minutes` is
+    /// miles per minute (the denominator replaced), and `10 cubic centimeters to meters` is cubic meters (the
+    /// target raised to the power the source has).
+    pub fn adapt_target(&self, target: &UnitExpr) -> Option<UnitExpr> {
+        let [(new, 1)] = target.0.as_slice() else {
+            return None;
+        };
+        let reg = registry();
+        let target_dim = target.dim();
+        let denominators: Vec<&(UnitId, i8)> = self.0.iter().filter(|(_, e)| *e < 0).collect();
+        if let [(d, -1)] = denominators.as_slice()
+            && reg.defs[*d as usize].dim == target_dim
+        {
+            let mut parts: Vec<(UnitId, i8)> = self
+                .0
+                .iter()
+                .map(|(u, e)| if u == d { (*new, -1) } else { (*u, *e) })
+                .collect();
+            parts.sort_by_key(|(u, _)| *u);
+            return Some(UnitExpr(parts));
+        }
+        // Only a length to a power (`cm³`, `ft²`), not a named volume such as a litre or a product of lengths.
+        let [(_, k)] = self.0.as_slice() else {
+            return None;
+        };
+        // `10 cm³ in cm` is not a conversion (the answer would only restate the question), and pixels are a
+        // screen length, never an area: `1 cm in px at 326 km` stays an error.
+        let pixel = lookup("px").is_some_and(|px| px == *target);
+        (matches!(k, 2 | 3)
+            && self.dim() == target_dim.scaled(*k)
+            && target.pow(*k) != *self
+            && !pixel)
+            .then(|| target.pow(*k))
+    }
+
+    /// True for a unit written over another, such as `g/lb`.
+    pub fn has_division(&self) -> bool {
+        self.0.iter().any(|(_, e)| *e < 0) && self.0.iter().any(|(_, e)| *e > 0)
+    }
+
     pub fn is_time_over_time(&self) -> bool {
         let Some(seconds) = lookup("s") else {
             return false;

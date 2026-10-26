@@ -9,3 +9,5 @@ From the audit of `unit-reference.md` (claims checked by probing the engine): fe
 Built since: imperial gallon, quart, pint and fluid ounce as units of their own (`imperial pint`, `imp pt`, `uk pint`), so the release notes's `1 liter in imperial pints` works without touching the volume setting.
 
 Built since (the reference app, A82 to A88): `kΩ`, `MΩ` and the other ohm prefixes, with `Ω` as the symbol; `3 W s` as a product printed in the order typed; `5' 6"` as `5 feet 6 inches`; amounts too small for ten decimals in scientific form (`1e-12 kg`); degrees printed as `°` with no space; `mph` as the name of miles per hour, and `km/hour` for a speed made by division. Still open: ares, `ppi`/`dpi`/`em`/`rem` as units, molar, millibars, kilopound names, `W m`, `squared`/`cubed`, `khz`.
+
+Built since: `em` and `rem` (16 px, written with no space like `px`), `Pt`, `millibar`, `khz` and `ghz` spellings. Still open: `ares` (`5 a in m²`), molar, `W m`, `ppi`/`dpi` as units of their own (only `at N ppi` and `ppi of ... screen` exist).

@@ -32,6 +32,8 @@ const FORMS: &[Form] = &[
     form(&["to", "is", "what", "%"], "EE...", Phrase::PercentChange),
     form(&["to", "as", "%"], "EE..", Phrase::PercentChange),
     form(&["is", "what", "%"], "E...", Phrase::AsPercent),
+    // `1 in 20 as %` is 5%: one part in twenty.
+    form(&["in", "as", "%"], "EE..", Phrase::WhatPercentOf),
     form(&["as", "%"], "E..", Phrase::AsPercent),
     form(&["%"], "E.", Phrase::AsPercent),
 ];
@@ -86,7 +88,19 @@ fn parse_shown(run: &[Token]) -> Option<Shown> {
     let joined = |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("and"));
     let parts: Vec<&[Token]> = run.split(joined).collect();
     if parts.len() < 2 {
-        return None;
+        // Several units of one kind written one after another: `in lb oz`.
+        let units: Vec<UnitExpr> = run
+            .iter()
+            .filter_map(|t| match &t.tok {
+                Tok::Unit(u) => Some(u.clone()),
+                _ => None,
+            })
+            .collect();
+        let same_kind = units
+            .windows(2)
+            .all(|w| w[0].dim() == w[1].dim() && w[0] != w[1]);
+        return (units.len() >= 2 && units.len() == run.len() && same_kind)
+            .then_some(Shown::Parts(units));
     }
     parts
         .iter()

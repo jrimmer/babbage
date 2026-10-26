@@ -215,6 +215,17 @@ pub fn format_decimal(n: &Number, opts: &FormatOptions) -> Formatted {
     }
 }
 
+/// A number in scientific form, `1.05e4`, as `in sci` shows it; zero stays 0.
+pub fn format_scientific(n: &Number, opts: &FormatOptions) -> Formatted {
+    if n.is_zero() {
+        return Formatted {
+            text: "0".to_string(),
+            exact: true,
+        };
+    }
+    scientific(n, opts)
+}
+
 /// `1e-12`, `-2.5e-11`: ten significant digits at most, the mantissa between 1 and 10.
 fn scientific(n: &Number, opts: &FormatOptions) -> Formatted {
     let ten = |e: i64| {

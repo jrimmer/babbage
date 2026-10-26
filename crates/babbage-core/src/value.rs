@@ -67,6 +67,8 @@ pub enum Shown {
     Pace(String),
     /// A time of day converted into UTC reads on the 24-hour clock: `19:00`.
     Clock24,
+    /// `10500 in sci` reads `1.05e4`.
+    Scientific,
     /// `5' 6"` reads `5 feet 6 inches`.
     FeetInches,
 }
@@ -247,6 +249,17 @@ impl Value {
                 }),
                 _ => Err(Error::UnsupportedOperation(
                     "a fraction needs a plain number or a percentage",
+                )),
+            };
+        }
+        if shown == Shown::Scientific {
+            return match (self.kind, self.unit.is_empty()) {
+                (Kind::Plain, true) => Ok(Value {
+                    layout: Some(shown),
+                    ..self
+                }),
+                _ => Err(Error::UnsupportedOperation(
+                    "scientific form is for plain numbers",
                 )),
             };
         }
@@ -481,7 +494,13 @@ impl Value {
 
     fn convert_exact(self, target: &UnitExpr) -> Result<Value, Error> {
         // A plain number shown as a rate of time over time: `3 hours / 3 days as hour/day` is `1 hour/day`.
-        if self.kind == Kind::Plain && self.unit.is_empty() && target.is_time_over_time() {
+        // A ratio of two amounts shown as a rate keeps its units: `8g/2 lb as grams/lb` is `4 g/lb`.
+        let is_ratio_of_units =
+            target.dim().is_none() && !target.is_empty() && target.has_division();
+        if self.kind == Kind::Plain
+            && self.unit.is_empty()
+            && (target.is_time_over_time() || is_ratio_of_units)
+        {
             return Ok(Value {
                 number: self.number.div(&target.factor()?)?,
                 kind: Kind::Plain,
@@ -496,6 +515,9 @@ impl Value {
             return Err(Error::IncompatibleUnits);
         }
         if self.unit.dim() != target.dim() {
+            if let Some(adapted) = self.unit.adapt_target(target) {
+                return self.convert_exact(&adapted);
+            }
             return Err(mismatch(&self.unit, target));
         }
         if self.unit.has_offset() || target.has_offset() {
@@ -1250,6 +1272,9 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
         Kind::Plain if v.layout == Some(Shown::Digits) => {
             format_decimal(&v.number, &opts.every_digit())
         }
+        Kind::Plain if v.layout == Some(Shown::Scientific) && v.unit.is_empty() => {
+            crate::format::format_scientific(&v.number, opts)
+        }
         Kind::Plain if v.layout == Some(Shown::Fraction) => {
             let whole = |n: &num_bigint::BigInt| {
                 Number::from_ratio(n.clone(), num_bigint::BigInt::from(1))
@@ -1292,9 +1317,10 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             if !v.unit.is_empty() {
                 let plural = v.number.abs() != Number::from_i64(1);
                 let symbol = v.unit.display(plural);
-                // the reference app writes pixels and degrees with no space (`128.3464566929px`, `180°`) and a
-                // rate that has no numerator unit straight after the number (`30/week`).
-                if !matches!(symbol.as_str(), "px" | "°") && !symbol.starts_with('/') {
+                // the reference app writes pixels and degrees with no space (`128.3464566929px`, `180°`), CSS
+                // units the same way, and a rate that has no numerator unit straight after the number (`30/week`).
+                if !matches!(symbol.as_str(), "px" | "em" | "rem" | "°") && !symbol.starts_with('/')
+                {
                     f.text.push(' ');
                 }
                 f.text.push_str(&symbol);
@@ -1486,6 +1512,7 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
         | Shown::Ratio(_)
         | Shown::Timed
         | Shown::Pace(_)
+        | Shown::Scientific
         | Shown::Clock24 => {
             unreachable!("written out before this is called")
         }

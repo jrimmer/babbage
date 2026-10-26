@@ -23,8 +23,37 @@ fn words_at(toks: &[Token], start: usize, words: &[&str]) -> bool {
 
 /// Splits at top-level commas and the word `and`.
 fn list_parts(toks: &[Token]) -> Vec<&[Token]> {
-    split_at_depth_zero(toks, |t| {
-        matches!(t.tok, Tok::Comma) || is_word(Some(t), "and")
+    // Items are separated by commas, `and`, or just a space between two numbers or brackets (`5 7`, `(1 + 1) 3`).
+    let ends = |t: &Token| matches!(t.tok, Tok::Num(_) | Tok::RParen | Tok::Value(_));
+    let starts = |t: &Token| matches!(t.tok, Tok::Num(_) | Tok::LParen | Tok::Value(_));
+    let mut parts = Vec::new();
+    let (mut depth, mut from) = (0i64, 0);
+    for (i, t) in toks.iter().enumerate() {
+        match t.tok {
+            Tok::LParen => depth += 1,
+            Tok::RParen => depth -= 1,
+            _ => {}
+        }
+        let separator = matches!(t.tok, Tok::Comma) || is_word(Some(t), "and");
+        let adjacent = depth_before(toks, i) == 0 && i > 0 && ends(&toks[i - 1]) && starts(t);
+        if depth == 0 && separator {
+            parts.push(&toks[from..i]);
+            from = i + 1;
+        } else if adjacent {
+            parts.push(&toks[from..i]);
+            from = i;
+        }
+    }
+    parts.push(&toks[from..]);
+    parts
+}
+
+/// The bracket depth just before token `i`.
+fn depth_before(toks: &[Token], i: usize) -> i64 {
+    toks[..i].iter().fold(0, |d, t| match t.tok {
+        Tok::LParen => d + 1,
+        Tok::RParen => d - 1,
+        _ => d,
     })
 }
 
@@ -62,7 +91,15 @@ fn depth_zero_word(toks: &[Token], word: &str) -> Option<usize> {
 fn rpn_of(parts: &[&[Token]]) -> Result<Vec<Node>, Error> {
     let mut rpn = Vec::new();
     for p in parts {
-        rpn.extend(parse(p)?.nodes().iter().cloned());
+        // A part may itself be a phrase: `half of half of 30% of 90`.
+        let expr = match parse(p) {
+            Ok(expr) => expr,
+            Err(e) => match parse_words(p) {
+                Some(Ok(expr)) => expr,
+                _ => return Err(e),
+            },
+        };
+        rpn.extend(expr.nodes().iter().cloned());
     }
     Ok(rpn)
 }
@@ -97,6 +134,22 @@ const LIST_FORMS: &[(&[&str], Func)] = &[
     (&["standard", "deviation"], Func::StdDev),
 ];
 
+/// Lists with no `of` after the name: `max 50, 20, 10`.
+const BARE_LIST_FORMS: &[(&[&str], Func)] = &[
+    (&["min"], Func::Min),
+    (&["minimum"], Func::Min),
+    (&["max"], Func::Max),
+    (&["maximum"], Func::Max),
+    (&["gcd"], Func::Gcd),
+    (&["lcm"], Func::Lcm),
+];
+
+/// `min` lexes as the unit of time, so a list that starts with it is spelled out.
+fn min_unit_at_start(toks: &[Token]) -> bool {
+    matches!(toks.first().map(|t| &t.tok), Some(Tok::Unit(u))
+        if crate::units::lookup("min").is_some_and(|k| &k == u))
+}
+
 /// Leading forms with no `of`: `midpoint between a and b`.
 const BETWEEN_FORMS: &[(&[&str], Func)] = &[
     (&["midpoint", "between"], Func::Midpoint),
@@ -114,6 +167,7 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| unit_in_quantity(toks))
         .or_else(|| proportion_what(toks))
         .or_else(|| in_what(toks))
+        .or_else(|| screen_density(toks))
         .or_else(|| at_density(toks))
         .or_else(|| root_and_log(toks))
         .or_else(|| finance_forms(toks))
@@ -123,6 +177,7 @@ pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
         .or_else(|| remainder(toks))
         .or_else(|| count_form(toks))
         .or_else(|| proportion(toks))
+        .or_else(|| scientific_form(toks))
         .or_else(|| pitch_forms(toks))
         .or_else(|| as_dms(toks))
         .or_else(|| as_number(toks))
@@ -208,6 +263,24 @@ fn list_form(toks: &[Token]) -> Option<Result<Expr, Error>> {
             && toks.len() > names.len() + 1
         {
             return Some(call(&list_parts(&toks[names.len() + 1..]), *func));
+        }
+    }
+    // `max 50, 20, 10`, `gcd 10, 20, 5`, `min 5, 3, 7`, `max (100 * 2) 50 100`: no `of`, and a number or bracket next.
+    for (names, func) in BARE_LIST_FORMS {
+        let starts_a_list = matches!(
+            toks.get(names.len()).map(|t| &t.tok),
+            Some(Tok::Num(_) | Tok::LParen | Tok::Value(_))
+        );
+        if (words_at(toks, 0, names) || (*func == Func::Min && min_unit_at_start(toks)))
+            && starts_a_list
+            && toks.len() > names.len()
+        {
+            let parts = list_parts(&toks[names.len()..]);
+            // `max(1, 2)` and `max (1 + 2)` are calls of the function, not lists.
+            let opens_a_bracket = matches!(toks[names.len()].tok, Tok::LParen);
+            if !opens_a_bracket || parts.len() > 1 {
+                return Some(call(&parts, *func));
+            }
         }
     }
     for (names, func) in BETWEEN_FORMS {
@@ -377,6 +450,25 @@ fn den_len(den: &[Token]) -> usize {
     parse(den).map_or(0, |e| e.nodes().len())
 }
 
+/// `ppi of 15" screen at 1024x768`: the density of a screen.
+fn screen_density(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    if !(is_word(toks.first(), "ppi") && is_word(toks.get(1), "of")) {
+        return None;
+    }
+    let screen = depth_zero_word(toks, "screen")?;
+    let at = depth_zero_word(toks, "at")?;
+    let size = &toks[2..screen];
+    let resolution = &toks[at + 1..];
+    let cross = resolution
+        .iter()
+        .position(|t| matches!(t.tok, Tok::Star) || is_word(Some(t), "x"))?;
+    let (w, h) = (&resolution[..cross], &resolution[cross + 1..]);
+    if size.is_empty() || w.is_empty() || h.is_empty() || screen > at {
+        return Some(Err(Error::UnexpectedEnd));
+    }
+    Some(call(&[size, w, h], Func::ScreenPpi))
+}
+
 /// `440 hz as pitch` is `A4`; `C2 to midi` is 36 and `A4 to hz` is 440 Hz.
 fn pitch_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let n = toks.len();
@@ -457,6 +549,28 @@ fn note_to_midi(name: &str) -> Option<i64> {
     };
     let octave: i64 = octave.parse().ok()?;
     Some(12 * (octave + 1) + semitone + accidental)
+}
+
+/// `10500 in sci`, `1234.5 as scientific`, `in scientific notation`: the answer in scientific form.
+fn scientific_form(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    let tail = if n >= 4 && words_at(toks, n - 2, &["scientific", "notation"]) {
+        2
+    } else if n >= 3 && (is_word(toks.last(), "sci") || is_word(toks.last(), "scientific")) {
+        1
+    } else {
+        return None;
+    };
+    let joiner = n > tail + 1
+        && ["as", "to", "in", "into"]
+            .iter()
+            .any(|w| is_word(toks.get(n - tail - 1), w));
+    joiner.then(|| {
+        rpn_of(&[&toks[..n - tail - 1]]).map(|mut rpn| {
+            rpn.push(Node::Show(crate::value::Shown::Scientific));
+            Expr::from_nodes(rpn)
+        })
+    })
 }
 
 /// `156.742° as DMS`: degrees, minutes and seconds.
@@ -575,19 +689,37 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
         let mut value_end = i - 1;
         let mut phrase = Phrase::RoundNearest;
         let mut as_fraction = false;
-        if value_end >= 1 && is_word(toks.get(value_end - 1), "up") {
+        // `round 21 up to nearest 5` and `round down 20 to nearest 8`: `round`, then `up` or `down` before or
+        // after the number.
+        let mut start = 0;
+        let mut led = None;
+        if is_word(toks.first(), "round") && value_end >= 2 {
+            start = 1;
+            if is_word(toks.get(1), "up") {
+                led = Some(Phrase::RoundUp);
+                start = 2;
+            } else if is_word(toks.get(1), "down") {
+                led = Some(Phrase::RoundDown);
+                start = 2;
+            }
+        }
+        if value_end > start && is_word(toks.get(value_end - 1), "up") {
             phrase = Phrase::RoundUp;
             value_end -= 1;
-        } else if value_end >= 1 && is_word(toks.get(value_end - 1), "down") {
+        } else if value_end > start && is_word(toks.get(value_end - 1), "down") {
             phrase = Phrase::RoundDown;
             value_end -= 1;
         }
-        if value_end >= 1 && is_word(toks.get(value_end - 1), "rounded") {
+        if start > 0 {
+            if phrase == Phrase::RoundNearest {
+                phrase = led.unwrap_or(Phrase::RoundNearest);
+            }
+        } else if value_end >= 1 && is_word(toks.get(value_end - 1), "rounded") {
             value_end -= 1;
         } else if phrase != Phrase::RoundNearest {
             return None;
         }
-        if value_end == 0 {
+        if value_end <= start {
             return Some(Err(Error::UnexpectedEnd));
         }
         let step = match step_toks {
@@ -620,7 +752,7 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
         let Some(step) = step else {
             return Some(Err(Error::UnexpectedEnd));
         };
-        return Some(parse(&toks[..value_end]).map(|v| {
+        return Some(parse(&toks[start..value_end]).map(|v| {
             let mut rpn = v.nodes().to_vec();
             rpn.extend(step);
             rpn.push(Node::Phrase(phrase));
@@ -738,16 +870,31 @@ fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
             _ => Err(Error::UnexpectedEnd),
         });
     }
+    // `investment required for $10k/month at 5%`, `deposit needed for $42k/year at 7.5%`.
+    for lead in [
+        &["investment", "required", "for"][..],
+        &["investment", "needed", "for"],
+        &["deposit", "required", "for"],
+        &["deposit", "needed", "for"],
+    ] {
+        if words_at(toks, 0, lead) {
+            let parts = between(&toks[3..], &["at"])?;
+            return Some(call(&parts, Func::InvestmentRequired));
+        }
+    }
     for (period, code) in [("daily", 1), ("monthly", 2), ("annual", 3), ("total", 4)] {
-        for (noun, func) in [
-            ("repayment", Func::Repayment),
-            ("interest", Func::LoanInterest),
+        for (nouns, func) in [
+            (&["repayment"][..], Func::Repayment),
+            (&["payment"], Func::Repayment),
+            (&["interest"], Func::LoanInterest),
+            (&["interest", "paid"], Func::LoanInterest),
         ] {
+            let on = 1 + nouns.len();
             if is_word(toks.first(), period)
-                && is_word(toks.get(1), noun)
-                && is_word(toks.get(2), "on")
+                && words_at(toks, 1, nouns)
+                && is_word(toks.get(on), "on")
             {
-                let parts = between(&toks[3..], &["over", "at"])?;
+                let parts = between(&toks[on + 1..], &["over", "at"])?;
                 return Some(call_with(&parts, vec![number_node(code)], func));
             }
         }

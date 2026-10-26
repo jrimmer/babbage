@@ -470,6 +470,91 @@ impl Editor {
         self.go(Pos::new(l, self.lines[l].len()), extend, false);
     }
 
+    /// Comments the lines of the selection out with `// `, or takes the comment off when every line that has text
+    /// already starts with one (the reference app's Command-/). The caret and the selection keep their place in the text.
+    pub fn toggle_comment(&mut self) {
+        let (a, b) = self.selection();
+        let first = a.line;
+        let last = if b.col == 0 && b.line > first {
+            b.line - 1
+        } else {
+            b.line
+        };
+        let commented = |s: &str| s.trim_start().starts_with("//");
+        let texts: Vec<&String> = self.lines[first..=last]
+            .iter()
+            .filter(|l| !l.trim().is_empty())
+            .collect();
+        if texts.is_empty() {
+            return;
+        }
+        let uncomment = texts.iter().all(|l| commented(l));
+        let mut shifts: Vec<isize> = Vec::new();
+        let rewritten: Vec<String> = self.lines[first..=last]
+            .iter()
+            .map(|l| {
+                if l.trim().is_empty() {
+                    shifts.push(0);
+                    l.clone()
+                } else if uncomment {
+                    let indent = l.len() - l.trim_start().len();
+                    let after = &l[indent + 2..];
+                    let kept = after.strip_prefix(' ').unwrap_or(after);
+                    let removed = l.len() - indent - kept.len();
+                    shifts.push(-(removed as isize));
+                    format!("{}{}", &l[..indent], kept)
+                } else {
+                    shifts.push(3);
+                    format!("// {l}")
+                }
+            })
+            .collect();
+        let (head, anchor) = (self.head, self.anchor);
+        let end = Pos::new(last, self.lines[last].len());
+        self.replace(Pos::new(first, 0), end, &rewritten.join("\n"), Kind::Other);
+        let moved = |p: Pos| {
+            if p.line < first || p.line > last {
+                return p;
+            }
+            let shift = shifts[p.line - first];
+            let col = (p.col as isize + shift).max(0) as usize;
+            Pos::new(p.line, col.min(self.lines[p.line].len()))
+        };
+        let (anchor, head) = (moved(anchor), moved(head));
+        self.set_caret(anchor, false);
+        self.set_caret(head, true);
+    }
+
+    /// Selects the run of letters and digits (or of spaces, or of marks) under `p`: a double click.
+    pub fn select_word_at(&mut self, p: Pos) {
+        let p = self.clamp(p);
+        let s = &self.lines[p.line];
+        let spans: Vec<(usize, &str)> = s.grapheme_indices(true).collect();
+        if spans.is_empty() {
+            return self.set_caret(p, false);
+        }
+        let at = spans.iter().rposition(|(i, _)| *i <= p.col).unwrap_or(0);
+        let kind = class(spans[at].1);
+        let mut first = at;
+        while first > 0 && class(spans[first - 1].1) == kind {
+            first -= 1;
+        }
+        let mut last = at;
+        while last + 1 < spans.len() && class(spans[last + 1].1) == kind {
+            last += 1;
+        }
+        let (start, end) = (spans[first].0, spans[last].0 + spans[last].1.len());
+        self.set_caret(Pos::new(p.line, start), false);
+        self.set_caret(Pos::new(p.line, end), true);
+    }
+
+    /// Selects the whole line `line`: a triple click.
+    pub fn select_line(&mut self, line: usize) {
+        let line = line.min(self.lines.len() - 1);
+        self.set_caret(Pos::new(line, 0), false);
+        self.set_caret(Pos::new(line, self.lines[line].len()), true);
+    }
+
     pub fn select_all(&mut self) {
         self.doc_start(false);
         self.doc_end(true);
@@ -556,6 +641,65 @@ mod tests {
         e.backspace(false);
         assert_eq!(e.all(), vec!["ab cd"]);
         assert_eq!(e.head(), Pos::new(0, 2));
+    }
+
+    #[test]
+    fn a_double_click_selects_the_word_and_a_triple_click_the_line() {
+        let mut e = ed(&["12 + 345 apples", "second"]);
+        e.select_word_at(Pos::new(0, 5));
+        assert_eq!(e.selected_text(), "345");
+        e.select_word_at(Pos::new(0, 0));
+        assert_eq!(e.selected_text(), "12");
+        e.select_word_at(Pos::new(0, 2));
+        assert_eq!(e.selected_text(), " ", "a run of spaces is a word too");
+        e.select_word_at(Pos::new(0, 15));
+        assert_eq!(
+            e.selected_text(),
+            "apples",
+            "the end of a line takes the last word"
+        );
+        e.select_line(1);
+        assert_eq!(e.selected_text(), "second");
+        e.select_line(9);
+        assert_eq!(
+            e.selected_text(),
+            "second",
+            "a line past the end is the last line"
+        );
+    }
+
+    #[test]
+    fn a_comment_is_toggled_on_the_selected_lines() {
+        let mut e = ed(&["1 + 1", "", "2 + 2"]);
+        e.set_caret(Pos::new(0, 3), false);
+        e.toggle_comment();
+        assert_eq!(e.all(), vec!["// 1 + 1", "", "2 + 2"]);
+        assert_eq!(
+            e.head(),
+            Pos::new(0, 6),
+            "the caret stays on the same character"
+        );
+        e.toggle_comment();
+        assert_eq!(e.all(), vec!["1 + 1", "", "2 + 2"]);
+        assert_eq!(e.head(), Pos::new(0, 3));
+        e.select_all();
+        e.toggle_comment();
+        assert_eq!(
+            e.all(),
+            vec!["// 1 + 1", "", "// 2 + 2"],
+            "blank lines are left alone"
+        );
+        e.toggle_comment();
+        assert_eq!(e.all(), vec!["1 + 1", "", "2 + 2"]);
+        // A mixed selection comments everything.
+        e.set_caret(Pos::new(0, 0), false);
+        e.toggle_comment();
+        e.select_all();
+        e.toggle_comment();
+        assert_eq!(e.all(), vec!["// // 1 + 1", "", "// 2 + 2"]);
+        // One undo takes the whole toggle back.
+        e.undo();
+        assert_eq!(e.all(), vec!["// 1 + 1", "", "2 + 2"]);
     }
 
     #[test]

@@ -140,7 +140,13 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
             i += 1;
             continue;
         }
-        let (tok, used) = if (word(i, "a") || word(i, "an")) && next_is_unit && prev_ends_operand {
+        // `pounds & ounces`: an ampersand between two units joins them like `and`.
+        let ampersand_between_units = matches!(toks[i].tok, Tok::Op(BinOp::BitAnd))
+            && matches!(out.last().map(|t| &t.tok), Some(Tok::Unit(_)))
+            && next_is_unit;
+        let (tok, used) = if ampersand_between_units {
+            (Some(Tok::Word("and".to_string())), 1)
+        } else if (word(i, "a") || word(i, "an")) && next_is_unit && prev_ends_operand {
             // `$24 a day` is `$24 per day`.
             (Some(Tok::Slash), 1)
         } else if (word(i, "a") || word(i, "an")) && next_is_unit && prev_is_for {
@@ -160,6 +166,18 @@ fn operator_words(toks: Vec<Token>) -> Vec<Token> {
             (Some(Tok::Slash), 2)
         } else if word(i, "to") && word(i + 1, "the") && word(i + 2, "power") && word(i + 3, "of") {
             (Some(Tok::Caret), 4)
+        } else if word(i, "raised")
+            && word(i + 1, "to")
+            && word(i + 2, "the")
+            && word(i + 3, "power")
+            && word(i + 4, "of")
+            && prev_ends_operand
+        {
+            (Some(Tok::Caret), 5)
+        } else if word(i, "raised") && word(i + 1, "to") && prev_ends_operand {
+            (Some(Tok::Caret), 2)
+        } else if word(i, "exponent") && prev_ends_operand {
+            (Some(Tok::Caret), 1)
         } else {
             (None, 1)
         };
@@ -191,6 +209,39 @@ fn unit_products(toks: Vec<Token>) -> Vec<Token> {
             continue;
         }
         out.push(t);
+    }
+    out
+}
+
+/// `1 1/2 pounds` is one and a half pounds: a whole number, then a proper fraction, then a unit.
+fn mixed_numbers(toks: Vec<Token>) -> Vec<Token> {
+    let whole = |t: Option<&Token>| match t.map(|t| &t.tok) {
+        Some(Tok::Num(n)) if n.is_integer() && !n.is_negative() => Some(n.clone()),
+        _ => None,
+    };
+    let mut out = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        let mixed = whole(toks.get(i))
+            .zip(whole(toks.get(i + 1)))
+            .zip(whole(toks.get(i + 3)));
+        if let Some(((a, b), c)) = mixed
+            && matches!(toks.get(i + 2).map(|t| &t.tok), Some(Tok::Slash))
+            && matches!(toks.get(i + 4).map(|t| &t.tok), Some(Tok::Unit(_)))
+            && b.is_positive()
+            && b < c
+            && let Ok(fraction) = b.div(&c)
+            && let Ok(total) = a.add(&fraction)
+        {
+            out.push(Token {
+                tok: Tok::Num(total),
+                at: toks[i].at,
+            });
+            i += 4;
+            continue;
+        }
+        out.push(toks[i].clone());
+        i += 1;
     }
     out
 }
@@ -242,6 +293,7 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         .map(minutes_beside_time)
         .and_then(resolve_timecodes)
         .map(operator_words)
+        .map(mixed_numbers)
         .map(unit_products)
         .map(crate::dates::rewrite)
         .map(split_date_shifts)
@@ -676,8 +728,9 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = end;
                 continue;
             }
-            '(' => simple(Tok::LParen, &mut out),
-            ')' => simple(Tok::RParen, &mut out),
+            // The full-width brackets of Chinese, Korean and Japanese keyboards.
+            '(' | '（' => simple(Tok::LParen, &mut out),
+            ')' | '）' => simple(Tok::RParen, &mut out),
             ch => return Err(Error::UnexpectedChar { ch, at }),
         }
         i += 1;
@@ -705,8 +758,31 @@ fn bare_currency_at(src: &str, chars: &[(usize, char)], i: usize) -> Option<(Uni
     (next == Some('/') || prev == Some('/')).then_some((unit, symbol_chars))
 }
 
+/// A currency code written before an amount, with or without a space: `USD1K`, `EUR 50`, `CAD3.50`.
+fn code_amount_at(chars: &[(usize, char)], i: usize) -> Option<(UnitExpr, usize)> {
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    if (i..i + 3).any(|k| !c(k).is_some_and(|ch| ch.is_ascii_uppercase()))
+        || c(i + 3).is_some_and(char::is_alphabetic)
+        || (i > 0 && c(i - 1).is_some_and(char::is_alphanumeric))
+    {
+        return None;
+    }
+    let code: String = (i..i + 3).filter_map(c).collect();
+    let unit = lookup(&code).filter(|u| u.currency_symbol().is_some())?;
+    let mut j = i + 3;
+    while c(j) == Some(' ') {
+        j += 1;
+    }
+    let digit_after = c(j).is_some_and(|ch| ch.is_ascii_digit())
+        || (c(j) == Some('.') && c(j + 1).is_some_and(|ch| ch.is_ascii_digit()));
+    digit_after.then_some((unit, j - i))
+}
+
 /// A currency symbol at `i` that is directly followed by a number, as in `$55`, `US$7` or `€.5`.
 fn currency_amount_at(src: &str, chars: &[(usize, char)], i: usize) -> Option<(UnitExpr, usize)> {
+    if let Some(found) = code_amount_at(chars, i) {
+        return Some(found);
+    }
     let (at, first) = chars[i];
     if first.is_ascii_digit() || first.is_whitespace() {
         return None;

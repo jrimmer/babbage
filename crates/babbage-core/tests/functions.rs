@@ -147,7 +147,8 @@ fn domain_and_argument_errors() {
     assert!(evaluate("average of 3 m, 2 kg").is_err());
     assert!(evaluate("sum(1,)").is_err());
     assert!(evaluate("(1, 2)").is_err());
-    assert!(evaluate("max 5 3").is_err());
+    // A list may be separated by spaces (release notes: `max (100 * 2) 50 100` is 200), so `max 5 3` is 5.
+    assert_eq!(shown("max 5 3"), "5");
 }
 
 #[test]

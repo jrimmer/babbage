@@ -217,6 +217,7 @@ PiB	PiB
 PiBps	PiB/s
 Pib	Pib
 Pibps	Pib/s
+Pt	pt
 QAR	QAR
 R$	R$
 RON	RON
@@ -367,6 +368,7 @@ ct	ct
 cu NM	NM³
 cu cm	cm³
 cu dm	dm³
+cu em	em³
 cu ft	ft³
 cu ftm	ftm³
 cu fur	fur³
@@ -379,6 +381,7 @@ cu mm	mm³
 cu nm	nm³
 cu pt	pt³
 cu px	px³
+cu rem	rem³
 cu yd	yd³
 cuNM	NM³
 cubic NM	NM³
@@ -392,6 +395,8 @@ cubic decimeters	dm³
 cubic decimetre	dm³
 cubic decimetres	dm³
 cubic dm	dm³
+cubic em	em³
+cubic ems	em³
 cubic fathom	ftm³
 cubic fathoms	ftm³
 cubic feet	ft³
@@ -439,6 +444,8 @@ cubic point	pt³
 cubic points	pt³
 cubic pt	pt³
 cubic px	px³
+cubic rem	rem³
+cubic rems	rem³
 cubic yard	yd³
 cubic yards	yd³
 cubic yd	yd³
@@ -446,6 +453,7 @@ cubic yds	yd³
 cubic µm	µm³
 cucm	cm³
 cudm	dm³
+cuem	em³
 cuft	ft³
 cuftm	ftm³
 cufur	fur³
@@ -460,6 +468,7 @@ cup	cup
 cups	cup
 cupt	pt³
 cupx	px³
+curem	rem³
 cuyd	yd³
 dL	dL
 day	day
@@ -480,6 +489,8 @@ degrees	deg
 dm	dm
 dollar	$
 dollars	$
+em	em
+ems	em
 ether	ETH
 euro	€
 euros	€
@@ -514,6 +525,7 @@ g	g
 gal	gal
 gallon	gal
 gallons	gal
+ghz	GHz
 gibibit	Gib
 gibibits	Gib
 gibibyte	GiB
@@ -597,6 +609,7 @@ kelvin	K
 kfarad	kfarad
 kg	kg
 khenry	khenry
+khz	kHz
 kibibit	Kib
 kibibits	Kib
 kibibyte	KiB
@@ -776,6 +789,8 @@ milliamp	mA
 milliampere	mA
 milliamperes	mA
 milliamps	mA
+millibar	mbar
+millibars	mbar
 millifarad	mfarad
 millifarads	mfarad
 milligram	mg
@@ -904,6 +919,8 @@ quarts	qt
 rad	rad
 radian	rad
 radians	rad
+rem	rem
+rems	rem
 rev	rev
 revolution	rev
 revolutions	rev
@@ -922,6 +939,7 @@ siemens	siemens
 sq NM	NM²
 sq cm	cm²
 sq dm	dm²
+sq em	em²
 sq ft	ft²
 sq ftm	ftm²
 sq fur	fur²
@@ -934,10 +952,12 @@ sq mm	mm²
 sq nm	nm²
 sq pt	pt²
 sq px	px²
+sq rem	rem²
 sq yd	yd²
 sqNM	NM²
 sqcm	cm²
 sqdm	dm²
+sqem	em²
 sqft	ft²
 sqftm	ftm²
 sqfur	fur²
@@ -950,6 +970,7 @@ sqmm	mm²
 sqnm	nm²
 sqpt	pt²
 sqpx	px²
+sqrem	rem²
 square NM	NM²
 square centimeter	cm²
 square centimeters	cm²
@@ -961,6 +982,8 @@ square decimeters	dm²
 square decimetre	dm²
 square decimetres	dm²
 square dm	dm²
+square em	em²
+square ems	em²
 square fathom	ftm²
 square fathoms	ftm²
 square feet	ft²
@@ -1008,6 +1031,8 @@ square point	pt²
 square points	pt²
 square pt	pt²
 square px	px²
+square rem	rem²
+square rems	rem²
 square yard	yd²
 square yards	yd²
 square yd	yd²

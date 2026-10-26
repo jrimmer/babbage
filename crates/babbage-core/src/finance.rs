@@ -113,6 +113,24 @@ fn multiple_of(ratio: Value) -> Result<Value, Error> {
     })
 }
 
+/// `investment required for $10k/month at 5%` is $2.4M: the deposit whose yearly interest at the rate is the yearly
+/// amount wanted (the amount per period, taken to a year, over the rate).
+pub fn investment_required(wanted: &Value, rate_value: &Value) -> Result<Value, Error> {
+    let year = units::lookup("yr").ok_or(Error::IncompatibleUnits)?;
+    let r = rate(rate_value)?;
+    if !r.is_positive() {
+        return Err(Error::OutOfDomain);
+    }
+    let per_year_unit = wanted
+        .unit()
+        .with_period(&year)
+        .ok_or(Error::UnsupportedOperation(
+            "an amount per period is needed here",
+        ))?;
+    let per_year = wanted.clone().convert(&per_year_unit)?;
+    Value::quantity(per_year.number().div(&r)?, per_year_unit.times(&year))
+}
+
 /// The yearly rate that turns `invested` into `returned` in `time`.
 pub fn annual_return(invested: &Value, returned: &Value, time: &Value) -> Result<Value, Error> {
     let multiple = growth(invested, returned)?;
@@ -184,7 +202,9 @@ fn per_period(total: &Value, time: &Value, period: Period) -> Result<Value, Erro
         Period::Total => return Ok(total.clone()),
         Period::Annual => t,
         Period::Monthly => int(12).mul(&t)?,
-        Period::Daily => int(365).mul(&t)?,
+        // A day is a 365.2425th of a year here, as in the release notes's `daily payment on $1M over 30 years at 6.5%`
+        // (= $207.67); 365 would give $207.80.
+        Period::Daily => Number::from_decimal_str("365.2425")?.mul(&t)?,
     };
     Value::binary(BinOp::Div, total, &Value::plain(divisor))
 }

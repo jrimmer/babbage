@@ -483,6 +483,8 @@ impl SheetView {
                     self.ed.redo();
                 }
                 "a" => self.ed.select_all(),
+                // Comment the lines out, or back in (the reference app's Command-/).
+                "/" => self.ed.toggle_comment(),
                 "c" => {
                     if self.ed.has_selection() {
                         cx.write_to_clipboard(ClipboardItem::new_string(self.ed.selected_text()));
@@ -589,6 +591,12 @@ impl SheetView {
             self.answer_focus = None;
             self.selecting = true;
             self.ed.set_caret(pos, ev.modifiers.shift);
+            // A double click selects the word, a triple click the line.
+            match ev.click_count {
+                2 => self.ed.select_word_at(pos),
+                3.. => self.ed.select_line(pos.line),
+                _ => {}
+            }
         }
         self.moved(window, cx);
     }

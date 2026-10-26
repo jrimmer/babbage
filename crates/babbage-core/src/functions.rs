@@ -41,6 +41,8 @@ pub enum Func {
     AsNumber,
     AsDms,
     AsPitch,
+    ScreenPpi,
+    InvestmentRequired,
     Hex,
     Bin,
     Oct,
@@ -162,10 +164,15 @@ impl Func {
             | Func::Midpoint
             | Func::Random => Arity::Exactly(2),
             Func::Clamp => Arity::Exactly(3),
-            Func::Root | Func::LogBase | Func::ToBase | Func::ReturnMultiple | Func::AtRate => {
-                Arity::Exactly(2)
+            Func::Root
+            | Func::LogBase
+            | Func::ToBase
+            | Func::ReturnMultiple
+            | Func::InvestmentRequired
+            | Func::AtRate => Arity::Exactly(2),
+            Func::AnnualReturn | Func::Proportion | Func::AtDensity | Func::ScreenPpi => {
+                Arity::Exactly(3)
             }
-            Func::AnnualReturn | Func::Proportion | Func::AtDensity => Arity::Exactly(3),
             Func::InWhat => Arity::Exactly(2),
             Func::Date(f) => Arity::Exactly(f.arity()),
             Func::Compound
@@ -303,6 +310,29 @@ fn as_dms(angle: &Value) -> Result<Value, Error> {
         plain(&m),
         seconds
     )))
+}
+
+/// `ppi of 15" screen at 1024x768`: the pixels along the diagonal over the diagonal in inches, as text.
+fn screen_ppi(diagonal: &Value, width: &Value, height: &Value) -> Result<Value, Error> {
+    let inches = match diagonal.unit().is_empty() {
+        true => diagonal.number().clone(),
+        false => diagonal
+            .clone()
+            .convert(&units::lookup("inch").ok_or(Error::IncompatibleUnits)?)?
+            .number()
+            .clone(),
+    };
+    let (w, h) = (plain_number(width)?, plain_number(height)?);
+    if !inches.is_positive() || !w.is_positive() || !h.is_positive() {
+        return Err(Error::OutOfDomain);
+    }
+    let squares = w.mul(w)?.add(&h.mul(h)?)?;
+    let diagonal_pixels = call(Func::Sqrt, &[Value::plain(squares)])?;
+    let density = Value::binary(BinOp::Div, &diagonal_pixels, &Value::plain(inches))?;
+    let text =
+        crate::format::format_decimal(density.number(), &crate::format::FormatOptions::default())
+            .text;
+    Ok(Value::text(&format!("{text} ppi")))
 }
 
 const NOTES: [&str; 12] = [
@@ -521,6 +551,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::AsNumber => Ok(Value::plain(args[0].number().clone())),
         Func::AsDms => as_dms(&args[0]),
         Func::AsPitch => as_pitch(&args[0]),
+        Func::ScreenPpi => screen_ppi(&args[0], &args[1], &args[2]),
         Func::Hex => args[0].clone().in_radix(16),
         Func::Bin => args[0].clone().in_radix(2),
         Func::Oct => args[0].clone().in_radix(8),
@@ -535,6 +566,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
             finance::present_value(&args[0], &args[1], &args[2], whole(&args[3])?)
         }
         Func::ReturnMultiple => finance::return_multiple(&args[0], &args[1]),
+        Func::InvestmentRequired => finance::investment_required(&args[0], &args[1]),
         Func::AnnualReturn => finance::annual_return(&args[0], &args[1], &args[2]),
         Func::Repayment | Func::LoanInterest => {
             let period = finance::Period::from_code(whole(&args[3])?).ok_or(Error::OutOfDomain)?;

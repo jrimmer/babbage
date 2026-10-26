@@ -91,10 +91,10 @@ for _ in range(450):
         rm = rl / 12
         pmt = P * rm / (1 - (1 + rm) ** (-n))
     total = pmt * n
-    for word, val in (("daily", total / (365 * years_l)), ("monthly", pmt), ("annual", total / years_l), ("total", total)):
+    for word, val in (("daily", total / (Fraction("365.2425") * years_l)), ("monthly", pmt), ("annual", total / years_l), ("total", total)):
         exact(f"{word} repayment on ${pt} over {years_l} years at {rt}%", val)
     interest = total - P
-    for word, val in (("daily", interest / (365 * years_l)), ("monthly", interest / n), ("annual", interest / years_l), ("total", interest)):
+    for word, val in (("daily", interest / (Fraction("365.2425") * years_l)), ("monthly", interest / n), ("annual", interest / years_l), ("total", interest)):
         exact(f"{word} interest on ${pt} over {years_l} years at {rt}%", val)
 
     # growth per period, integer periods
