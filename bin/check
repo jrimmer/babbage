@@ -1,0 +1,25 @@
+#!/bin/bash
+# The gate: formatting, clippy, tests, and the architecture guards.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+step() { printf '\n== %s\n' "$*"; }
+
+step "rustfmt"
+cargo fmt --all --check
+step "clippy"
+cargo clippy --workspace --all-targets --locked -- -D warnings
+step "tests"
+cargo test --workspace --locked
+step "guard: the engine stays free of any UI toolkit"
+if cargo tree --locked -p babbage-core -e normal,build --prefix none | grep -E '^(gpui|iced|egui|qt)' >/dev/null; then
+  echo "babbage-core depends on a UI crate" >&2
+  exit 1
+fi
+echo ok
+step "guard: the engine never uses floating point"
+if grep -rnE '\b(f32|f64)\b' crates/babbage-core/src; then
+  echo "floating point found in the engine" >&2
+  exit 1
+fi
+echo ok
+echo; echo "bin/check passed"

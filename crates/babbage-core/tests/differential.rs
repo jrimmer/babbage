@@ -49,6 +49,11 @@ fn agrees_with_python_fraction_and_decimal_on_every_corpus_line() {
         failures.is_empty(),
         "{} of {checked} corpus lines disagree, first 15:\n{}",
         failures.len(),
-        failures.iter().take(15).cloned().collect::<Vec<_>>().join("\n")
+        failures
+            .iter()
+            .take(15)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }

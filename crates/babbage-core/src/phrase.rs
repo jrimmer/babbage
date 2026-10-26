@@ -10,7 +10,11 @@ struct Form {
 }
 
 const fn form(keywords: &'static [&'static str], shape: &'static str, phrase: Phrase) -> Form {
-    Form { keywords, shape, phrase }
+    Form {
+        keywords,
+        shape,
+        phrase,
+    }
 }
 
 const FORMS: &[Form] = &[
@@ -30,7 +34,9 @@ const FORMS: &[Form] = &[
     form(&["%"], "E.", Phrase::AsPercent),
 ];
 
-const VOCABULARY: &[&str] = &["is", "what", "as", "a", "to", "in", "of", "on", "off", "percent"];
+const VOCABULARY: &[&str] = &[
+    "is", "what", "as", "a", "to", "in", "of", "on", "off", "percent",
+];
 
 /// Parses one line, recognising the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
@@ -59,8 +65,17 @@ pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
     }
     bounds.push(toks.len());
     let runs: Vec<&[Token]> = bounds.chunks(2).map(|w| &toks[w[0]..w[1]]).collect();
-    assert_eq!(form.shape.len(), runs.len(), "phrase table entry {:?} has the wrong shape length", form.keywords);
-    let shape_matches = form.shape.chars().zip(&runs).all(|(want, run)| (want == 'E') != run.is_empty());
+    assert_eq!(
+        form.shape.len(),
+        runs.len(),
+        "phrase table entry {:?} has the wrong shape length",
+        form.keywords
+    );
+    let shape_matches = form
+        .shape
+        .chars()
+        .zip(&runs)
+        .all(|(want, run)| (want == 'E') != run.is_empty());
     if !shape_matches {
         return parse(toks);
     }
@@ -83,7 +98,11 @@ mod tests {
             assert_eq!(f.shape.len(), f.keywords.len() + 1, "{:?}", f.keywords);
             let expressions = f.shape.chars().filter(|c| *c == 'E').count();
             assert_eq!(expressions, f.phrase.arity(), "{:?}", f.keywords);
-            assert!(f.shape.chars().all(|c| c == 'E' || c == '.'), "{:?}", f.keywords);
+            assert!(
+                f.shape.chars().all(|c| c == 'E' || c == '.'),
+                "{:?}",
+                f.keywords
+            );
         }
     }
 

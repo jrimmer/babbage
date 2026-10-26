@@ -5,11 +5,32 @@ fn every_error_has_a_distinct_human_readable_message() {
     let all = [
         (Error::Empty, "empty expression"),
         (Error::InputTooLong, "input too long"),
-        (Error::UnexpectedChar { ch: '@', at: 3 }, "unexpected character '@' at byte 3"),
-        (Error::InvalidNumber { text: "1.2.3".into(), at: 4 }, "invalid number \"1.2.3\" at byte 4"),
-        (Error::UnexpectedToken { found: "')'".into(), at: 7 }, "unexpected ')' at byte 7"),
+        (
+            Error::UnexpectedChar { ch: '@', at: 3 },
+            "unexpected character '@' at byte 3",
+        ),
+        (
+            Error::InvalidNumber {
+                text: "1.2.3".into(),
+                at: 4,
+            },
+            "invalid number \"1.2.3\" at byte 4",
+        ),
+        (
+            Error::UnexpectedToken {
+                found: "')'".into(),
+                at: 7,
+            },
+            "unexpected ')' at byte 7",
+        ),
         (Error::UnexpectedEnd, "unexpected end of expression"),
-        (Error::UnexpectedWord { word: "abc".into(), at: 2 }, "unexpected word \"abc\" at byte 2"),
+        (
+            Error::UnexpectedWord {
+                word: "abc".into(),
+                at: 2,
+            },
+            "unexpected word \"abc\" at byte 2",
+        ),
         (Error::UnsupportedOperation("no way"), "unsupported: no way"),
         (Error::NotAPlainNumber, "result is not a plain number"),
         (Error::DivisionByZero, "division by zero"),

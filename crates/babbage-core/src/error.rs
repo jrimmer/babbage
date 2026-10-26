@@ -23,11 +23,15 @@ impl fmt::Display for Error {
         match self {
             Error::Empty => write!(f, "empty expression"),
             Error::InputTooLong => write!(f, "input too long"),
-            Error::UnexpectedChar { ch, at } => write!(f, "unexpected character {ch:?} at byte {at}"),
+            Error::UnexpectedChar { ch, at } => {
+                write!(f, "unexpected character {ch:?} at byte {at}")
+            }
             Error::InvalidNumber { text, at } => write!(f, "invalid number {text:?} at byte {at}"),
             Error::UnexpectedToken { found, at } => write!(f, "unexpected {found} at byte {at}"),
             Error::UnexpectedEnd => write!(f, "unexpected end of expression"),
-            Error::UnexpectedWord { word, at } => write!(f, "unexpected word {word:?} at byte {at}"),
+            Error::UnexpectedWord { word, at } => {
+                write!(f, "unexpected word {word:?} at byte {at}")
+            }
             Error::UnsupportedOperation(what) => write!(f, "unsupported: {what}"),
             Error::NotAPlainNumber => write!(f, "result is not a plain number"),
             Error::DivisionByZero => write!(f, "division by zero"),

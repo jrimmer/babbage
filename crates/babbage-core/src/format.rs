@@ -119,7 +119,7 @@ pub fn format_decimal(n: &Number, opts: &FormatOptions) -> Formatted {
 fn push_grouped(out: &mut String, int_part: &str) {
     let len = int_part.len();
     for (i, ch) in int_part.chars().enumerate() {
-        if i > 0 && (len - i) % 3 == 0 {
+        if i > 0 && (len - i).is_multiple_of(3) {
             out.push(',');
         }
         out.push(ch);

@@ -1,4 +1,7 @@
-use babbage_core::{Error, FormatOptions, Formatted, Number, RoundingMode, evaluate_plain as evaluate, format_decimal};
+use babbage_core::{
+    Error, FormatOptions, Formatted, Number, RoundingMode, evaluate_plain as evaluate,
+    format_decimal,
+};
 
 fn fmt(expr: &str, dp: u32, mode: RoundingMode, group: bool, trim: bool) -> Formatted {
     let mut o = FormatOptions::new(dp).unwrap();
@@ -13,7 +16,9 @@ fn plain(expr: &str, dp: u32, mode: RoundingMode) -> (String, bool) {
     (f.text, f.exact)
 }
 
-use RoundingMode::{AwayFromZero as Away, HalfAwayFromZero as HalfAway, HalfEven, TowardZero as Zero};
+use RoundingMode::{
+    AwayFromZero as Away, HalfAwayFromZero as HalfAway, HalfEven, TowardZero as Zero,
+};
 
 #[test]
 fn rounding_mode_matrix() {
@@ -81,7 +86,11 @@ fn exact_flag_is_true_only_when_the_text_is_the_true_value() {
 #[test]
 fn a_value_that_rounds_to_zero_never_prints_a_minus_sign() {
     for mode in [HalfAway, HalfEven, Zero] {
-        assert_eq!(plain("-1/3000000", 5, mode), ("0".to_string(), false), "{mode:?}");
+        assert_eq!(
+            plain("-1/3000000", 5, mode),
+            ("0".to_string(), false),
+            "{mode:?}"
+        );
     }
     assert_eq!(plain("-1/3000000", 5, Away).0, "-0.00001");
     assert_eq!(plain("-0.4", 0, HalfAway), ("0".to_string(), false));
@@ -127,7 +136,11 @@ fn thousands_grouping() {
     ];
     for (expr, want) in rows {
         assert_eq!(fmt(expr, 10, HalfAway, true, true).text, want, "{expr}");
-        assert_eq!(fmt(expr, 10, HalfAway, false, true).text, want.replace(',', ""), "{expr} ungrouped");
+        assert_eq!(
+            fmt(expr, 10, HalfAway, false, true).text,
+            want.replace(',', ""),
+            "{expr} ungrouped"
+        );
     }
     let big = "1,".to_string() + &"000,".repeat(16) + "000";
     assert_eq!(fmt("10^51", 0, HalfAway, true, true).text, big);

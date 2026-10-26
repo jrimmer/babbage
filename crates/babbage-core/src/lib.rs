@@ -5,6 +5,7 @@ pub mod lexer;
 pub mod number;
 pub mod parser;
 pub mod phrase;
+pub mod units;
 pub mod value;
 
 pub use error::Error;

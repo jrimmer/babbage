@@ -82,10 +82,12 @@ pub struct Expr {
 
 impl Expr {
     pub fn num(n: Number) -> Expr {
-        Expr { rpn: vec![Node::Num(n)] }
+        Expr {
+            rpn: vec![Node::Num(n)],
+        }
     }
 
-    pub fn neg(mut self) -> Expr {
+    pub fn negated(mut self) -> Expr {
         self.rpn.push(Node::Neg);
         self
     }
@@ -102,7 +104,10 @@ impl Expr {
     }
 
     pub(crate) fn from_nodes(rpn: Vec<Node>) -> Expr {
-        assert!(is_balanced(&rpn), "internal error: expression does not reduce to exactly one value");
+        assert!(
+            is_balanced(&rpn),
+            "internal error: expression does not reduce to exactly one value"
+        );
         Expr { rpn }
     }
 
@@ -184,7 +189,12 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     Tok::Word(w) if w == "of" => BinOp::Mul,
                     Tok::Word(w) if w == "on" => BinOp::On,
                     Tok::Word(w) if w == "off" => BinOp::Off,
-                    Tok::Word(w) => return Err(Error::UnexpectedWord { word: w.clone(), at: t.at }),
+                    Tok::Word(w) => {
+                        return Err(Error::UnexpectedWord {
+                            word: w.clone(),
+                            at: t.at,
+                        });
+                    }
                     _ => unreachable!("outer pattern admits only operators and words"),
                 };
                 while let Some(top) = ops.last() {
@@ -202,11 +212,26 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                 match ops.pop() {
                     Some(Pending::LParen) => break,
                     Some(p) => p.emit(&mut out),
-                    None => return Err(Error::UnexpectedToken { found: t.tok.describe(), at: t.at }),
+                    None => {
+                        return Err(Error::UnexpectedToken {
+                            found: t.tok.describe(),
+                            at: t.at,
+                        });
+                    }
                 }
             },
-            (Tok::Word(w), true) => return Err(Error::UnexpectedWord { word: w.clone(), at: t.at }),
-            (tok, _) => return Err(Error::UnexpectedToken { found: tok.describe(), at: t.at }),
+            (Tok::Word(w), true) => {
+                return Err(Error::UnexpectedWord {
+                    word: w.clone(),
+                    at: t.at,
+                });
+            }
+            (tok, _) => {
+                return Err(Error::UnexpectedToken {
+                    found: tok.describe(),
+                    at: t.at,
+                });
+            }
         }
     }
     if want_operand {
@@ -267,9 +292,19 @@ mod tests {
         assert!(is_balanced(&[n(1), Node::Neg]));
         assert!(is_balanced(&[n(1), Node::Percent]));
         assert!(is_balanced(&[n(1), n(2), Node::Bin(BinOp::Add)]));
-        assert!(is_balanced(&[n(1), n(2), n(3), Node::Bin(BinOp::Add), Node::Bin(BinOp::Mul)]));
+        assert!(is_balanced(&[
+            n(1),
+            n(2),
+            n(3),
+            Node::Bin(BinOp::Add),
+            Node::Bin(BinOp::Mul)
+        ]));
         assert!(is_balanced(&[n(1), Node::Phrase(Phrase::AsPercent)]));
-        assert!(is_balanced(&[n(1), n(2), Node::Phrase(Phrase::PercentChange)]));
+        assert!(is_balanced(&[
+            n(1),
+            n(2),
+            Node::Phrase(Phrase::PercentChange)
+        ]));
         assert!(!is_balanced(&[]));
         assert!(!is_balanced(&[Node::Neg]));
         assert!(!is_balanced(&[Node::Bin(BinOp::Add)]));

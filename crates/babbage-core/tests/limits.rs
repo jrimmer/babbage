@@ -8,14 +8,26 @@ fn daily_compounding_for_thirty_years_is_exact() {
 
 #[test]
 fn zero_to_any_positive_power_is_zero_even_for_huge_exponents() {
-    assert_eq!(evaluate("0^1000000000"), Ok(babbage_core::Number::from_i64(0)));
+    assert_eq!(
+        evaluate("0^1000000000"),
+        Ok(babbage_core::Number::from_i64(0))
+    );
 }
 
 #[test]
 fn one_and_minus_one_to_huge_powers_follow_parity() {
-    assert_eq!(evaluate("1^99999999999999999999"), Ok(babbage_core::Number::from_i64(1)));
-    assert_eq!(evaluate("(-1)^99999999999999999999"), Ok(babbage_core::Number::from_i64(-1)));
-    assert_eq!(evaluate("(-1)^99999999999999999998"), Ok(babbage_core::Number::from_i64(1)));
+    assert_eq!(
+        evaluate("1^99999999999999999999"),
+        Ok(babbage_core::Number::from_i64(1))
+    );
+    assert_eq!(
+        evaluate("(-1)^99999999999999999999"),
+        Ok(babbage_core::Number::from_i64(-1))
+    );
+    assert_eq!(
+        evaluate("(-1)^99999999999999999998"),
+        Ok(babbage_core::Number::from_i64(1))
+    );
 }
 
 #[test]

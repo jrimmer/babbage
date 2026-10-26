@@ -24,11 +24,17 @@ fn one() -> Number {
 
 impl Value {
     pub fn plain(number: Number) -> Value {
-        Value { number, kind: Kind::Plain }
+        Value {
+            number,
+            kind: Kind::Plain,
+        }
     }
 
     pub fn percent(fraction: Number) -> Value {
-        Value { number: fraction, kind: Kind::Percent }
+        Value {
+            number: fraction,
+            kind: Kind::Percent,
+        }
     }
 
     pub fn kind(&self) -> Kind {
@@ -48,7 +54,10 @@ impl Value {
     }
 
     pub fn neg(&self) -> Value {
-        Value { number: self.number.neg(), kind: self.kind }
+        Value {
+            number: self.number.neg(),
+            kind: self.kind,
+        }
     }
 
     pub fn into_percent_literal(self) -> Result<Value, Error> {
@@ -61,23 +70,31 @@ impl Value {
     pub fn binary(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
         use Kind::{Percent, Plain};
         match (op, l.kind, r.kind) {
-            (BinOp::Add | BinOp::Sub, Plain, Plain) => Ok(Value::plain(arith(op, &l.number, &r.number)?)),
+            (BinOp::Add | BinOp::Sub, Plain, Plain) => {
+                Ok(Value::plain(arith(op, &l.number, &r.number)?))
+            }
             (BinOp::Add | BinOp::Sub, Percent, Percent | Plain) => {
                 Ok(Value::percent(arith(op, &l.number, &r.number)?))
             }
             (BinOp::Add | BinOp::Sub, Plain, Percent) => {
                 Ok(Value::plain(l.number.mul(&adjust(op, &r.number)?)?))
             }
-            (BinOp::Mul, Plain, Plain) | (BinOp::Mul, Percent, Plain) | (BinOp::Mul, Plain, Percent) => {
-                Ok(Value::plain(l.number.mul(&r.number)?))
-            }
+            (BinOp::Mul, Plain, Plain)
+            | (BinOp::Mul, Percent, Plain)
+            | (BinOp::Mul, Plain, Percent) => Ok(Value::plain(l.number.mul(&r.number)?)),
             (BinOp::Div, Plain, Plain) => Ok(Value::plain(l.number.div(&r.number)?)),
             (BinOp::Pow, Plain, Plain) => Ok(Value::plain(l.number.pow(&r.number)?)),
             (BinOp::On | BinOp::Off, _, Plain) => {
-                let sign = if op == BinOp::On { BinOp::Add } else { BinOp::Sub };
+                let sign = if op == BinOp::On {
+                    BinOp::Add
+                } else {
+                    BinOp::Sub
+                };
                 Ok(Value::plain(r.number.mul(&adjust(sign, &l.number)?)?))
             }
-            (BinOp::On | BinOp::Off, ..) => Err(Error::UnsupportedOperation("'on' and 'off' need a plain number after them")),
+            (BinOp::On | BinOp::Off, ..) => Err(Error::UnsupportedOperation(
+                "'on' and 'off' need a plain number after them",
+            )),
             _ => Err(Error::UnsupportedOperation(NOT_YET)),
         }
     }
@@ -110,7 +127,9 @@ impl Value {
             (Phrase::PercentChange, [a, b]) if a.kind == Plain && b.kind == Plain => {
                 Ok(Value::percent(b.number.sub(&a.number)?.div(&a.number)?))
             }
-            _ => Err(Error::UnsupportedOperation("this phrase needs plain numbers and, where written, a percentage")),
+            _ => Err(Error::UnsupportedOperation(
+                "this phrase needs plain numbers and, where written, a percentage",
+            )),
         }
     }
 }

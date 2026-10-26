@@ -1,0 +1,18 @@
+#!/bin/bash
+# Mutation testing with the temp dir on /home (the shared /tmp tmpfs fills up).
+# Usage: bin/mutate ['**/file.rs' ...]   (no args: everything)
+set -euo pipefail
+cd "$(dirname "$0")/.."
+tmp=$HOME/.cache/babbage-mutants-tmp
+mkdir -p "$tmp"
+args=()
+for f in "$@"; do args+=(-f "$f"); done
+rm -rf mutants.out
+status=0
+TMPDIR=$tmp cargo mutants -p babbage-core -j 4 --timeout 30 --no-shuffle "${args[@]}" || status=$?
+rm -rf "$tmp"
+echo "--- missed"; cat mutants.out/missed.txt
+echo "--- timeout (loop mutants are detected by hanging)"; cat mutants.out/timeout.txt
+# Exit 2 means survivors. Exit 3 means only timeouts. Anything else is a real failure.
+[ -s mutants.out/missed.txt ] && exit 2
+exit 0

@@ -25,6 +25,36 @@ impl Number {
         Ok(Number(r))
     }
 
+    /// Parses a plain decimal such as `-12.5`, `.25` or `1.5e3` exactly. For built-in tables, not user input.
+    pub fn from_decimal_str(text: &str) -> Result<Self, Error> {
+        let bad = || Error::InvalidNumber {
+            text: text.to_string(),
+            at: 0,
+        };
+        let (negative, rest) = match text.strip_prefix('-') {
+            Some(r) => (true, r),
+            None => (false, text),
+        };
+        let (mantissa, exp) = match rest.split_once(['e', 'E']) {
+            Some((m, e)) => (m, e.parse::<i32>().map_err(|_| bad())?),
+            None => (rest, 0),
+        };
+        let (int_part, frac_part) = mantissa.split_once('.').unwrap_or((mantissa, ""));
+        if int_part.is_empty() && frac_part.is_empty() {
+            return Err(bad());
+        }
+        let digits = format!("{int_part}{frac_part}");
+        let numer: BigInt = digits.parse().map_err(|_| bad())?;
+        let scale = exp - frac_part.len() as i32;
+        let ten = BigInt::from(10).pow(scale.unsigned_abs());
+        let r = if scale >= 0 {
+            BigRational::from_integer(numer * ten)
+        } else {
+            BigRational::new(numer, ten)
+        };
+        Number::new(if negative { -r } else { r })
+    }
+
     pub fn from_i64(n: i64) -> Self {
         Number(BigRational::from_integer(BigInt::from(n)))
     }
@@ -104,9 +134,17 @@ impl Number {
         }
         if *self.denom() == one && self.numer().abs() == one {
             let odd = e.is_odd();
-            return Ok(if self.is_negative() && odd { self.clone() } else { Number(BigRational::one()) });
+            return Ok(if self.is_negative() && odd {
+                self.clone()
+            } else {
+                Number(BigRational::one())
+            });
         }
-        let magnitude = e.abs().to_u32().filter(|m| *m <= i32::MAX as u32).ok_or(Error::Overflow)?;
+        let magnitude = e
+            .abs()
+            .to_u32()
+            .filter(|m| *m <= i32::MAX as u32)
+            .ok_or(Error::Overflow)?;
         let base_bits = self.numer().bits().max(self.denom().bits());
         if pow_exceeds_cap(base_bits, magnitude) {
             return Err(Error::Overflow);

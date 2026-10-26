@@ -9,7 +9,11 @@ fn shown(line: &str) -> String {
 }
 
 fn unsupported(line: &str) {
-    assert!(matches!(evaluate(line), Err(Error::UnsupportedOperation(_))), "{line}: {:?}", evaluate(line));
+    assert!(
+        matches!(evaluate(line), Err(Error::UnsupportedOperation(_))),
+        "{line}: {:?}",
+        evaluate(line)
+    );
 }
 
 #[test]
@@ -69,9 +73,15 @@ fn kinds_follow_the_reference_rules() {
     for (line, kind) in kinds {
         assert_eq!(evaluate(line).unwrap().kind(), kind, "{line}");
     }
-    assert_eq!(evaluate("12.5%").unwrap().number(), &evaluate("1/8").unwrap().into_plain().unwrap());
+    assert_eq!(
+        evaluate("12.5%").unwrap().number(),
+        &evaluate("1/8").unwrap().into_plain().unwrap()
+    );
     assert_eq!(evaluate("10%"), Ok(evaluate("0.1 as %").unwrap()));
-    assert_eq!(evaluate("10%").unwrap().into_plain(), Err(Error::NotAPlainNumber));
+    assert_eq!(
+        evaluate("10%").unwrap().into_plain(),
+        Err(Error::NotAPlainNumber)
+    );
 }
 
 #[test]
@@ -104,33 +114,67 @@ fn word_forms_are_case_and_spacing_insensitive() {
     for line in ["10% OF 200", "10% Of 200", "  10%   of   200  "] {
         assert_eq!(shown(line), "20", "{line}");
     }
-    for line in ["20 IS 10% OF WHAT", "20 Is 10% Of What", "20  is   10%  of  what"] {
+    for line in [
+        "20 IS 10% OF WHAT",
+        "20 Is 10% Of What",
+        "20  is   10%  of  what",
+    ] {
         assert_eq!(shown(line), "200", "{line}");
     }
     assert_eq!(shown("20 as PERCENT"), "2,000%");
     assert_eq!(shown("20 is what percent of 200"), "10%");
-    assert_eq!(shown("20 is what % of 200"), shown("20 is what percent of 200"));
+    assert_eq!(
+        shown("20 is what % of 200"),
+        shown("20 is what percent of 200")
+    );
 }
 
 #[test]
 fn undocumented_combinations_are_refused_not_guessed() {
-    for line in ["10% × 10%", "10% / 20%", "20 / 50%", "50% / 2", "10%^2", "2^10%", "10% on 20%", "10% off 20%", "10%%"] {
+    for line in [
+        "10% × 10%",
+        "10% / 20%",
+        "20 / 50%",
+        "50% / 2",
+        "10%^2",
+        "2^10%",
+        "10% on 20%",
+        "10% off 20%",
+        "10%%",
+    ] {
         unsupported(line);
     }
 }
 
 #[test]
 fn phrase_forms_only_apply_to_a_whole_line() {
-    for line in ["(20 as %) × 1", "1 + (20 is what % of 200)", "(3 to 4 as %) + 1"] {
-        assert!(matches!(evaluate(line), Err(Error::UnexpectedWord { .. })), "{line}: {:?}", evaluate(line));
+    for line in [
+        "(20 as %) × 1",
+        "1 + (20 is what % of 200)",
+        "(3 to 4 as %) + 1",
+    ] {
+        assert!(
+            matches!(evaluate(line), Err(Error::UnexpectedWord { .. })),
+            "{line}: {:?}",
+            evaluate(line)
+        );
     }
 }
 
 #[test]
 fn zero_divisors_in_every_form() {
     let lines = [
-        "5 is 0% of what", "5 is 100% off what", "5 is what % of 0", "5 is what % on 0", "5 is what % off 0",
-        "0 to 5 is what %", "0 to 5 as %", "5 in 0 is what %", "5/0 as %", "5/0 %", "5 is 0/3 of what",
+        "5 is 0% of what",
+        "5 is 100% off what",
+        "5 is what % of 0",
+        "5 is what % on 0",
+        "5 is what % off 0",
+        "0 to 5 is what %",
+        "0 to 5 as %",
+        "5 in 0 is what %",
+        "5/0 as %",
+        "5/0 %",
+        "5 is 0/3 of what",
     ];
     for line in lines {
         assert_eq!(evaluate(line), Err(Error::DivisionByZero), "{line}");
@@ -139,11 +183,32 @@ fn zero_divisors_in_every_form() {
 
 #[test]
 fn incomplete_or_misplaced_phrases_are_errors() {
-    for line in ["is what %", "of 200", "10% of", "20 is of what", "20 is what % of", "to 5 as %", "20 as", "as %", "%", "is"] {
-        assert!(evaluate(line).is_err(), "{line} should fail, got {:?}", evaluate(line));
+    for line in [
+        "is what %",
+        "of 200",
+        "10% of",
+        "20 is of what",
+        "20 is what % of",
+        "to 5 as %",
+        "20 as",
+        "as %",
+        "%",
+        "is",
+    ] {
+        assert!(
+            evaluate(line).is_err(),
+            "{line} should fail, got {:?}",
+            evaluate(line)
+        );
     }
-    assert!(matches!(evaluate("20 foo 5"), Err(Error::UnexpectedWord { .. })));
-    assert!(matches!(evaluate("lunch was 55"), Err(Error::UnexpectedWord { .. })));
+    assert!(matches!(
+        evaluate("20 foo 5"),
+        Err(Error::UnexpectedWord { .. })
+    ));
+    assert!(matches!(
+        evaluate("lunch was 55"),
+        Err(Error::UnexpectedWord { .. })
+    ));
 }
 
 #[test]
@@ -175,19 +240,35 @@ fn agrees_with_the_percentage_oracle_on_every_line() {
             ("ERR:div0", Err(Error::DivisionByZero)) => true,
             ("ERR:unsupported", Err(Error::UnsupportedOperation(_))) => true,
             ("plain" | "percent", Ok(v)) => {
-                let want_kind = if kind == "plain" { Kind::Plain } else { Kind::Percent };
+                let want_kind = if kind == "plain" {
+                    Kind::Plain
+                } else {
+                    Kind::Percent
+                };
                 let ours = format!("{}/{}", v.number().numer(), v.number().denom());
                 v.kind() == want_kind && ours == exact && format_value(v, &opts).text == display
             }
             _ => false,
         };
         if !ok {
-            failures.push(format!("{expr:?} want {kind} {exact} {display}, got {got:?}"));
+            failures.push(format!(
+                "{expr:?} want {kind} {exact} {display}, got {got:?}"
+            ));
         }
         checked += 1;
     }
     assert!(checked > 40_000, "corpus unexpectedly small: {checked}");
-    assert!(failures.is_empty(), "{} of {checked} disagree, first 12:\n{}", failures.len(), failures.iter().take(12).cloned().collect::<Vec<_>>().join("\n"));
+    assert!(
+        failures.is_empty(),
+        "{} of {checked} disagree, first 12:\n{}",
+        failures.len(),
+        failures
+            .iter()
+            .take(12)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
 }
 
 fn dec() -> impl Strategy<Value = String> {
@@ -304,30 +385,100 @@ fn phrase_forms_reject_a_percentage_where_a_plain_number_is_required() {
         "20 as a % of 10%",
     ];
     for line in lines {
-        assert_eq!(evaluate(line), Err(Error::UnsupportedOperation(PHRASE_NEEDS_PLAIN)), "{line}");
+        assert_eq!(
+            evaluate(line),
+            Err(Error::UnsupportedOperation(PHRASE_NEEDS_PLAIN)),
+            "{line}"
+        );
     }
 }
 
 #[test]
 fn refusal_messages_say_which_rule_was_hit() {
-    assert_eq!(evaluate("10% on 20%"), Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN)));
-    assert_eq!(evaluate("10% off 20%"), Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN)));
-    assert_eq!(evaluate("5 on 10%"), Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN)));
-    assert_eq!(evaluate("10% × 10%"), Err(Error::UnsupportedOperation(PERCENT_COMBO)));
-    assert_eq!(evaluate("20 / 50%"), Err(Error::UnsupportedOperation(PERCENT_COMBO)));
-    assert_eq!(evaluate("10%%"), Err(Error::UnsupportedOperation("a percentage of a percentage")));
+    assert_eq!(
+        evaluate("10% on 20%"),
+        Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN))
+    );
+    assert_eq!(
+        evaluate("10% off 20%"),
+        Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN))
+    );
+    assert_eq!(
+        evaluate("5 on 10%"),
+        Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN))
+    );
+    assert_eq!(
+        evaluate("10% × 10%"),
+        Err(Error::UnsupportedOperation(PERCENT_COMBO))
+    );
+    assert_eq!(
+        evaluate("20 / 50%"),
+        Err(Error::UnsupportedOperation(PERCENT_COMBO))
+    );
+    assert_eq!(
+        evaluate("10%%"),
+        Err(Error::UnsupportedOperation("a percentage of a percentage"))
+    );
 }
 
 #[test]
 fn keywords_inside_unbalanced_parentheses_are_not_phrase_keywords() {
-    assert_eq!(evaluate("(5 as %"), Err(Error::UnexpectedWord { word: "as".into(), at: 3 }));
-    assert_eq!(evaluate("(5 %"), Err(Error::UnexpectedToken { found: "'%'".into(), at: 3 }));
-    assert_eq!(evaluate("(5 is what %"), Err(Error::UnexpectedWord { word: "is".into(), at: 3 }));
-    assert_eq!(evaluate("(20 is 10% of what"), Err(Error::UnexpectedWord { word: "is".into(), at: 4 }));
-    assert_eq!(evaluate("(20 is 10 on what"), Err(Error::UnexpectedWord { word: "is".into(), at: 4 }));
-    assert_eq!(evaluate("(20 is 10 off what"), Err(Error::UnexpectedWord { word: "is".into(), at: 4 }));
-    assert_eq!(evaluate("20 is 10% of what foo"), Err(Error::UnexpectedWord { word: "is".into(), at: 3 }));
-    assert_eq!(evaluate("20 is 0.1 of what 5"), Err(Error::UnexpectedWord { word: "is".into(), at: 3 }));
+    assert_eq!(
+        evaluate("(5 as %"),
+        Err(Error::UnexpectedWord {
+            word: "as".into(),
+            at: 3
+        })
+    );
+    assert_eq!(
+        evaluate("(5 %"),
+        Err(Error::UnexpectedToken {
+            found: "'%'".into(),
+            at: 3
+        })
+    );
+    assert_eq!(
+        evaluate("(5 is what %"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 3
+        })
+    );
+    assert_eq!(
+        evaluate("(20 is 10% of what"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 4
+        })
+    );
+    assert_eq!(
+        evaluate("(20 is 10 on what"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 4
+        })
+    );
+    assert_eq!(
+        evaluate("(20 is 10 off what"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 4
+        })
+    );
+    assert_eq!(
+        evaluate("20 is 10% of what foo"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 3
+        })
+    );
+    assert_eq!(
+        evaluate("20 is 0.1 of what 5"),
+        Err(Error::UnexpectedWord {
+            word: "is".into(),
+            at: 3
+        })
+    );
 }
 
 #[test]
@@ -341,12 +492,26 @@ fn phrases_print_in_a_readable_form() {
 #[test]
 fn text_after_what_never_changes_the_answer() {
     for line in [
-        "20 is 0.1 of what 5", "20 is 0.1 on what 7", "20 is 0.1 off what 7", "20 is 10% of what (5)",
-        "20 is 10% of what + 1", "20 is 10% of what %", "20 is what % of 10 what",
+        "20 is 0.1 of what 5",
+        "20 is 0.1 on what 7",
+        "20 is 0.1 off what 7",
+        "20 is 10% of what (5)",
+        "20 is 10% of what + 1",
+        "20 is 10% of what %",
+        "20 is what % of 10 what",
     ] {
-        assert!(evaluate(line).is_err(), "{line} must not produce an answer, got {:?}", evaluate(line));
+        assert!(
+            evaluate(line).is_err(),
+            "{line} must not produce an answer, got {:?}",
+            evaluate(line)
+        );
     }
-    for line in ["is 10% of what 20", "20 is what 10% of what", "20 10% is of what", "20 is of 10% what"] {
+    for line in [
+        "is 10% of what 20",
+        "20 is what 10% of what",
+        "20 10% is of what",
+        "20 is of 10% what",
+    ] {
         assert!(evaluate(line).is_err(), "{line} must not produce an answer");
     }
 }

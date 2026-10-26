@@ -19,7 +19,9 @@ pub enum Tok {
     RParen,
     Word(String),
     /// `attached` is true when `%` directly follows a number or `)`, as in `10%`.
-    Percent { attached: bool },
+    Percent {
+        attached: bool,
+    },
 }
 
 impl Tok {
@@ -59,13 +61,19 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             c if c.is_whitespace() => {}
             '0'..='9' => {
                 let (n, next) = scan_number(src, &chars, i)?;
-                out.push(Token { tok: Tok::Num(n), at });
+                out.push(Token {
+                    tok: Tok::Num(n),
+                    at,
+                });
                 i = next;
                 continue;
             }
             '.' if chars.get(i + 1).is_some_and(|(_, d)| d.is_ascii_digit()) => {
                 let (n, next) = scan_number(src, &chars, i)?;
-                out.push(Token { tok: Tok::Num(n), at });
+                out.push(Token {
+                    tok: Tok::Num(n),
+                    at,
+                });
                 i = next;
                 continue;
             }
@@ -81,7 +89,8 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             '/' | '\u{00F7}' | '\u{2215}' => simple(Tok::Slash, &mut out),
             '^' => simple(Tok::Caret, &mut out),
             '%' => {
-                let attached = i > 0 && (chars[i - 1].1.is_ascii_digit() || matches!(chars[i - 1].1, ')' | '%'));
+                let attached = i > 0
+                    && (chars[i - 1].1.is_ascii_digit() || matches!(chars[i - 1].1, ')' | '%'));
                 simple(Tok::Percent { attached }, &mut out)
             }
             c if c.is_alphabetic() => {
@@ -90,7 +99,10 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                     end += 1;
                 }
                 let word: String = chars[i..end].iter().map(|(_, ch)| *ch).collect();
-                out.push(Token { tok: Tok::Word(word.to_lowercase()), at });
+                out.push(Token {
+                    tok: Tok::Word(word.to_lowercase()),
+                    at,
+                });
                 i = end;
                 continue;
             }
@@ -161,7 +173,11 @@ fn scan_number(src: &str, chars: &[(usize, char)], start: usize) -> Result<(Numb
 
     let mut exp: i64 = 0;
     if chars.get(j).is_some_and(|(_, c)| matches!(c, 'e' | 'E')) {
-        let sign_len = usize::from(chars.get(j + 1).is_some_and(|(_, c)| matches!(c, '+' | '-')));
+        let sign_len = usize::from(
+            chars
+                .get(j + 1)
+                .is_some_and(|(_, c)| matches!(c, '+' | '-')),
+        );
         if digit_at(chars, j + 1 + sign_len) {
             let negative = sign_len == 1 && chars[j + 1].1 == '-';
             let mut k = j + 1 + sign_len;
