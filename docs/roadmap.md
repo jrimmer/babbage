@@ -1,6 +1,6 @@
 # v1 roadmap (offline features only)
 
-Status as of 2026-10-25. Every row ships only after a Python-oracle differential test and a clean cargo-mutants run.
+Status as of 2026-10-26. Every row ships only after a Python-oracle differential test and a clean cargo-mutants run.
 
 | # | Area | Status |
 |---|---|---|
@@ -25,11 +25,11 @@ Status as of 2026-10-25. Every row ships only after a Python-oracle differential
 | 19 | Clock time, timespans, lap times, video timecode | built, oracle-tested (82k lines); mutation run pending; timecode syntax is ticket 0044 |
 | 20 | Time zones and cities (bundled tzdb) | built, oracle-tested (8k lines vs zoneinfo); mutation run pending; ticket 0046 |
 | 21 | Finance formulas: compound interest, present value, returns, loans, sales tax (CPI, income tax tables: post-v1) | done |
-| 22 | Number locale settings | todo |
-| 23 | Sheets, sheetbooks, reference-format-like file format | todo |
-| 24 | gpui front end | todo |
+| 22 | Number locale settings | built: three number formats, underscore separators, local zone, region dollar, US or imperial volume; oracle-tested (27k and 36k lines) and checked end to end; open items in ticket 0049 |
+| 23 | Sheets, sheetbooks, reference-format-like file format | built as `babbage-store`: one text file per sheet, atomic writes, a debounced autosaver, a sheetbook with create, rename and move-to-trash; importing real reference-format files is ticket 0051 |
+| 24 | gpui front end | built: sidebar, editor, answer column, total chip, Omarchy theme; 12 end-to-end checks in a nested Hyprland (`bin/accept`); known gaps are ticket 0052 |
 
-16 of 24 done. The hardest remaining precision areas are 16 and 21 (dates, finance).
+Rows 1 to 15 and 21 are done with a clean mutation run. Rows 16 to 20 are built and oracle-tested, and their mutation run is in progress. Rows 22 to 24 are built; the gaps are tickets 0049, 0051 and 0052.
 
 Row 3 leftovers, each filed as a ticket: fraction display (`as fraction`), multipliers (`4x`), proportion forms (`20% is 500, what is 750`), and phrase forms inside parentheses.
 

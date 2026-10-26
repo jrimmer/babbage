@@ -1,6 +1,9 @@
 #!/bin/bash
 # Mutation testing with the temp dir on /home (the shared /tmp tmpfs fills up).
 # Usage: bin/mutate ['**/file.rs' ...]   (no args: everything)
+# Environment: MUTATE_TIMEOUT (seconds per mutant, default 30), MUTATE_DIFF (a diff file: only mutate the
+# lines it changes), MUTATE_TESTS (extra `cargo test` arguments, such as "--lib --test dates", to run only
+# the tests that exercise the mutated files).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 tmp=$HOME/.cache/babbage-mutants-tmp
@@ -10,7 +13,10 @@ for f in "$@"; do args+=(-f "$f"); done
 rm -rf mutants.out
 status=0
 # Throttled on purpose: this is the owner's workstation, and heavy runs must not swamp it.
-TMPDIR=$tmp nice -n 19 ionice -c3 cargo mutants -p babbage-core -j 2 --timeout 30 --no-shuffle "${args[@]}" || status=$?
+diff_args=()
+[ -n "${MUTATE_DIFF:-}" ] && diff_args=(--in-diff "$MUTATE_DIFF")
+# shellcheck disable=SC2086
+TMPDIR=$tmp nice -n 19 ionice -c3 cargo mutants -p babbage-core -j 2 --timeout "${MUTATE_TIMEOUT:-30}" --no-shuffle "${diff_args[@]}" "${args[@]}" -- ${MUTATE_TESTS:-} || status=$?
 rm -rf "$tmp"
 echo "--- missed"; cat mutants.out/missed.txt
 echo "--- timeout (loop mutants are detected by hanging)"; cat mutants.out/timeout.txt
