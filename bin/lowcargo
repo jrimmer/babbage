@@ -1,0 +1,3 @@
+#!/bin/bash
+# Runs cargo at the lowest priority: this is a shared workstation.
+exec nice -n 19 cargo "$@"
