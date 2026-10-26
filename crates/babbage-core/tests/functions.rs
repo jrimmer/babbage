@@ -52,7 +52,7 @@ fn the_example_lines() {
         ("2,100 to nearest thousand", "2,000"),
         ("21 rounded up to nearest 5", "25"),
         ("17 rounded down to nearest 3", "15"),
-        ("0.534 to nearest 16th", "0.5625"),
+        ("0.534 to nearest 16th", "9/16"),
         ("total of 3, 4, 7 and 9", "23"),
         ("average of 36, 42, 19 and 81", "44.5"),
         ("count of 1, 2, 3, 4, 5", "5"),

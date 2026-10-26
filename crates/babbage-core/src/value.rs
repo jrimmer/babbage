@@ -334,6 +334,32 @@ impl Value {
     }
 
     /// Applies `f` to the number and keeps the unit and kind.
+    /// An amount of one currency rounded to that currency's own digits (`$3.33`, `¥33`), which is what a line
+    /// reference or a subtotal uses. Anything that is not a plain amount of one currency comes back unchanged.
+    pub fn rounded_to_currency(&self) -> Value {
+        let Some((currency, rest)) = self.unit.currency_split() else {
+            return self.clone();
+        };
+        let Some(minor) = currency.minor_digits else {
+            return self.clone();
+        };
+        if self.kind != Kind::Plain || !rest.is_empty() {
+            return self.clone();
+        }
+        let step = Number::from_i64(1).div(
+            &Number::from_i64(10)
+                .pow(&Number::from_i64(i64::from(minor)))
+                .unwrap_or_else(|_| Number::from_i64(1)),
+        );
+        match step.and_then(|s| self.map_number(|n| round_to_multiple(n, &s, Rounding::Nearest))) {
+            Ok(v) => Value {
+                approx: self.approx,
+                ..v
+            },
+            Err(_) => self.clone(),
+        }
+    }
+
     pub fn map_number(
         &self,
         f: impl FnOnce(&Number) -> Result<Number, Error>,

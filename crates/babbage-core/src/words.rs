@@ -384,6 +384,7 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
         let step_toks = &toks[i + 1..];
         let mut value_end = i - 1;
         let mut phrase = Phrase::RoundNearest;
+        let mut as_fraction = false;
         if value_end >= 1 && is_word(toks.get(value_end - 1), "up") {
             phrase = Phrase::RoundUp;
             value_end -= 1;
@@ -416,6 +417,8 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
                 .iter()
                 .any(|s| w.eq_ignore_ascii_case(s)) =>
             {
+                // Rounding to a fraction of an inch (`to nearest 16th`) shows the answer as a fraction.
+                as_fraction = true;
                 Some(vec![
                     Node::Num(Number::from_i64(1)),
                     Node::Num(k.clone()),
@@ -431,6 +434,9 @@ fn rounding(toks: &[Token]) -> Option<Result<Expr, Error>> {
             let mut rpn = v.nodes().to_vec();
             rpn.extend(step);
             rpn.push(Node::Phrase(phrase));
+            if as_fraction {
+                rpn.push(Node::Show(crate::value::Shown::Fraction));
+            }
             Expr::from_nodes(rpn)
         }));
     }
@@ -632,7 +638,10 @@ fn time_to_reach(rest: &[Token]) -> Option<Result<Expr, Error>> {
 fn multiplier_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let n = toks.len();
     let is_x = |t: Option<&Token>| {
-        is_word(t, "multiplier") || is_word(t, "x") || matches!(t.map(|t| &t.tok), Some(Tok::Star))
+        is_word(t, "multiplier")
+            || is_word(t, "multiple")
+            || is_word(t, "x")
+            || matches!(t.map(|t| &t.tok), Some(Tok::Star))
     };
     // `<A> to <B> is what x` and `<A> to <B> as x`
     let change = if n >= 6

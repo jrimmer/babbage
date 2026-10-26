@@ -89,6 +89,18 @@ impl LineResult {
         }
     }
 
+    /// The value other lines see: money is rounded to its currency's digits for line references, subtotals and
+    /// the floating total, but a declaration (`rent = $10/3`) keeps every digit.
+    pub fn counted_value(&self) -> Option<Value> {
+        self.value().map(|v| {
+            if self.declares.is_none() {
+                v.rounded_to_currency()
+            } else {
+                v.clone()
+            }
+        })
+    }
+
     pub fn value(&self) -> Option<&Value> {
         match &self.kind {
             LineKind::Value(v) => Some(v),
@@ -134,11 +146,12 @@ fn evaluate_sheet_in_scope(lines: &[&str], opts: &SheetOptions) -> Vec<LineResul
 
 /// The floating total: every line with a result, apart from subtotal lines.
 pub fn floating_total(results: &[LineResult], opts: &SheetOptions) -> Option<Result<Value, Error>> {
-    let values: Vec<&Value> = results
+    let counted: Vec<Value> = results
         .iter()
         .filter(|r| !r.subtotal && (opts.declarations_in_totals || r.declares.is_none()))
-        .filter_map(LineResult::value)
+        .filter_map(LineResult::counted_value)
         .collect();
+    let values: Vec<&Value> = counted.iter().collect();
     (!values.is_empty()).then(|| add_up(&values))
 }
 
@@ -287,8 +300,9 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
         let found = st.results[st.section_start..]
             .iter()
             .filter(|r| r.tags.contains(&tag))
-            .filter_map(LineResult::value)
+            .filter_map(LineResult::counted_value)
             .collect::<Vec<_>>();
+        let found: Vec<&Value> = found.iter().collect();
         result.kind = match aggregate(function, &found) {
             Ok(v) => LineKind::Value(v),
             Err(e) => LineKind::Error(e),
@@ -436,11 +450,12 @@ fn run_statement(
     let (target, op, rhs_text) = split_assignment(text);
     if lowered == "subtotal" || (target.is_some() && rhs_text.trim().is_empty() && op.is_none()) {
         result.subtotal = true;
-        let range: Vec<&Value> = st.results[st.subtotal_start.min(index)..]
+        let counted: Vec<Value> = st.results[st.subtotal_start.min(index)..]
             .iter()
             .filter(|r| !r.subtotal && (opts.declarations_in_totals || r.declares.is_none()))
-            .filter_map(LineResult::value)
+            .filter_map(LineResult::counted_value)
             .collect();
+        let range: Vec<&Value> = counted.iter().collect();
         st.subtotal_start = index + 1;
         result.kind = match add_up(&range) {
             Ok(v) => {
@@ -648,7 +663,7 @@ fn substitute(
             let value = wanted
                 .checked_sub(1)
                 .filter(|n| *n < index)
-                .and_then(|n| st.results[n].value().cloned())
+                .and_then(|n| st.results[n].counted_value())
                 .ok_or(Error::BadReference { line: wanted })?;
             out.push(Token {
                 tok: Tok::Value(value),
@@ -738,6 +753,15 @@ fn drop_unknown(
                 drop[kept_at[*k]] = true;
             }
         }
+    }
+
+    // An operator word with only prose after it is part of the prose: the `on` of `$45 on clothes`.
+    if let Some(last_kept) = (0..toks.len()).rev().find(|i| !drop[*i])
+        && last_kept + 1 < toks.len()
+        && matches!(&toks[last_kept].tok, Tok::Word(w) if phrase::is_infix_word(w))
+        && last_kept > 0
+    {
+        drop[last_kept] = true;
     }
 
     refuse_a_dropped_stretch_that_stands_in_for_a_value(&toks, &drop)?;

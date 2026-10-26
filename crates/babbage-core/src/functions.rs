@@ -764,7 +764,9 @@ fn random_between(a: &Value, b: &Value) -> Result<Value, Error> {
     } else {
         (b.number(), a.number())
     };
-    if lo.is_integer() && hi.is_integer() {
+    // `between 0 and 1` is the documented way to ask for a fraction, so it is not the integer range 0 to 1.
+    let unit_interval = lo.is_zero() && hi.cmp(&Number::from_i64(1)) == std::cmp::Ordering::Equal;
+    if lo.is_integer() && hi.is_integer() && !unit_interval {
         let span = hi.sub(lo)?.numer().clone() + 1;
         let pick = BigInt::from(next_random()) % span;
         return Ok(Value::plain(

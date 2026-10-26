@@ -122,6 +122,17 @@ def literal():
     return f"{t}%", ("percent", q / 100, False)
 
 
+def counted(r):
+    """The value other lines see: money from a line that is not a declaration is rounded to cents (half away
+    from zero), because the reference says "the rounded answer of currencies is used in subtotals and line
+    references"; a variable keeps every digit."""
+    kind, q, money = r[1]
+    if r[0] != "value" or r[2] or kind != "plain" or not money:
+        return r[1]
+    cents = (abs(q) * 100 + Fraction(1, 2)).__floor__()
+    return (kind, Fraction(cents if q >= 0 else -cents, 100), money)
+
+
 def sheet():
     lines, results = [], []  # results: ("value", v) | (".blank",) ...
     vars_, section, sub_start = {}, 0, 0
@@ -130,7 +141,7 @@ def sheet():
         i = len(lines)
         choice = rng.random()
         text, out = None, None
-        values_above = [(j, r[1]) for j, r in enumerate(results) if r[0] == "value"]
+        values_above = [(j, counted(r)) for j, r in enumerate(results) if r[0] == "value"]
         if choice < 0.22:
             t, v = literal()
             text, out = t, ("value", v, False)
@@ -172,7 +183,7 @@ def sheet():
             else:
                 text, out = f"line{j + 1} × {n}", ("value", mul(v, ("plain", Fraction(n), False)), False)
         elif choice < 0.80:
-            vals = [r[1] for r in results[sub_start:] if r[0] == "value" and not r[3]]
+            vals = [counted(r) for r in results[sub_start:] if r[0] == "value" and not r[3]]
             try:
                 res = total(vals)
             except ValueError:
@@ -204,7 +215,7 @@ def sheet():
             if not idxs:
                 continue
             try:
-                s = total([results[j][1] for j in idxs])
+                s = total([counted(results[j]) for j in idxs])
             except ValueError:
                 continue
             res = s if fn == "total" else ("plain", s[1] / len(idxs), s[2])
