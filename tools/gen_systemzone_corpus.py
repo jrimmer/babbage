@@ -38,8 +38,8 @@ def dated(d, clock, today):
     return f"{MONTHS[d.month - 1]} {d.day}, {d.year} at {clock}"
 
 
-def shown(d, secs=0, today=None):
-    if secs:
+def shown(d, secs=0, today=None, timed=False):
+    if secs or timed:
         return dated(d, clock_text(secs), today or NOW.date())
     return f"{MONTHS[d.month - 1]} {d.day}" + ("" if d.year == NOW.year else f", {d.year}")
 
@@ -70,14 +70,14 @@ for _ in range(4000):
     if not once(naive, ZONES[a]):
         continue
     there = naive.replace(tzinfo=ZONES[a]).astimezone(ZONES[b])
-    add("-", f"{literal(d, secs)} {a} in {b}", shown(there.date(), there.hour * 3600 + there.minute * 60))
+    add("-", f"{literal(d, secs)} {a} in {b}", shown(there.date(), there.hour * 3600 + there.minute * 60, timed=True))
 
 for name in names:
     z = ZONES[name]
     here = NOW.astimezone(z)
     tod = here.hour * 3600 + here.minute * 60
-    add(PLACES[name], "now", shown(here.date(), tod, here.date()))
-    add("-", f"time in {name}", clock_text(tod))
+    add(PLACES[name], "now", shown(here.date(), tod, here.date(), timed=True))
+    add("-", f"time in {name}", clock_text(tod) if here.date() == NOW.date() else dated(here.date(), clock_text(tod), NOW.date()))
     for _ in range(150):
         d = date(2026, 1, 1) + timedelta(days=rng.randint(200, 420))
         secs = rng.randrange(60, 86400, 60)

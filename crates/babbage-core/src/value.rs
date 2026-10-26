@@ -1263,7 +1263,7 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             f
         }
         Kind::Date => Formatted {
-            text: crate::dates::format_date(&v.number),
+            text: crate::dates::format_date(&v.number, v.layout == Some(Shown::Timed)),
             exact: true,
         },
         Kind::Clock => Formatted {

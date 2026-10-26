@@ -535,7 +535,7 @@
 -	1796126400	February 21, 2035 2:30pm Lord Howe in Sydney	February 21, 2035 at 2:30 PM
 -	1796126400	January 8, 2027 8:33pm Berlin in Edmonton	January 8, 2027 at 1:33 PM
 -	1796126400	January 30, 2027 5:21pm London in Sao Paulo	January 30, 2027 at 2:21 PM
--	1796126400	August 26, 2028 6:30am Auckland in Kolkata	August 26, 2028
+-	1796126400	August 26, 2028 6:30am Auckland in Kolkata	August 26, 2028 at 12:00 AM
 -	1796126400	January 3, 2039 6:00pm Kolkata in Los Angeles	January 3, 2039 at 4:30 AM
 -	1796126400	December 24, 2026 11:08am Sydney in Lord Howe	December 24, 2026 at 11:08 AM
 -	1796126400	October 24, 2031 1:02am Los Angeles in Edmonton	October 24, 2031 at 2:02 AM
@@ -3679,7 +3679,7 @@
 -	1796126400	September 30, 2026 6:17pm Tokyo in Auckland	September 30, 2026 at 10:17 PM
 -	1796126400	August 16, 2026 10:31pm Kolkata in Sydney	August 17, 2026 at 3:01 AM
 -	1796126400	September 20, 2025 2:54pm Auckland in Sydney	September 20, 2025 at 12:54 PM
--	1796126400	January 28, 2027 1:00am New York in Edmonton	January 28, 2027
+-	1796126400	January 28, 2027 1:00am New York in Edmonton	January 28, 2027 at 12:00 AM
 -	1796126400	November 11, 2026 6:54am Kolkata in New York	November 10, 2026 at 8:24 PM
 -	1796126400	September 15, 2026 2:14pm Lord Howe in Sydney	September 15, 2026 at 1:44 PM
 -	1796126400	October 30, 2026 6:07am Vancouver in Casablanca	October 30, 2026 at 1:07 PM
@@ -7019,7 +7019,7 @@ Asia/Kolkata	1796126400	1785662160 to date	August 2, 2026 at 2:46 PM
 Asia/Kolkata	1796126400	November 28, 2026 1:47am to timestamp	1795810620
 Asia/Kolkata	1796126400	1795810620 to date	November 28, 2026 at 1:47 AM
 Pacific/Auckland	1796126400	now	December 2, 2026 at 1:00 AM
--	1796126400	time in Auckland	1:00 AM
+-	1796126400	time in Auckland	Tomorrow at 1:00 AM
 Pacific/Auckland	1796126400	August 28, 2026 7:49am to timestamp	1787860140
 Pacific/Auckland	1796126400	1787860140 to date	August 28, 2026 at 7:49 AM
 Pacific/Auckland	1796126400	September 8, 2026 11:04am to timestamp	1788822240

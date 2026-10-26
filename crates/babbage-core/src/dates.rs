@@ -465,15 +465,16 @@ fn split_days(value: &Number) -> (i64, Number) {
     )
 }
 
-/// `June 17`, or `June 17, 2019` when the year is not the current one; with ` at 3:30 pm` for a time of day.
-pub fn format_date(days: &Number) -> String {
+/// `June 17`, or `June 17, 2019` when the year is not the current one; with ` at 3:30 pm` for a time of day,
+/// which a `timed` date shows even at midnight.
+pub fn format_date(days: &Number, timed: bool) -> String {
     let (day, seconds) = split_days(days);
     let civil = calendar::civil_from_days(day);
     let (today, _) = settings::local_now();
     let this_year = calendar::civil_from_days(today).year;
     // A date with a time reads `Yesterday at 6:35 PM` or `Tomorrow at 12:30 AM` a day either side of today, and
     // otherwise always carries its year (`November 1, 2026 at 10:30 PM`), as the reference app prints it.
-    if !seconds.is_zero() {
+    if !seconds.is_zero() || timed {
         let clock = format_clock(&seconds);
         return match day - today {
             -1 => format!("Yesterday at {clock}"),

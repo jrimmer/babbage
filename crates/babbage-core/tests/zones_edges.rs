@@ -126,7 +126,7 @@ fn zone_words_do_not_disturb_other_lines() {
 }
 
 /// A moment given as hours after 00:00 UTC on June 15 (the test clock's day), written as the answer shows it:
-/// a time of day on June 15, or the date, with the time unless it is exactly midnight.
+/// a time of day on June 15, or the date with its time (midnight too, since the answer came from a time).
 fn shown_moment(hours_after: i32) -> String {
     shown_moment_with(hours_after, false)
 }
@@ -141,7 +141,6 @@ fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
     );
     match (day, hour) {
         (0, _) if !with_date => clock,
-        (d, 0) => format!("June {}", 15 + d),
         (-1, _) => format!("Yesterday at {clock}"),
         (1, _) => format!("Tomorrow at {clock}"),
         (d, _) => format!("June {}, 2024 at {clock}", 15 + d),

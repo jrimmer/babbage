@@ -172,7 +172,7 @@
 9:58am jakarta to Chatham	3:43 PM	0
 2:39am Chatham to LISBON	June 15, 2024 at 2:54 PM	0
 11:40pm PST in MUNICH	Tomorrow at 9:40 AM	0
-6am hst to shanghai	June 16	0
+6am hst to shanghai	Tomorrow at 12:00 AM	0
 7:08am nzdt in aest	4:08 AM	0
 12:56am SAO PAULO in anchorage	Yesterday at 7:56 PM	0
 1:20pm manila in PDT	Yesterday at 10:20 PM	0
@@ -2507,7 +2507,7 @@ December 22, 2006 9:39pm EDT in MANCHESTER	December 23, 2006 at 1:39 AM	0
 November 11, 2025 9:41pm COLOMBO in JOHANNESBURG	November 11, 2025 at 6:11 PM	0
 March 28, 2026 1:03am cape town in cst	March 27, 2026 at 5:03 PM	0
 September 9, 2028 2:46pm gmt in Chicago	September 9, 2028 at 9:46 AM	0
-July 27, 2026 1am nzdt in new zealand	July 27, 2026	0
+July 27, 2026 1am nzdt in new zealand	July 27, 2026 at 12:00 AM	0
 July 5, 2034 4:49am USA in new york	July 5, 2034 at 4:49 AM	0
 September 28, 2006 6:49pm LONDON in JST	September 29, 2006 at 2:49 AM	0
 July 9, 2019 8:09pm cape town in RUSSIA	July 9, 2019 at 9:09 PM	0
@@ -5184,10 +5184,10 @@ time in melbourne	10:00 PM	0
 Melbourne time	10:00 PM	0
 date in MELBOURNE	June 15	0
 now in melbourne	June 15, 2024 at 10:00 PM	0
-time in AUCKLAND	12:00 AM	0
-Auckland time	12:00 AM	0
+time in AUCKLAND	Tomorrow at 12:00 AM	0
+Auckland time	Tomorrow at 12:00 AM	0
 date in AUCKLAND	June 16	0
-now in Auckland	June 16	0
+now in Auckland	Tomorrow at 12:00 AM	0
 time in Kathmandu	5:45 PM	0
 KATHMANDU time	5:45 PM	0
 date in KATHMANDU	June 15	0
@@ -5200,12 +5200,12 @@ time in colombo	5:30 PM	0
 colombo time	5:30 PM	0
 date in colombo	June 15	0
 now in Colombo	June 15, 2024 at 5:30 PM	0
-time in CHATHAM	12:45 AM	0
-Chatham time	12:45 AM	0
+time in CHATHAM	Tomorrow at 12:45 AM	0
+Chatham time	Tomorrow at 12:45 AM	0
 date in CHATHAM	June 16	0
 now in CHATHAM	Tomorrow at 12:45 AM	0
-time in kiritimati	2:00 AM	0
-Kiritimati time	2:00 AM	0
+time in kiritimati	Tomorrow at 2:00 AM	0
+Kiritimati time	Tomorrow at 2:00 AM	0
 date in Kiritimati	June 16	0
 now in KIRITIMATI	Tomorrow at 2:00 AM	0
 time in Pago Pago	1:00 AM	0
@@ -5322,9 +5322,9 @@ time in Egypt	3:00 PM	0
 EGYPT time	3:00 PM	0
 date in egypt	June 15	0
 now in egypt	June 15, 2024 at 3:00 PM	0
-time in NEW ZEALAND	12:00 AM	0
+time in NEW ZEALAND	Tomorrow at 12:00 AM	0
 date in new zealand	June 16	0
-now in New Zealand	June 16	0
+now in New Zealand	Tomorrow at 12:00 AM	0
 time in South Africa	2:00 PM	0
 date in south africa	June 15	0
 now in south africa	June 15, 2024 at 2:00 PM	0
@@ -5435,10 +5435,10 @@ now in aest	June 15, 2024 at 10:00 PM	0
 time in AEDT	11:00 PM	0
 date in aedt	June 15	0
 now in AEDT	June 15, 2024 at 11:00 PM	0
-time in NZST	12:00 AM	0
+time in NZST	Tomorrow at 12:00 AM	0
 date in NZST	June 16	0
-now in NZST	June 16	0
-time in NZDT	1:00 AM	0
+now in NZST	Tomorrow at 12:00 AM	0
+time in NZDT	Tomorrow at 1:00 AM	0
 date in nzdt	June 16	0
 now in NZDT	Tomorrow at 1:00 AM	0
 time difference between PARIS and CET	-1 hour	0
@@ -6656,7 +6656,7 @@ time difference between Denver & PHOENIX	-1 hour	0
 3:58pm GMT+4:30 in NZST	11:28 PM	0
 6:21am UTC-6:45 in est	8:06 AM	0
 8:16pm GMT-3 in Paris	Tomorrow at 1:16 AM	0
-6:30pm UTC-0 in india	June 16	0
+6:30pm UTC-0 in india	Tomorrow at 12:00 AM	0
 8:17pm GMT+3 in CST	11:17 AM	0
 11:03am GMT-7 in UT	6:03 PM	0
 11:20am UTC+7 in tehran	7:50 AM	0

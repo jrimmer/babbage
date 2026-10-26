@@ -244,9 +244,16 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::TimeIn => {
             let zone = zone_arg(&args[0])?;
             let now = settings::now_utc_seconds();
-            Ok(Value::clock(Number::from_i64(
-                (now + zone.offset_at(now)).rem_euclid(86_400),
-            )))
+            let wall = now + zone.offset_at(now);
+            // On the day before or after the local day the answer names that day: `Tomorrow at 12:30 AM`.
+            if wall.div_euclid(86_400) != settings::local_now().0 {
+                let days = Number::from_ratio(
+                    num_bigint::BigInt::from(wall),
+                    num_bigint::BigInt::from(86_400),
+                )?;
+                return Ok(Value::date_at(days, true));
+            }
+            Ok(Value::clock(Number::from_i64(wall.rem_euclid(86_400))))
         }
         DateFn::DateIn => {
             let zone = zone_arg(&args[0])?;
@@ -387,7 +394,7 @@ fn zone_convert(v: &Value, from: &Value, to: &Value) -> Result<Value, Error> {
         let into_day = there.sub(&Number::from_i64(day).mul(&day_seconds)?)?;
         return Ok(Value::clock(into_day));
     }
-    Ok(Value::date(there.div(&day_seconds)?))
+    Ok(Value::date_at(there.div(&day_seconds)?, true))
 }
 
 /// Frames per second when a timecode does not say.
