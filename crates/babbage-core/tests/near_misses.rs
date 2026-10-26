@@ -424,9 +424,9 @@ fn words_and_booleans_compare_for_equality_only_with_their_own_kind() {
         "5 == a",
     ]);
     assert_eq!(&r[3..7], ["true", "false", "false", "true"]);
-    for i in 7..10 {
+    for (i, got) in r.iter().enumerate().skip(7) {
         assert_eq!(
-            r[i], "ERROR unsupported: words can only be compared for equality",
+            got, "ERROR unsupported: words can only be compared for equality",
             "line {i}"
         );
     }
