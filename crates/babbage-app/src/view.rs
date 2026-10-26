@@ -1,5 +1,6 @@
 //! The window: sidebar, editor with line numbers, answer column and the floating total.
 
+use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -12,7 +13,7 @@ use gpui::{
 };
 
 use crate::computed::{Answer, Computed, compute};
-use crate::editor_model::{Editor, Kind, Marked, Pos};
+use crate::editor_model::{Editor, History, Kind, Marked, Pos};
 use crate::syntax::{Class, Span};
 use crate::theme::Colors;
 use crate::timefmt::describe_time;
@@ -82,6 +83,8 @@ pub struct SheetView {
     pub sheets: Vec<SheetInfo>,
     pub current: SheetId,
     pub ed: Editor,
+    /// Undo steps of the sheets that are not open, by sheet.
+    histories: HashMap<SheetId, History>,
     pub computed: Computed,
     pub sidebar_open: bool,
     pub answer_focus: Option<usize>,
@@ -124,6 +127,7 @@ impl SheetView {
             sheets,
             current,
             ed,
+            histories: HashMap::new(),
             computed,
             sidebar_open: true,
             answer_focus: None,
@@ -181,7 +185,12 @@ impl SheetView {
         self.saver.flush();
         match self.book.read(&id) {
             Ok(lines) => {
+                let left = self.ed.take_history();
+                self.histories.insert(self.current.clone(), left);
                 self.ed = Editor::new(&lines);
+                if let Some(kept) = self.histories.remove(&id) {
+                    self.ed.restore_history(kept);
+                }
                 self.current = id;
                 self.scroll = 0.;
                 self.answer_focus = None;

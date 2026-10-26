@@ -34,6 +34,14 @@ struct Snap {
     head: Pos,
 }
 
+/// A sheet's undo and redo steps, kept while another sheet is open. `lines` is the text they lead from: they
+/// come back only if the sheet still reads that way, so an undo never lands on text that changed meanwhile.
+pub struct History {
+    lines: Vec<String>,
+    undo: Vec<Snap>,
+    redo: Vec<Snap>,
+}
+
 /// Text the input method has shown but not committed: a byte range inside one line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Marked {
@@ -135,6 +143,25 @@ impl Editor {
             last: Kind::Other,
             marked: None,
         }
+    }
+
+    /// Takes the undo and redo steps out, to keep for later.
+    pub fn take_history(&mut self) -> History {
+        History {
+            lines: self.lines.clone(),
+            undo: std::mem::take(&mut self.undo),
+            redo: std::mem::take(&mut self.redo),
+        }
+    }
+
+    /// Puts kept steps back when the text is the text they were kept for. Returns whether it did.
+    pub fn restore_history(&mut self, h: History) -> bool {
+        if h.lines != self.lines {
+            return false;
+        }
+        self.undo = h.undo;
+        self.redo = h.redo;
+        true
     }
 
     pub fn lines(&self) -> &[String] {
@@ -668,6 +695,26 @@ mod tests {
         assert_eq!(e.all(), vec!["12"]);
         e.undo();
         assert_eq!(e.all(), vec![""]);
+    }
+
+    #[test]
+    fn kept_history_comes_back_only_for_the_same_text() {
+        let mut e = Editor::new(&["a"]);
+        e.insert("b");
+        e.insert(" c");
+        let kept = e.take_history();
+        assert!(!e.undo(), "taking the history empties the editor's");
+        let mut other = Editor::new(&["different"]);
+        assert!(!other.restore_history(kept));
+        assert!(!other.undo());
+        let mut e2 = Editor::new(&["a"]);
+        e2.insert("b");
+        let lines = e2.lines().to_vec();
+        let kept = e2.take_history();
+        let mut back = Editor::new(&lines);
+        assert!(back.restore_history(kept));
+        assert!(back.undo());
+        assert_eq!(back.lines(), ["a"]);
     }
 
     #[test]

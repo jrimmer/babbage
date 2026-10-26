@@ -78,6 +78,6 @@ with `wtype` into the focused window and real mouse clicks from `tools/pointer.p
 - A sheet's name in the sidebar is its title (first non-empty line) until the user renames it; then the
   name is the file name. Rename is F2, a double click on the card, or Rename in the card's right-click menu; Move to trash is Ctrl+Shift+Delete or the menu.
 - The theme file is polled once a second; no file-watching crate is needed.
-- Undo history is per open sheet and is dropped when another sheet opens.
+- Undo history is kept per sheet while another sheet is open. It comes back only if the sheet still reads the way it did when it was left, so an undo never lands on text that changed meanwhile.
 - Not built: the "General" folder pill and the toolbar icons of the reference, chips that show the
   referenced value instead of `lineN`.

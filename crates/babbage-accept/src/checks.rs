@@ -19,6 +19,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("total", total_chip),
     ("sheets", sheets_lifecycle),
     ("sidebar-mouse", sidebar_mouse),
+    ("undo-per-sheet", undo_per_sheet),
     ("autosave-sigkill", autosave_sigkill),
     ("keys", keyboard_features),
     ("quit-saves", quit_saves),
@@ -798,6 +799,67 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
     let name = trashed[0].file_name().to_string_lossy().into_owned();
     ensure!(name.starts_with("Mouse."), "{name}");
     ensure!(std::fs::read_to_string(trashed[0].path())? == "7 + 7\n");
+    app.finish()
+}
+
+/// Each sheet keeps its own undo steps while another is open.
+fn undo_per_sheet(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("undo-per-sheet", None, &[])?;
+    h.type_text("1 + 1")?;
+    let s = app.wait_for("the first sheet", T, |s| answer(s, 0) == Some("2"))?;
+    let first = s["current"].as_str().context("current")?.to_owned();
+    // Let the autosave land so the sheet reads the same when it is opened again.
+    wait_file(&app.data_dir.clone(), &first, "1 + 1\n")?;
+    h.press(&["ctrl"], "n")?;
+    app.wait_for("a second sheet", T, |s| {
+        s["sheets"].as_array().is_some_and(|a| a.len() == 2)
+    })?;
+    h.type_text("7 + 7")?;
+    let s = app.wait_for("the second sheet's text", T, |s| answer(s, 0) == Some("14"))?;
+    let second = s["current"].as_str().context("current")?.to_owned();
+    wait_file(&app.data_dir.clone(), &second, "7 + 7\n")?;
+
+    // Back to the first: its own typing can be undone, the second sheet's cannot leak in.
+    h.press(&["ctrl"], "Tab")?;
+    app.wait_for("the first sheet again", T, |s| {
+        s["current"] == first.as_str()
+    })?;
+    h.press(&["ctrl"], "z")?;
+    let s = app.wait_for("one step undone in the first sheet", T, |s| {
+        s["current"] == first.as_str() && s["lines"][0]["text"] != "1 + 1"
+    })?;
+    let shorter = s["lines"][0]["text"].as_str().context("text")?.to_owned();
+    ensure!(
+        "1 + 1".starts_with(&shorter) && shorter != "7 + 7",
+        "undo gave {shorter:?}"
+    );
+
+    // The second sheet is as it was left, and its own undo works.
+    h.press(&["ctrl", "shift"], "Tab")?;
+    let s = app.wait_for("the second sheet again", T, |s| {
+        s["current"] == second.as_str()
+    })?;
+    ensure!(
+        s["lines"][0]["text"] == "7 + 7",
+        "{:?}",
+        s["lines"][0]["text"]
+    );
+    h.press(&["ctrl"], "z")?;
+    let s = app.wait_for("one step undone in the second sheet", T, |s| {
+        s["current"] == second.as_str() && s["lines"][0]["text"] != "7 + 7"
+    })?;
+    let shorter = s["lines"][0]["text"].as_str().context("text")?.to_owned();
+    ensure!("7 + 7".starts_with(&shorter), "undo gave {shorter:?}");
+
+    // Redo in the first sheet still has its step after all the switching.
+    h.press(&["ctrl"], "Tab")?;
+    app.wait_for("the first sheet a third time", T, |s| {
+        s["current"] == first.as_str()
+    })?;
+    h.press(&["ctrl", "shift"], "z")?;
+    app.wait_for("the first sheet redone", T, |s| {
+        s["lines"][0]["text"] == "1 + 1"
+    })?;
     app.finish()
 }
 
