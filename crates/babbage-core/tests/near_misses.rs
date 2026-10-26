@@ -523,3 +523,64 @@ fn what_a_sheet_ignores_is_reported_where_it_stood() {
         }
     }
 }
+
+#[test]
+fn a_time_or_timecode_glued_to_letters_is_not_one_even_when_the_letters_are_dropped() {
+    // In a sheet unknown words are dropped, so a time that did swallow its neighbours would answer; it must refuse.
+    for line in [
+        "lunch01:02:03:04",
+        "01:02:03:04apples",
+        "00:00:01.x",
+        "lunch5:30pm",
+        "5:30pmapples",
+        "lunch12:30:45",
+        "12:30:45apples",
+    ] {
+        let r = sheet(&[line]);
+        assert!(r[0].starts_with("ERROR"), "{line}: {}", r[0]);
+    }
+    assert_eq!(sheet(&["lunch 5:30pm"])[0], "5:30 pm");
+}
+
+#[test]
+fn number_scanning_errors_name_exactly_the_text_they_stopped_at() {
+    use babbage_core::Error;
+    let bad = |text: &str| Error::InvalidNumber {
+        text: text.into(),
+        at: 0,
+    };
+    assert_eq!(babbage_core::evaluate("1.2.3"), Err(bad("1.2.3")));
+    assert_eq!(babbage_core::evaluate("12.5.5"), Err(bad("12.5.5")));
+    assert_eq!(babbage_core::evaluate("1.23.45.6"), Err(bad("1.23.45")));
+    assert_eq!(answer("5 30pm"), "ERROR unexpected number at byte 2");
+    assert_eq!(answer("24:00"), "ERROR unexpected character ':' at byte 2");
+    assert_eq!(answer("23:59"), "11:59 pm");
+    assert_eq!(answer("$15bn+1"), "$15.000000001G");
+    assert_eq!(answer("$15bn + 1"), "$15.000000001G");
+    assert_eq!(answer("$15bnx"), "ERROR unexpected word \"bnx\" at byte 3");
+    assert_eq!(answer("5T"), "5T");
+    assert_eq!(answer("$5T"), "$5T");
+}
+
+#[test]
+fn every_ignored_piece_has_text() {
+    let s = Settings::at(1_718_452_800);
+    let opts = SheetOptions {
+        settings: s.clone(),
+        ..SheetOptions::default()
+    };
+    let r = scoped(&s, || {
+        evaluate_sheet(
+            &["$999 (for iPhone 16)", "at the cafe 3 + 4 (with a friend)"],
+            &opts,
+        )
+    });
+    for line in &r {
+        assert!(!line.ignored.is_empty());
+        assert!(
+            line.ignored.iter().all(|i| !i.text.is_empty()),
+            "{:?}",
+            line.ignored
+        );
+    }
+}
