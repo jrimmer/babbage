@@ -868,11 +868,7 @@ fn comparison(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     let order = Value::compare(l, r)?;
     if l.approx || r.approx {
         let gap = l.si_against(r)?.sub(&r.si_against(l)?)?.abs();
-        let scale = if r.si_against(l)?.abs() > Number::from_i64(1) {
-            r.si_against(l)?.abs()
-        } else {
-            Number::from_i64(1)
-        };
+        let scale = r.si_against(l)?.abs().max(Number::from_i64(1));
         let tolerance = Number::from_decimal_str("1e-60")?.mul(&scale)?;
         if gap <= tolerance {
             return Err(Error::UnsupportedOperation(

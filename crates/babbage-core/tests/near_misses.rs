@@ -584,3 +584,83 @@ fn every_ignored_piece_has_text() {
         );
     }
 }
+
+#[test]
+fn the_remaining_near_misses_of_the_proportion_and_ratio_forms() {
+    for (line, want) in [
+        (
+            "is to 4 as 3 is to what",
+            "ERROR unexpected end of expression",
+        ),
+        (
+            "2 is to as 3 is to what",
+            "ERROR unexpected end of expression",
+        ),
+        (
+            "2 is to 4 as is to what",
+            "ERROR unexpected end of expression",
+        ),
+        (
+            "2 is to 4 as what is to",
+            "ERROR unexpected end of expression",
+        ),
+        (
+            "2 is to 4 what is 8",
+            "ERROR unexpected word \"is\" at byte 2",
+        ),
+        ("5 is 1 in what", "1/0.2"),
+        ("4 is 2 in what", "2/0.5"),
+        ("3 is 1 in what", "1/0.3333333333"),
+        (
+            "5% is 1 in whatever",
+            "ERROR unexpected word \"is\" at byte 3",
+        ),
+        (
+            "5 in px at 326 ppi",
+            "ERROR unsupported: this needs a length or a number of pixels",
+        ),
+        (
+            "1 cm in px at 326 km",
+            "ERROR these units measure different things",
+        ),
+        ("1 cm in px at 326", "12,321.2598425197 px"),
+        (
+            "1 cm in px at 326 ppix",
+            "ERROR unexpected word \"ppix\" at byte 18",
+        ),
+    ] {
+        assert_eq!(answer(line), want, "{line}");
+    }
+}
+
+#[test]
+fn a_repeating_ratio_is_flagged_inexact_and_a_plain_one_is_not() {
+    let s = Settings::at(1_718_452_800);
+    scoped(&s, || {
+        let third = evaluate_with("3 is 1 in what", &s).unwrap();
+        let tenth = evaluate_with("5% is 1 in what", &s).unwrap();
+        assert!(!format_value(&third, &FormatOptions::default()).exact);
+        assert!(format_value(&tenth, &FormatOptions::default()).exact);
+    });
+}
+
+#[test]
+fn an_approximate_comparison_allows_a_gap_in_proportion_to_the_size_of_the_numbers() {
+    // A gap of 1e-40 on a number near 1.4e30 is below the tolerance (1e-60 of the size), so the two cannot be
+    // told apart; a gap of 1e-20 is above it.
+    assert_eq!(
+        answer("sqrt(2) * 10^30 == sqrt(2) * 10^30 + 10^-40"),
+        "ERROR unsupported: these approximate values are too close to tell apart"
+    );
+    assert_eq!(
+        answer("sqrt(2) * 10^30 == sqrt(2) * 10^30 + 10^-20"),
+        "false"
+    );
+    assert_eq!(answer("sqrt(2) * 10^30 < sqrt(2) * 10^30 + 10^-20"), "true");
+    // near 1 the same rule gives a gap of about 1e-60
+    assert_eq!(answer("sqrt(2) == sqrt(2) + 10^-50"), "false");
+    assert_eq!(
+        answer("sqrt(2) == sqrt(2) + 10^-70"),
+        "ERROR unsupported: these approximate values are too close to tell apart"
+    );
+}
