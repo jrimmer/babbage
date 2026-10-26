@@ -58,6 +58,15 @@ fn calendar_helpers_at_their_edges() {
     // A span of a million million days is counted by weeks, not one day at a time.
     assert_eq!(workdays_between(1, 1_000_000_000_000), 714_285_714_285);
     assert_eq!(workdays_between(1_000_000_000_000, 1), -714_285_714_285);
+    // Counts from an independent formula (checked against a brute-force walk), starting away from day 1.
+    assert_eq!(workdays_between(3, 1_000_000_000_003), 714_285_714_285);
+    assert_eq!(workdays_between(19_000, 1_000_000_019_000), 714_285_714_285);
+    assert_eq!(workdays_between(5, 1_000_000_000_009), 714_285_714_289);
+    assert_eq!(workdays_between(1_000_000_000_000, 1_000_000_000_006), 4);
+    assert_eq!(
+        workdays_between(-1_000_000_000, 1_000_000_000),
+        1_428_571_428
+    );
     // The same day at both ends is no days, and it must not recurse.
     assert_eq!(workdays_between(5, 5), 0);
     assert_eq!(workdays_between(-5, -5), 0);

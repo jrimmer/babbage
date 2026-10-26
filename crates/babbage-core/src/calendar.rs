@@ -154,11 +154,10 @@ pub fn nth_weekday(year: i64, month: u32, weekday_index: u32, n: u32) -> Civil {
 
 /// Monday to Friday between two days, counting the first and not the last (a half-open range).
 pub fn workdays_between(from: i64, to: i64) -> i64 {
-    if to == from {
-        return 0;
-    }
-    if to < from {
-        return -workdays_between(to, from);
+    match to.cmp(&from) {
+        std::cmp::Ordering::Equal => return 0,
+        std::cmp::Ordering::Less => return -workdays_between(to, from),
+        std::cmp::Ordering::Greater => {}
     }
     let full_weeks = (to - from) / 7;
     let mut count = full_weeks * 5;
@@ -181,7 +180,7 @@ pub fn add_workdays(from: i64, n: i64) -> i64 {
     if n == 0 {
         return from;
     }
-    let forward = n > 0;
+    let forward = n.is_positive();
     let mut day = from;
     let weekday_now = i64::from(weekday(day));
     if weekday_now >= 5 {
