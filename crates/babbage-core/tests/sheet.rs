@@ -473,3 +473,19 @@ fn layout_words_are_not_dropped_as_prose() {
     // `timespan` standing on its own is still just a word.
     assert!(!run(&["my timespan is 5 + 5"])[0].ignored.is_empty());
 }
+
+#[test]
+fn a_layout_word_at_the_start_of_a_line_is_just_a_word() {
+    // The layout words are only special after `as`, `in`, `to` or `into`; at the start nothing comes before them.
+    for line in [
+        "timespan",
+        "laptime",
+        "fraction",
+        "timespan 5 + 5",
+        "fraction of 3 + 3",
+    ] {
+        let r = run(&[line]);
+        assert_eq!(r.len(), 1, "{line}");
+    }
+    assert_eq!(shown(&run(&["timespan 5 + 5"])[0]), "10");
+}

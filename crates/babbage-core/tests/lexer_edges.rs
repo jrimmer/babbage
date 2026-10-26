@@ -102,3 +102,77 @@ fn an_apostrophe_joins_two_letters_and_nothing_else() {
     ]);
     fails(&["Valentine' Day 2025", "Valentine'1 Day 2025", "'s Day 2025"]);
 }
+
+#[test]
+fn a_timecode_has_one_to_three_hour_digits_and_stands_alone() {
+    all(&[
+        ("0:00:00:00", "00:00:00:00"),
+        ("999:59:59:23", "999:59:59:23"),
+        ("(01:00:00:10)", "01:00:00:10"),
+        ("1+01:00:00:10", "01:00:01:10"),
+    ]);
+    fails(&[
+        "x01:02:03:04",
+        "1.01:02:03:04",
+        "5,01:02:03:04",
+        "1234:00:00:00",
+        "01:60:00:00",
+        "01:00:60:00",
+        "01:00:00:00x",
+        "01:00:00:00.5",
+        "01:00:00:00:00",
+    ]);
+}
+
+#[test]
+fn a_time_of_day_needs_one_to_six_hour_digits_and_stands_alone() {
+    all(&[
+        ("5:30:15pm", "5:30:15 pm"),
+        ("05:30pm", "5:30 pm"),
+        ("12:30:45", "12:30:45"),
+        ("123456:30:15", "123456:30:15"),
+        ("00:00:00.5", "00:00:00.5"),
+        ("00:00:00.123456789", "00:00:00.123456789"),
+    ]);
+    fails(&[
+        "x5pm",
+        "5.5pm",
+        "1,5pm",
+        "123456pm",
+        "1234567pm",
+        "5pm5",
+        "5pmx",
+        "5:30:15.5pm",
+        "5:3pm",
+    ]);
+}
+
+#[test]
+fn underscores_in_the_fraction_and_the_exponent() {
+    all(&[
+        ("1_000.000_1", "1,000.0001"),
+        ("0.0_1", "0.01"),
+        (".5_5", "0.55"),
+        ("1,000.5", "1,000.5"),
+    ]);
+    fails(&["1.5_", "1.5__5", "5_.5", "1e5_0"]);
+}
+
+#[test]
+fn a_bad_iso_date_names_the_ten_characters_it_stopped_at() {
+    use babbage_core::Error;
+    assert_eq!(
+        evaluate("2019-02-30"),
+        Err(Error::InvalidNumber {
+            text: "2019-02-30".into(),
+            at: 0
+        })
+    );
+    assert_eq!(
+        evaluate("1 + 2019-13-45 + 2"),
+        Err(Error::InvalidNumber {
+            text: "2019-13-45".into(),
+            at: 4
+        })
+    );
+}

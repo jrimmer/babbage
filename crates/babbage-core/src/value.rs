@@ -169,10 +169,6 @@ impl Value {
         self
     }
 
-    pub fn is_timespan(&self) -> bool {
-        self.layout == Some(Shown::Timespan)
-    }
-
     /// A length of time shown as hours, minutes, seconds and frames at a whole number of frames per second.
     pub fn as_timecode(mut self, frames_per_second: Number) -> Value {
         self.layout = Some(Shown::Timecode(frames_per_second));
@@ -190,7 +186,6 @@ impl Value {
     /// This number as `top/(top / this)`, for `5% is 1 in what`.
     pub fn as_ratio_of(self, top: Number) -> Value {
         Value {
-            kind: Kind::Plain,
             layout: Some(Shown::Ratio(top)),
             ..self
         }
@@ -200,10 +195,6 @@ impl Value {
     pub fn written_in_full(mut self) -> Value {
         self.layout = Some(Shown::Digits);
         self
-    }
-
-    pub fn is_laptime(&self) -> bool {
-        self.layout == Some(Shown::Laptime)
     }
 
     /// Chooses how a quantity is written, refusing a layout its dimension cannot have.
@@ -226,14 +217,6 @@ impl Value {
         match &shown {
             Shown::Timespan | Shown::Laptime if !is_length_of_time(&self) => {
                 return Err(Error::UnsupportedOperation("this needs a length of time"));
-            }
-            Shown::Digits => {}
-            Shown::Timecode(rate) => {
-                if !is_length_of_time(&self) || !rate.is_integer() || !rate.is_positive() {
-                    return Err(Error::UnsupportedOperation(
-                        "a timecode needs a length of time and a whole number of frames per second",
-                    ));
-                }
             }
             Shown::Parts(units) => {
                 for u in units {
