@@ -195,8 +195,8 @@ const CASES: &[(&str, &str)] = &[
     ),
     ("June 10, 2024 - 3 workdays", "June 5"),
     ("June 10, 2024 + 3 workdays", "June 13"),
-    ("5pm - 90 minutes", "3:30 pm"),
-    ("5pm + 90 minutes", "6:30 pm"),
+    ("5pm - 90 minutes", "3:30 PM"),
+    ("5pm + 90 minutes", "6:30 PM"),
     ("true == false", "false"),
     ("true == true", "true"),
     ("true != false", "true"),
@@ -314,15 +314,15 @@ fn a_layout_survives_a_sum_and_not_a_product() {
         "b * 2",
         "a + 5",
     ]);
-    assert_eq!(r[1], "6 minutes 30 seconds");
-    assert_eq!(r[2], "6 minutes 30 seconds");
-    assert_eq!(r[3], "5 minutes");
+    assert_eq!(r[1], "6 min 30 s");
+    assert_eq!(r[2], "6 min 30 s");
+    assert_eq!(r[3], "5 min");
     assert_eq!(r[4], "11 min");
     assert_eq!(r[5], "2.75 min");
     assert_eq!(r[7], "00:06:00");
     assert_eq!(r[8], "11 min");
     assert!(
-        r[9].starts_with("5 minutes 5 s") || r[9].starts_with("ERROR") || r[9].contains("minutes"),
+        r[9].starts_with("5 min 5 s") || r[9].starts_with("ERROR") || r[9].contains("min"),
         "{}",
         r[9]
     );
@@ -402,7 +402,7 @@ fn words_glued_to_numbers_in_a_sheet() {
         "abc' 5",
     ]);
     assert_eq!(r[0], "5");
-    assert_eq!(r[1], "5:00 pm");
+    assert_eq!(r[1], "5:00 PM");
     assert_eq!(r[2], "2,014");
     assert_eq!(r[3], "10");
     assert!(r[4].starts_with("ERROR"), "{}", r[4]);
@@ -463,10 +463,10 @@ fn words_and_booleans_compare_for_equality_only_with_their_own_kind() {
 #[test]
 fn a_length_of_time_before_a_time_of_day_shifts_it() {
     for (line, want) in [
-        ("2 hours + 5pm", "7:00 pm"),
-        ("90 minutes + 5pm", "6:30 pm"),
-        ("5pm + 2 hours", "7:00 pm"),
-        ("5pm - 2 hours", "3:00 pm"),
+        ("2 hours + 5pm", "7:00 PM"),
+        ("90 minutes + 5pm", "6:30 PM"),
+        ("5pm + 2 hours", "7:00 PM"),
+        ("5pm - 2 hours", "3:00 PM"),
         (
             "2 hours - 5pm",
             "ERROR unsupported: a date or time can be shifted by a length of time, and two of them can be subtracted",
@@ -539,7 +539,7 @@ fn a_time_or_timecode_glued_to_letters_is_not_one_even_when_the_letters_are_drop
         let r = sheet(&[line]);
         assert!(r[0].starts_with("ERROR"), "{line}: {}", r[0]);
     }
-    assert_eq!(sheet(&["lunch 5:30pm"])[0], "5:30 pm");
+    assert_eq!(sheet(&["lunch 5:30pm"])[0], "5:30 PM");
 }
 
 #[test]
@@ -554,7 +554,7 @@ fn number_scanning_errors_name_exactly_the_text_they_stopped_at() {
     assert_eq!(babbage_core::evaluate("1.23.45.6"), Err(bad("1.23.45")));
     assert_eq!(answer("5 30pm"), "ERROR unexpected number at byte 2");
     assert_eq!(answer("24:00"), "ERROR unexpected character ':' at byte 2");
-    assert_eq!(answer("23:59"), "11:59 pm");
+    assert_eq!(answer("23:59"), "11:59 PM");
     assert_eq!(answer("$15bn+1"), "$15.000000001G");
     assert_eq!(answer("$15bn + 1"), "$15.000000001G");
     assert_eq!(answer("$15bnx"), "ERROR unexpected word \"bnx\" at byte 3");
@@ -822,10 +822,10 @@ fn a_zone_offset_is_hours_and_minutes_never_a_twelve_hour_clock() {
             answer(line)
         );
     }
-    assert_eq!(answer("noon GMT+5 in UTC"), "7:00 am");
-    assert_eq!(answer("noon GMT+5:30 in UTC"), "6:30 am");
-    assert_eq!(answer("noon UTC-5:30 in UTC"), "5:30 pm");
+    assert_eq!(answer("noon GMT+5 in UTC"), "7:00 AM");
+    assert_eq!(answer("noon GMT+5:30 in UTC"), "6:30 AM");
+    assert_eq!(answer("noon UTC-5:30 in UTC"), "5:30 PM");
     // A time before the zone is still a time.
-    assert_eq!(answer("5pm GMT+2 in UTC"), "3:00 pm");
-    assert_eq!(answer("5:30pm GMT-5 in UTC"), "10:30 pm");
+    assert_eq!(answer("5pm GMT+2 in UTC"), "3:00 PM");
+    assert_eq!(answer("5:30pm GMT-5 in UTC"), "10:30 PM");
 }

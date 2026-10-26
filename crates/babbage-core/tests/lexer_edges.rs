@@ -58,7 +58,7 @@ fn a_multiplier_literal_stops_at_the_right_x() {
         ("(2x)", "2x"),
         ("2x * 3", "6"),
         ("2x*3x", "6x"),
-        ("1 hour at 2x", "30 minutes"),
+        ("1 hour at 2x", "30 min"),
         // `x` between operands is still a times sign
         ("3x4", "12"),
         ("3 x 4", "12"),
@@ -127,8 +127,8 @@ fn a_timecode_has_one_to_three_hour_digits_and_stands_alone() {
 #[test]
 fn a_time_of_day_needs_one_to_six_hour_digits_and_stands_alone() {
     all(&[
-        ("5:30:15pm", "5:30:15 pm"),
-        ("05:30pm", "5:30 pm"),
+        ("5:30:15pm", "5:30:15 PM"),
+        ("05:30pm", "5:30 PM"),
         ("12:30:45", "12:30:45"),
         ("123456:30:15", "123456:30:15"),
         ("00:00:00.5", "00:00:00.5"),
@@ -180,9 +180,9 @@ fn a_bad_iso_date_names_the_ten_characters_it_stopped_at() {
 #[test]
 fn a_run_of_quantities_with_nothing_after_it_still_reads_m_as_minutes() {
     all(&[
-        ("3h 5m", "3.0833333333 h"),
-        ("1 week 5m", "1.0004960317 wk"),
-        ("5m 3h", "3.0833333333 h"),
+        ("3h 5m", "3 hours 5 min"),
+        ("1 week 5m", "1 week 5 min"),
+        ("5m 3h", "3 hours 5 min"),
     ]);
 }
 
@@ -251,8 +251,8 @@ fn a_function_name_may_end_in_digits_and_then_needs_no_brackets() {
 #[test]
 fn a_time_unit_two_places_before_decides_whether_m_is_minutes() {
     all(&[
-        ("1h 2s 5m", "1.0838888889 h"),
-        ("1h 2 min 5m", "1.1166666667 h"),
-        ("2 s 5 m", "5.0333333333 min"),
+        ("1h 2s 5m", "1 hour 5 min 2 s"),
+        ("1h 2 min 5m", "1 hour 7 min"),
+        ("2 s 5 m", "5 min 2 s"),
     ]);
 }

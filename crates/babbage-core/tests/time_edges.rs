@@ -43,14 +43,14 @@ fn layouts_refuse_what_cannot_be_written_that_way() {
 #[test]
 fn zero_negative_and_large_spans() {
     for (line, want) in [
-        ("0 minutes as timespan", "0 seconds"),
-        ("-90 minutes as timespan", "-1 hour 30 minutes"),
+        ("0 minutes as timespan", "0 s"),
+        ("-90 minutes as timespan", "-1 hour 30 min"),
         ("0 minutes as laptime", "00:00:00"),
         ("-90 minutes as laptime", "-01:30:00"),
         ("100:00:00 as timespan", "4 days 4 hours"),
         ("1:00:00 - 2:00:00", "-01:00:00"),
         ("00:00:00.001 + 00:00:00.001", "00:00:00.002"),
-        ("7pm to 7pm", "0 seconds"),
+        ("7pm to 7pm", "0 s"),
         ("0 minutes in hours and minutes", "0 min"),
     ] {
         assert_eq!(shown(line), want, "{line}");
@@ -75,14 +75,14 @@ fn clock_literals_have_strict_shapes() {
         fails(line);
     }
     for (line, want) in [
-        ("0:30", "12:30 am"),
-        ("23:59", "11:59 pm"),
-        ("12am", "12:00 am"),
-        ("12:30am", "12:30 am"),
-        ("12pm", "12:00 pm"),
-        ("9:05 AM", "9:05 am"),
-        ("noon", "12:00 pm"),
-        ("midnight", "12:00 am"),
+        ("0:30", "12:30 AM"),
+        ("23:59", "11:59 PM"),
+        ("12am", "12:00 AM"),
+        ("12:30am", "12:30 AM"),
+        ("12pm", "12:00 PM"),
+        ("9:05 AM", "9:05 AM"),
+        ("noon", "12:00 PM"),
+        ("midnight", "12:00 AM"),
     ] {
         assert_eq!(shown(line), want, "{line}");
     }
@@ -90,9 +90,9 @@ fn clock_literals_have_strict_shapes() {
 
 #[test]
 fn a_time_of_day_wraps_past_midnight_in_both_directions() {
-    assert_eq!(shown("11pm + 3 hours"), "2:00 am");
-    assert_eq!(shown("1am - 3 hours"), "10:00 pm");
-    assert_eq!(shown("noon + 48 hours"), "12:00 pm");
+    assert_eq!(shown("11pm + 3 hours"), "2:00 AM");
+    assert_eq!(shown("1am - 3 hours"), "10:00 PM");
+    assert_eq!(shown("noon + 48 hours"), "12:00 PM");
 }
 
 #[test]
@@ -118,13 +118,13 @@ fn playback_speed_needs_a_time_and_a_speed() {
 fn timestamps_are_written_in_full() {
     assert_eq!(shown("June 15, 2024 to timestamp"), "1718409600");
     assert_eq!(shown("current timestamp"), "1718452800");
-    assert_eq!(shown("1718452800 to date"), "June 15 at 12:00 pm");
+    assert_eq!(shown("1718452800 to date"), "June 15 at 12:00 PM");
     assert_eq!(shown("0 to date"), "January 1, 1970");
     assert_eq!(
         shown("99999999999 to date"),
-        "November 16, 5138 at 9:46:39 am"
+        "November 16, 5138 at 9:46:39 AM"
     );
-    assert_eq!(shown("100000000000 to date"), "March 3, 1973 at 9:46:40 am");
+    assert_eq!(shown("100000000000 to date"), "March 3, 1973 at 9:46:40 AM");
 }
 
 #[test]
@@ -144,7 +144,7 @@ fn iso_dates_are_read_strictly() {
     assert_eq!(shown("2019-04-01"), "April 1, 2019");
     assert_eq!(shown("2020-02-29"), "February 29, 2020");
     assert_eq!(shown("2019-4-1"), "2,014");
-    assert_eq!(shown("2019-04-01T15:30"), "April 1, 2019 at 3:30 pm");
+    assert_eq!(shown("2019-04-01T15:30"), "April 1, 2019 at 3:30 PM");
     assert_eq!(
         shown("2019-04-01T15:30:00.5Z as iso8601"),
         "2019-04-01T15:30:00.5Z"

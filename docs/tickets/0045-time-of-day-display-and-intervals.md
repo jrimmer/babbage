@@ -1,6 +1,6 @@
 # 0045 Time-of-day display and midnight rules
 
-Status: open
+Status: half closed (the reference app)
 Milestone: v1
 Area: time
 
@@ -11,3 +11,5 @@ Choices made without a real install to check:
 - An ISO-shaped string (`2019-04-01`) is a date, and a malformed one (`2019-02-30`) is an error and not a subtraction.
 - A Unix timestamp from 100,000,000,000 up is read as milliseconds.
 Confirm each against a real install.
+
+The reference app: a malformed ISO date is a subtraction (ticket 0071); times of day print upper case in the US region (ticket 0068).

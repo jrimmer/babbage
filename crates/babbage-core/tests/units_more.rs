@@ -9,10 +9,11 @@ fn shown(line: &str) -> String {
 
 #[test]
 fn several_quantities_in_a_row_are_a_sum() {
-    assert_eq!(shown("5 hours 30 minutes"), "5.5 h");
+    // Several time units written in a row print as a timespan, as the reference app does.
+    assert_eq!(shown("5 hours 30 minutes"), "5 hours 30 min");
     assert_eq!(shown("5 hours 30 minutes to seconds"), "19,800 s");
     assert_eq!(shown("1 m 50 cm"), "1.5 m");
-    assert_eq!(shown("1 h 30 min 30 s"), "1.5083333333 h");
+    assert_eq!(shown("1 h 30 min 30 s"), "1 hour 30 min 30 s");
     assert_eq!(shown("2 ft 3 inches in inches"), "27 in");
     assert_eq!(shown("1 lb 8 oz in oz"), "24 oz");
     assert_eq!(

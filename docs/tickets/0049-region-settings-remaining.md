@@ -19,3 +19,5 @@ To confirm against a real reference app (owner offered): set its volume units to
 ```
 
 If the reference app differs, the constants live in `factor_now` in `crates/babbage-core/src/units.rs`.
+
+The reference app (volume setting seen as US Customary): `1 tbsp in mL` 14.7867647813, `1 tsp` 4.9289215938, `1 fl oz in tbsp` 2, `1 cup` 236.5882365, `1 pint` 473.176473: the US values, unchanged when the setting was changed. Whether an imperial option exists is not yet confirmed (see the session question).

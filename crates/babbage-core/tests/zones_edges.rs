@@ -45,9 +45,9 @@ fn an_unknown_place_is_an_error_not_a_guess() {
 
 #[test]
 fn a_time_with_no_place_is_in_the_local_zone() {
-    assert_eq!(shown("6pm in Chicago"), "1:00 pm");
-    assert_eq!(shown("6pm UTC in Chicago"), "1:00 pm");
-    assert_eq!(shown("6pm Sydney in Sydney"), "6:00 pm");
+    assert_eq!(shown("6pm in Chicago"), "1:00 PM");
+    assert_eq!(shown("6pm UTC in Chicago"), "1:00 PM");
+    assert_eq!(shown("6pm Sydney in Sydney"), "6:00 PM");
 }
 
 #[test]
@@ -58,24 +58,24 @@ fn case_and_spacing_do_not_matter() {
         "6pm   Sydney   in   Chicago",
         "6pm Sydney to Chicago",
     ] {
-        assert_eq!(shown(line), "3:00 am", "{line}");
+        assert_eq!(shown(line), "3:00 AM", "{line}");
     }
 }
 
 #[test]
 fn an_abbreviation_is_a_fixed_offset_all_year() {
-    assert_eq!(shown("3pm PDT to PST"), "2:00 pm");
-    assert_eq!(shown("12pm PST in PDT"), "1:00 pm");
-    assert_eq!(shown("12pm EST in New York"), "1:00 pm");
-    assert_eq!(shown("12pm eastern time in New York"), "12:00 pm");
-    assert_eq!(shown("12pm pacific time in eastern time"), "3:00 pm");
+    assert_eq!(shown("3pm PDT to PST"), "2:00 PM");
+    assert_eq!(shown("12pm PST in PDT"), "1:00 PM");
+    assert_eq!(shown("12pm EST in New York"), "1:00 PM");
+    assert_eq!(shown("12pm eastern time in New York"), "12:00 PM");
+    assert_eq!(shown("12pm pacific time in eastern time"), "3:00 PM");
 }
 
 #[test]
 fn offsets_are_written_gmt_or_utc_with_a_sign() {
-    assert_eq!(shown("noon GMT+5:45 in UTC"), "6:15 am");
-    assert_eq!(shown("noon UTC+14 in GMT-12"), "June 15 at 10:00 am");
-    assert_eq!(shown("noon gmt-12 in utc+14"), "June 16 at 2:00 pm");
+    assert_eq!(shown("noon GMT+5:45 in UTC"), "6:15 AM");
+    assert_eq!(shown("noon UTC+14 in GMT-12"), "June 15 at 10:00 AM");
+    assert_eq!(shown("noon gmt-12 in utc+14"), "June 16 at 2:00 PM");
 }
 
 #[test]
@@ -83,42 +83,39 @@ fn a_repeated_or_skipped_hour_is_decided_the_same_way_every_time() {
     // 2024-03-10 02:30 does not exist in New York: the offset from before the change applies.
     assert_eq!(
         shown("March 10, 2024 2:30am New York in London"),
-        "March 10 at 7:30 am"
+        "March 10 at 7:30 AM"
     );
     // 2024-11-03 01:30 happens twice in New York: the first reading, daylight time, applies.
     assert_eq!(
         shown("November 3, 2024 1:30am New York in London"),
-        "November 3 at 5:30 am"
+        "November 3 at 5:30 AM"
     );
     assert_eq!(
         shown("November 3, 2024 3:30am New York in London"),
-        "November 3 at 8:30 am"
+        "November 3 at 8:30 AM"
     );
 }
 
 #[test]
 fn a_country_means_its_capitals_zone() {
-    assert_eq!(shown("noon Germany in Berlin"), "12:00 pm");
-    assert_eq!(shown("noon USA in New York"), "12:00 pm");
-    assert_eq!(shown("noon Australia in Sydney"), "12:00 pm");
-    assert_eq!(shown("noon China in Beijing"), "12:00 pm");
+    assert_eq!(shown("noon Germany in Berlin"), "12:00 PM");
+    assert_eq!(shown("noon USA in New York"), "12:00 PM");
+    assert_eq!(shown("noon Australia in Sydney"), "12:00 PM");
+    assert_eq!(shown("noon China in Beijing"), "12:00 PM");
 }
 
 #[test]
-fn the_time_difference_is_how_far_ahead_the_first_place_is() {
-    assert_eq!(shown("time difference between Tokyo and London"), "8 hours");
+fn the_time_difference_is_how_far_ahead_the_second_place_is() {
     assert_eq!(
-        shown("time difference between London and Tokyo"),
+        shown("time difference between Tokyo and London"),
         "-8 hours"
     );
+    assert_eq!(shown("time difference between London and Tokyo"), "8 hours");
     assert_eq!(
         shown("time difference between Kathmandu and Delhi"),
-        "15 minutes"
+        "-15 min"
     );
-    assert_eq!(
-        shown("time difference between Tokyo and Tokyo"),
-        "0 seconds"
-    );
+    assert_eq!(shown("time difference between Tokyo and Tokyo"), "0 s");
 }
 
 #[test]
@@ -140,7 +137,7 @@ fn shown_moment_with(hours_after: i32, with_date: bool) -> String {
     let clock = format!(
         "{}:00 {}",
         if hour % 12 == 0 { 12 } else { hour % 12 },
-        if hour < 12 { "am" } else { "pm" }
+        if hour < 12 { "AM" } else { "PM" }
     );
     match (day, hour) {
         (0, _) if !with_date => clock,
@@ -213,11 +210,11 @@ fn every_abbreviation_is_the_fixed_offset_it_names() {
 fn a_place_name_of_four_words_works_and_five_does_not() {
     assert_eq!(
         shown("noon united states of america in New York"),
-        "12:00 pm"
+        "12:00 PM"
     );
     assert_eq!(
         shown("noon new york in united states of america"),
-        "12:00 pm"
+        "12:00 PM"
     );
     for line in [
         "noon a b c d e in New York",

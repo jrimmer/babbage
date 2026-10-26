@@ -1,6 +1,6 @@
 # 0046 Time zone choices to confirm, and data to extend
 
-Status: open
+Status: half closed (the reference app)
 Milestone: v1
 Area: time zones
 
@@ -14,3 +14,5 @@ Choices made without a real install to check:
 Data to extend after v1: the full country list, the large city dataset and airport codes (ticket 0010). The IANA database is bundled with the `chrono-tz` crate (2025b at the time of writing), so rule changes after that release need a dependency update.
 
 The bundled database is out of date for two places; see ticket 0053.
+
+The reference app: `time difference between Sydney and Chicago` is `-16 hours` and the reverse is `16 hours`, so the answer is the second place minus the first (the engine has the opposite sign). `IST` is India (ticket 0072). `time in Tokyo when it is 9am in London` and airport codes work (ticket 0073).

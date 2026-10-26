@@ -152,8 +152,8 @@ const CASES: &[(&str, &str)] = &[
         "ERROR unexpected word \"as\" at byte 0",
     ),
     ("10 seconds at 30 fps as timecode", "00:00:10:00"),
-    ("noon GMT+5 in UTC", "7:00 am"),
-    ("noon GMT+5:30 in UTC", "6:30 am"),
+    ("noon GMT+5 in UTC", "7:00 AM"),
+    ("noon GMT+5:30 in UTC", "6:30 AM"),
     (
         "noon GMT+true in UTC",
         "ERROR unexpected word \"GMT\" at byte 5",

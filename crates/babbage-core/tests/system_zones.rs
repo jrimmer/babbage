@@ -68,7 +68,7 @@ fn the_machines_newer_rules_replace_the_bundled_ones() {
     let line = "now in Vancouver";
     let (old, new) = (run(&bundled, line), run(&files, line));
     assert_ne!(old, new, "the rule change should be visible: {old}");
-    assert_eq!(new, "December 1 at 5:00 am", "from the 2026e files");
+    assert_eq!(new, "December 1 at 5:00 AM", "from the 2026e files");
     // Casablanca: 2026-09-23 onward.
     assert_ne!(
         run(&bundled, "now in Casablanca"),
@@ -80,15 +80,15 @@ fn the_machines_newer_rules_replace_the_bundled_ones() {
 fn a_zone_the_folder_lacks_falls_back_to_the_bundled_database() {
     let files = system(1_718_452_800, None);
     // Paris is not in the fixtures; its bundled rules still apply.
-    assert_eq!(run(&files, "time in Paris"), "2:00 pm");
+    assert_eq!(run(&files, "time in Paris"), "2:00 PM");
     let missing = Settings {
         zone_source: ZoneSource::System {
             dir: fixtures().join("nowhere"),
         },
         ..Settings::at(1_718_452_800)
     };
-    assert_eq!(run(&missing, "time in Paris"), "2:00 pm");
-    assert_eq!(run(&missing, "time in Tokyo"), "9:00 pm");
+    assert_eq!(run(&missing, "time in Paris"), "2:00 PM");
+    assert_eq!(run(&missing, "time in Tokyo"), "9:00 PM");
 }
 
 #[test]

@@ -243,8 +243,9 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::ZoneDifference => {
             let (a, b) = (zone_arg(&args[0])?, zone_arg(&args[1])?);
             let now = settings::now_utc_seconds();
+            // How far ahead the second place is of the first, as the reference app prints it.
             Ok(Value::quantity(
-                Number::from_i64(a.offset_at(now) - b.offset_at(now)),
+                Number::from_i64(b.offset_at(now) - a.offset_at(now)),
                 unit("s"),
             )?
             .as_timespan())

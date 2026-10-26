@@ -22,7 +22,7 @@ rows = []
 def clock_text(sec):
     h, m, s = sec // 3600, sec % 3600 // 60, sec % 60
     body = f"{h % 12 or 12}:{m:02}" + (f":{s:02}" if s else "")
-    return f"{body} {'am' if h < 12 else 'pm'}"
+    return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
 def shown(d, secs=0):

@@ -828,6 +828,13 @@ fn inherit_layout(op: BinOp, l: &Value, r: &Value, v: Value) -> Value {
     if !matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join) || !is_length_of_time(&v) {
         return v;
     }
+    // Several time units written one after another (`3 hours 5 minutes 10 seconds`) print as a timespan.
+    if op == BinOp::Join && !wanted(l) && !wanted(r) && v.layout.is_none() {
+        return Value {
+            layout: Some(Shown::Timespan),
+            ..v
+        };
+    }
     let layout = if wanted(l) {
         l.layout.clone()
     } else if wanted(r) {

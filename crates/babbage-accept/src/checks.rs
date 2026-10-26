@@ -160,8 +160,8 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "June 15 at 5:00 am"),
-            ("3pm in Tokyo", "June 16 at 7:00 am"),
+            ("now", "June 15 at 5:00 AM"),
+            ("3pm in Tokyo", "June 16 at 7:00 AM"),
             ("now to timestamp", "1718452800"),
             (
                 "January 15, 2024 3pm as iso8601",
@@ -171,7 +171,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
         ],
     )?;
     ensure!(
-        answer(&s, 0) != Some("June 15 at 12:00 pm"),
+        answer(&s, 0) != Some("June 15 at 12:00 PM"),
         "the app is showing UTC, not the local zone"
     );
     settle();
@@ -198,7 +198,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     answers_for(
         h,
         &mut app,
-        &[("now", "June 15 at 5:30 pm"), ("today", "June 15")],
+        &[("now", "June 15 at 5:30 PM"), ("today", "June 15")],
     )?;
     app.finish()?;
 
@@ -215,7 +215,7 @@ fn local_time(h: &mut Harness) -> anyhow::Result<()> {
     answers_for(
         h,
         &mut app,
-        &[("today", "June 15"), ("now", "June 15 at 8:00 pm")],
+        &[("today", "June 15"), ("now", "June 15 at 8:00 PM")],
     )?;
     app.finish()
 }
@@ -239,9 +239,9 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
         h,
         &mut app,
         &[
-            ("now", "December 1 at 5:00 am"),
-            ("noon in Casablanca", "7:00 pm"),
-            ("time in Paris", "1:00 pm"),
+            ("now", "December 1 at 5:00 AM"),
+            ("noon in Casablanca", "7:00 PM"),
+            ("time in Paris", "1:00 PM"),
         ],
     )?;
     ensure!(
@@ -264,7 +264,7 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
             ("BABBAGE_CONFIG_FILE", &config),
         ],
     )?;
-    let s = answers_for(h, &mut app, &[("now", "December 1 at 4:00 am")])?;
+    let s = answers_for(h, &mut app, &[("now", "December 1 at 4:00 AM")])?;
     ensure!(
         s["tzdb"].as_str() == Some("2025b"),
         "the bundled source should report 2025b, got {:?}",
@@ -311,7 +311,7 @@ fn sheet_functions(h: &mut Harness) -> anyhow::Result<()> {
             ("max(3, 9, 4)", "9"),
             ("round(2.567)", "3"),
             ("2.567 to 1 dp", "2.6"),
-            ("5.5 minutes as timespan", "5 minutes 30 seconds"),
+            ("5.5 minutes as timespan", "5 min 30 s"),
             ("5.5 minutes as laptime", "00:05:30"),
         ],
     );
@@ -337,12 +337,12 @@ fn everyday_lines(h: &mut Harness) -> anyhow::Result<()> {
         ("Easter 2027", "March 28, 2027"),
         ("workdays in 3 weeks", "15 workday"),
         ("January 10 - February 5", "-3 weeks 5 days"),
-        ("7:30am to 8:45pm", "13 hours 15 minutes"),
+        ("7:30am to 8:45pm", "13 hours 15 min"),
         ("01:02:03:04 + 00:00:01:00", "01:02:04:04"),
         ("20% is 500, what is 750", "30%"),
         ("2/10 as fraction", "1/5"),
         ("meters in 10 km", "10,000 m"),
-        ("6pm Sydney in Chicago", "3:00 am"),
+        ("6pm Sydney in Chicago", "3:00 AM"),
         ("$500/workday * 4 weeks", "$10,000.00"),
         ("day of the week on January 24, 1984", "Tuesday"),
         ("New Year 2025", "January 1, 2025"),

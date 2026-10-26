@@ -56,12 +56,13 @@ def timespan(total):
     whole = total.numerator // total.denominator
     frac = total - whole
     parts = []
-    for n, name in ((whole // 604800, "week"), (whole % 604800 // 86400, "day"), (whole % 86400 // 3600, "hour"), (whole % 3600 // 60, "minute")):
+    for n, name in ((whole // 604800, "week"), (whole % 604800 // 86400, "day"), (whole % 86400 // 3600, "hour"), (whole % 3600 // 60, "min")):
         if n:
-            parts.append(f"{n} {name}{'' if n == 1 else 's'}")
+            # weeks, days and hours are written out; minutes and seconds are `min` and `s`
+            parts.append(f"{n} {name}{'' if n == 1 or name == 'min' else 's'}")
     secs = seconds_text(whole % 60, frac)
     if whole % 60 or frac or not parts:
-        parts.append(f"{secs} second{'' if secs == '1' else 's'}")
+        parts.append(f"{secs} s")
     return ("-" if neg else "") + " ".join(parts)
 
 
@@ -81,7 +82,7 @@ def clock(sec):
     h, m, s = sec // 3600, sec % 3600 // 60, sec % 60
     h12 = h % 12 or 12
     body = f"{h12}:{m:02}" + (f":{s:02}" if s else "")
-    return f"{body} {'am' if h < 12 else 'pm'}"
+    return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
 def parts(total, units):
@@ -105,7 +106,7 @@ def shown_date(d, secs=0):
     if secs:
         h, m, s = secs // 3600, secs % 3600 // 60, secs % 60
         body = f"{h % 12 or 12}:{m:02}" + (f":{s:02}" if s else "")
-        text += f" at {body} {'am' if h < 12 else 'pm'}"
+        text += f" at {body} {'AM' if h < 12 else 'PM'}"
     return text
 
 
@@ -138,8 +139,8 @@ def amount_text(q):
 for _ in range(1500):
     a, b = rng.randrange(0, 86400, 60), rng.randrange(0, 86400, 60)
     la, lb = clock_literal(a), clock_literal(b)
-    add(f"{la} to {lb}", timespan(Fraction((b - a) % 86400 or 0)) if a != b else "0 seconds")
-    add(f"{la} - {lb}", timespan(Fraction(abs(a - b))) if a != b else "0 seconds")
+    add(f"{la} to {lb}", timespan(Fraction((b - a) % 86400 or 0)) if a != b else "0 s")
+    add(f"{la} - {lb}", timespan(Fraction(abs(a - b))) if a != b else "0 s")
     add(f"{la}", clock(a))
     minutes = rng.randint(0, 3000)
     add(f"{la} + {minutes} minutes", clock(a + minutes * 60))

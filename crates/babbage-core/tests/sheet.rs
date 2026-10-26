@@ -460,14 +460,11 @@ fn a_function_name_is_never_dropped_as_prose() {
 
 #[test]
 fn layout_words_are_not_dropped_as_prose() {
-    assert_eq!(
-        shown(&run(&["5.5 minutes as timespan"])[0]),
-        "5 minutes 30 seconds"
-    );
+    assert_eq!(shown(&run(&["5.5 minutes as timespan"])[0]), "5 min 30 s");
     assert_eq!(shown(&run(&["5.5 minutes as laptime"])[0]), "00:05:30");
     assert_eq!(
         shown(&run(&["03:04:05 as timespan"])[0]),
-        "3 hours 4 minutes 5 seconds"
+        "3 hours 4 min 5 s"
     );
     assert_eq!(shown(&run(&["5.5 minutes to laptime"])[0]), "00:05:30");
     // `timespan` standing on its own is still just a word.

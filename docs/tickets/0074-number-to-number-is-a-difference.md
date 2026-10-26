@@ -1,0 +1,7 @@
+# 0074 `1978 to 2021` is 43
+
+Status: open
+Milestone: v1
+Area: dates, numbers
+
+The reference app prints `1978 to 2021` as `43`, a plain number with no unit. The engine refuses `to` between two plain numbers. The reference page prints `42 years` for the same line; the reference app does not. Whether `to` between any two numbers is their difference (`10 to 25` is `15`) is not known.

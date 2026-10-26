@@ -82,7 +82,7 @@ def spell(name):
 def clock_text(sec):
     h, m, s = sec // 3600, sec % 3600 // 60, sec % 60
     body = f"{h % 12 or 12}:{m:02}" + (f":{s:02}" if s else "")
-    return f"{body} {'am' if h < 12 else 'pm'}"
+    return f"{body} {'AM' if h < 12 else 'PM'}"
 
 
 def shown_date(d, secs=0):
@@ -159,18 +159,18 @@ def span_hours(delta):
     sign = "-" if secs < 0 else ""
     secs = abs(secs)
     parts = []
-    for n, name in ((secs // 604800, "week"), (secs % 604800 // 86400, "day"), (secs % 86400 // 3600, "hour"), (secs % 3600 // 60, "minute")):
+    for n, name in ((secs // 604800, "week"), (secs % 604800 // 86400, "day"), (secs % 86400 // 3600, "hour"), (secs % 3600 // 60, "min")):
         if n:
-            parts.append(f"{n} {name}{'' if n == 1 else 's'}")
+            parts.append(f"{n} {name}{'' if n == 1 or name == 'min' else 's'}")
     if secs % 60 or not parts:
-        parts.append(f"{secs % 60} second{'' if secs % 60 == 1 else 's'}")
+        parts.append(f"{secs % 60} s")
     return sign + " ".join(parts)
 
 
 for _ in range(800):
     a, b = rng.sample(names, 2)
     off = lambda z: NOW.astimezone(z).utcoffset()
-    want = span_hours(off(PLACES[a]) - off(PLACES[b]))
+    want = span_hours(off(PLACES[b]) - off(PLACES[a]))  # the second place minus the first, as the reference app prints it
     connector = rng.choice(["and", "&"])
     add(f"time difference between {spell(a)} {connector} {spell(b)}", want)
 

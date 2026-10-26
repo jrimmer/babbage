@@ -385,7 +385,8 @@ fn year_after_month(toks: &[Token], i: usize) -> (Option<i64>, usize) {
     }
 }
 
-/// `3:30 pm` style: no leading zero, `am`/`pm` in lower case, seconds only when there are some.
+/// `3:30 PM` style: no leading zero, `AM`/`PM` in upper case (the US region, as the reference app prints it),
+/// seconds only when there are some.
 pub fn format_clock(seconds: &Number) -> String {
     let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
     let total = whole.mod_floor(&BigInt::from(86_400)).to_i64().unwrap_or(0);
@@ -397,7 +398,7 @@ pub fn format_clock(seconds: &Number) -> String {
         0 => 12,
         n => n,
     };
-    let suffix = if h < 12 { "am" } else { "pm" };
+    let suffix = if h < 12 { "AM" } else { "PM" };
     let sub_second = fraction
         .filter(|f| !f.is_zero())
         .and_then(|f| f.to_exact_decimal())
@@ -472,23 +473,22 @@ pub(crate) fn split_seconds(seconds: &Number) -> (bool, i64, Number) {
 /// A length of time as `3 weeks 5 days` or `4 hours 32 minutes 24 seconds`.
 pub fn format_timespan(seconds: &Number) -> (String, bool) {
     let (negative, total, fraction) = split_seconds(seconds);
+    // Weeks, days and hours are written out; minutes and seconds are `min` and `s`, as the reference app does
+    // (`8 hours 35 min`, `3 hours 5 min 10 s`).
     let parts = [
-        (total / 604_800, "week"),
-        (total % 604_800 / 86_400, "day"),
-        (total % 86_400 / 3600, "hour"),
-        (total % 3600 / 60, "minute"),
+        (total / 604_800, "week", true),
+        (total % 604_800 / 86_400, "day", true),
+        (total % 86_400 / 3600, "hour", true),
+        (total % 3600 / 60, "min", false),
     ];
     let mut text: Vec<String> = parts
         .iter()
-        .filter(|(n, _)| *n != 0)
-        .map(|(n, name)| format!("{n} {name}{}", if *n == 1 { "" } else { "s" }))
+        .filter(|(n, _, _)| *n != 0)
+        .map(|(n, name, plural)| format!("{n} {name}{}", if *plural && *n != 1 { "s" } else { "" }))
         .collect();
     let (secs_text, exact) = seconds_text(total % 60, &fraction);
     if total % 60 != 0 || !fraction.is_zero() || text.is_empty() {
-        text.push(format!(
-            "{secs_text} second{}",
-            if secs_text == "1" { "" } else { "s" }
-        ));
+        text.push(format!("{secs_text} s"));
     }
     (
         format!("{}{}", if negative { "-" } else { "" }, text.join(" ")),

@@ -146,7 +146,7 @@ for _ in range(800):
     add(f"days between {la} and {lb}", "days", abs((a - b).days))
     add(f"workdays between {la} and {lb}", "workdays", workdays(a, b))
     add(f"work hours between {la} and {lb}", "hours", workdays(a, b) * 8)
-    add(f"midpoint between {la} and {lb}", "text", shown(a + (b - a) / 2) if (b - a).days % 2 == 0 else shown(min(a, b) + timedelta(days=abs((b - a).days) // 2)) + " at 12:00 pm")
+    add(f"midpoint between {la} and {lb}", "text", shown(a + (b - a) / 2) if (b - a).days % 2 == 0 else shown(min(a, b) + timedelta(days=abs((b - a).days) // 2)) + " at 12:00 PM")
     lo, hi = sorted((a, b))
     add(f"{literal(lo)} through {literal(hi)}", "days", (hi - lo).days + 1)
 
@@ -252,8 +252,8 @@ for name, idx in weekday_names.items():
 
 for n in range(0, 300):
     now = datetime(2024, 6, 15, 12, 0) + timedelta(days=n)
-    add(f"{n} days from now", "text", shown(now.date(), "12:00 pm"))
-    add(f"{n} days ago", "text", shown((datetime(2024, 6, 15, 12) - timedelta(days=n)).date(), "12:00 pm"))
+    add(f"{n} days from now", "text", shown(now.date(), "12:00 PM"))
+    add(f"{n} days ago", "text", shown((datetime(2024, 6, 15, 12) - timedelta(days=n)).date(), "12:00 PM"))
 
 for row in rows:
     print("\t".join(row))

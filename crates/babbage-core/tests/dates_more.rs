@@ -233,11 +233,11 @@ fn the_words_after_a_long_expression_still_find_their_place() {
         ("June 5, 2019 + 3 days to date", "June 8, 2019"),
         (
             "(1_000_000_000 + 700_000_000) to date",
-            "November 14, 2023 at 10:13:20 pm",
+            "November 14, 2023 at 10:13:20 PM",
         ),
         (
             "(1_700_000_000 * 1_000) to date",
-            "November 14, 2023 at 10:13:20 pm",
+            "November 14, 2023 at 10:13:20 PM",
         ),
         ("June 5, 2019 + 3 days to timestamp", "1559952000"),
         ("June 5, 2019 + 3 days as iso8601", "2019-06-08T00:00:00Z"),
@@ -249,17 +249,14 @@ fn the_words_after_a_long_expression_still_find_their_place() {
         ("3 weeks + 2 days after June 5, 2019", "June 28, 2019"),
         (
             "2 days + 1 hour before June 5, 2019",
-            "June 2, 2019 at 11:00 pm",
+            "June 2, 2019 at 11:00 PM",
         ),
-        ("5 days + 2 hours ago", "June 10 at 10:00 am"),
-        ("3 hours + 30 minutes from now", "June 15 at 3:30 pm"),
-        (
-            "1 hour 30 minutes + 5 minutes at 1.5x",
-            "1 hour 3 minutes 20 seconds",
-        ),
+        ("5 days + 2 hours ago", "June 10 at 10:00 AM"),
+        ("3 hours + 30 minutes from now", "June 15 at 3:30 PM"),
+        ("1 hour 30 minutes + 5 minutes at 1.5x", "1 hour 3 min 20 s"),
         (
             "time saved 1 hour 30 minutes + 5 minutes at 1.5x",
-            "31 minutes 40 seconds",
+            "31 min 40 s",
         ),
         (
             "300 frames + 60 frames at 30 fps as timecode",
@@ -376,9 +373,9 @@ fn days_in_a_period() {
 #[test]
 fn offsets_and_months_written_with_a_number() {
     all(&[
-        ("noon GMT+5:30 in UTC", "6:30 am"),
-        ("noon GMT+ 5 in UTC", "7:00 am"),
-        ("noon UTC-3 in UTC", "3:00 pm"),
+        ("noon GMT+5:30 in UTC", "6:30 AM"),
+        ("noon GMT+ 5 in UTC", "7:00 AM"),
+        ("noon UTC-3 in UTC", "3:00 PM"),
         ("workdays in June 2024", "20 workday"),
         ("workdays in June", "20 workday"),
         ("work hours in June", "160 h"),
@@ -507,16 +504,16 @@ fn date_to_date_intervals_and_midpoints_by_function() {
 #[test]
 fn a_date_and_a_time_of_day_join_only_when_that_is_what_they_are() {
     all(&[
-        ("June 5, 2019 at 3pm", "June 5, 2019 at 3:00 pm"),
-        ("June 5, 2019 3pm", "June 5, 2019 at 3:00 pm"),
-        ("2 hours + June 5, 2019 at 3pm", "June 5, 2019 at 5:00 pm"),
-        ("2 hours + June 5, 2019 3pm", "June 5, 2019 at 5:00 pm"),
+        ("June 5, 2019 at 3pm", "June 5, 2019 at 3:00 PM"),
+        ("June 5, 2019 3pm", "June 5, 2019 at 3:00 PM"),
+        ("2 hours + June 5, 2019 at 3pm", "June 5, 2019 at 5:00 PM"),
+        ("2 hours + June 5, 2019 3pm", "June 5, 2019 at 5:00 PM"),
         (
             "1 day + 2 hours + June 5, 2019 3pm",
-            "June 6, 2019 at 5:00 pm",
+            "June 6, 2019 at 5:00 PM",
         ),
-        ("5 March 2019 at 9:30am", "March 5, 2019 at 9:30 am"),
-        ("June 5, 2019 at 5:30:15 pm", "June 5, 2019 at 5:30:15 pm"),
+        ("5 March 2019 at 9:30am", "March 5, 2019 at 9:30 AM"),
+        ("June 5, 2019 at 5:30:15 PM", "June 5, 2019 at 5:30:15 PM"),
     ]);
     for line in [
         // a date that already has a time of day takes no second one
@@ -548,11 +545,11 @@ fn a_year_after_a_day_and_month_has_four_digits() {
 #[test]
 fn a_time_of_day_keeps_its_fraction_of_a_second() {
     all(&[
-        ("5pm + 0.5 seconds", "5:00:00.5 pm"),
-        ("5pm + 90.25 seconds", "5:01:30.25 pm"),
-        ("5pm + 1 second", "5:00:01 pm"),
-        ("5pm + 60 seconds", "5:01 pm"),
-        ("11:59:59pm + 1.5 seconds", "12:00:00.5 am"),
+        ("5pm + 0.5 seconds", "5:00:00.5 PM"),
+        ("5pm + 90.25 seconds", "5:01:30.25 PM"),
+        ("5pm + 1 second", "5:00:01 PM"),
+        ("5pm + 60 seconds", "5:01 PM"),
+        ("11:59:59pm + 1.5 seconds", "12:00:00.5 AM"),
     ]);
 }
 
