@@ -716,6 +716,12 @@ fn in_western_europe_a_point_is_a_grouping_mark_and_a_misplaced_one_is_named_exa
         assert_eq!(evaluate_with("12.5 + 1", &s), bad("12.5", 0));
         assert_eq!(evaluate_with("1 + 3.14", &s), bad("3.14", 4));
         assert_eq!(evaluate_with("1.2.3", &s), bad("1.2", 0));
+        // a point with no digit after it is not a misplaced group: it is a stray character
+        let stray = |ch: char, at: usize| Err(Error::UnexpectedChar { ch, at });
+        assert_eq!(evaluate_with("5.", &s), stray('.', 1));
+        assert_eq!(evaluate_with("5. + 1", &s), stray('.', 1));
+        assert_eq!(evaluate_with("1.x", &s), stray('.', 1));
+        assert_eq!(evaluate_with("10. 5", &s), stray('.', 2));
         assert_eq!(
             format_value(&evaluate_with("1.234", &s).unwrap(), &s.format_options()).text,
             "1.234"
