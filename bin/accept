@@ -3,6 +3,7 @@
 # Usage: bin/accept [--list] [check ...]      (default: every check)
 # Screenshots of the checks that publish one go to docs/shots/; the rest stay in target/accept-logs/.
 set -euo pipefail
+[ -n "${BABBAGE_LOWPRIO:-}" ] || exec "$(dirname "$0")/lowprio" "$0" "$@"
 cd "$(dirname "$0")/.."
 bin/build
 exec target/release/babbage-accept "$@"

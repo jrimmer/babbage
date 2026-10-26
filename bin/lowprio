@@ -1,0 +1,5 @@
+#!/bin/bash
+# Runs a command so it cannot flood this shared workstation: lowest CPU priority, idle I/O, four cores
+# (override with BABBAGE_CPUS="0-5") and two build jobs. rustc and the linker start many threads, so
+# `nice` alone is not enough.
+exec nice -n 19 ionice -c3 taskset -c "${BABBAGE_CPUS:-0-3}" env CARGO_BUILD_JOBS=2 BABBAGE_LOWPRIO=1 "$@"

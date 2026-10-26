@@ -1,6 +1,7 @@
 #!/bin/bash
 # The gate: formatting, clippy, tests, and the architecture guards.
 set -euo pipefail
+[ -n "${BABBAGE_LOWPRIO:-}" ] || exec "$(dirname "$0")/lowprio" "$0" "$@"
 cd "$(dirname "$0")/.."
 # This is a shared workstation: the whole gate runs at the lowest priority.
 renice -n 19 $$ >/dev/null 2>&1 || true

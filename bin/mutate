@@ -5,6 +5,7 @@
 # lines it changes), MUTATE_TESTS (extra `cargo test` arguments, such as "--lib --test dates", to run only
 # the tests that exercise the mutated files).
 set -euo pipefail
+[ -n "${BABBAGE_LOWPRIO:-}" ] || exec "$(dirname "$0")/lowprio" "$0" "$@"
 cd "$(dirname "$0")/.."
 tmp=$HOME/.cache/babbage-mutants-tmp
 mkdir -p "$tmp"

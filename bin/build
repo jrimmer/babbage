@@ -1,5 +1,6 @@
 #!/bin/bash
 # Release build of the app and the acceptance runner, at low priority and two jobs.
 set -euo pipefail
+[ -n "${BABBAGE_LOWPRIO:-}" ] || exec "$(dirname "$0")/lowprio" "$0" "$@"
 cd "$(dirname "$0")/.."
 exec nice -n 19 cargo build --release --locked -p babbage-app -p babbage-accept
