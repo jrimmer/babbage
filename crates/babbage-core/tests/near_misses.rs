@@ -408,3 +408,118 @@ fn words_glued_to_numbers_in_a_sheet() {
     assert!(r[4].starts_with("ERROR"), "{}", r[4]);
     assert!(r[5].starts_with("ERROR"), "{}", r[5]);
 }
+
+#[test]
+fn words_and_booleans_compare_for_equality_only_with_their_own_kind() {
+    let r = sheet(&[
+        "a = day of the week on June 15, 2024",
+        "b = day of the week on June 22, 2024",
+        "c = day of the week on June 16, 2024",
+        "a == b",
+        "a != b",
+        "a == c",
+        "a != c",
+        "a < c",
+        "a == 5",
+        "5 == a",
+    ]);
+    assert_eq!(&r[3..7], ["true", "false", "false", "true"]);
+    for i in 7..10 {
+        assert_eq!(
+            r[i], "ERROR unsupported: words can only be compared for equality",
+            "line {i}"
+        );
+    }
+    for (line, want) in [
+        (
+            "true < false",
+            "ERROR unsupported: true and false can only be compared for equality",
+        ),
+        (
+            "true >= false",
+            "ERROR unsupported: true and false can only be compared for equality",
+        ),
+        (
+            "true < 1",
+            "ERROR unsupported: a true or false cannot be compared with a number",
+        ),
+        (
+            "1 < true",
+            "ERROR unsupported: a true or false cannot be compared with a number",
+        ),
+        (
+            "true == 1",
+            "ERROR unsupported: a true or false cannot be compared with a number",
+        ),
+        (
+            "1 != false",
+            "ERROR unsupported: a true or false cannot be compared with a number",
+        ),
+    ] {
+        assert_eq!(answer(line), want, "{line}");
+    }
+}
+
+#[test]
+fn a_length_of_time_before_a_time_of_day_shifts_it() {
+    for (line, want) in [
+        ("2 hours + 5pm", "7:00 pm"),
+        ("90 minutes + 5pm", "6:30 pm"),
+        ("5pm + 2 hours", "7:00 pm"),
+        ("5pm - 2 hours", "3:00 pm"),
+        (
+            "2 hours - 5pm",
+            "ERROR unsupported: a date or time can be shifted by a length of time, and two of them can be subtracted",
+        ),
+        ("June 10, 2024 - 1 month", "May 10"),
+        ("June 10, 2024 + 1 month", "July 10"),
+        ("June 10, 2024 - 1 year", "June 10, 2023"),
+        ("June 10, 2024 + 1 year", "June 10, 2025"),
+        ("June 10, 2024 - 1 workday", "June 7"),
+        ("June 10, 2024 + 1 workday", "June 11"),
+    ] {
+        assert_eq!(answer(line), want, "{line}");
+    }
+}
+
+#[test]
+fn a_plain_number_cannot_take_a_layout_that_needs_a_length_or_a_unit() {
+    for line in ["5 as timespan", "5 as laptime", "5 in hours and minutes"] {
+        assert_eq!(
+            answer(line),
+            "ERROR these units measure different things",
+            "{line}"
+        );
+    }
+    assert_eq!(
+        answer("5 km as multiplier"),
+        "ERROR unsupported: this phrase needs plain numbers and, where written, a percentage"
+    );
+}
+
+#[test]
+fn what_a_sheet_ignores_is_reported_where_it_stood() {
+    let s = Settings::at(1_718_452_800);
+    let opts = SheetOptions {
+        settings: s.clone(),
+        ..SheetOptions::default()
+    };
+    for line in [
+        "3 apples + 4 oranges",
+        "h\u{e9}llo 5 + 5",
+        "5 + \u{fc} 5",
+        "lunch was $55 + 25% tip",
+        "at the cafe 3 + 4 (with a friend)",
+        "\u{4f60}\u{597d} 2 + 2",
+    ] {
+        let r = scoped(&s, || evaluate_sheet(&[line], &opts));
+        assert!(!r[0].ignored.is_empty(), "{line}");
+        for i in &r[0].ignored {
+            assert_eq!(
+                line.get(i.at..i.at + i.text.len()),
+                Some(i.text.as_str()),
+                "{line}: {i:?}"
+            );
+        }
+    }
+}

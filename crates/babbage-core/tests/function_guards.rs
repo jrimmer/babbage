@@ -134,3 +134,68 @@ fn pixel_density_needs_a_positive_bare_number_and_a_length_or_pixel_count() {
         );
     }
 }
+
+fn phrase(p: babbage_core::parser::Phrase, args: &[Value]) -> String {
+    text(Value::phrase(p, args))
+}
+
+#[test]
+fn rounding_phrases_take_a_plain_count_of_places_or_a_plain_step() {
+    use babbage_core::parser::Phrase;
+    let one = Value::plain(Number::from_decimal_str("3.14159").unwrap());
+    assert_eq!(phrase(Phrase::RoundPlaces, &[one.clone(), n(2)]), "3.14");
+    assert_eq!(
+        phrase(
+            Phrase::RoundNearest,
+            &[
+                one.clone(),
+                Value::plain(Number::from_decimal_str("0.5").unwrap())
+            ]
+        ),
+        "3"
+    );
+    assert_eq!(phrase(Phrase::RoundUp, &[one.clone(), n(1)]), "4");
+    assert_eq!(phrase(Phrase::RoundDown, &[one.clone(), n(1)]), "3");
+    // a step or a count that is not a bare number is refused, never read as its number
+    for bad in [q(2, "km"), pct("0.5"), Value::date(Number::from_i64(2))] {
+        for p in [
+            Phrase::RoundPlaces,
+            Phrase::RoundNearest,
+            Phrase::RoundUp,
+            Phrase::RoundDown,
+        ] {
+            assert!(
+                phrase(p, &[one.clone(), bad.clone()]).starts_with("ERROR"),
+                "{p:?} {bad:?}"
+            );
+        }
+    }
+    // a quantity keeps its unit when it is the one rounded
+    assert_eq!(
+        phrase(
+            Phrase::RoundPlaces,
+            &[
+                Value::quantity(
+                    Number::from_decimal_str("5.555").unwrap(),
+                    lookup("km").unwrap()
+                )
+                .unwrap(),
+                n(1)
+            ]
+        ),
+        "5.6 km"
+    );
+    // places must be a whole number between 0 and 1000
+    for bad in [
+        Value::plain(Number::from_decimal_str("1.5").unwrap()),
+        n(-1),
+        n(1001),
+    ] {
+        assert!(phrase(Phrase::RoundPlaces, &[one.clone(), bad]).starts_with("ERROR"));
+    }
+    assert!(!phrase(Phrase::RoundPlaces, &[one.clone(), n(1000)]).starts_with("ERROR"));
+    // as multiplier
+    assert_eq!(phrase(Phrase::AsMultiplier, &[n(4)]), "4x");
+    assert!(phrase(Phrase::AsMultiplier, &[q(4, "km")]).starts_with("ERROR"));
+    assert!(phrase(Phrase::AsMultiplier, &[pct("0.5")]).starts_with("ERROR"));
+}

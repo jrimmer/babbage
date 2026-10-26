@@ -710,6 +710,11 @@ fn tax_arithmetic(op: BinOp, l: &Value, r: &Value) -> Result<Value, Error> {
     }
 }
 
+/// `n` for a sign of 1 and `-n` for a sign of -1.
+fn signed(n: i64, sign: i64) -> i64 {
+    if sign.is_negative() { -n } else { n }
+}
+
 fn is_length_of_time(v: &Value) -> bool {
     let seconds = crate::units::lookup("s").expect("seconds are defined");
     v.kind == Kind::Plain && !v.unit.is_empty() && v.unit.dim() == seconds.dim()
@@ -743,7 +748,7 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
                 "a date moves by whole months or years",
             ));
         }
-        let n = i64::try_from(m.numer()).map_err(|_| Error::Overflow)? * sign;
+        let n = signed(i64::try_from(m.numer()).map_err(|_| Error::Overflow)?, sign);
         let moved =
             calendar::days_from_civil(calendar::add_months(calendar::civil_from_days(day), n));
         return Ok(Value::date(Number::from_i64(moved).add(&fraction)?));
@@ -754,7 +759,10 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
                 "a date moves by whole workdays",
             ));
         }
-        let n = i64::try_from(by.number.numer()).map_err(|_| Error::Overflow)? * sign;
+        let n = signed(
+            i64::try_from(by.number.numer()).map_err(|_| Error::Overflow)?,
+            sign,
+        );
         // Far enough that the date could not be written down; refused before it can wrap.
         if n.unsigned_abs() > 1_000_000_000_000 {
             return Err(Error::Overflow);
@@ -791,11 +799,7 @@ fn inherit_layout(op: BinOp, l: &Value, r: &Value, v: Value) -> Value {
             Some(Shown::Timespan | Shown::Laptime | Shown::Timecode(_))
         )
     };
-    if !matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
-        || v.kind != Kind::Plain
-        || v.unit.is_empty()
-        || !is_length_of_time(&v)
-    {
+    if !matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join) || !is_length_of_time(&v) {
         return v;
     }
     let layout = if wanted(l) {
