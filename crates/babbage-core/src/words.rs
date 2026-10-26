@@ -207,8 +207,23 @@ fn list_form(toks: &[Token]) -> Option<Result<Expr, Error>> {
     None
 }
 
-/// `root 5 of 100`, `log 20 base 4`, `81 is 9 to what power`.
+/// `root 5 of 100`, `5 root of 2`, `is 59 prime`, `log 20 base 4`, `81 is 9 to what power`.
 fn root_and_log(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    // `is 59 prime`
+    if toks.len() >= 3 && is_word(toks.first(), "is") && is_word(toks.last(), "prime") {
+        return Some(call(&[&toks[1..toks.len() - 1]], Func::IsPrime));
+    }
+    // `5 root of 2`: the fifth root of 2.
+    if !is_word(toks.first(), "root")
+        && !is_word(toks.first(), "square")
+        && !is_word(toks.first(), "cube")
+        && let Some(at) = depth_zero_word(toks, "root")
+        && at > 0
+        && is_word(toks.get(at + 1), "of")
+        && at + 2 < toks.len()
+    {
+        return Some(call(&[&toks[..at], &toks[at + 2..]], Func::Root));
+    }
     if is_word(toks.first(), "root") {
         let of = depth_zero_word(toks, "of")?;
         let (degree, value) = (&toks[1..of], &toks[of + 1..]);
@@ -704,7 +719,7 @@ fn time_to_reach(rest: &[Token]) -> Option<Result<Expr, Error>> {
     }))
 }
 
-/// `20/5 as multiplier`, `50 as x of 5`, `2 as multiplier on 1`, `1 as x off 2`, `50 to 75 is what x`, `20 to 40 as x`.
+/// `20/5 as multiplier`, `50 as x of 5`, `100 is what multiple of 50`, `2 as multiplier on 1`, `1 as x off 2`, `50 to 75 is what x`, `20 to 40 as x`.
 fn multiplier_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let n = toks.len();
     let is_x = |t: Option<&Token>| {
@@ -742,6 +757,16 @@ fn multiplier_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
             && at + 3 < n
         {
             return Some(call_with_phrase(&[&toks[..at], &toks[at + 3..]], phrase));
+        }
+        // `100 is what multiple of 50`: the same as `100 as x of 50`.
+        if let Some(at) = depth_zero_word(toks, "is")
+            && is_word(toks.get(at + 1), "what")
+            && is_x(toks.get(at + 2))
+            && is_word(toks.get(at + 3), word)
+            && at > 0
+            && at + 4 < n
+        {
+            return Some(call_with_phrase(&[&toks[..at], &toks[at + 4..]], phrase));
         }
     }
     if n >= 3 && is_x(toks.get(n - 1)) && is_word(toks.get(n - 2), "as") {

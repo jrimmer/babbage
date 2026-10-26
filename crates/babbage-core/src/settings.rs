@@ -44,6 +44,9 @@ pub struct Settings {
     pub zone_source: crate::zones::ZoneSource,
     /// How numbers are typed and shown: `1,234.56`, `1.234,56` or `1 234,56`.
     pub number_format: crate::format::NumberFormat,
+    /// `12/02/1988` and `12-02-1988` mean 12 February (day first, as in Australia) when set, and December 2
+    /// (month first, as in the United States) when not.
+    pub day_first: bool,
 }
 
 impl Settings {
@@ -83,6 +86,11 @@ pub fn volume_system() -> VolumeSystem {
 /// How numbers are typed and shown right now.
 pub fn number_format() -> crate::format::NumberFormat {
     current(|s| s.number_format)
+}
+
+/// Whether `12/02/1988` is read day first.
+pub fn day_first() -> bool {
+    current(|s| s.day_first)
 }
 
 /// The current moment in UTC seconds, from the settings or the system clock.

@@ -152,6 +152,10 @@ floz | fl oz,floz,fluid ounce,fluid ounces | L3 | 0.003785411784/128
 tbsp | tbsp,tablespoon,tablespoons | L3 | 0.003785411784/256
 tsp | tsp,teaspoon,teaspoons | L3 | 0.003785411784/768
 bsh | bsh,bushel,bushels | L3 | 0.03523907016688
+imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 0.00454609
+imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 0.00454609/4
+imp pt | imperial pint,imperial pints,imp pt,imp pint,imp pints,uk pint,uk pints | L3 | 0.00454609/8
+imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 0.00454609/160
 af | af,acre foot,acre feet,acre-foot | L3 | 4046.8564224*0.3048
 # mass
 g | g,gram,grams,gramme,grammes | M | 0.001

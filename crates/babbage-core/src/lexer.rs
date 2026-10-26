@@ -244,6 +244,15 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = end;
                 continue;
             }
+            '0'..='9' if numeric_date_at(&chars, i).is_some() => {
+                let (v, next) = numeric_date_at(&chars, i).expect("checked by the guard");
+                out.push(Token {
+                    tok: Tok::Value(v),
+                    at,
+                });
+                i = next;
+                continue;
+            }
             // Text shaped like a date that is not one (`2019-02-30`) is plain arithmetic, as in the owner's
             // the reference app, where it is `2019 - 02 - 30`.
             '0'..='9' if iso_shape_at(&chars, i) && iso_at(&chars, i).is_some() => {
@@ -726,6 +735,59 @@ fn iso_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
         .map(|days| (Value::date_at(days, pos - i > 10), pos))
 }
 
+/// A date written with a two-digit month and day and a four-digit year, joined by `/` or `-`: `04-05-2020`,
+/// `4/5/2020`. The order is month first unless the day-first setting says otherwise. A date that does not exist
+/// (`13/13/2020`) is left to be arithmetic.
+fn numeric_date_at(chars: &[(usize, char)], i: usize) -> Option<(Value, usize)> {
+    use crate::calendar::{self, Civil};
+    let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
+    if i > 0 && c(i - 1).is_some_and(|p| p.is_alphanumeric() || matches!(p, '.' | '-' | '/' | ':'))
+    {
+        return None;
+    }
+    let run = |from: usize| {
+        (from..)
+            .take_while(|k| c(*k).is_some_and(|d| d.is_ascii_digit()))
+            .count()
+    };
+    let first = run(i);
+    let sep = c(i + first).filter(|s| matches!(s, '/' | '-'))?;
+    let second = run(i + first + 1);
+    if !(1..=2).contains(&first)
+        || !(1..=2).contains(&second)
+        || c(i + first + 1 + second) != Some(sep)
+    {
+        return None;
+    }
+    let year_at = i + first + second + 2;
+    if run(year_at) != 4 || c(year_at + 4).is_some_and(|d| d.is_alphanumeric() || d == '.') {
+        return None;
+    }
+    let number = |from: usize, len: usize| -> Option<i64> {
+        (from..from + len).try_fold(0, |acc, k| {
+            c(k).and_then(|d| d.to_digit(10))
+                .map(|d| acc * 10 + i64::from(d))
+        })
+    };
+    let (a, b) = (number(i, first)?, number(i + first + 1, second)?);
+    let (month, day) = if crate::settings::day_first() {
+        (b, a)
+    } else {
+        (a, b)
+    };
+    let civil = Civil {
+        year: number(year_at, 4)?,
+        month: u32::try_from(month).ok()?,
+        day: u32::try_from(day).ok()?,
+    };
+    calendar::is_valid(civil).then(|| {
+        (
+            Value::date(Number::from_i64(calendar::days_from_civil(civil))),
+            year_at + 4,
+        )
+    })
+}
+
 /// The exponent written straight after `in` (`in²`, `in³`, `in^2`, `in^3`, `in2`, `in3`) and where it ends.
 fn inch_power(chars: &[(usize, char)], at: usize) -> Option<(i8, usize)> {
     let c = |k: usize| chars.get(k).map(|(_, ch)| *ch);
@@ -1021,7 +1083,13 @@ fn scan_unit(chars: &[(usize, char)], start: usize) -> Option<(UnitExpr, usize)>
     } else {
         None
     };
-    for end in second.into_iter().chain([first]) {
+    // A third word, for names like `imperial fluid ounces`.
+    let third = second.filter(|&e| {
+        matches!(chars.get(e).map(|(_, c)| *c), Some(' ' | '-'))
+            && chars.get(e + 1).is_some_and(|(_, c)| c.is_alphabetic())
+    });
+    let third = third.map(|e| word_end(chars, e + 1));
+    for end in third.into_iter().chain(second).chain([first]) {
         let name: String = chars[start..end].iter().map(|(_, c)| *c).collect();
         if let Some(unit) = lookup(&name) {
             return Some(with_exponent_suffix(chars, end, unit));
@@ -1204,6 +1272,7 @@ fn scan_number(
         let ends = |x: Option<char>| !x.is_some_and(char::is_alphanumeric);
         match c {
             'k' | 'K' if currency || c == 'k' => ends(next).then_some((3, 1)),
+            'M' | 'm' if currency && next == Some('n') && ends(after_next) => Some((6, 2)),
             'M' => ends(next).then_some((6, 1)),
             'm' if currency => ends(next).then_some((6, 1)),
             'G' if !currency => ends(next).then_some((9, 1)),

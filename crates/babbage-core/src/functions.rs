@@ -48,6 +48,7 @@ pub enum Func {
     Cbrt,
     /// `root 5 of 100`: the degree, then the value.
     Root,
+    IsPrime,
     Ln,
     Log2,
     Log10,
@@ -140,6 +141,7 @@ impl Func {
             | Func::Floor
             | Func::Ceil
             | Func::Half
+            | Func::IsPrime
             | Func::AsNumber => Arity::Exactly(1),
             Func::Min
             | Func::Max
@@ -247,6 +249,28 @@ pub fn lookup(name: &str) -> Option<Func> {
         .map(|(_, f)| *f)
 }
 
+/// Trial division, which is exact and quick up to the limit (a million steps at most).
+fn is_prime(n: &BigInt) -> Result<bool, Error> {
+    const LIMIT: u64 = 1_000_000_000_000;
+    if n < &BigInt::from(2) {
+        return Ok(false);
+    }
+    let n = n
+        .to_u64()
+        .filter(|n| *n <= LIMIT)
+        .ok_or(Error::UnsupportedOperation(
+            "a number this large is not tested for being prime",
+        ))?;
+    let mut d = 2;
+    while d * d <= n {
+        if n % d == 0 {
+            return Ok(false);
+        }
+        d += if d == 2 { 1 } else { 2 };
+    }
+    Ok(true)
+}
+
 fn plain_integer(v: &Value) -> Result<BigInt, Error> {
     if v.kind() != Kind::Plain || !v.unit().is_empty() || !v.number().is_integer() {
         return Err(Error::UnsupportedOperation(
@@ -332,6 +356,7 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
                 call(Func::Average, &sorted[mid - 1..=mid])
             }
         }
+        Func::IsPrime => is_prime(&plain_integer(&args[0])?).map(Value::boolean),
         Func::Gcd | Func::Lcm => {
             let mut acc = plain_integer(&args[0])?.abs();
             for v in &args[1..] {
@@ -401,6 +426,10 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
             Value::binary(BinOp::Div, &sum, &Value::plain(Number::from_i64(2)))
         }
         Func::Random => random_between(&args[0], &args[1]),
+        // A time of day is a count of seconds inside; as a decimal it is hours: `10:15 to decimal` is 10.25.
+        Func::AsNumber if args[0].kind() == Kind::Clock => {
+            Ok(Value::plain(args[0].number().div(&Number::from_i64(3600))?))
+        }
         Func::AsNumber => Ok(Value::plain(args[0].number().clone())),
         Func::Hex => args[0].clone().in_radix(16),
         Func::Bin => args[0].clone().in_radix(2),

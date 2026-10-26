@@ -553,6 +553,24 @@ hp	hp
 hr	h
 hrs	h
 hz	Hz
+imp fl oz	imp fl oz
+imp floz	imp fl oz
+imp gal	imp gal
+imp gallon	imp gal
+imp pint	imp pt
+imp pints	imp pt
+imp pt	imp pt
+imp qt	imp qt
+imp quart	imp qt
+imperial fl oz	imp fl oz
+imperial fluid ounce	imp fl oz
+imperial fluid ounces	imp fl oz
+imperial gallon	imp gal
+imperial gallons	imp gal
+imperial pint	imp pt
+imperial pints	imp pt
+imperial quart	imp qt
+imperial quarts	imp qt
 inch	in
 inches	in
 joule	J
@@ -1028,6 +1046,14 @@ uWb	µWb
 ufarad	µfarad
 ug	µg
 uhenry	µhenry
+uk fluid ounce	imp fl oz
+uk fluid ounces	imp fl oz
+uk gallon	imp gal
+uk gallons	imp gal
+uk pint	imp pt
+uk pints	imp pt
+uk quart	imp qt
+uk quarts	imp qt
 um	µm
 umol	µmol
 uohm	µohm

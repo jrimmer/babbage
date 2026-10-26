@@ -281,6 +281,23 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                     continue;
                 }
                 // A weekday on its own is the next one after today: on a Monday, `Monday` is a week away.
+                // `Tuesday next week`, `Friday last week`, `Monday this week`: that day of the week, with the
+                // week starting on Monday.
+                name if WEEKDAYS.iter().any(|d| d.eq_ignore_ascii_case(name))
+                    && matches!(toks.get(i + 2).map(|t| &t.tok), Some(Tok::Unit(u))
+                        if crate::units::lookup("week").is_some_and(|k| &k == u))
+                    && let Some(shift) = word_of(toks.get(i + 1))
+                        .and_then(|w| ["last", "this", "next"].iter().position(|s| *s == w)) =>
+                {
+                    let target = i64::from(weekday_index(name).expect("a full weekday name"));
+                    let monday = today - i64::from(calendar::weekday(today));
+                    push(
+                        &mut out,
+                        date_value(monday + target + 7 * (shift as i64 - 1)),
+                    );
+                    i += 3;
+                    continue;
+                }
                 name if WEEKDAYS.iter().any(|d| d.eq_ignore_ascii_case(name)) => {
                     let target = weekday_index(name).expect("a full weekday name");
                     let current = i64::from(calendar::weekday(today));
