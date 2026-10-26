@@ -18,7 +18,18 @@ fn main() {
         ..SheetOptions::default()
     };
     scoped(&s, || {
-        for (l, r) in lines.iter().zip(evaluate_sheet(&refs, &opts)) {
+        let results = evaluate_sheet(&refs, &opts);
+        if std::env::var("PROBE_TOTAL").is_ok() {
+            let total = babbage_core::sheet::floating_total(&results, &opts);
+            let text = match total {
+                Some(Ok(v)) => format_value(&v, &FormatOptions::default()).text,
+                Some(Err(e)) => format!("ERROR {e}"),
+                None => "(none)".into(),
+            };
+            println!("TOTAL => {text}");
+            return;
+        }
+        for (l, r) in lines.iter().zip(results) {
             let t = match &r.kind {
                 LineKind::Value(v) => {
                     format_value(v, &r.display_options(&FormatOptions::default())).text
