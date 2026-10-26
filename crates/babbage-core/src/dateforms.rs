@@ -270,6 +270,16 @@ fn relative(toks: &[Token]) -> Option<Result<Expr, Error>> {
             return None;
         };
         let date = date.clone();
+        // `weeks after March 14` has no count: a lone unit is refused here, not read as one of them.
+        if matches!(
+            toks[..n - 2],
+            [Token {
+                tok: Tok::Unit(_),
+                ..
+            }]
+        ) {
+            return None;
+        }
         return Some(rpn_of(&toks[..n - 2]).map(|l| {
             let mut x = vec![Node::Value(date)];
             x.extend(l);

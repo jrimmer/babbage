@@ -756,12 +756,21 @@ fn drop_unknown(
                 }
             }
             _ => {
-                let end = text[t.at..]
-                    .chars()
-                    .next()
-                    .map_or(t.at, |c| t.at + c.len_utf8());
+                // The token runs up to the next one that starts later (or the end of the line), less spaces.
+                let next = toks
+                    .iter()
+                    .map(|n| n.at)
+                    .filter(|at| *at > t.at)
+                    .min()
+                    .unwrap_or(text.len());
+                let shown = text[t.at..next].trim_end();
+                let shown = if shown.is_empty() {
+                    &text[t.at..t.at + text[t.at..].chars().next().map_or(0, char::len_utf8)]
+                } else {
+                    shown
+                };
                 ignored.push(Ignored {
-                    text: text[t.at..end].to_string(),
+                    text: shown.to_string(),
                     at: t.at,
                 });
             }

@@ -760,3 +760,49 @@ fn a_stray_number_after_a_time_and_stray_characters_after_a_timecode_are_named_e
         assert_eq!(answer(line), want, "{line}");
     }
 }
+
+#[test]
+fn a_dropped_remark_is_reported_over_its_whole_width() {
+    let s = Settings::at(1_718_452_800);
+    let opts = SheetOptions {
+        settings: s.clone(),
+        ..SheetOptions::default()
+    };
+    let r = scoped(&s, || {
+        evaluate_sheet(
+            &["$999 (for iPhone 16)", "5 + 5 (a 100% sure thing)"],
+            &opts,
+        )
+    });
+    let texts = |i: usize| {
+        r[i].ignored
+            .iter()
+            .map(|g| (g.text.as_str(), g.at))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        texts(0),
+        [("(", 5), ("for", 6), ("iPhone", 10), ("16", 17), (")", 19)]
+    );
+    assert_eq!(texts(1)[0], ("(", 6));
+    assert!(texts(1).contains(&("100", 9)));
+    assert!(texts(1).contains(&("%", 12)));
+}
+
+#[test]
+fn a_unit_with_no_count_is_not_one_of_them_before_after_or_before() {
+    for line in [
+        "weeks after March 14",
+        "weeks before March 14",
+        "week after March 14",
+    ] {
+        assert!(
+            answer(line).starts_with("ERROR"),
+            "{line}: {}",
+            answer(line)
+        );
+    }
+    assert_eq!(answer("1 week after March 14"), "March 21");
+    assert_eq!(answer("2 weeks after March 14"), "March 28");
+    assert_eq!(answer("2 weeks before March 14"), "February 29");
+}
