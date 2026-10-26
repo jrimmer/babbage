@@ -75,7 +75,13 @@ fn the_volume_system_changes_gallons_quarts_pints_and_fluid_ounces() {
         ("1 gal in pint", "8 pint", "8 pint"),
         ("1 gal in qt", "4 qt", "4 qt"),
         ("1 cup in mL", "236.5882365 mL", "236.5882365 mL"),
-        ("1 tbsp in mL", "14.7867647813 mL", "14.7867647813 mL"),
+        ("1 tbsp in mL", "14.7867647813 mL", "17.7581640625 mL"),
+        ("1 tsp in mL", "4.9289215938 mL", "5.9193880208 mL"),
+        ("1 tbsp in tsp", "3 tsp", "3 tsp"),
+        ("1 fl oz in tbsp", "2 tbsp", "1.6 tbsp"),
+        ("8 tbsp in fl oz", "4 floz", "5 floz"),
+        ("24 tsp in fl oz", "4 floz", "5 floz"),
+        ("1 gal in tbsp", "256 tbsp", "256 tbsp"),
     ] {
         assert_eq!(run(&us, line).as_deref(), Ok(us_want), "US: {line}");
         assert_eq!(run(&uk, line).as_deref(), Ok(uk_want), "imperial: {line}");

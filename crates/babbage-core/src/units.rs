@@ -724,17 +724,22 @@ fn factor_now(def: &UnitDef) -> Number {
     use crate::settings::VolumeSystem;
     match def.symbol {
         "workday" => Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600),
-        "gal" | "qt" | "pint" | "floz"
+        "gal" | "qt" | "pint" | "floz" | "tbsp" | "tsp"
             if crate::settings::volume_system() == VolumeSystem::Imperial =>
         {
-            let divisor = match def.symbol {
-                "gal" => 1,
-                "qt" => 4,
-                "pint" => 8,
-                _ => 160,
+            // The imperial fluid ounce is a hundred and sixtieth of the gallon; the tablespoon is five
+            // eighths of it and the teaspoon a third of the tablespoon. The cup stays US customary.
+            let (numerator, divisor) = match def.symbol {
+                "gal" => (1, 1),
+                "qt" => (1, 4),
+                "pint" => (1, 8),
+                "floz" => (1, 160),
+                "tbsp" => (5, 160 * 8),
+                _ => (5, 160 * 8 * 3),
             };
             Number::from_decimal_str("0.00454609")
-                .and_then(|gallon| gallon.div(&Number::from_i64(divisor)))
+                .and_then(|gallon| gallon.mul(&Number::from_i64(numerator)))
+                .and_then(|n| n.div(&Number::from_i64(divisor)))
                 .expect("the imperial gallon is a plain decimal")
         }
         _ => def.factor.clone(),

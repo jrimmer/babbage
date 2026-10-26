@@ -15,7 +15,7 @@ pub struct Tax {
     pub rate: Number,
 }
 
-/// Which gallons, quarts, pints and fluid ounces are meant. The cup, tablespoon and teaspoon stay US customary.
+/// Which gallons, quarts, pints, fluid ounces, tablespoons and teaspoons are meant. The cup stays US customary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum VolumeSystem {
     #[default]
