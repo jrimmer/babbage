@@ -454,7 +454,6 @@ fn whole(v: &Value) -> Result<i64, Error> {
     plain_integer(v)?.to_i64().ok_or(Error::Overflow)
 }
 
-/// `30 hours at $30/hour` multiplies, `$500 at $20/hour` divides: which one the units of the rate decide.
 /// `a is b, what is c`: the number that stands to c as a stands to b.
 fn proportion(a: &Value, b: &Value, c: &Value) -> Result<Value, Error> {
     let bare = |v: &Value| matches!(v.kind(), Kind::Plain | Kind::Percent) && v.unit().is_empty();
@@ -532,6 +531,7 @@ fn at_density(value: &Value, density: &Value, target: &Value) -> Result<Value, E
     ))
 }
 
+/// `30 hours at $30/hour` multiplies, `$500 at $20/hour` divides: which one the units of the rate decide.
 fn at_rate(amount: &Value, rate: &Value) -> Result<Value, Error> {
     let (per, of) = (rate.unit().denominator(), rate.unit().numerator());
     if per.is_empty() || of.is_empty() {
