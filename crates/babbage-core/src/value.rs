@@ -57,6 +57,10 @@ pub enum Shown {
     Digits,
     /// `01:02:03:04` at this many whole frames per second.
     Timecode(Number),
+    /// `1/5`: the exact numerator and denominator, as `as fraction` shows a number.
+    Fraction,
+    /// `1/20` for `5% is 1 in what`: this top number over the top number divided by the value.
+    Ratio(Number),
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -183,6 +187,15 @@ impl Value {
         }
     }
 
+    /// This number as `top/(top / this)`, for `5% is 1 in what`.
+    pub fn as_ratio_of(self, top: Number) -> Value {
+        Value {
+            kind: Kind::Plain,
+            layout: Some(Shown::Ratio(top)),
+            ..self
+        }
+    }
+
     /// A whole number shown with every digit, like a Unix timestamp.
     pub fn written_in_full(mut self) -> Value {
         self.layout = Some(Shown::Digits);
@@ -195,6 +208,18 @@ impl Value {
 
     /// Chooses how a quantity is written, refusing a layout its dimension cannot have.
     pub fn show(self, shown: Shown) -> Result<Value, Error> {
+        if shown == Shown::Fraction {
+            return match (self.kind, self.unit.is_empty()) {
+                (Kind::Plain | Kind::Percent, true) => Ok(Value {
+                    kind: Kind::Plain,
+                    layout: Some(shown),
+                    ..self
+                }),
+                _ => Err(Error::UnsupportedOperation(
+                    "a fraction needs a plain number or a percentage",
+                )),
+            };
+        }
         if self.kind != Kind::Plain || self.unit.is_empty() {
             return Err(Error::IncompatibleUnits);
         }
@@ -1043,6 +1068,35 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
         Kind::Plain if v.layout == Some(Shown::Digits) => {
             format_decimal(&v.number, &opts.every_digit())
         }
+        Kind::Plain if v.layout == Some(Shown::Fraction) => {
+            let whole = |n: &num_bigint::BigInt| {
+                Number::from_ratio(n.clone(), num_bigint::BigInt::from(1))
+                    .map(|n| format_decimal(&n, &opts.unabbreviated()).text)
+                    .unwrap_or_else(|_| n.to_string())
+            };
+            Formatted {
+                text: if v.number.is_integer() {
+                    whole(v.number.numer())
+                } else {
+                    format!("{}/{}", whole(v.number.numer()), whole(v.number.denom()))
+                },
+                exact: true,
+            }
+        }
+        Kind::Plain if matches!(v.layout, Some(Shown::Ratio(_))) => {
+            let Some(Shown::Ratio(top)) = &v.layout else {
+                unreachable!("matched by the guard")
+            };
+            let below = top.div(&v.number).unwrap_or_else(|_| top.clone());
+            let (a, b) = (
+                format_decimal(top, &opts.unabbreviated()),
+                format_decimal(&below, &opts.unabbreviated()),
+            );
+            Formatted {
+                text: format!("{}/{}", a.text, b.text),
+                exact: a.exact && b.exact,
+            }
+        }
         Kind::Plain if v.layout.is_some() && !v.unit.is_empty() => format_layout(v, opts),
         Kind::Plain => {
             if let Some(f) = format_money(v, opts) {
@@ -1184,7 +1238,9 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
             let (text, exact) = crate::dates::format_timecode(&base, rate);
             Formatted { text, exact }
         }
-        Shown::Digits => unreachable!("written out before this is called"),
+        Shown::Digits | Shown::Fraction | Shown::Ratio(_) => {
+            unreachable!("written out before this is called")
+        }
     }
 }
 

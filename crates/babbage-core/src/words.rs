@@ -170,6 +170,10 @@ pub fn is_form_word(word: &str) -> bool {
 pub fn parse_words(toks: &[Token]) -> Option<Result<Expr, Error>> {
     list_form(toks)
         .or_else(|| crate::dateforms::parse_date_forms(toks))
+        .or_else(|| unit_in_quantity(toks))
+        .or_else(|| proportion_what(toks))
+        .or_else(|| in_what(toks))
+        .or_else(|| at_density(toks))
         .or_else(|| root_and_log(toks))
         .or_else(|| finance_forms(toks))
         .or_else(|| multiplier_forms(toks))
@@ -771,4 +775,112 @@ fn rate_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
         return None;
     }
     Some(call(&[&toks[start..at], &toks[at + 1..]], Func::AtRate))
+}
+
+fn is_unit_run(toks: &[Token]) -> bool {
+    !toks.is_empty()
+        && matches!(toks[0].tok, Tok::Unit(_))
+        && toks
+            .iter()
+            .all(|t| matches!(t.tok, Tok::Unit(_) | Tok::Star | Tok::Slash))
+}
+
+/// `meters in 10 km`, `days in 3 weeks`, `seconds in a day`: how many of the unit on the left the quantity on
+/// the right holds.
+fn unit_in_quantity(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let at = depth_zero_word(toks, "in")?;
+    let (left, rest) = (&toks[..at], &toks[at + 1..]);
+    if !is_unit_run(left) || rest.is_empty() {
+        return None;
+    }
+    let target = crate::phrase::parse_unit_run(left).ok()?;
+    fn one_of(run: &[Token]) -> Option<&[Token]> {
+        let a_or_one =
+            is_word(run.first(), "a") || is_word(run.first(), "an") || is_word(run.first(), "one");
+        (a_or_one && is_unit_run(&run[1..])).then(|| &run[1..])
+    }
+    let rpn = match one_of(rest) {
+        Some(unit) => {
+            crate::phrase::parse_unit_run(unit).map(|u| vec![number_node(1), Node::Unit(u)])
+        }
+        None => parse(rest).map(|e| e.nodes().to_vec()),
+    };
+    Some(rpn.map(|mut rpn| {
+        rpn.push(Node::Convert(target));
+        Expr::from_nodes(rpn)
+    }))
+}
+
+/// `20% is 500, what is 750` and `if 20 is 30%, what is 60%`: a stands to b as the answer stands to c.
+fn proportion_what(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let start = usize::from(is_word(toks.first(), "if"));
+    let toks = &toks[start..];
+    let first = depth_zero_word(toks, "is")?;
+    let what = depth_zero_word(toks, "what")?;
+    // `a is to b as what is to c` is the other proportion form.
+    let ratio_form = is_word(toks.get(first + 1), "to") || is_word(toks.get(what + 2), "to");
+    if ratio_form
+        || what <= first + 1
+        || !is_word(toks.get(what + 1), "is")
+        || toks.len() <= what + 2
+    {
+        return None;
+    }
+    let a = &toks[..first];
+    let mut b = &toks[first + 1..what];
+    if matches!(b.last().map(|t| &t.tok), Some(Tok::Comma)) {
+        b = &b[..b.len() - 1];
+    }
+    let c = &toks[what + 2..];
+    if a.is_empty() || b.is_empty() {
+        return None;
+    }
+    Some(call(&[a, b, c], Func::Proportion))
+}
+
+/// `5% is 1 in what`: one in twenty.
+fn in_what(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    if n < 5 || !is_word(toks.last(), "what") || !is_word(toks.get(n - 2), "in") {
+        return None;
+    }
+    let first = depth_zero_word(toks, "is")?;
+    if first == 0 || first + 1 >= n - 2 {
+        return None;
+    }
+    Some(call(
+        &[&toks[..first], &toks[first + 1..n - 2]],
+        Func::InWhat,
+    ))
+}
+
+/// `1 cm in px at 326 ppi`: pixels need a density.
+fn at_density(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    let n = toks.len();
+    if n < 6 || !(is_word(toks.last(), "ppi") || is_word(toks.last(), "dpi")) {
+        return None;
+    }
+    let Tok::Num(density) = &toks[n - 2].tok else {
+        return None;
+    };
+    if !is_word(toks.get(n - 3), "at") {
+        return None;
+    }
+    let head = &toks[..n - 3];
+    let in_at = (0..head.len()).rev().find(|k| {
+        is_word(head.get(*k), "in") || is_word(head.get(*k), "to") || is_word(head.get(*k), "as")
+    })?;
+    let (value, target) = (&head[..in_at], &head[in_at + 1..]);
+    if value.is_empty() || !is_unit_run(target) {
+        return None;
+    }
+    let unit = crate::phrase::parse_unit_run(target).ok()?;
+    Some(parse(value).map(|e| {
+        let mut rpn = e.nodes().to_vec();
+        rpn.push(Node::Num(density.clone()));
+        rpn.push(number_node(1));
+        rpn.push(Node::Unit(unit));
+        rpn.push(Node::Call(Func::AtDensity, 3));
+        Expr::from_nodes(rpn)
+    }))
 }

@@ -5,8 +5,9 @@
 
 use std::sync::OnceLock;
 
+use babbage_core::Number;
 use babbage_core::NumberFormat;
-use babbage_core::settings::{Settings, VolumeSystem};
+use babbage_core::settings::{Settings, Tax, VolumeSystem};
 use babbage_core::zones::{Zone, ZoneSource};
 
 /// The settings for this run, read once.
@@ -78,6 +79,7 @@ pub fn from_parts(
                 }
             }
             "timezone" if value != "system" => zone_from_file = Some(value.to_string()),
+            "tax" => settings.tax = parse_tax(value),
             "tz_source" => {
                 if value == "bundled" {
                     settings.zone_source = ZoneSource::Bundled;
@@ -108,6 +110,23 @@ pub fn from_parts(
     });
     settings.now_utc_seconds = now_override.and_then(|n| n.trim().parse().ok());
     settings
+}
+
+/// `VAT 15%` or `GST 10`: the name a line can use and its rate. A name that is a number, a unit or has no rate
+/// is refused, so a typo cannot make `5` or `km` mean a tax.
+fn parse_tax(value: &str) -> Option<Tax> {
+    let (name, rate) = value.rsplit_once(char::is_whitespace)?;
+    let (name, rate) = (name.trim(), rate.trim().trim_end_matches('%').trim());
+    let letters = !name.is_empty() && name.chars().all(char::is_alphabetic);
+    let percent = Number::from_decimal_str(rate).ok()?;
+    let in_range = !percent.is_negative() && percent <= Number::from_i64(100);
+    if !(letters && in_range) {
+        return None;
+    }
+    Some(Tax {
+        name: name.to_string(),
+        rate: percent.div(&Number::from_i64(100)).ok()?,
+    })
 }
 
 /// The zone named by `TZ`, or the one `/etc/localtime` points into, or None (UTC).
@@ -237,6 +256,31 @@ mod tests {
         let s = parts("dollar = EUR\nvolume_system = metric\n", None, None, None);
         assert_eq!(s.dollar, None);
         assert_eq!(s.volume_system, VolumeSystem::UsCustomary);
+    }
+
+    #[test]
+    fn a_tax_is_a_name_and_a_rate() {
+        let tax = |text: &str| parts(text, None, None, None).tax.map(|t| (t.name, t.rate));
+        let rate = |d: &str| Number::from_decimal_str(d).unwrap();
+        assert_eq!(tax("tax = VAT 15%\n"), Some(("VAT".into(), rate("0.15"))));
+        assert_eq!(tax("tax = GST 10\n"), Some(("GST".into(), rate("0.1"))));
+        assert_eq!(
+            tax("tax = Sales Tax 8.25%\n"),
+            Some(("Sales Tax".into(), rate("0.0825")))
+        );
+        assert_eq!(tax("tax = VAT 0%\n"), Some(("VAT".into(), rate("0"))));
+        for bad in [
+            "tax = VAT\n",
+            "tax = 15%\n",
+            "tax = VAT fifteen\n",
+            "tax = VAT 150%\n",
+            "tax = VAT -5%\n",
+            "tax = V4T 15%\n",
+            "tax =\n",
+            "tax = VAT 15% 20%\n",
+        ] {
+            assert_eq!(tax(bad), None, "{bad:?}");
+        }
     }
 
     #[test]

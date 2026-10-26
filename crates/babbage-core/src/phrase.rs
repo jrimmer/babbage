@@ -79,6 +79,9 @@ fn parse_shown(run: &[Token]) -> Option<Shown> {
         if w.eq_ignore_ascii_case("laptime") {
             return Some(Shown::Laptime);
         }
+        if w.eq_ignore_ascii_case("fraction") {
+            return Some(Shown::Fraction);
+        }
     }
     let joined = |t: &Token| matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("and"));
     let parts: Vec<&[Token]> = run.split(joined).collect();

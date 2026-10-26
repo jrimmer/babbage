@@ -692,7 +692,8 @@ fn drop_unknown(
     ignored: &mut Vec<Ignored>,
     warnings: &mut Vec<Warning>,
 ) -> Result<Vec<Token>, Error> {
-    let unknown = |t: &Token| matches!(&t.tok, Tok::Word(w) if !phrase::is_vocabulary_word(w) && !phrase::is_infix_word(w));
+    // A function name is never prose: dropping `sqrt` from `sqrt(16)` would answer 16.
+    let unknown = |t: &Token| matches!(&t.tok, Tok::Word(w) if !phrase::is_vocabulary_word(w) && !phrase::is_infix_word(w) && crate::functions::lookup(w).is_none());
     let mut drop = vec![false; toks.len()];
 
     // A parenthesised group holding a word is a remark: `$999 (for iPhone 16)`.
@@ -711,7 +712,11 @@ fn drop_unknown(
         }
     }
     for (i, t) in toks.iter().enumerate() {
-        if unknown(t) {
+        // `as timespan` and `in laptime` name a layout, not a stray word.
+        let layout_word = matches!(&t.tok, Tok::Word(w) if w.eq_ignore_ascii_case("timespan") || w.eq_ignore_ascii_case("laptime") || w.eq_ignore_ascii_case("fraction"))
+            && i > 0
+            && matches!(&toks[i - 1].tok, Tok::Word(p) if ["as", "in", "to", "into"].iter().any(|k| p.eq_ignore_ascii_case(k)));
+        if unknown(t) && !layout_word {
             drop[i] = true;
         }
     }

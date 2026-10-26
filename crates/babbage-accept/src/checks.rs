@@ -23,6 +23,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("quit-saves", quit_saves),
     ("local-time", local_time),
     ("tz-database", tz_database),
+    ("sales-tax", sales_tax),
+    ("sheet-functions", sheet_functions),
     ("number-format", number_format),
     ("no-real-desktop", no_real_desktop),
 ];
@@ -266,6 +268,52 @@ fn tz_database(h: &mut Harness) -> anyhow::Result<()> {
         s["tzdb"]
     );
     app.finish()
+}
+
+fn sales_tax(h: &mut Harness) -> anyhow::Result<()> {
+    let config = h.logs.join("vat.settings");
+    std::fs::write(&config, "tax = VAT 15%\n")?;
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch("tax", None, &[("BABBAGE_CONFIG_FILE", &config)])?;
+    answers_for(
+        h,
+        &mut app,
+        &[
+            ("$300 + VAT", "$345.00"),
+            ("VAT on $300", "$45.00"),
+            ("$300 - VAT", "$260.87"),
+            ("VAT in $300", "$39.13"),
+        ],
+    )?;
+    app.finish()?;
+    // With no tax set, the same line is an error and not a guess.
+    let mut app = h.launch("no-tax", None, &[])?;
+    h.type_text("$300 + VAT")?;
+    app.wait_for("an error for VAT", T, |s| {
+        s["lines"][0]["error"].is_string()
+    })?;
+    app.finish()
+}
+
+/// Function calls and layouts must reach the engine: in a sheet, unknown words are dropped, and a function
+/// name once went with them (`sqrt(16)` answered 16).
+fn sheet_functions(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("functions", None, &[])?;
+    let s = answers_for(
+        h,
+        &mut app,
+        &[
+            ("sqrt(16)", "4"),
+            ("cbrt(343)", "7"),
+            ("max(3, 9, 4)", "9"),
+            ("round(2.567)", "3"),
+            ("2.567 to 1 dp", "2.6"),
+            ("5.5 minutes as timespan", "5 minutes 30 seconds"),
+            ("5.5 minutes as laptime", "00:05:30"),
+        ],
+    );
+    app.finish()?;
+    s.map(|_| ())
 }
 
 fn number_format(h: &mut Harness) -> anyhow::Result<()> {

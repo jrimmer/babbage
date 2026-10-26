@@ -11,6 +11,7 @@ use crate::error::Error;
 use crate::finance;
 use crate::number::Number;
 use crate::parser::BinOp;
+use crate::units;
 use crate::value::{Kind, Value};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -95,6 +96,12 @@ pub enum Func {
     GrowthRate,
     /// `30 hours at $30/hour` and `$500 at $20/hour`: multiplies or divides, by the units.
     AtRate,
+    /// `20% is 500, what is 750`: (a, b, c) gives a x c / b, in the kind of a.
+    Proportion,
+    /// `5% is 1 in what`: (share, top) shows as `top/(top / share)`.
+    InWhat,
+    /// `1 cm in px at 326 ppi`: (value, pixels per inch, 1 of the target unit).
+    AtDensity,
     Date(crate::datefns::DateFn),
 }
 
@@ -141,7 +148,8 @@ impl Func {
             Func::Root | Func::LogBase | Func::ToBase | Func::ReturnMultiple | Func::AtRate => {
                 Arity::Exactly(2)
             }
-            Func::AnnualReturn => Arity::Exactly(3),
+            Func::AnnualReturn | Func::Proportion | Func::AtDensity => Arity::Exactly(3),
+            Func::InWhat => Arity::Exactly(2),
             Func::Date(f) => Arity::Exactly(f.arity()),
             Func::Compound
             | Func::InterestOn
@@ -401,6 +409,9 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::TimeByGrowth => finance::time_by_growth(&args[0], &args[1], &args[2], &args[3]),
         Func::GrowthRate => finance::growth_rate(&args[0], &args[1], &args[2], &args[3]),
         Func::AtRate => at_rate(&args[0], &args[1]),
+        Func::Proportion => proportion(&args[0], &args[1], &args[2]),
+        Func::InWhat => in_what(&args[0], &args[1]),
+        Func::AtDensity => at_density(&args[0], &args[1], &args[2]),
         Func::Date(f) => crate::datefns::call(f, args),
         Func::Root => {
             let k = plain_integer(&args[0])?;
@@ -444,6 +455,83 @@ fn whole(v: &Value) -> Result<i64, Error> {
 }
 
 /// `30 hours at $30/hour` multiplies, `$500 at $20/hour` divides: which one the units of the rate decide.
+/// `a is b, what is c`: the number that stands to c as a stands to b.
+fn proportion(a: &Value, b: &Value, c: &Value) -> Result<Value, Error> {
+    let bare = |v: &Value| matches!(v.kind(), Kind::Plain | Kind::Percent) && v.unit().is_empty();
+    if bare(a) && bare(b) && bare(c) {
+        let n = a.number().mul(c.number())?.div(b.number())?;
+        let v = if a.kind() == Kind::Percent {
+            Value::percent(n)
+        } else {
+            Value::plain(n)
+        };
+        return Ok(
+            if a.is_approximate() || b.is_approximate() || c.is_approximate() {
+                v.approximate()
+            } else {
+                v
+            },
+        );
+    }
+    let times = Value::binary(BinOp::Mul, a, c)?;
+    Value::binary(BinOp::Div, &times, b)
+}
+
+/// `5% is 1 in what`: one in twenty.
+fn in_what(share: &Value, top: &Value) -> Result<Value, Error> {
+    let bare = |v: &Value| matches!(v.kind(), Kind::Plain | Kind::Percent) && v.unit().is_empty();
+    if !bare(share) || !bare(top) {
+        return Err(Error::UnsupportedOperation(
+            "this needs plain numbers or a percentage",
+        ));
+    }
+    if share.number().is_zero() {
+        return Err(Error::DivisionByZero);
+    }
+    if top.number().is_zero() {
+        return Err(Error::OutOfDomain);
+    }
+    Ok(Value::plain(share.number().clone()).as_ratio_of(top.number().clone()))
+}
+
+/// Pixels depend on how many fit in an inch: `1 cm in px at 326 ppi` and `326 px in cm at 326 ppi`.
+fn at_density(value: &Value, density: &Value, target: &Value) -> Result<Value, Error> {
+    let (px, inch) = (
+        units::lookup("px").expect("px is defined"),
+        units::lookup("inch").expect("inch is defined"),
+    );
+    if density.kind() != Kind::Plain
+        || !density.unit().is_empty()
+        || !density.number().is_positive()
+    {
+        return Err(Error::UnsupportedOperation(
+            "pixels per inch must be a number above zero",
+        ));
+    }
+    let to = target.unit();
+    if value.kind() != Kind::Plain || value.unit().is_empty() || value.unit().dim() != px.dim() {
+        return Err(Error::UnsupportedOperation(
+            "this needs a length or a number of pixels",
+        ));
+    }
+    if to.dim() != px.dim() {
+        return Err(Error::UnsupportedOperation(
+            "the answer must be a length or pixels",
+        ));
+    }
+    if value.unit() == &px && to != &px {
+        let inches = value.number().div(density.number())?;
+        return Value::quantity(inches, inch)?.convert(to);
+    }
+    if to == &px && value.unit() != &px {
+        let inches = value.clone().convert(&inch)?;
+        return Value::quantity(inches.number().mul(density.number())?, px);
+    }
+    Err(Error::UnsupportedOperation(
+        "this needs pixels on one side and a length on the other",
+    ))
+}
+
 fn at_rate(amount: &Value, rate: &Value) -> Result<Value, Error> {
     let (per, of) = (rate.unit().denominator(), rate.unit().numerator());
     if per.is_empty() || of.is_empty() {

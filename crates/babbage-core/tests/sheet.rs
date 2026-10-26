@@ -426,3 +426,50 @@ fn agrees_with_the_sheet_simulator_on_every_line_of_600_sheets() {
             .join("\n")
     );
 }
+
+#[test]
+fn a_function_name_is_never_dropped_as_prose() {
+    // In natural mode unknown words are dropped, and a function name once went with them: `sqrt(16)` was 16.
+    for (line, want) in [
+        ("sqrt(16)", "4"),
+        ("cbrt(343)", "7"),
+        ("max(3, 9, 4)", "9"),
+        ("min(3, 9, 4)", "3"),
+        ("abs(-5)", "5"),
+        ("round(2.567)", "3"),
+        ("floor(2.9)", "2"),
+        ("ceil(2.1)", "3"),
+        ("sin(30°)", "0.5"),
+        ("ln(1)", "0"),
+        ("sqrt 16", "4"),
+        ("3 + sqrt(16) + 1", "8"),
+        ("the total is sqrt(16) dollars", "4"),
+    ] {
+        let r = run(&[line]);
+        assert_eq!(shown(&r[0]), want, "{line}");
+        assert!(
+            r[0].ignored.iter().all(|i| ![
+                "sqrt", "cbrt", "max", "min", "abs", "round", "floor", "ceil", "sin", "ln"
+            ]
+            .contains(&i.text.as_str())),
+            "{line}: {:?}",
+            r[0].ignored
+        );
+    }
+}
+
+#[test]
+fn layout_words_are_not_dropped_as_prose() {
+    assert_eq!(
+        shown(&run(&["5.5 minutes as timespan"])[0]),
+        "5 minutes 30 seconds"
+    );
+    assert_eq!(shown(&run(&["5.5 minutes as laptime"])[0]), "00:05:30");
+    assert_eq!(
+        shown(&run(&["03:04:05 as timespan"])[0]),
+        "3 hours 4 minutes 5 seconds"
+    );
+    assert_eq!(shown(&run(&["5.5 minutes to laptime"])[0]), "00:05:30");
+    // `timespan` standing on its own is still just a word.
+    assert!(!run(&["my timespan is 5 + 5"])[0].ignored.is_empty());
+}
