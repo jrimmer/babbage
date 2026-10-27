@@ -3,10 +3,10 @@
 //! Every clickable thing has a fixed place (`toolbar_buttons`, and `settings_ui::item_rects`) so the acceptance checks can aim
 //! at it with a real pointer.
 
-use gpui::{AnyElement, Context, FontWeight, MouseButton, Window, div, prelude::*, px};
+use gpui::{AnyElement, Context, FontWeight, MouseButton, Window, div, prelude::*, px, relative};
 
 use crate::theme::Colors;
-use crate::view::SheetView;
+use crate::view::{SheetView, answer_min_w};
 
 pub const TOOLBAR_H: f32 = 48.;
 pub const TOOL_W: f32 = 34.;
@@ -207,7 +207,6 @@ impl SheetView {
 
     /// The strip above the sheet: empty over the text, the three buttons over the answers.
     pub fn toolbar(&self, c: Colors, cx: &mut Context<Self>) -> AnyElement {
-        let answer_w = self.layout.as_ref().map_or(300., |l| f32::from(l.answer_w));
         div()
             .h(px(TOOLBAR_H))
             .flex_none()
@@ -218,7 +217,10 @@ impl SheetView {
             .child(div().flex_1())
             .child(
                 div()
-                    .w(px(answer_w))
+                    // The same share of the pane as the answers column below (30%, at least its minimum), worked out
+                    // here so a resize never leaves the strip a width behind the column.
+                    .w(relative(0.3))
+                    .min_w(px(answer_min_w()))
                     .h_full()
                     .bg(c.answers)
                     .border_l_1()

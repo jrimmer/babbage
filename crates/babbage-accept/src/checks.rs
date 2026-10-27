@@ -43,6 +43,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("wrapping", wrapping),
     ("line-chips", line_chips),
     ("toolbar", toolbar),
+    ("toolbar-follows-resize", toolbar_follows_resize),
     ("settings-window", settings_window),
     ("settings-editing", settings_editing),
     ("settings-styling", settings_styling),
@@ -2559,6 +2560,38 @@ fn updates_install(h: &mut Harness) -> anyhow::Result<()> {
         "the restarted app did not quit"
     );
     result
+}
+
+/// The strip above the sheet shades the same share of the width as the answers column below it, also after the window
+/// changes size (it once kept the width of the earlier window, so its shading began too far left).
+fn toolbar_follows_resize(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("toolbar-resize", None, &[])?;
+    h.type_text("1 + 1")?;
+    let first = app.wait_for("the answer", T, |s| answer(s, 0) == Some("2"))?;
+    for (w, hgt) in [(900u32, 500u32), (1300, 600), (700, 450)] {
+        h.resize(&app, w, hgt)?;
+        h.hover(&app, w as f32 - 6., hgt as f32 - 6.)?;
+        settle();
+        // No request for the state in between: asking for it makes the app draw again, which hid the fault.
+        let shot = h.shot()?;
+        let scr = Screen::of(h, &app, &first)?;
+        let at = |x: f32, y: f32| {
+            scr.brightest(&shot, x, y, x + 2., y + 2.)
+                .unwrap_or([0, 0, 0])
+        };
+        // From the middle of the window to its right edge, a point in an empty part of the strip and one straight
+        // below it (the buttons sit lower than the strip's first few points).
+        let mut x = w as f32 * 0.5;
+        while x < w as f32 - 160. {
+            let (strip, below) = (at(x, 3.), at(x, hgt as f32 / 2.));
+            ensure!(
+                strip.iter().zip(below).all(|(a, b)| a.abs_diff(b) <= 3),
+                "at {w}x{hgt} the strip over x={x} is {strip:?} but the column below it is {below:?}"
+            );
+            x += 20.;
+        }
+    }
+    app.finish()
 }
 
 /// The strip above the sheet: its three buttons work with a real pointer, the settings panel changes the number
