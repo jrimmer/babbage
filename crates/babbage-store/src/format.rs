@@ -22,9 +22,21 @@ pub fn decode(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// A line that starts with this and ends a file's lines is not part of the sheet's text: the app keeps how each
+/// answer is written in such trailer lines (`⟦bbg line 3 dp=4⟧`).
+pub const TRAILER_START: &str = "⟦bbg ";
+
+/// How many of `lines` are the sheet's text: the trailer lines at the end are left out.
+pub fn text_len<S: AsRef<str>>(lines: &[S]) -> usize {
+    lines
+        .iter()
+        .rposition(|l| !l.as_ref().starts_with(TRAILER_START))
+        .map_or(0, |i| i + 1)
+}
+
 /// The first line that holds something besides white space, trimmed.
 pub fn title_of<S: AsRef<str>>(lines: &[S]) -> Option<String> {
-    lines
+    lines[..text_len(lines)]
         .iter()
         .map(|l| l.as_ref().trim())
         .find(|l| !l.is_empty())
@@ -34,7 +46,7 @@ pub fn title_of<S: AsRef<str>>(lines: &[S]) -> Option<String> {
 /// How many lines the sheet has, not counting blank lines at the end (a sheet of only blank lines has
 /// none, which the sidebar shows as "No lines").
 pub fn count_lines<S: AsRef<str>>(lines: &[S]) -> usize {
-    lines
+    lines[..text_len(lines)]
         .iter()
         .rposition(|l| !l.as_ref().trim().is_empty())
         .map_or(0, |i| i + 1)
@@ -63,6 +75,18 @@ mod tests {
     fn the_title_is_the_first_non_blank_line() {
         assert_eq!(title_of(&["", "  ", " 1 + 1 "]), Some("1 + 1".to_owned()));
         assert_eq!(title_of(&["", " "]), None);
+    }
+
+    #[test]
+    fn trailer_lines_are_not_part_of_the_title_or_the_count() {
+        let lines = ["", "1/3", "2/3", "⟦bbg line 2 dp=4⟧"];
+        assert_eq!(text_len(&lines), 3);
+        assert_eq!(count_lines(&lines), 3);
+        assert_eq!(title_of(&["⟦bbg line 1 dp=2⟧"]), None);
+        assert_eq!(count_lines(&["⟦bbg line 1 dp=2⟧"]), 0);
+        assert_eq!(title_of(&lines), Some("1/3".to_owned()));
+        // A line like a trailer in the middle of the text is text.
+        assert_eq!(text_len(&["⟦bbg x⟧", "a"]), 2);
     }
 
     #[test]

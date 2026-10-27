@@ -13,8 +13,9 @@ use gpui::{
 };
 
 use crate::chrome::Panel;
-use crate::computed::{Answer, Computed, compute};
+use crate::computed::{Answer, Computed, compute_formatted};
 use crate::editor_model::{Editor, History, Kind, Marked, Pos};
+use crate::linefmt::{self, LineFormat};
 use crate::shown::{Shown, shown_for};
 use crate::syntax::{Class, Span};
 use crate::theme::Colors;
@@ -78,6 +79,12 @@ impl Init {
     }
 }
 
+/// An editor for the lines a sheet's file holds: the text, with how each answer is written read from the trailer.
+fn editor_from_file(lines: &[String]) -> Editor {
+    let (content, formats) = linefmt::split(lines);
+    Editor::new(&content).with_formats(&formats)
+}
+
 pub struct Rename {
     pub text: String,
 }
@@ -94,6 +101,10 @@ pub struct SheetView {
     pub sidebar_open: bool,
     /// The settings or help panel opened from the toolbar.
     pub panel: Option<Panel>,
+    /// The line the pointer is over in the answer column (it shows the `⋯` button), and the line whose answer menu
+    /// is open.
+    pub hover_line: Option<usize>,
+    pub answer_menu: Option<usize>,
     pub answer_focus: Option<usize>,
     pub rename: Option<Rename>,
     /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
@@ -128,8 +139,8 @@ impl SheetView {
             current,
             lines,
         } = init;
-        let ed = Editor::new(&lines);
-        let computed = compute(ed.lines());
+        let ed = editor_from_file(&lines);
+        let computed = compute_formatted(ed.lines(), ed.formats());
         let focus = cx.focus_handle();
         window.focus(&focus);
         let view = SheetView {
@@ -142,6 +153,8 @@ impl SheetView {
             computed,
             sidebar_open: true,
             panel: None,
+            hover_line: None,
+            answer_menu: None,
             answer_focus: None,
             rename: None,
             menu: None,
@@ -201,7 +214,7 @@ impl SheetView {
             Ok(lines) => {
                 let left = self.ed.take_history();
                 self.histories.insert(self.current.clone(), left);
-                self.ed = Editor::new(&lines);
+                self.ed = editor_from_file(&lines);
                 if let Some(kept) = self.histories.remove(&id) {
                     self.ed.restore_history(kept);
                 }
@@ -372,15 +385,34 @@ impl SheetView {
 
     // Text.
 
+    /// The lines the sheet's file holds: its text, then the trailer lines that keep how its answers are written.
+    pub fn file_lines(&self) -> Vec<String> {
+        linefmt::join(self.ed.lines(), self.ed.formats())
+    }
+
+    /// Sets how line `i`'s answer is written and saves the sheet.
+    pub fn set_line_format(&mut self, i: usize, f: LineFormat, cx: &mut Context<Self>) {
+        self.ed.set_format(i, f);
+        self.recompute();
+        self.saver.submit(&self.current, self.file_lines());
+        cx.notify();
+    }
+
+    /// After the text changed by something other than typing (a menu action): works it out, saves it, keeps the
+    /// caret in view.
+    pub fn after_edit(&mut self, cx: &mut Context<Self>) {
+        self.edited(cx);
+    }
+
     pub fn recompute(&mut self) {
-        self.computed = compute(self.ed.lines());
+        self.computed = compute_formatted(self.ed.lines(), self.ed.formats());
     }
 
     /// Called after the text changed: evaluates the whole sheet again and queues the save.
     fn edited(&mut self, cx: &mut Context<Self>) {
         self.answer_focus = None;
         self.recompute();
-        self.saver.submit(&self.current, self.ed.lines().to_vec());
+        self.saver.submit(&self.current, self.file_lines());
         self.reveal = true;
         self.scroll_to_caret();
         cx.notify();
@@ -447,8 +479,9 @@ impl SheetView {
         let m = &ks.modifiers;
         let (ctrl, shift, alt) = (m.control, m.shift, m.alt);
         let key = ks.key.as_str();
-        if self.panel.is_some() && key == "escape" {
+        if (self.panel.is_some() || self.answer_menu.is_some()) && key == "escape" {
             self.panel = None;
+            self.answer_menu = None;
             cx.notify();
             cx.stop_propagation();
             return;
@@ -766,10 +799,13 @@ impl SheetView {
         window.focus(&self.focus);
         self.menu = None;
         self.panel = None;
+        self.answer_menu = None;
         let Some((pos, in_answers)) = self.position_at(ev.position) else {
             return;
         };
-        if in_answers {
+        if in_answers && self.on_more_button(ev.position, pos.line) {
+            self.open_answer_menu(pos.line);
+        } else if in_answers {
             self.ed.set_caret(Pos::new(pos.line, 0), false);
             self.answer_focus = Some(pos.line);
         } else {
@@ -786,7 +822,24 @@ impl SheetView {
         self.moved(window, cx);
     }
 
+    /// Whether `p` is on the `⋯` button of `line`, which only a line with an answer has.
+    fn on_more_button(&self, p: Point<Pixels>, line: usize) -> bool {
+        let Some(l) = self.layout.as_ref() else {
+            return false;
+        };
+        let centre = f32::from(l.bounds.right()) - crate::answer_menu::MORE_FROM_RIGHT;
+        let has_answer = self.answer_for(line).is_some_and(|a| a.text.is_some());
+        has_answer && (f32::from(p.x) - centre).abs() <= crate::answer_menu::MORE_RADIUS + 4.
+    }
+
     fn on_mouse_move(&mut self, ev: &MouseMoveEvent, window: &mut Window, cx: &mut Context<Self>) {
+        let over = self
+            .position_at(ev.position)
+            .and_then(|(pos, in_answers)| in_answers.then_some(pos.line));
+        if over != self.hover_line {
+            self.hover_line = over;
+            cx.notify();
+        }
         if self.selecting
             && ev.pressed_button == Some(MouseButton::Left)
             && let Some((pos, _)) = self.position_at(ev.position)
@@ -1071,6 +1124,7 @@ impl Render for SheetView {
         let chip = self.total_chip(c);
         let toolbar = self.toolbar(c, cx);
         let panel = self.panel_view(c, cx);
+        let answer_menu = self.answer_menu_view(c, cx);
         div()
             .key_context("Babbage")
             .track_focus(&self.focus)
@@ -1107,6 +1161,7 @@ impl Render for SheetView {
             )
             .children(chip)
             .children(panel)
+            .children(answer_menu)
     }
 }
 

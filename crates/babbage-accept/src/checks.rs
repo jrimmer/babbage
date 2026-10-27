@@ -41,6 +41,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("wrapping", wrapping),
     ("line-chips", line_chips),
     ("toolbar", toolbar),
+    ("answer-menu", answer_menu),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -1220,8 +1221,8 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
         answer(s, 0) == Some("1,234") && s["total"]["left_out"] == 3
     })?;
     ensure!(
-        s["total"]["text"] == "$10.00",
-        "a Total of clashing kinds is the money: {}",
+        s["total"]["text"] == "3 gal",
+        "a Total of clashing kinds follows the last line with a unit: {}",
         s["total"]
     );
     let button = |s: &Value, name: &str| -> anyhow::Result<(f32, f32)> {
@@ -1313,6 +1314,189 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
     h.click(&app, f(&s["text_x"])? + 200., ty + rh / 2., "left", 1)?;
     app.wait_for("the panel closed by a click", T, |s| s["panel"].is_null())?;
     app.finish()
+}
+
+/// The `⋯` on an answer and its menu, with a real pointer: it shows on the line the pointer is over, the menu sets
+/// the decimal places and switches the separators, notation and money digits per line, resets them, makes a
+/// subtotal line and deletes a line; the choices are saved with the sheet and come back when it is opened again.
+fn answer_menu(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("answer-menu", None, &[])?;
+    let dir = app.data_dir.clone();
+    for line in ["1/3", "$1.495", "12345 * 3", "300000 * 3"] {
+        h.type_line(line)?;
+    }
+    h.type_text("5 + 5")?;
+    let s = app.wait_for("the answers", T, |s| {
+        answer(s, 0) == Some("0.3333333333")
+            && answer(s, 1) == Some("$1.50")
+            && answer(s, 2) == Some("37,035")
+            && answer(s, 3) == Some("900k")
+            && answer(s, 4) == Some("10")
+    })?;
+    let right = f(&s["more_button"]["right"])?;
+    let from_right = f(&s["more_button"]["from_right"])?;
+    let row_mid = |s: &Value, i: usize| -> anyhow::Result<f32> {
+        Ok(f(&s["lines"][i]["y"])? + f(&s["lines"][i]["row_h"])? / 2.)
+    };
+    let more = |s: &Value, i: usize| -> anyhow::Result<(f32, f32)> {
+        Ok((right - from_right, row_mid(s, i)?))
+    };
+    let item = |s: &Value, id: &str| -> anyhow::Result<(f32, f32)> {
+        let b = s["answer_menu"]["items"]
+            .as_array()
+            .context("an open menu")?
+            .iter()
+            .find(|b| b["id"] == id)
+            .with_context(|| format!("a {id} control"))?;
+        Ok((
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+        ))
+    };
+
+    // The button shows under the pointer, on that line only.
+    let (mx, my) = more(&s, 0)?;
+    ensure!(s["hover_line"].is_null(), "no line is hovered at the start");
+    h.hover(&app, mx - 80., my)?;
+    let s = app.wait_for("line 1 hovered", T, |s| s["hover_line"] == 0)?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let ink = scr
+        .brightest(&shot, mx - 8., my - 3., mx + 8., my + 3.)
+        .unwrap_or([0, 0, 0]);
+    ensure!(
+        luminance(ink) > 60.,
+        "no button is drawn on the hovered answer: {ink:?}"
+    );
+    let off = scr
+        .brightest(
+            &shot,
+            mx - 8.,
+            row_mid(&s, 2)? - 3.,
+            mx + 8.,
+            row_mid(&s, 2)? + 3.,
+        )
+        .unwrap_or([0, 0, 0]);
+    ensure!(
+        luminance(off) < 60.,
+        "a button is drawn on a line that is not hovered: {off:?}"
+    );
+
+    // Decimal places.
+    h.click(&app, mx, my, "left", 1)?;
+    let s = app.wait_for("the menu", T, |s| s["answer_menu"]["line"] == 0)?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (cx0, cy0) = item(&s, "copy")?;
+    ensure!(
+        luminance(
+            scr.brightest(&shot, cx0 - 60., cy0 - 8., cx0 + 20., cy0 + 8.)
+                .unwrap_or([0, 0, 0])
+        ) > 150.,
+        "no text on the Copy Answer row"
+    );
+    let (x, y) = item(&s, "dp-4")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("four places", T, |s| {
+        answer(s, 0) == Some("0.3333") && s["lines"][0]["format"] == "dp=4"
+    })?;
+    ensure!(
+        s["answer_menu"]["line"] == 0,
+        "the menu stays open after a choice"
+    );
+    let (x, y) = item(&s, "dp-0")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("no places", T, |s| answer(s, 0) == Some("0"))?;
+    let (x, y) = item(&s, "dp-2")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("two places", T, |s| answer(s, 0) == Some("0.33"))?;
+    let id = s["current"].as_str().context("current")?.to_owned();
+    wait_file(
+        &dir,
+        &id,
+        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=2⟧\n",
+    )?;
+    let (x, y) = item(&s, "reset")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("reset", T, |s| {
+        answer(s, 0) == Some("0.3333333333") && s["lines"][0]["format"] == ""
+    })?;
+    let (x, y) = item(&s, "dp-3")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("three places again", T, |s| answer(s, 0) == Some("0.333"))?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the menu closed", T, |s| s["answer_menu"].is_null())?;
+
+    // Money digits, thousands separators and notation, each on its own line.
+    for (line, id, then) in [
+        (1usize, "money", "$1.495"),
+        (2, "group", "37035"),
+        (3, "notation", "900,000"),
+    ] {
+        let s = app.state()?;
+        let (x, y) = more(&s, line)?;
+        h.click(&app, x, y, "left", 1)?;
+        let s = app.wait_for("the menu", T, |s| s["answer_menu"]["line"] == line)?;
+        let (x, y) = item(&s, id)?;
+        h.click(&app, x, y, "left", 1)?;
+        app.wait_for(id, T, |s| answer(s, line) == Some(then))?;
+        h.press(&[], "Escape")?;
+        app.wait_for("closed", T, |s| s["answer_menu"].is_null())?;
+    }
+    // The choices are saved with the sheet and come back after a hard kill.
+    wait_file(
+        &dir,
+        &id,
+        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=3⟧\n⟦bbg line 2 money=off⟧\n⟦bbg line 3 group=off⟧\n⟦bbg line 4 notation=off⟧\n",
+    )?;
+    app.kill_hard()?;
+    let mut again = h.launch("answer-menu-again", Some(&dir), &[])?;
+    let s = again.wait_for("the saved sheet", T, |s| answer(s, 4) == Some("10"))?;
+    ensure!(
+        answer(&s, 0) == Some("0.333")
+            && answer(&s, 1) == Some("$1.495")
+            && answer(&s, 2) == Some("37035")
+            && answer(&s, 3) == Some("900,000"),
+        "the formats did not come back: {:?}",
+        (0..5).map(|i| answer(&s, i)).collect::<Vec<_>>()
+    );
+    ensure!(
+        s["sheets"][0]["lines"] == 5,
+        "the trailer lines are not counted as lines: {}",
+        s["sheets"][0]
+    );
+
+    // A subtotal line is made under the line, and Delete Line takes a line away.
+    let (x, y) = more(&s, 4)?;
+    h.click(&again, x, y, "left", 1)?;
+    let s = again.wait_for("the menu", T, |s| s["answer_menu"]["line"] == 4)?;
+    let (x, y) = item(&s, "subtotal")?;
+    h.click(&again, x, y, "left", 1)?;
+    let s = again.wait_for("a subtotal line", T, |s| {
+        s["lines"][5]["text"] == "subtotal"
+    })?;
+    ensure!(
+        s["answer_menu"].is_null(),
+        "the menu closes after Make Subtotal Line"
+    );
+    ensure!(
+        answer(&s, 5).is_some(),
+        "the subtotal line has an answer: {:?}",
+        answer(&s, 5)
+    );
+    let (x, y) = more(&s, 5)?;
+    h.click(&again, x, y, "left", 1)?;
+    let s = again.wait_for("the menu", T, |s| s["answer_menu"]["line"] == 5)?;
+    let (x, y) = item(&s, "delete")?;
+    h.click(&again, x, y, "left", 1)?;
+    let s = again.wait_for("the line deleted", T, |s| {
+        s["lines"].as_array().is_some_and(|l| l.len() == 5)
+    })?;
+    ensure!(
+        s["lines"][4]["text"] == "5 + 5" && answer(&s, 2) == Some("37035"),
+        "the other lines are untouched"
+    );
+    again.finish()
 }
 
 /// A reference to another line is drawn as a chip holding that line's answer, follows the line when it changes, and

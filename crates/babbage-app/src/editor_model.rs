@@ -7,6 +7,8 @@ use std::ops::Range;
 
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::linefmt::LineFormat;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Pos {
     pub line: usize,
@@ -30,6 +32,7 @@ pub enum Kind {
 #[derive(Clone, Debug)]
 struct Snap {
     lines: Vec<String>,
+    formats: Vec<LineFormat>,
     anchor: Pos,
     head: Pos,
 }
@@ -53,6 +56,8 @@ pub struct Marked {
 #[derive(Clone, Debug)]
 pub struct Editor {
     lines: Vec<String>,
+    /// How each line's answer is written; always as long as `lines`.
+    formats: Vec<LineFormat>,
     anchor: Pos,
     head: Pos,
     /// The column (in graphemes) the caret returns to when moving up and down across short lines.
@@ -134,6 +139,7 @@ impl Editor {
             lines.push(String::new());
         }
         Editor {
+            formats: vec![LineFormat::default(); lines.len()],
             lines,
             anchor: Pos::default(),
             head: Pos::default(),
@@ -166,6 +172,66 @@ impl Editor {
 
     pub fn lines(&self) -> &[String] {
         &self.lines
+    }
+
+    /// How line `i`'s answer is written.
+    pub fn format(&self, i: usize) -> LineFormat {
+        self.formats.get(i).copied().unwrap_or_default()
+    }
+
+    pub fn formats(&self) -> &[LineFormat] {
+        &self.formats
+    }
+
+    /// Sets how line `i`'s answer is written, as one undo step. Does nothing when it is the same.
+    pub fn set_format(&mut self, i: usize, f: LineFormat) {
+        if i >= self.formats.len() || self.formats[i] == f {
+            return;
+        }
+        let s = self.snap();
+        self.undo.push(s);
+        self.redo.clear();
+        self.last = Kind::Other;
+        self.formats[i] = f;
+    }
+
+    /// Gives lines their answers' formats, as read from a file (extra or missing entries are fixed up).
+    pub fn with_formats(mut self, formats: &[LineFormat]) -> Editor {
+        for (i, f) in formats.iter().enumerate().take(self.lines.len()) {
+            self.formats[i] = *f;
+        }
+        self
+    }
+
+    /// Removes line `i` (the last line is emptied instead, as a sheet always has a line), as one undo step.
+    pub fn delete_line(&mut self, i: usize) {
+        if i >= self.lines.len() {
+            return;
+        }
+        if self.lines.len() == 1 {
+            let end = Pos::new(0, self.lines[0].len());
+            return self.replace(Pos::new(0, 0), end, "", Kind::Other);
+        }
+        // The lines below keep their own formats: the deleted line's goes with it.
+        let mut formats = self.formats.clone();
+        formats.remove(i);
+        if i + 1 < self.lines.len() {
+            self.replace(Pos::new(i, 0), Pos::new(i + 1, 0), "", Kind::Other);
+        } else {
+            let prev_end = Pos::new(i - 1, self.lines[i - 1].len());
+            let end = Pos::new(i, self.lines[i].len());
+            self.replace(prev_end, end, "", Kind::Other);
+        }
+        self.formats = formats;
+    }
+
+    /// Puts `text` on a new line after line `i`, as one undo step; the caret goes to its end.
+    pub fn insert_line_after(&mut self, i: usize, text: &str) {
+        let at = Pos::new(
+            i.min(self.lines.len() - 1),
+            self.lines[i.min(self.lines.len() - 1)].len(),
+        );
+        self.replace(at, at, &format!("\n{text}"), Kind::Other);
     }
 
     pub fn line(&self, i: usize) -> &str {
@@ -230,6 +296,7 @@ impl Editor {
     fn snap(&self) -> Snap {
         Snap {
             lines: self.lines.clone(),
+            formats: self.formats.clone(),
             anchor: self.anchor,
             head: self.head,
         }
@@ -237,6 +304,7 @@ impl Editor {
 
     fn restore(&mut self, s: Snap) {
         self.lines = s.lines;
+        self.formats = s.formats;
         self.anchor = s.anchor;
         self.head = s.head;
         self.goal = None;
@@ -291,9 +359,11 @@ impl Editor {
         let mut col = self.lines[a.line].len();
         let rest: Vec<&str> = parts.collect();
         self.lines.drain(a.line + 1..=b.line);
+        self.formats.drain(a.line + 1..=b.line);
         for (i, p) in rest.iter().enumerate() {
             line = a.line + 1 + i;
             self.lines.insert(line, (*p).to_owned());
+            self.formats.insert(line, LineFormat::default());
             col = p.len();
         }
         self.lines[line].push_str(&tail);
@@ -919,5 +989,84 @@ mod tests {
         );
         e.replace(Pos::new(0, 0), Pos::new(5, 5), "x", Kind::Other);
         assert_eq!(e.all(), vec!["x"]);
+    }
+
+    fn dp(p: u32) -> LineFormat {
+        LineFormat {
+            places: Some(p),
+            ..LineFormat::default()
+        }
+    }
+
+    fn formatted(e: &Editor) -> Vec<Option<u32>> {
+        e.formats().iter().map(|f| f.places).collect()
+    }
+
+    #[test]
+    fn a_line_keeps_its_format_through_edits_above_and_inside_it() {
+        let mut e = Editor::new(&["a", "b", "c"]);
+        e.set_format(1, dp(4));
+        assert_eq!(formatted(&e), [None, Some(4), None]);
+        // A line inserted above pushes it down; text typed inside it leaves it alone.
+        e.replace(Pos::new(0, 1), Pos::new(0, 1), "\nnew", Kind::Other);
+        assert_eq!(e.all(), vec!["a", "new", "b", "c"]);
+        assert_eq!(formatted(&e), [None, None, Some(4), None]);
+        e.replace(Pos::new(2, 1), Pos::new(2, 1), "x", Kind::Other);
+        assert_eq!(formatted(&e), [None, None, Some(4), None]);
+        // Joining the line above into it drops the joined line's format, keeping the first line's.
+        e.replace(Pos::new(1, 3), Pos::new(2, 0), "", Kind::Other);
+        assert_eq!(e.all(), vec!["a", "newbx", "c"]);
+        assert_eq!(formatted(&e), [None, None, None]);
+    }
+
+    #[test]
+    fn splitting_a_formatted_line_leaves_the_new_line_plain() {
+        let mut e = Editor::new(&["abcd"]);
+        e.set_format(0, dp(2));
+        e.replace(Pos::new(0, 2), Pos::new(0, 2), "\n", Kind::Other);
+        assert_eq!(formatted(&e), [Some(2), None]);
+    }
+
+    #[test]
+    fn undo_and_redo_bring_formats_back_with_the_text() {
+        let mut e = Editor::new(&["1/3", "2/3"]);
+        e.set_format(0, dp(3));
+        e.set_format(1, dp(5));
+        assert!(e.undo());
+        assert_eq!(formatted(&e), [Some(3), None]);
+        assert!(e.undo());
+        assert_eq!(formatted(&e), [None, None]);
+        assert!(e.redo());
+        assert!(e.redo());
+        assert_eq!(formatted(&e), [Some(3), Some(5)]);
+        // Setting the same format again is no step.
+        e.set_format(1, dp(5));
+        assert!(e.undo());
+        assert_eq!(formatted(&e), [Some(3), None]);
+    }
+
+    #[test]
+    fn formats_are_read_from_a_file_and_fixed_up() {
+        let e = Editor::new(&["a", "b"]).with_formats(&[dp(1), LineFormat::default(), dp(9)]);
+        assert_eq!(formatted(&e), [Some(1), None]);
+        assert_eq!(Editor::new::<&str>(&[]).formats().len(), 1);
+    }
+
+    #[test]
+    fn a_line_can_be_deleted_or_added_after_another() {
+        let mut e = Editor::new(&["a", "b", "c"]);
+        e.set_format(2, dp(2));
+        e.delete_line(1);
+        assert_eq!(e.all(), vec!["a", "c"]);
+        assert_eq!(formatted(&e), [None, Some(2)]);
+        e.delete_line(1);
+        assert_eq!(e.all(), vec!["a"]);
+        e.delete_line(0);
+        assert_eq!(e.all(), vec![""], "the last line is emptied, not removed");
+        e.insert_line_after(0, "subtotal");
+        assert_eq!(e.all(), vec!["", "subtotal"]);
+        assert_eq!(e.head(), Pos::new(1, 8));
+        assert!(e.undo());
+        assert_eq!(e.all(), vec![""]);
     }
 }

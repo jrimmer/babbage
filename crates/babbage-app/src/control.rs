@@ -135,6 +135,7 @@ pub fn report(v: &SheetView) -> Value {
             json!({
                 "text": text,
                 "shown": sh.text,
+                "format": v.ed.format(i).to_text(),
                 "kind": result.map_or("blank", |r| kind_name(&r.kind)),
                 "answer": ans.and_then(|a| a.text.clone()),
                 "exact": ans.is_none_or(|a| a.exact),
@@ -199,6 +200,22 @@ pub fn report(v: &SheetView) -> Value {
             json!({"h": crate::chrome::TOOLBAR_H, "buttons": buttons, "settings_items": items,
                    "panel_x": right + px_, "panel_y": top + crate::chrome::TOOLBAR_H + py})
         }),
+        "answer_menu": v.answer_menu.and_then(|line| {
+            let l = layout?;
+            let row_y = f32::from(l.top) + v.wrap.top_row(line) as f32 * ROW_H;
+            let (mx, my) = crate::answer_menu::origin(
+                f32::from(l.bounds.right()),
+                row_y,
+                f32::from(l.bounds.top() + l.bounds.size.height),
+            );
+            let items: Vec<Value> = crate::answer_menu::items()
+                .iter()
+                .map(|(id, r)| json!({"id": id, "x": mx + r.x, "y": my + r.y, "w": r.w, "h": r.h}))
+                .collect();
+            Some(json!({"line": line, "x": mx, "y": my, "w": crate::answer_menu::MENU_W, "h": crate::answer_menu::MENU_H, "items": items}))
+        }),
+        "more_button": layout.map(|l| json!({"from_right": crate::answer_menu::MORE_FROM_RIGHT, "radius": crate::answer_menu::MORE_RADIUS, "right": f32::from(l.bounds.right())})),
+        "hover_line": v.hover_line,
         "number_format": format!("{:?}", crate::prefs::current().number_format),
         "work_hours": crate::prefs::current().work_hours_per_day,
         "settings_path": crate::prefs::settings_path().map(|p| p.display().to_string()),

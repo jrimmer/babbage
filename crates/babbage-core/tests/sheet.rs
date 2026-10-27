@@ -342,11 +342,11 @@ fn the_floating_total_adds_every_result_except_subtotal_lines() {
     assert!(floating_total(&run(&["hello"]), &SheetOptions::default()).is_none());
 }
 
-/// Lines that cannot all be added: the Total is the sum of the money lines, plain numbers left out, whatever the
-/// order (ticket 0050, Sheet D lines 59 and 60: `$10.00` both ways). With no money it follows the last line with a
-/// unit. The reference app once gave `3 gal` for the first set of lines and `$10.00` twice, so this follows the two.
+/// Lines that cannot all be added: the sum starts again from the line that does not fit, so the Total is the sum of
+/// the lines since the last such line, plain numbers joining the unit (Sheets C and F of the reference app,
+/// ticket 0050).
 #[test]
-fn a_total_of_clashing_kinds_is_the_money() {
+fn a_total_restarts_at_a_line_that_does_not_fit() {
     let total = |lines: &[&str]| {
         let results = run(lines);
         let t = floating_total(&results, &SheetOptions::default())
@@ -354,9 +354,12 @@ fn a_total_of_clashing_kinds_is_the_money() {
             .unwrap();
         format_value(&t, &FormatOptions::default()).text
     };
-    assert_eq!(total(&["$10", "5", "3 gallons"]), "$10.00");
+    assert_eq!(total(&["$10", "5", "3 gallons"]), "3 gal");
     assert_eq!(total(&["3 gallons", "5", "$10"]), "$10.00");
     assert_eq!(total(&["3 gallons", "5", "2 km", "4 kg"]), "4 kg");
+    // A plain number before the conflict is part of the old sum; after it, of the new one.
+    assert_eq!(total(&["$10", "3 gallons", "5"]), "8 gal");
+    assert_eq!(total(&["3 gallons", "$10", "5", "$1"]), "$16.00");
     assert_eq!(
         total(&["5", "3 gallons"]),
         "8 gal",
@@ -515,6 +518,8 @@ fn the_total_says_how_many_lines_it_left_out() {
     let left_out = |lines: &[&str]| floating_total_left_out(&run(lines), &SheetOptions::default());
     assert_eq!(left_out(&["$10", "5", "3 gallons"]), 2);
     assert_eq!(left_out(&["3 gallons", "5", "$10"]), 2);
+    assert_eq!(left_out(&["$10", "3 gallons"]), 1);
+    assert_eq!(left_out(&["$10", "3 gallons", "5"]), 1);
     assert_eq!(left_out(&["3 gallons", "5", "2 km", "4 kg"]), 3);
     // Lines that can all be added leave nothing out, plain numbers joining the unit.
     assert_eq!(left_out(&["5", "3 gallons"]), 0);

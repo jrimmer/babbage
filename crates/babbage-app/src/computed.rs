@@ -1,5 +1,6 @@
 //! Runs the engine over a whole sheet and turns each result into the text the answer column shows.
 
+use crate::linefmt::LineFormat;
 use babbage_core::settings::{Settings, scoped};
 use babbage_core::sheet::{floating_total, floating_total_left_out};
 use babbage_core::{
@@ -24,16 +25,27 @@ pub struct Computed {
     pub left_out: usize,
 }
 
+#[cfg(test)]
 pub fn compute(lines: &[String]) -> Computed {
-    compute_with(lines, crate::prefs::current())
+    compute_formatted(lines, &[])
+}
+
+/// Evaluates a sheet with each line's answer written as that line's menu choices say.
+pub fn compute_formatted(lines: &[String], formats: &[LineFormat]) -> Computed {
+    compute_with_formats(lines, formats, crate::prefs::current())
 }
 
 /// Evaluates and formats inside one settings scope, so dates print in the same zone they were read in.
+#[cfg(test)]
 pub fn compute_with(lines: &[String], settings: &Settings) -> Computed {
-    scoped(settings, || compute_scoped(lines, settings))
+    compute_with_formats(lines, &[], settings)
 }
 
-fn compute_scoped(lines: &[String], settings: &Settings) -> Computed {
+fn compute_with_formats(lines: &[String], formats: &[LineFormat], settings: &Settings) -> Computed {
+    scoped(settings, || compute_scoped(lines, formats, settings))
+}
+
+fn compute_scoped(lines: &[String], formats: &[LineFormat], settings: &Settings) -> Computed {
     let refs: Vec<&str> = lines.iter().map(String::as_str).collect();
     let opts = SheetOptions {
         settings: settings.clone(),
@@ -43,9 +55,11 @@ fn compute_scoped(lines: &[String], settings: &Settings) -> Computed {
     let base: FormatOptions = settings.format_options();
     let answers = results
         .iter()
-        .map(|r| match &r.kind {
+        .enumerate()
+        .map(|(i, r)| match &r.kind {
             LineKind::Value(v) => {
-                let f = format_value(v, &r.display_options(&base));
+                let own = formats.get(i).copied().unwrap_or_default();
+                let f = format_value(v, &own.apply(r.display_options(&base)));
                 Answer {
                     text: Some(f.text),
                     exact: f.exact,

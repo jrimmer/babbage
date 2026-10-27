@@ -613,6 +613,17 @@ impl Harness {
         ))
     }
 
+    /// Moves the pointer to (`x`, `y`), from the window's top-left corner, with no button pressed.
+    pub fn hover(&mut self, app: &App, x: f32, y: f32) -> anyhow::Result<()> {
+        let w = self.window_of(app.pid)?;
+        let (ax, ay) = (
+            w["at"][0].as_f64().unwrap_or(0.),
+            w["at"][1].as_f64().unwrap_or(0.),
+        );
+        self.pointer
+            .send(&format!("move {} {}", ax + f64::from(x), ay + f64::from(y)))
+    }
+
     /// Presses the left button at (`x0`, `y0`), moves to (`x1`, `y1`) in steps and releases it; points are from the
     /// window's top-left corner.
     pub fn drag(&mut self, app: &App, from: (f32, f32), to: (f32, f32)) -> anyhow::Result<()> {

@@ -7,11 +7,13 @@
 //! Sheets live in `$BABBAGE_DATA_DIR` (default `~/.local/share/babbage/sheets`). `--control` serves the
 //! test hook described in `control.rs`.
 
+mod answer_menu;
 mod chrome;
 mod computed;
 mod control;
 mod editor_model;
 mod element;
+mod linefmt;
 mod prefs;
 mod shown;
 mod syntax;

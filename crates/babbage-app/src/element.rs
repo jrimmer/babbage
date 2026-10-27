@@ -301,6 +301,32 @@ impl SheetElement {
                     }
                 }
 
+                // The `⋯` button on the line the pointer is over (or whose menu is open).
+                if (view.hover_line == Some(i) || view.answer_menu == Some(i))
+                    && view.answer_for(i).is_some_and(|a| a.text.is_some())
+                {
+                    let r = px(crate::answer_menu::MORE_RADIUS);
+                    let cx0 = bounds.right() - px(crate::answer_menu::MORE_FROM_RIGHT);
+                    let cy0 = y + row_h / 2.;
+                    window.paint_quad(quad(
+                        Bounds::new(point(cx0 - r, cy0 - r), size(r * 2., r * 2.)),
+                        r,
+                        c.raised,
+                        1.,
+                        c.line,
+                        gpui::BorderStyle::default(),
+                    ));
+                    for dx in [-6., 0., 6.] {
+                        window.paint_quad(fill(
+                            Bounds::new(
+                                point(cx0 + px(dx) - px(1.5), cy0 - px(1.5)),
+                                size(px(3.), px(3.)),
+                            ),
+                            c.muted,
+                        ));
+                    }
+                }
+
                 // Answer, on the first row.
                 if let Some(a) = view.answer_for(i) {
                     let ax = answer_x + px(30.);

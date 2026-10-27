@@ -159,62 +159,50 @@ fn normalise_name(name: &str) -> String {
     name.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// Adds values in order: `None` for no values at all.
-fn sum_in_order(values: &[&Value]) -> Result<Option<Value>, Error> {
-    let mut total: Option<Value> = None;
-    for v in values {
-        total = Some(match total {
-            None => (*v).clone(),
-            Some(t) => Value::binary(BinOp::Add, &t, v)?,
-        });
-    }
-    Ok(total)
-}
-
-/// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to each
-/// other (`$10`, `5` and `3 gallons`) do not make the Total an error: as the reference app shows, it is then
-/// the sum of the money lines, and the plain numbers are left out (`$10.00`, whichever order the lines come in).
-/// With no money among them it is the lines of the last line's kind. The reference app gave `3 gal` once for
-/// `$10`, `5`, `3 gallons` and `$10.00` twice; this follows the two.
+/// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to the running
+/// sum (`$10`, then `3 gallons`) do not make the Total an error: as the reference app shows (Sheets C and F), the
+/// sum starts again from the line that does not fit, so the Total is the sum of the lines since the last one that
+/// did not fit, plain numbers joining whatever unit the sum has. `$10`, `5`, `3 gallons` is `3 gal`; the nineteen
+/// lines of the target screenshot are `$39,506.77`.
 fn add_up(values: &[&Value]) -> Result<Value, Error> {
     add_up_counting(values).map(|(total, _)| total)
 }
 
-/// Like `add_up`, with how many lines the sum left out because they could not be added to the others.
+/// Like `add_up`, with how many lines the sum left out: those before the last restart.
 fn add_up_counting(values: &[&Value]) -> Result<(Value, usize), Error> {
     let plain: Vec<&Value> = values
         .iter()
         .copied()
         .filter(|v| v.kind() == Kind::Plain)
         .collect();
-    let mut left_out = 0;
-    let total = match sum_in_order(&plain) {
-        Err(Error::IncompatibleUnits | Error::CurrencyRateNeeded) => {
-            let last_with_unit = plain
-                .iter()
-                .rev()
-                .find(|v| v.unit().currency_symbol().is_some())
-                .or_else(|| plain.iter().rev().find(|v| !v.unit().is_empty()));
-            let same_kind: Vec<&Value> = plain
-                .iter()
-                .copied()
-                .filter(|v| {
-                    !v.unit().is_empty()
-                        && last_with_unit.is_some_and(|l| Value::binary(BinOp::Add, l, v).is_ok())
-                })
-                .collect();
-            left_out = plain.len() - same_kind.len();
-            sum_in_order(&same_kind)?
-        }
-        other => other?,
-    };
+    let mut total: Option<Value> = None;
+    let mut in_sum = 0;
+    for v in &plain {
+        total = Some(match total {
+            None => {
+                in_sum = 1;
+                (*v).clone()
+            }
+            Some(t) => match Value::binary(BinOp::Add, &t, v) {
+                Ok(sum) => {
+                    in_sum += 1;
+                    sum
+                }
+                Err(Error::IncompatibleUnits | Error::CurrencyRateNeeded) => {
+                    in_sum = 1;
+                    (*v).clone()
+                }
+                Err(e) => return Err(e),
+            },
+        });
+    }
     let Some(mut total) = total else {
         return Err(Error::UnsupportedOperation("there is nothing to add up"));
     };
     for p in values.iter().filter(|v| v.kind() == Kind::Percent) {
         total = Value::binary(BinOp::Add, &total, p)?;
     }
-    Ok((total, left_out))
+    Ok((total, plain.len() - in_sum))
 }
 
 /// How many lines the floating total leaves out because they cannot be added to the others (plain numbers
