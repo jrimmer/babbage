@@ -31,7 +31,9 @@ fn one_and_minus_one_to_huge_powers_follow_parity() {
 }
 
 #[test]
-fn oversized_results_are_refused_not_approximated() {
+fn results_too_big_to_write_down_are_refused() {
     assert_eq!(evaluate("10^1000000"), Err(Error::Overflow));
-    assert_eq!(evaluate("1.0000001^100000"), Err(Error::Overflow));
+    // A power whose exact value does not fit but whose size is modest is approximated (`large_powers.rs`); an
+    // exponent past the approximation's range is still refused.
+    assert_eq!(evaluate("1.0000001^1000000000"), Err(Error::Overflow));
 }

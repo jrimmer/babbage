@@ -1,6 +1,6 @@
 # 0034 Bitwise operators on negative numbers
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: operators
 

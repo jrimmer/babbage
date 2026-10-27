@@ -1,6 +1,6 @@
 # 0026 prev/above references, median, and floating-total statistics
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: sheets
 

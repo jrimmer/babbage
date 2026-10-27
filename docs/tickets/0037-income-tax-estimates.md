@@ -1,6 +1,6 @@
 # 0037 Income tax estimates by country
 
-Status: open
+Status: open (post-v1: needs income tax tables, which Babbage would have to fetch; it is offline apart from the update check, see docs/updates.md)
 Milestone: post-v1 (needs a yearly dataset)
 Area: finance
 

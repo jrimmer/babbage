@@ -221,6 +221,8 @@ kcal | kcal,kCal,Cal,kilocalorie,kilocalories | M L2 T-2 | 4184
 W | W,watt,watts | M L2 T-3 | 1
 +m,k,M,G,T
 hp | hp,horsepower | M L2 T-3 | 550*0.3048*0.45359237*9.80665
+cv | cv,metric horsepower,metric hp,metric horsepowers | M L2 T-3 | 75*9.80665
+ehp | ehp,electrical horsepower,electric horsepower,electrical hp,electric hp | M L2 T-3 | 746
 N | N,newton,newtons | M L T-2 | 1
 +n,µ,m,k,M,G
 lbf | lbf,pound-force,pounds-force | M L T-2 | 0.45359237*9.80665

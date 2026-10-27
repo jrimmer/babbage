@@ -470,6 +470,7 @@ cupt	pt³
 cupx	px³
 curem	rem³
 cuyd	yd³
+cv	cv
 dL	dL
 day	day
 days	day
@@ -489,6 +490,11 @@ degrees	deg
 dm	dm
 dollar	$
 dollars	$
+ehp	ehp
+electric horsepower	ehp
+electric hp	ehp
+electrical horsepower	ehp
+electrical hp	ehp
 em	em
 ems	em
 ether	ETH
@@ -741,6 +747,9 @@ metre	m
 metres	m
 metric cup	mcup
 metric cups	mcup
+metric horsepower	cv
+metric horsepowers	cv
+metric hp	cv
 metric ton	t
 metric tons	t
 mfarad	mfarad

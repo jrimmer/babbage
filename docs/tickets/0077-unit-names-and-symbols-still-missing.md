@@ -1,6 +1,6 @@
 # 0077 Unit names and symbols the unit reference lists that the engine lacks
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: units
 

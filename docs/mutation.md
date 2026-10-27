@@ -59,3 +59,7 @@ Loop mutants (`+=` becoming `-=` inside a `while`) hang the test and are counted
 ## What this does not prove
 
 Mutation testing shows that the tests notice changes to the code that exists. It does not show that the answers match a real reference app: that is what the oracle corpora, the replay of the reference examples and the open tickets (0018, 0030, 0043 to 0046, 0055) are for.
+
+## Large powers (2026-10-26)
+
+`approx::pow_large` and the fallback in `value::power`: 7 mutants, 6 caught, 1 unviable, 0 missed (after a boundary test for the 400,000 exponent limit was added). Run with `MUTATE_RE=pow_large MUTATE_TESTS="--test large_powers --test limits" bin/mutate crates/babbage-core/src/approx.rs`.

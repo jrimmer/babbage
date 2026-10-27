@@ -1,6 +1,6 @@
 # 0017 L/100km and other units with a number in the denominator
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: units, parser
 

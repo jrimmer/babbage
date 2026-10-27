@@ -195,6 +195,22 @@ pub fn pow_rational(base: &Number, exp: &Number) -> Result<Outcome, Error> {
     })
 }
 
+/// `base` to a whole power whose exact value would not fit the engine's number size (`(1 + 0.03/365)^36500`): the
+/// value is computed to about 115 digits and is approximate, so the caller must mark it. A power too large for even
+/// the approximation to be written down is still an overflow.
+pub fn pow_large(base: &Number, exp: &Number) -> Result<Outcome, Error> {
+    if !exp.is_integer() || exp.abs() > int(EXPONENT_LIMIT) {
+        return Err(Error::Overflow);
+    }
+    let negative = base.is_negative() && exp.numer().is_odd();
+    approximate(|cc| {
+        let b = to_float(&base.abs(), cc);
+        let e = to_float(exp, cc);
+        let r = b.pow(&e, PRECISION_BITS, ROUNDING, cc);
+        if negative { r.neg() } else { r }
+    })
+}
+
 pub fn sqrt(x: &Number) -> Result<Outcome, Error> {
     if x.is_negative() {
         return Err(Error::OutOfDomain);

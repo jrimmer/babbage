@@ -1,6 +1,6 @@
 # 0012 Confirm undocumented percentage combinations against the real app
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: engine, percentages
 

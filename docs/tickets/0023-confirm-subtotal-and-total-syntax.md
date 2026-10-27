@@ -1,6 +1,6 @@
 # 0023 Confirm how subtotals, totals and tags are typed
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: sheets
 

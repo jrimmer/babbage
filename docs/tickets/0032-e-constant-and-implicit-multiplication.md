@@ -1,6 +1,6 @@
 # 0032 The constant e, and `2pi`
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: syntax
 

@@ -1,6 +1,6 @@
 # 0001 Symbolic results where possible
 
-Status: open
+Status: partly built
 Milestone: post-v1
 Area: engine, precision
 
@@ -16,3 +16,5 @@ v1 computes irrationals to 50 digits and flags the answer as approximate (see de
 
 ## Depends on
 v1 arbitrary-precision path (astro-float) as the reference oracle.
+
+Audit 2026-10-26: `sqrt 2 × sqrt 2` prints 2, `π / π` prints 1 and `sin(π/6)` prints 0.5; `e^ln 5` fails because `e` is not a constant (ticket 0032). A symbolic value domain is not built.

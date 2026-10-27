@@ -1,6 +1,6 @@
 # 0020 Astronomical hours and degrees
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: units
 

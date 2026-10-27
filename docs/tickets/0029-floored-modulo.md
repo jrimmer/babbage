@@ -1,6 +1,6 @@
 # 0029 Floored versus truncated modulo
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: operators
 

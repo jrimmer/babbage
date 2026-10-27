@@ -1307,12 +1307,23 @@ fn power(l: &Value, r: &Value) -> Result<Value, Error> {
             "an exponent cannot have a unit",
         ));
     }
-    let number = l.number.pow(&r.number)?;
-    if l.unit.is_empty() {
-        return Ok(Value::plain(number));
-    }
-    let exponent = i8::try_from(r.number.numer().clone()).map_err(|_| Error::Overflow)?;
-    Value::quantity(number, l.unit.with_exponent(exponent))
+    // A power too large to hold exactly falls back to about 115 digits, marked approximate (never silently).
+    let (number, approximate) = match l.number.pow(&r.number) {
+        Ok(n) => (n, false),
+        Err(Error::Overflow) => (crate::approx::pow_large(&l.number, &r.number)?.number, true),
+        Err(e) => return Err(e),
+    };
+    let value = if l.unit.is_empty() {
+        Value::plain(number)
+    } else {
+        let exponent = i8::try_from(r.number.numer().clone()).map_err(|_| Error::Overflow)?;
+        Value::quantity(number, l.unit.with_exponent(exponent))?
+    };
+    Ok(if approximate {
+        value.approximate()
+    } else {
+        value
+    })
 }
 
 pub fn format_value(v: &Value, opts: &FormatOptions) -> Formatted {

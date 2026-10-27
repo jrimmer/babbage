@@ -1,6 +1,6 @@
 # 0002 Flagged approximate answer when an exact result exceeds the size cap
 
-Status: open
+Status: closed (built)
 Milestone: v1.1
 Area: engine, precision
 
@@ -11,3 +11,5 @@ Retry the line in the 50-digit float path and show the answer with the approxima
 
 ## Open question
 Whether 50 digits is enough for compounding chains. Add a test that compares against Python Fraction to the shown digits.
+
+Audit 2026-10-26: a power too large to hold exactly now falls back to about 115 digits and is marked approximate (`approx::pow_large`; `(1+0.03/365)^36500` is 20.0830609124, checked against a Python `Fraction` power to 50 digits in `tests/large_powers.rs`, mutation clean). An exponent past 400,000 and a result too large to write down are still refused. Sheet G asks what the reference app shows for the line.

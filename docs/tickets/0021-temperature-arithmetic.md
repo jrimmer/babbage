@@ -1,6 +1,6 @@
 # 0021 Temperature differences and arithmetic
 
-Status: open
+Status: open (asked in Sheet G)
 Milestone: v1
 Area: units
 

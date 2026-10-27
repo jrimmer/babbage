@@ -1,6 +1,6 @@
 # 0036 Inflation with historical CPI
 
-Status: open
+Status: open (post-v1: needs CPI series, which Babbage would have to fetch; it is offline apart from the update check, see docs/updates.md)
 Milestone: post-v1 (needs off-box data)
 Area: finance
 
