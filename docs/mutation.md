@@ -67,3 +67,22 @@ Mutation testing shows that the tests notice changes to the code that exists. It
 ## Sheet G changes (2026-10-26)
 
 `bin/mutate` limited to the changed engine lines (`MUTATE_DIFF`, the diff written with `git -c diff.mnemonicPrefix=false diff HEAD`). First run: 125 mutants, 94 caught, 15 missed, 15 unviable, 1 timeout. The misses were gaps in the tests (the tag forms `#tag average` and `#tag count`, the characters a tag name may hold, the temperature refusals, a percentage divided by a quantity, the exactness mark on `6h 0m 0s`), two redundant lines (a date-kind guard and an arithmetic bound, both removed), and the near-zero trig boundary (now a helper with its own test). Second run: 123 mutants, 106 caught, 1 missed, 15 unviable, 1 timeout. The one miss was an equivalent mutant (a percentage never carries a unit, so the check on it was redundant); the check is removed. The timeout is `per_hundred_km` with `+=` turned into `*=`, a loop that hangs, which counts as caught.
+
+## Engine pass over `units`, `parser`, `phrase` and `functions` (2026-10-27)
+
+Full tests, the whole of the four files: 726 mutants, 492 caught, 74 unviable, 61 timeouts (loop mutants that hang), 99 missed. The misses sat in code whose coverage had gone with the removed example corpus: primes, pitch, degrees-minutes-seconds, screen density, the seeded random numbers, combinations, standard deviation, the `in lb oz` split, conversions at a rate and the rules that cancel or merge units. Each now has a test (`function_near_misses.rs`, `phrase_unit_near_misses.rs`, `unit_targets.rs`, `spoken_forms.rs`). Reruns of the touched functions: 335 mutants (92 missed), then 209 (23 missed). The 23 that remain are accepted below.
+
+| Where | Mutant | Why it cannot matter |
+|---|---|---|
+| `call`, `factorial` | the size test `bits > MAX_BITS` becomes `>=` or `==` | only a result of exactly the limit differs, and no factorial or combination has exactly that many bits |
+| `standard_deviation` | the kind test `||` becomes `&&` | a quantity of another kind fails the conversion on the next line with the same error |
+| `keyword_signature`, `parse_line` | the bracket-depth guard on the loose `%` becomes `true` | a lone `%` is never dropped as prose, so counting one inside brackets changes nothing |
+| `parse_line` | `at + 1 < len` becomes `<=` or `-` | a conversion word at the very end falls through to the same "unexpected word" error |
+| `parse_line` | the bracket test `==` becomes `!=` | collapsing groups of a line with no brackets is a no-op |
+| `keywords_form_a_phrase` | the `[conv, "at"]` guard becomes `true` | no other two-keyword pair that reaches it spells a phrase either |
+| `is_conversion_word` | becomes `true` | it only matters for a bare word kept at the end of a line, which the parser refuses anyway |
+| `UnitExpr::has_division`, `is_time_over_time` | each comparison | the callers also test that the target has no dimension, which every target these would wrongly accept already fails; the targets are pinned in `a_plain_number_shown_in_a_unit_of_another_kind_is_refused` |
+| `Spelling::partial_cmp` | becomes `None` | spellings never take part in an ordering; equality ignores them |
+| `UnitExpr::reduce` | `e > 0` becomes `>= 0` | an exponent is never zero in a unit expression |
+
+Noticed while probing, left as a ticket: `5 m to cm at 2` answers `1,000 cm`. A conversion at a rate on units that are not money is accepted and the rate multiplies the result.

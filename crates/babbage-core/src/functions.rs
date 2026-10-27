@@ -144,16 +144,6 @@ impl Arity {
 impl Func {
     pub fn arity(self) -> Arity {
         match self {
-            Func::Abs
-            | Func::Fact
-            | Func::Round
-            | Func::Floor
-            | Func::Ceil
-            | Func::Half
-            | Func::IsPrime
-            | Func::AsNumber
-            | Func::AsDms
-            | Func::AsPitch => Arity::Exactly(1),
             Func::Min
             | Func::Max
             | Func::Sum
@@ -191,6 +181,7 @@ impl Func {
             | Func::GrowthRate => Arity::Exactly(4),
             Func::InterestEach => Arity::Exactly(5),
             Func::StdDev => Arity::AtLeast(2),
+            // Everything else takes one argument: `abs`, `fact`, `round`, `is prime`, `as dms`, `as pitch`.
             _ => Arity::Exactly(1),
         }
     }

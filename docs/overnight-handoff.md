@@ -1,18 +1,14 @@
 # Overnight handoff (2026-10-27)
 
-Plan, in order: (1) mutation run of the engine lines changed today (117 mutants, tests limited to the suites that
-exercise them; log `mutate.log` in the session scratchpad), a test for every survivor; (2) a gate on the final tree;
-(3) commit locally. Already done tonight: `CHANGELOG.md` (1.0.0 draft) and `docs/release-plan.md`.
+**Done.** Mutation testing of the lines changed today (117 mutants, then 68: two survivors, one equivalent, one fixed by `unit_targets.rs`). Then a full pass over `units`, `parser`, `phrase` and `functions` (726 mutants, 99 missed) with two reruns of the touched functions (335, then 209 mutants): 23 remain, all accepted as equivalent with reasons in `docs/mutation.md`. New tests: `function_near_misses.rs` (primes, pitch, degrees-minutes-seconds, screen density, combinations, roots, standard deviation, the seeded random sequence, refusal messages) and `phrase_unit_near_misses.rs` (`in lb oz`, conversions in brackets, rate merging, unit cancelling, plain numbers shown as rates, conversions at a rate, the written form of a parsed line). One redundant arm in `Func::arity` was removed. `CHANGELOG.md` (1.0.0 draft) and `docs/release-plan.md` are written.
 
-Rules while away: nothing is pushed, published or downloaded; no process I did not start is signalled.
+**Verified.** `bin/check` passed (678 tests, 56 suites) and `bin/accept` passed 58 of 58 on the final tree; the evidence file and the roadmap counts are refreshed.
 
-Waiting on the maintainer: pushes (7 commits to the private repo, 3 to the site repo), `appimagetool` and an icon
-for the AppImage, the choice on `5% * 2` and on `mpg * gallons` as miles, the public repository, and real sheets
-for the skipped-words report (ticket 0025).
+**Stuck, or noticed.** `5 m to cm at 2` answers `1,000 cm`: a conversion at a rate on units that are not money is accepted and the rate multiplies the result. Not changed; it needs a decision (refuse it, or keep it). Bash calls failed for a while because the auto-mode classifier gave no verdict, which was not caused by the commands.
 
-Log
-- Bash calls began failing because the auto-mode classifier gave no verdict (not caused by the commands); the work
-  continues through the tools that do not need it.
+**Next.** Waiting on you, in one batch: the pushes (the private repo has about 10 commits not pushed, the site repo 3), `appimagetool` and an icon for the AppImage, the choice on `5% * 2` and on `mpg * gallons` as miles, the public repository (a fresh one-commit history), real sheets for the skipped-words report (ticket 0025), and whether to delete the merged helper worktree.
+
+Rules held: nothing was pushed, published or downloaded; no process I did not start was signalled.
 
 # Earlier handoff (2026-10-26)
 
