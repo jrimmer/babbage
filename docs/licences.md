@@ -18,6 +18,7 @@ that gpui itself depends on.
 | thiserror | 2.0.21 | MIT OR Apache-2.0 | store |
 | tempfile | 3.27.0 | MIT OR Apache-2.0 | store (tests), app (tests), accept (the per-run work folder) |
 | proptest | 1.12.0 | MIT OR Apache-2.0 | store (tests) |
+| praeco | 0.1.1 | MIT | app (the update check and install; the owner's own crate from crates.io; brings ureq, rustls, ring, tar, sha2, semver and nix, all MIT, Apache-2.0, ISC or a mix) |
 
 The engine's own dependencies (num-bigint, num-integer, num-rational, num-traits, astro-float, and
 proptest for its tests) are listed by the engine's owner.

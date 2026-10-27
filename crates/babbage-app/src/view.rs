@@ -168,6 +168,8 @@ pub struct SheetView {
     /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
     pub menu: Option<SheetId>,
     pub notice: Option<String>,
+    /// What the update checks found and what they are doing.
+    pub updates: crate::update_ui::Updates,
     scroll: f32,
     focus: FocusHandle,
     pub layout: Option<Layout>,
@@ -201,7 +203,7 @@ impl SheetView {
         let computed = compute_formatted(ed.lines(), ed.formats());
         let focus = cx.focus_handle();
         window.focus(&focus);
-        let view = SheetView {
+        let mut view = SheetView {
             book,
             saver,
             sheets,
@@ -225,6 +227,7 @@ impl SheetView {
             rename: None,
             menu: None,
             notice: None,
+            updates: crate::update_ui::Updates::load(),
             scroll: 0.,
             focus,
             layout: None,
@@ -244,7 +247,13 @@ impl SheetView {
             }
         })
         .detach();
+        view.launch_check(cx);
         view
+    }
+
+    /// Writes whatever is waiting to be saved.
+    pub fn save_now(&self) {
+        self.saver.flush();
     }
 
     // Sheets.

@@ -40,6 +40,8 @@ pub enum Control {
     Text { placeholder: &'static str },
     /// A colour from a few, or the default.
     Swatches { palette: &'static [u32] },
+    /// A button that does something and sets nothing; its id is the item's key.
+    Button { label: &'static str },
 }
 
 pub struct Item {
@@ -53,6 +55,8 @@ pub struct Item {
 pub struct Pane {
     pub id: &'static str,
     pub title: &'static str,
+    /// A paragraph under the controls, or empty.
+    pub note: &'static str,
     pub items: &'static [Item],
 }
 
@@ -70,6 +74,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "general",
         title: "General",
+        note: "",
         items: &[
             Item {
                 key: "sheet_order",
@@ -98,6 +103,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "editing",
         title: "Editing",
+        note: "",
         items: &[
             Item {
                 key: "group_as_you_type",
@@ -134,6 +140,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "numbers",
         title: "Numbers",
+        note: "",
         items: &[
             Item {
                 key: "number_format",
@@ -178,6 +185,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "calculator",
         title: "Calculator",
+        note: "",
         items: &[
             Item {
                 key: "currency_codes",
@@ -226,6 +234,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "variables",
         title: "Variables",
+        note: "",
         items: &[
             Item {
                 key: "globals",
@@ -246,6 +255,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "styling",
         title: "Styling",
+        note: "",
         items: &[
             Item {
                 key: "color_number",
@@ -345,6 +355,7 @@ pub const PANES: &[Pane] = &[
     Pane {
         id: "dates",
         title: "Dates & Times",
+        note: "",
         items: &[
             Item {
                 key: "work_hours",
@@ -371,6 +382,41 @@ pub const PANES: &[Pane] = &[
                 label: "Day first in 12/02/1988",
                 hint: "12 February and not December 2",
                 control: Control::Toggle { default: false },
+            },
+        ],
+    },
+    Pane {
+        id: "updates",
+        title: "Updates",
+        note: "Babbage works offline and goes online only for this. A check sends one request to the release source (api.github.com unless you change it) asking for its list of releases. The request carries your IP address, as any request does, and the name of the update library, praeco; nothing from your sheets or settings is sent. By default it asks at most once a week, when Babbage starts, and keeps the answer so the Update pill stays up until you install or skip that version. Choose Off and Babbage makes no requests at all. BABBAGE_UPDATES=off in the environment also turns it off, whatever is chosen here. Write the source as github owner/repo, or forgejo https://host owner/repo.",
+        items: &[
+            Item {
+                key: "update_check",
+                label: "Look for a new version",
+                hint: "At most this often",
+                control: Control::Choice {
+                    options: &[
+                        ("off", "Off"),
+                        ("monthly", "Monthly"),
+                        ("weekly", "Weekly"),
+                        ("daily", "Daily"),
+                    ],
+                    default: "weekly",
+                },
+            },
+            Item {
+                key: "update_source",
+                label: "Where to look",
+                hint: "See the note below",
+                control: Control::Text {
+                    placeholder: "github jrimmer/babbage",
+                },
+            },
+            Item {
+                key: "update_now",
+                label: "Check now",
+                hint: "Asks right away",
+                control: Control::Button { label: "Check now" },
             },
         ],
     },
@@ -413,6 +459,7 @@ pub fn item_rects(pane: usize) -> Vec<(String, Rect)> {
                 item.key.to_string(),
                 r(CONTROL_X, y, WINDOW_W - CONTROL_X - 30., 28.),
             )),
+            Control::Button { .. } => out.push((item.key.to_string(), r(CONTROL_X, y, 140., 28.))),
             Control::Swatches { palette } => {
                 for (k, c) in palette.iter().enumerate() {
                     out.push((
@@ -483,6 +530,7 @@ impl Item {
             Control::Swatches { .. } => raw
                 .filter(|v| v.starts_with('#') && v.len() == 7)
                 .unwrap_or_else(|| "default".to_string()),
+            Control::Button { .. } => String::new(),
         }
     }
 }
@@ -539,6 +587,9 @@ impl SheetView {
                 Control::Text { .. } if id == item.key => {
                     self.settings_edit = Some((item.key.to_string(), item.current()));
                     cx.notify();
+                }
+                Control::Button { .. } if id == item.key && item.key == "update_now" => {
+                    self.run_check(true, cx);
                 }
                 _ => {}
             }
@@ -788,6 +839,21 @@ impl SheetView {
                             .child("Default"),
                     );
                 }
+                Control::Button { label } => {
+                    win = win.child(
+                        at(rect_of(item.key))
+                            .id(item.key)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .rounded(px(7.))
+                            .text_size(px(13.))
+                            .bg(c.line)
+                            .hover(|d| d.bg(c.selection))
+                            .on_mouse_down(MouseButton::Left, click_for(item.key.to_string(), cx))
+                            .child(*label),
+                    );
+                }
                 Control::Text { placeholder } => {
                     let editing = self.settings_edit.as_ref().filter(|(k, _)| k == item.key);
                     let shown = match editing {
@@ -815,6 +881,18 @@ impl SheetView {
                     );
                 }
             }
+        }
+        if !pane.note.is_empty() {
+            win = win.child(
+                div()
+                    .absolute()
+                    .left(px(TAB_X + TAB_W + 30.))
+                    .top(px(ROW_TOP + ROW_H * pane.items.len() as f32 + 8.))
+                    .w(px(WINDOW_W - (TAB_X + TAB_W + 30.) - 30.))
+                    .text_size(px(12.))
+                    .text_color(c.muted)
+                    .child(pane.note),
+            );
         }
         win.into_any_element()
     }

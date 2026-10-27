@@ -230,6 +230,10 @@ pub fn report(v: &SheetView) -> Value {
                 .collect();
             Some(json!({"old": o.old, "new": o.new, "uses": o.edits.len(), "x": x, "y": y, "buttons": buttons}))
         }),
+        "updates": layout.map(|l| v.updates_report(
+            f32::from(l.bounds.right()),
+            f32::from(l.bounds.top()) - crate::chrome::TOOLBAR_H,
+        )),
         "scrubbing": v.is_scrubbing(),
         "tooltip": v.hover_var.as_ref().map(|t| json!({"name": t.name, "value": t.value, "x": t.x, "y": t.y})),
         "completion": v.complete.as_ref().map(|c| {

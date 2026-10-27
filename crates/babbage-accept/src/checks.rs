@@ -1,8 +1,9 @@
 //! The acceptance checks. Each one starts the real binary on a temporary data folder, types real
 //! keystrokes into its window, and reads the result back from the screen and from the app's state hook.
 
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, bail, ensure};
 use serde_json::Value;
@@ -46,6 +47,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("settings-styling", settings_styling),
     ("answer-menu", answer_menu),
     ("answer-formats-follow-text", answer_formats_follow_text),
+    ("updates-interval", updates_interval),
+    ("updates-install", updates_install),
     ("variables", variables),
     ("subtotal-style", subtotal_style),
     ("number-scrub", number_scrub),
@@ -1882,6 +1885,325 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
     h.save_shot(&h.doc_shot("settings-styling.png"))?;
     close_settings(h, &mut app)?;
     app.finish()
+}
+
+/// The centre of a rectangle the state reports (`x`, `y`, `w`, `h`).
+fn centre(r: &Value) -> anyhow::Result<(f32, f32)> {
+    Ok((
+        f(&r["x"])? + f(&r["w"])? / 2.,
+        f(&r["y"])? + f(&r["h"])? / 2.,
+    ))
+}
+
+fn updates_of(s: &Value) -> &Value {
+    &s["updates"]
+}
+
+/// The update check is infrequent and can be turned off: off asks nothing, the default (weekly) asks once and
+/// then not again within the week while the pill stays up, Check now asks whatever the interval says, and the
+/// Updates pane says plainly what the check does. The release source is a server on loopback.
+fn updates_interval(h: &mut Harness) -> anyhow::Result<()> {
+    use crate::releases::{Listed, Releases};
+    let server = Releases::start(
+        "jrimmer/babbage",
+        &[
+            Listed {
+                version: "99.1.0",
+                notes: "- Faster totals",
+            },
+            Listed {
+                version: "99.0.0",
+                notes: "- A first release",
+            },
+        ],
+        b"not a program",
+    )?;
+    let config = h.logs.join("updates-interval.settings");
+    let state = h.logs.join("updates-interval-state");
+    let _ = std::fs::remove_dir_all(&state);
+    let source = format!("update_source = forgejo {} jrimmer/babbage\n", server.base);
+    let (config_s, state_s) = (
+        config.to_string_lossy().into_owned(),
+        state.to_string_lossy().into_owned(),
+    );
+    // An empty BABBAGE_UPDATES leaves it to the settings (the harness otherwise switches updates off).
+    let env = [
+        ("BABBAGE_CONFIG_FILE", config_s.as_str()),
+        ("XDG_STATE_HOME", state_s.as_str()),
+        ("BABBAGE_UPDATES", ""),
+    ];
+
+    // Off: nothing is asked, however long it waits.
+    std::fs::write(&config, format!("{source}update_check = off\n"))?;
+    let mut app = h.launch("updates-off", None, &env)?;
+    std::thread::sleep(Duration::from_millis(2500));
+    let s = app.state()?;
+    ensure!(
+        server.requests().is_empty()
+            && updates_of(&s)["interval"] == "off"
+            && updates_of(&s)["pill"].is_null(),
+        "an off check still asked: {:?} {}",
+        server.requests(),
+        updates_of(&s)
+    );
+    // The Updates pane says what the check does, and the choice is saved.
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-updates")?;
+    settings_click(h, &mut app, "update_check=weekly")?;
+    app.wait_for("weekly saved", T, |s| updates_of(s)["interval"] == "weekly")?;
+    let saved = std::fs::read_to_string(&config)?;
+    ensure!(saved.contains("update_check = weekly"), "file {saved:?}");
+    settle();
+    h.save_shot(&h.doc_shot("settings-updates.png"))?;
+    ensure!(
+        server.requests().is_empty(),
+        "choosing an interval asked the server: {:?}",
+        server.requests()
+    );
+    app.finish()?;
+
+    // The default interval: the first launch asks once and a pill offers the newest release.
+    std::fs::write(&config, &source)?;
+    let mut app = h.launch("updates-weekly", None, &env)?;
+    let s = app.wait_for("the pill", T, |s| !updates_of(s)["pill"].is_null())?;
+    ensure!(
+        updates_of(&s)["interval"] == "weekly"
+            && updates_of(&s)["latest"] == "99.1.0"
+            && server.list_requests() == 1,
+        "first launch: {} after {:?}",
+        updates_of(&s),
+        server.requests()
+    );
+    ensure!(
+        state.join("babbage/updates.json").is_file(),
+        "the answer was not kept"
+    );
+    app.finish()?;
+
+    // The next launch is inside the week: no request, and the pill is still up from the kept answer.
+    let mut app = h.launch("updates-weekly-again", None, &env)?;
+    app.wait_for("the pill from the kept answer", T, |s| {
+        !updates_of(s)["pill"].is_null()
+    })?;
+    std::thread::sleep(Duration::from_millis(1500));
+    ensure!(
+        server.list_requests() == 1,
+        "asked again within the week: {:?}",
+        server.requests()
+    );
+
+    // Check now asks whatever the interval says, and says how it went.
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-updates")?;
+    settings_click(h, &mut app, "update_check=off")?;
+    app.wait_for("off saved", T, |s| updates_of(s)["interval"] == "off")?;
+    settings_click(h, &mut app, "update_now")?;
+    let s = app.wait_for("the answer", T, |s| {
+        s["notice"]
+            .as_str()
+            .is_some_and(|n| n.contains("99.1.0 is available"))
+    })?;
+    ensure!(
+        server.list_requests() == 2 && updates_of(&s)["phase"] == "idle",
+        "check now: {} after {:?}",
+        updates_of(&s),
+        server.requests()
+    );
+    app.finish()
+}
+
+/// What an update looks like from the window: the pill opens the panel with the releases newest first and the
+/// install boilerplate cut off; Later closes it and the pill stays; Skip this version hides the pill and keeps
+/// hiding it at the next launch; Install downloads, checks the checksum and replaces the AppImage; Restart starts
+/// the new file and quits the old process.
+fn updates_install(h: &mut Harness) -> anyhow::Result<()> {
+    use crate::releases::{Listed, Releases};
+    let marker = h.logs.join("updates-install.started");
+    let _ = std::fs::remove_file(&marker);
+    let bin = h.repo.join("target/release/babbage");
+    // The "AppImage" the server hands out: a script that notes it was started and runs the real program.
+    let new_file = format!(
+        "#!/bin/sh\necho started >> '{}'\nexec '{}' \"$@\"\n",
+        marker.display(),
+        bin.display()
+    );
+    let server = Releases::start(
+        "jrimmer/babbage",
+        &[
+            Listed {
+                version: "99.1.0",
+                notes: "## Faster\n\n- **Totals** restart at a line that does not fit",
+            },
+            Listed {
+                version: "99.0.0",
+                notes: "- A first release",
+            },
+        ],
+        new_file.as_bytes(),
+    )?;
+    let dir = h.logs.join("updates-install");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir)?;
+    let image = dir.join("Babbage.AppImage");
+    std::fs::write(&image, "#!/bin/sh\necho old\n")?;
+    std::fs::set_permissions(&image, std::fs::Permissions::from_mode(0o755))?;
+    let config = dir.join("settings");
+    let state = dir.join("state");
+    let text = format!("update_source = forgejo {} jrimmer/babbage\n", server.base);
+    std::fs::write(&config, &text)?;
+    let (config_s, state_s, image_s, appdir_s) = (
+        config.to_string_lossy().into_owned(),
+        state.to_string_lossy().into_owned(),
+        image.to_string_lossy().into_owned(),
+        bin.parent()
+            .context("the program's folder")?
+            .to_string_lossy()
+            .into_owned(),
+    );
+    let env = [
+        ("BABBAGE_CONFIG_FILE", config_s.as_str()),
+        ("XDG_STATE_HOME", state_s.as_str()),
+        ("BABBAGE_UPDATES", ""),
+        ("APPIMAGE", image_s.as_str()),
+        ("APPDIR", appdir_s.as_str()),
+    ];
+    let click = |h: &mut Harness, app: &App, r: &Value| -> anyhow::Result<()> {
+        let (x, y) = centre(r)?;
+        h.click(app, x, y, "left", 1)
+    };
+    let button = |s: &Value, id: &str| -> anyhow::Result<Value> {
+        updates_of(s)["buttons"]
+            .as_array()
+            .context("buttons")?
+            .iter()
+            .find(|b| b["id"] == id)
+            .cloned()
+            .with_context(|| format!("a {id} button"))
+    };
+
+    // The pill, the panel, Later and Skip.
+    let mut app = h.launch("updates-panel", None, &env)?;
+    let s = app.wait_for("the pill", T, |s| !updates_of(s)["pill"].is_null())?;
+    click(h, &app, &updates_of(&s)["pill"])?;
+    let s = app.wait_for("the panel", T, |s| s["panel"] == "updates")?;
+    let releases = updates_of(&s)["releases"].as_array().context("releases")?;
+    let versions: Vec<&str> = releases
+        .iter()
+        .filter_map(|r| r["version"].as_str())
+        .collect();
+    ensure!(versions == ["99.1.0", "99.0.0"], "releases {versions:?}");
+    let all_notes: String = releases
+        .iter()
+        .filter_map(|r| r["notes"].as_str())
+        .collect();
+    ensure!(
+        all_notes.contains("Totals") && !all_notes.contains("BOILERPLATE"),
+        "the notes {all_notes:?}"
+    );
+    settle();
+    h.save_shot(&h.doc_shot("update-panel.png"))?;
+    click(h, &app, &button(&s, "update-later")?)?;
+    let s = app.wait_for("Later closes the panel", T, |s| s["panel"].is_null())?;
+    ensure!(
+        !updates_of(&s)["pill"].is_null(),
+        "the pill stays after Later"
+    );
+    click(h, &app, &updates_of(&s)["pill"])?;
+    let s = app.wait_for("the panel again", T, |s| s["panel"] == "updates")?;
+    click(h, &app, &button(&s, "update-skip")?)?;
+    let s = app.wait_for("the pill gone", T, |s| {
+        updates_of(s)["pill"].is_null() && s["panel"].is_null()
+    })?;
+    ensure!(
+        std::fs::read_to_string(&config)?.contains("update_skip = 99.1.0"),
+        "the skip was not saved: {:?}",
+        std::fs::read_to_string(&config)
+    );
+    ensure!(updates_of(&s)["latest"].is_null());
+    app.finish()?;
+    // Skipped stays skipped at the next launch.
+    let mut app = h.launch("updates-skipped", None, &env)?;
+    std::thread::sleep(Duration::from_millis(1500));
+    ensure!(
+        updates_of(&app.state()?)["pill"].is_null(),
+        "a skipped version came back"
+    );
+    app.finish()?;
+    ensure!(server.list_requests() == 1, "asked {:?}", server.requests());
+
+    // Install: the file on disk is replaced, after its checksum was checked.
+    std::fs::write(&config, &text)?;
+    let mut app = h.launch("updates-install", None, &env)?;
+    let s = app.wait_for("the pill", T, |s| !updates_of(s)["pill"].is_null())?;
+    click(h, &app, &updates_of(&s)["pill"])?;
+    let s = app.wait_for("the panel", T, |s| s["panel"] == "updates")?;
+    click(h, &app, &button(&s, "update-install")?)?;
+    let s = app.wait_for("installed", Duration::from_secs(60), |s| {
+        updates_of(s)["phase"] == "installed" || updates_of(s)["phase"] == "install_failed"
+    })?;
+    ensure!(
+        updates_of(&s)["phase"] == "installed",
+        "the install failed: {}",
+        updates_of(&s)
+    );
+    ensure!(
+        std::fs::read_to_string(&image)? == new_file,
+        "the AppImage was not replaced: {:?}",
+        std::fs::read_to_string(&image)
+    );
+    ensure!(
+        std::fs::metadata(&image)?.permissions().mode() & 0o100 != 0,
+        "the new file is not executable"
+    );
+    ensure!(
+        button(&s, "update-restart").is_ok() && button(&s, "update-install").is_err(),
+        "buttons {}",
+        updates_of(&s)["buttons"]
+    );
+
+    // Restart: the new file starts, and this process goes.
+    let old = app.pid();
+    let sock = app.sock_path().to_string_lossy().into_owned();
+    click(h, &app, &button(&s, "update-restart")?)?;
+    let start = Instant::now();
+    while Path::new(&format!("/proc/{old}")).exists() {
+        ensure!(
+            start.elapsed() < Duration::from_secs(20),
+            "the old process did not quit"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    app.reconnect(Duration::from_secs(30))?;
+    let started = std::fs::read_to_string(&marker).unwrap_or_default();
+    ensure!(
+        started.trim() == "started",
+        "the new file did not start: {started:?}"
+    );
+    let fresh: Vec<u32> = std::fs::read_dir("/proc")?
+        .flatten()
+        .filter_map(|e| e.file_name().to_string_lossy().parse::<u32>().ok())
+        .filter(|pid| {
+            std::fs::read(format!("/proc/{pid}/cmdline"))
+                .is_ok_and(|c| String::from_utf8_lossy(&c).contains(&sock))
+        })
+        .collect();
+    ensure!(
+        fresh.len() == 1 && fresh[0] != old,
+        "one new process for this run's socket, found {fresh:?} (old {old})"
+    );
+    // The process this check started by restarting is stopped by its own socket's quit command.
+    let result = app.finish();
+    let start = Instant::now();
+    while Path::new(&format!("/proc/{}", fresh[0])).exists()
+        && start.elapsed() < Duration::from_secs(8)
+    {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    ensure!(
+        !Path::new(&format!("/proc/{}", fresh[0])).exists(),
+        "the restarted app did not quit"
+    );
+    result
 }
 
 /// The strip above the sheet: its three buttons work with a real pointer, the settings panel changes the number

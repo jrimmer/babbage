@@ -25,6 +25,8 @@ mod shown;
 mod syntax;
 mod theme;
 mod timefmt;
+mod update_ui;
+mod updates;
 mod view;
 mod wrap;
 

@@ -3,6 +3,7 @@
 
 mod checks;
 mod harness;
+mod releases;
 
 use std::path::PathBuf;
 use std::time::Instant;

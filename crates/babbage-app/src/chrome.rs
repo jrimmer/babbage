@@ -11,17 +11,18 @@ use crate::view::SheetView;
 pub const TOOLBAR_H: f32 = 48.;
 pub const TOOL_W: f32 = 34.;
 pub const TOOL_H: f32 = 28.;
-const TOOL_GAP: f32 = 6.;
+pub const TOOL_GAP: f32 = 6.;
 const TOOL_PAD_RIGHT: f32 = 14.;
 
 pub const PANEL_W: f32 = 340.;
-const PANEL_RIGHT: f32 = 14.;
-const PANEL_TOP: f32 = 4.;
+pub const PANEL_RIGHT: f32 = 14.;
+pub const PANEL_TOP: f32 = 4.;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Panel {
     Settings,
     Help,
+    Updates,
 }
 
 impl Panel {
@@ -29,6 +30,7 @@ impl Panel {
         match self {
             Panel::Settings => "settings",
             Panel::Help => "help",
+            Panel::Updates => "updates",
         }
     }
 }
@@ -227,6 +229,7 @@ impl SheetView {
                     .justify_end()
                     .gap(px(TOOL_GAP))
                     .pr(px(TOOL_PAD_RIGHT))
+                    .children(self.update_pill(c, cx))
                     .child(self.tool_button(
                         "settings",
                         self.panel == Some(Panel::Settings),
@@ -246,7 +249,7 @@ impl SheetView {
             .into_any_element()
     }
 
-    fn panel_frame(&self, c: Colors, height: Option<f32>) -> gpui::Div {
+    pub fn panel_frame(&self, c: Colors, height: Option<f32>) -> gpui::Div {
         div()
             .occlude()
             .absolute()
@@ -267,6 +270,7 @@ impl SheetView {
         match self.panel? {
             Panel::Help => Some(self.help_panel(c)),
             Panel::Settings => Some(self.settings_window(c, cx)),
+            Panel::Updates => Some(self.updates_panel(c, cx)),
         }
     }
 

@@ -381,7 +381,7 @@ impl Harness {
         // The theme file does not exist, so the built-in colours are drawn and pixels never depend on
         // the user's theme.
         let script = format!(
-            "#!/bin/bash\necho $$ > {pid}\nexport HOME={home}\nexport BABBAGE_DATA_DIR={data}\nexport BABBAGE_THEME_FILE={theme}\nexport XDG_STATE_HOME={home}/state\nexport XDG_CONFIG_HOME={home}/config\nexport XDG_DATA_HOME={home}/data\nexport DBUS_SESSION_BUS_ADDRESS={bus}\n{exports}exec {bin} --control {sock} > {out} 2> {err}\n",
+            "#!/bin/bash\necho $$ > {pid}\nexport HOME={home}\nexport BABBAGE_DATA_DIR={data}\nexport BABBAGE_THEME_FILE={theme}\nexport XDG_STATE_HOME={home}/state\nexport XDG_CONFIG_HOME={home}/config\nexport XDG_DATA_HOME={home}/data\nexport DBUS_SESSION_BUS_ADDRESS={bus}\nexport BABBAGE_UPDATES=off\n{exports}exec {bin} --control {sock} > {out} 2> {err}\n",
             pid = q(&pid_file),
             home = q(&home),
             data = q(&data_dir),
@@ -720,6 +720,36 @@ impl Harness {
 }
 
 impl App {
+    /// The app's pid.
+    pub fn pid(&self) -> u32 {
+        self.pid
+    }
+
+    /// The control socket's path: also the argument that marks this run's processes.
+    pub fn sock_path(&self) -> &Path {
+        &self.sock
+    }
+
+    /// Connects again, to whichever process now serves the socket (the app restarted itself).
+    pub fn reconnect(&mut self, timeout: Duration) -> anyhow::Result<()> {
+        let start = Instant::now();
+        loop {
+            if let Ok(s) = UnixStream::connect(&self.sock) {
+                self.reader = BufReader::new(s.try_clone()?);
+                self.stream = s;
+                if self.request(r#"{"cmd":"state"}"#).is_ok() {
+                    return Ok(());
+                }
+            }
+            ensure!(
+                start.elapsed() < timeout,
+                "{}: nothing answered on the control socket within {timeout:?}",
+                self.name
+            );
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    }
+
     pub fn stderr(&self) -> String {
         std::fs::read_to_string(&self.err_log).unwrap_or_default()
     }
