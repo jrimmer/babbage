@@ -3,3 +3,6 @@
 /mutants.out.old
 /.oracle-venv
 /.claude/
+
+# Packaged files (bin/package)
+/dist

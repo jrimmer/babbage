@@ -13,6 +13,17 @@ use crate::harness::{App, Harness, Shot, luminance};
 pub type Check = fn(&mut Harness) -> anyhow::Result<()>;
 
 pub const CHECKS: &[(&str, Check)] = &[
+    // Command mode and the installer: no window, so they need no compositor.
+    ("cli-expression", cli_expression),
+    ("cli-errors", cli_errors),
+    ("cli-sheet-input", cli_sheet_input),
+    ("cli-answers", cli_answers),
+    ("cli-total", cli_total),
+    ("cli-json", cli_json),
+    ("cli-saved", cli_saved),
+    ("cli-repeating", cli_repeating),
+    ("cli-bbg-name", cli_bbg_name),
+    ("install-script", install_script),
     ("sum", sum_shows_39),
     ("sheet-overview", sheet_overview),
     ("error-line", error_line),
@@ -3788,4 +3799,537 @@ fn no_real_desktop(h: &mut Harness) -> anyhow::Result<()> {
         "babbage windows on the real desktop: {before} before, {after} after"
     );
     app.finish()
+}
+
+/// One scratch home for the command-mode and installer checks: a fake HOME with its own sheet folder and settings file,
+/// and the clock and zone pinned. The program is run with nothing else from the environment.
+struct Cli {
+    home: PathBuf,
+    program: PathBuf,
+}
+
+/// What one run printed and returned.
+struct Ran {
+    code: i32,
+    out: String,
+    err: String,
+}
+
+impl Cli {
+    fn new(h: &Harness, name: &str) -> anyhow::Result<Cli> {
+        let home = h.logs.join("cli").join(name);
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(home.join("sheets"))?;
+        Ok(Cli {
+            home,
+            program: h.repo.join("target/release/babbage"),
+        })
+    }
+
+    /// Runs `program` with `args`, standard input from `stdin` (empty when None) and `extra` set on top of the scratch
+    /// environment.
+    fn exec(
+        &self,
+        program: &Path,
+        args: &[&str],
+        stdin: Option<&str>,
+        extra: &[(&str, &str)],
+    ) -> anyhow::Result<Ran> {
+        use std::io::Write as _;
+        let mut cmd = std::process::Command::new(program);
+        cmd.args(args)
+            .env_clear()
+            .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+            .env("HOME", &self.home)
+            .env("BABBAGE_DATA_DIR", self.home.join("sheets"))
+            .env("BABBAGE_CONFIG_FILE", self.home.join("settings"))
+            .env("BABBAGE_NOW", FIXED_NOW)
+            .env("BABBAGE_UPDATES", "off")
+            .env("TZ", "UTC")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        for (k, v) in extra {
+            cmd.env(k, v);
+        }
+        let mut child = cmd
+            .spawn()
+            .with_context(|| format!("run {}", program.display()))?;
+        child
+            .stdin
+            .take()
+            .context("standard input")?
+            .write_all(stdin.unwrap_or("").as_bytes())?;
+        let out = child.wait_with_output()?;
+        Ok(Ran {
+            code: out.status.code().context("the program was killed")?,
+            out: String::from_utf8_lossy(&out.stdout).into_owned(),
+            err: String::from_utf8_lossy(&out.stderr).into_owned(),
+        })
+    }
+
+    /// `babbage calc ARGS`: the command mode under its subcommand name.
+    fn calc(&self, args: &[&str], stdin: Option<&str>) -> anyhow::Result<Ran> {
+        let mut all = vec!["calc"];
+        all.extend_from_slice(args);
+        self.exec(&self.program, &all, stdin, &[])
+    }
+}
+
+/// Expression mode: the words are joined into one line and only the answer is printed; a line with no answer prints
+/// nothing and exits 0. The answers are the window's (20% of 85 is 17).
+fn cli_expression(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-expression")?;
+    let r = cli.calc(&["20%", "of", "85"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "17\n",
+        "20% of 85: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    let r = cli.calc(&["-5", "+", "3"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "-2\n",
+        "-5 + 3: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["-p", "4", "1/3"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "≈ 0.3333\n",
+        "-p 4 1/3: {} {:?}",
+        r.code,
+        r.out
+    );
+    // A line that sets a variable answers with its value, as in the window; a note answers nothing.
+    let r = cli.calc(&["rent", "=", "$900"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "$900.00\n",
+        "a declaration: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["// a note"], None)?;
+    ensure!(
+        r.code == 0 && r.out.is_empty(),
+        "a note: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// Errors: a line with an error prints its message on stderr and exits 1; bad usage exits 2 with the usage on stderr.
+fn cli_errors(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-errors")?;
+    let r = cli.calc(&["1", "+"], None)?;
+    ensure!(
+        r.code == 1 && r.out.is_empty() && !r.err.is_empty(),
+        "1 +: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    let r = cli.calc(&["--bogus"], None)?;
+    ensure!(
+        r.code == 2 && r.err.contains("usage: bbg"),
+        "--bogus: {} {:?}",
+        r.code,
+        r.err
+    );
+    let r = cli.calc(&["-p", "11", "1"], None)?;
+    ensure!(
+        r.code == 2 && r.err.contains("0 to 10"),
+        "-p 11: {} {:?}",
+        r.code,
+        r.err
+    );
+    let r = cli.calc(&["-"], Some("1 +\n"))?;
+    ensure!(
+        r.code == 1 && r.out.contains("error:"),
+        "a sheet with an error line: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// Sheets from standard input and from a file: each line prints its text and its answer in two aligned columns, and a
+/// file's trailer line still sets how its answer is written.
+fn cli_sheet_input(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-sheet-input")?;
+    let r = cli.calc(&["-"], Some("Lunch\n12 + 8\n\n"))?;
+    ensure!(
+        r.code == 0 && r.out == "Lunch\n12 + 8  20\n",
+        "stdin sheet: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["-"], Some(""))?;
+    ensure!(
+        r.code == 0 && r.out.is_empty(),
+        "an empty stdin sheet: {} {:?}",
+        r.code,
+        r.out
+    );
+    let file = cli.home.join("budget.bbg");
+    std::fs::write(&file, "1/3\n⟦bbg line 1 dp=2⟧\n")?;
+    let path = file.to_string_lossy().into_owned();
+    let r = cli.calc(&[path.as_str()], None)?;
+    ensure!(
+        r.code == 0 && r.out == "1/3  ≈ 0.33\n",
+        "file sheet with a trailer: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// `-a`: only the answers, one per line, blank when a line has none; errors go to stderr and still exit 1.
+fn cli_answers(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-answers")?;
+    let r = cli.calc(&["-a"], Some("Lunch\n12 + 8\n1 +\n"))?;
+    ensure!(
+        r.code == 1 && r.out == "\n20\n\n" && !r.err.is_empty(),
+        "-a: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    Ok(())
+}
+
+/// `-t`: the sheet's total as a last row that lines up with the answers; with `-a` it is one more answer line.
+fn cli_total(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-total")?;
+    let r = cli.calc(&["-t"], Some("10\n20\n"))?;
+    ensure!(
+        r.code == 0 && r.out == "10     10\n20     20\nTotal  30\n",
+        "-t: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["-a", "-t"], Some("10\n20\n"))?;
+    ensure!(
+        r.code == 0 && r.out == "10\n20\n30\n",
+        "-a -t: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// `--json`: one object per line with text, answer, exact and error; `-t` adds a `total` object.
+fn cli_json(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-json")?;
+    let r = cli.calc(&["--json", "-t"], Some("12 + 8\n1 +\n"))?;
+    ensure!(r.code == 1, "--json exit code {}", r.code);
+    let objects: Vec<Value> = r
+        .out
+        .lines()
+        .map(|l| serde_json::from_str(l).with_context(|| format!("not JSON: {l}")))
+        .collect::<anyhow::Result<_>>()?;
+    ensure!(objects.len() == 3, "{} objects: {}", objects.len(), r.out);
+    ensure!(
+        objects[0]["text"] == "12 + 8"
+            && objects[0]["answer"] == "20"
+            && objects[0]["exact"] == true,
+        "first line: {}",
+        objects[0]
+    );
+    ensure!(
+        objects[1]["answer"].is_null() && objects[1]["error"].is_string(),
+        "error line: {}",
+        objects[1]
+    );
+    ensure!(
+        objects[2]["total"]["answer"] == "20",
+        "total: {}",
+        objects[2]
+    );
+    Ok(())
+}
+
+/// `-s NAME`: a saved sheet is read from the sheet folder by its name; a name with no sheet exits 1.
+fn cli_saved(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-saved")?;
+    std::fs::write(cli.home.join("sheets/Trip.bbg"), "Hotel\n3 * $120\n")?;
+    let r = cli.calc(&["-s", "Trip"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "Hotel\n3 * $120  $360.00\n",
+        "-s Trip: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["-s", "Nope"], None)?;
+    ensure!(
+        r.code == 1 && r.err.contains("no sheet named"),
+        "-s Nope: {} {:?}",
+        r.code,
+        r.err
+    );
+    Ok(())
+}
+
+/// `-r`: a repeating decimal is written with its repeating part in brackets; without it the ordinary answer.
+fn cli_repeating(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-repeating")?;
+    let r = cli.calc(&["-r", "1/3"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "0.(3)\n",
+        "-r 1/3: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["-r", "1/7"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "0.(142857)\n",
+        "-r 1/7: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.calc(&["1/3"], None)?;
+    ensure!(
+        r.code == 0 && r.out == "≈ 0.3333333333\n",
+        "1/3: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// The name decides the mode: a symlink named `bbg` runs the command-line calculator, with the words as its
+/// expression, or with standard input as its sheet; `BABBAGE_AS=bbg` does the same for any name.
+fn cli_bbg_name(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-bbg-name")?;
+    let bin = cli.home.join("bin");
+    std::fs::create_dir_all(&bin)?;
+    let link = bin.join("bbg");
+    let _ = std::fs::remove_file(&link);
+    std::os::unix::fs::symlink(&cli.program, &link)?;
+    let r = cli.exec(&link, &["20%", "of", "85"], None, &[])?;
+    ensure!(
+        r.code == 0 && r.out == "17\n",
+        "bbg 20% of 85: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    let r = cli.exec(&link, &[], Some("2 + 2\n"), &[])?;
+    ensure!(
+        r.code == 0 && r.out == "2 + 2  4\n",
+        "bbg with a sheet on standard input: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.exec(
+        &cli.program,
+        &["20%", "of", "85"],
+        None,
+        &[("BABBAGE_AS", "bbg")],
+    )?;
+    ensure!(
+        r.code == 0 && r.out == "17\n",
+        "BABBAGE_AS=bbg: {} {:?}",
+        r.code,
+        r.out
+    );
+    Ok(())
+}
+
+/// The sha256 line `sha256sum` writes for `file`, named by its file name, as a .sha256 file holds it.
+fn sha256_file(file: &Path) -> anyhow::Result<String> {
+    let dir = file.parent().context("a folder for the file")?;
+    let name = file.file_name().context("a file name")?;
+    let out = std::process::Command::new("sha256sum")
+        .current_dir(dir)
+        .arg(name)
+        .output()?;
+    ensure!(out.status.success(), "sha256sum {}", file.display());
+    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+}
+
+/// The one-line installer, against a local release server on a scratch home. A good download installs the AppImage
+/// and both commands, and `bbg` answers. A wrong checksum stops the install and leaves no files behind. A second run
+/// changes nothing. `--uninstall` removes what was installed and nothing else. `--tarball` installs the program
+/// from the tarball.
+fn install_script(h: &mut Harness) -> anyhow::Result<()> {
+    use crate::releases::Releases;
+    use std::os::unix::fs::PermissionsExt;
+    let cli = Cli::new(h, "install-script")?;
+    let stage = cli.home.join("stage");
+    std::fs::create_dir_all(&stage)?;
+    let version = "99.2.0";
+    let arch = std::env::consts::ARCH;
+    let appimage = format!("babbage-{version}-{arch}.AppImage");
+    let tarball = format!("babbage-{version}-{arch}.tar.gz");
+    // The real program stands in for the AppImage, so the installed commands really run.
+    let program_bytes = std::fs::read(&cli.program)?;
+    std::fs::write(stage.join(&appimage), &program_bytes)?;
+    // The tarball holds the same program, a bbg link, LICENSE and README.md, as bin/package makes it.
+    let tar_dir = stage.join("tar");
+    std::fs::create_dir_all(&tar_dir)?;
+    std::fs::write(tar_dir.join("babbage"), &program_bytes)?;
+    std::fs::set_permissions(
+        tar_dir.join("babbage"),
+        std::fs::Permissions::from_mode(0o755),
+    )?;
+    std::os::unix::fs::symlink("babbage", tar_dir.join("bbg"))?;
+    std::fs::copy(h.repo.join("LICENSE"), tar_dir.join("LICENSE"))?;
+    std::fs::copy(h.repo.join("README.md"), tar_dir.join("README.md"))?;
+    let status = std::process::Command::new("tar")
+        .arg("-czf")
+        .arg(stage.join(&tarball))
+        .arg("-C")
+        .arg(&tar_dir)
+        .args(["babbage", "bbg", "LICENSE", "README.md"])
+        .status()?;
+    ensure!(status.success(), "tar failed");
+    // A release folder served over HTTP: the version, then each file and its .sha256. `bad` puts a wrong sum on each.
+    std::fs::write(stage.join("babbage-version.txt"), format!("{version}\n"))?;
+    // `bad` gives the AppImage a wrong .sha256; everything else is served as it is.
+    let release = |bad: bool| -> anyhow::Result<Vec<(String, Vec<u8>)>> {
+        let mut files = Vec::new();
+        for name in ["babbage-version.txt", appimage.as_str(), tarball.as_str()] {
+            let body = std::fs::read(stage.join(name))?;
+            let sum = if bad && name == appimage {
+                format!("{}  {name}\n", "0".repeat(64))
+            } else {
+                sha256_file(&stage.join(name))?
+            };
+            files.push((format!("/download/{name}"), body));
+            files.push((format!("/download/{name}.sha256"), sum.into_bytes()));
+        }
+        Ok(files)
+    };
+    let good = Releases::start_files(release(false)?)?;
+    let bad = Releases::start_files(release(true)?)?;
+    let installer = h.repo.join("install.sh").to_string_lossy().into_owned();
+    let share = cli.home.join(".local/share/babbage");
+    let bin = cli.home.join(".local/bin");
+    let good_url = format!("{}/download", good.base);
+    let bad_url = format!("{}/download", bad.base);
+    let tmp = cli.home.join("tmp");
+    std::fs::create_dir_all(&tmp)?;
+    let tmp_s = tmp.to_string_lossy().into_owned();
+
+    // A wrong checksum: the install stops, and nothing is written under HOME or in the temporary folder.
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str()],
+        None,
+        &[
+            ("BABBAGE_RELEASE_URL", bad_url.as_str()),
+            ("TMPDIR", tmp_s.as_str()),
+        ],
+    )?;
+    ensure!(
+        r.code != 0 && r.err.contains("checksum mismatch"),
+        "a bad checksum: {} {:?}",
+        r.code,
+        r.err
+    );
+    ensure!(
+        !cli.home.join(".local").exists(),
+        "a bad checksum left files under HOME"
+    );
+    ensure!(
+        std::fs::read_dir(&tmp)?.next().is_none(),
+        "a bad checksum left files in the temporary folder"
+    );
+
+    // A fresh install of the AppImage, and the commands it writes.
+    let env = [
+        ("BABBAGE_RELEASE_URL", good_url.as_str()),
+        ("TMPDIR", tmp_s.as_str()),
+    ];
+    let r = cli.exec(Path::new("/bin/bash"), &[installer.as_str()], None, &env)?;
+    ensure!(r.code == 0, "install: {} {:?}", r.code, r.err);
+    ensure!(
+        std::fs::read(share.join("babbage.AppImage"))? == program_bytes,
+        "the installed AppImage is not the one served"
+    );
+    ensure!(
+        std::fs::read_to_string(share.join("installed-version"))? == format!("{version}\n"),
+        "installed-version"
+    );
+    for name in ["babbage", "bbg"] {
+        let mode = std::fs::metadata(bin.join(name))?.permissions().mode();
+        ensure!(mode & 0o111 != 0, "{name} is not executable");
+    }
+    let r = cli.exec(&bin.join("bbg"), &["20%", "of", "85"], None, &[])?;
+    ensure!(
+        r.code == 0 && r.out == "17\n",
+        "installed bbg: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+
+    // A second run changes nothing and says so.
+    let r = cli.exec(Path::new("/bin/bash"), &[installer.as_str()], None, &env)?;
+    ensure!(
+        r.code == 0 && r.out.contains("already installed"),
+        "second run: {} {:?}",
+        r.code,
+        r.out
+    );
+    ensure!(
+        std::fs::read(share.join("babbage.AppImage"))? == program_bytes,
+        "the second run changed the AppImage"
+    );
+
+    // Uninstall removes what it installed; a file of the user's in the same folder stays.
+    std::fs::write(bin.join("keep-me"), "mine\n")?;
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str(), "--uninstall"],
+        None,
+        &env,
+    )?;
+    ensure!(r.code == 0, "uninstall: {} {:?}", r.code, r.err);
+    ensure!(
+        !bin.join("babbage").exists() && !bin.join("bbg").exists() && !share.exists(),
+        "uninstall left files behind"
+    );
+    ensure!(
+        bin.join("keep-me").is_file(),
+        "uninstall removed a file it did not install"
+    );
+    std::fs::remove_file(bin.join("keep-me"))?;
+
+    // The tarball: the program itself, not the AppImage, and the commands still answer.
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str(), "--tarball"],
+        None,
+        &env,
+    )?;
+    ensure!(r.code == 0, "--tarball install: {} {:?}", r.code, r.err);
+    ensure!(
+        share.join("babbage").is_file() && share.join("LICENSE").is_file(),
+        "the tarball's files are not installed"
+    );
+    let r = cli.exec(&bin.join("bbg"), &["2 + 2"], None, &[])?;
+    ensure!(
+        r.code == 0 && r.out == "4\n",
+        "bbg from the tarball install: {} {:?}",
+        r.code,
+        r.out
+    );
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str(), "--uninstall"],
+        None,
+        &env,
+    )?;
+    ensure!(
+        r.code == 0 && !share.exists(),
+        "uninstall after the tarball: {} {:?}",
+        r.code,
+        r.err
+    );
+    drop((good, bad));
+    Ok(())
 }

@@ -9,6 +9,25 @@ This chapter gets Babbage onto your machine, shows you the window, and walks you
 
 ## Install
 
+One line installs Babbage for your user, with no administrator rights needed:
+
+```
+curl -fsSL https://github.com/jrimmer/babbage/releases/latest/download/install.sh | bash
+```
+
+The installer keeps the program in `~/.local/share/babbage` and adds two commands to `~/.local/bin`: `babbage`,
+which opens the window, and `bbg`, which answers from the command line (see
+[The command line](14-command-line.html)). Each file it downloads is checked against its published `.sha256` file
+before anything is installed. Run the same line again to update to the newest release.
+
+To take the tarball rather than the AppImage, add `--tarball` after `bash -s --`. To remove Babbage, run the line
+with `--uninstall` in the same place. Only the files the installer made are removed.
+
+If `~/.local/bin` is not on your `PATH`, the installer says so. Add that folder to your shell's `PATH` to run
+`babbage` and `bbg` by name.
+
+### Download by hand
+
 Babbage is released as two downloads. Pick one.
 
 | File | Best for |
@@ -54,7 +73,7 @@ machine.
 
 ### Check that it runs
 
-`babbage --version` prints the version and `babbage --help` prints the one line of usage. Run either from a
+`babbage --version` prints the version and `babbage --help` prints the usage. Run either from a
 terminal if you want to confirm the install before opening the window.
 
 ## First launch

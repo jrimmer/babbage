@@ -2,6 +2,7 @@
 //!
 //! ```text
 //! babbage [--control <socket>]
+//! babbage calc [options] EXPRESSION...      (also run as `bbg`; see `cli.rs`)
 //! ```
 //!
 //! Sheets live in `$BABBAGE_DATA_DIR` (default `~/.local/share/babbage/sheets`). `--control` serves the
@@ -11,6 +12,7 @@ mod answer_menu;
 mod appprefs;
 mod autocomplete;
 mod chrome;
+mod cli;
 mod computed;
 mod control;
 mod editor_model;
@@ -40,11 +42,19 @@ use gpui::{AppContext, Bounds, TitlebarOptions, WindowBounds, WindowOptions, px,
 
 use view::{Init, SAVE_DELAY_MS, SheetView};
 
-const USAGE: &str = "usage: babbage [--control <socket>]";
+const USAGE: &str = "usage: babbage [--control <socket>]\n       babbage calc [options] EXPRESSION... (see babbage calc --help)";
 
 fn main() -> anyhow::Result<()> {
+    let argv: Vec<std::ffi::OsString> = std::env::args_os().collect();
+    if let Some(rest) = cli::command_args(&argv) {
+        let rest: Vec<String> = rest
+            .iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        std::process::exit(cli::run(&rest));
+    }
     let mut control = None;
-    let mut args = std::env::args_os().skip(1);
+    let mut args = argv.into_iter().skip(1);
     while let Some(arg) = args.next() {
         match arg.to_str() {
             Some("--control") => {
