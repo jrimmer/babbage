@@ -378,6 +378,14 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
     let text = blank_text(raw, &blanks);
     result.tags = tags;
 
+    // A statistics word on a line of its own shows no answer in the reference app (Sheet G), not an error.
+    if matches!(
+        text.trim().to_lowercase().as_str(),
+        "average" | "avg" | "count" | "median"
+    ) {
+        return result;
+    }
+
     match split_conditional(&text) {
         Some(c) => run_conditional(&c, index, st, opts, &mut result),
         None => run_statement(&text, index, st, opts, &mut result),
@@ -576,21 +584,33 @@ enum Aggregate {
     Count,
 }
 
-fn aggregate_request(lowered: &str) -> Option<(Aggregate, String)> {
-    let (function, rest) = lowered.split_once(char::is_whitespace)?;
-    let function = match function {
-        "total" | "sum" => Aggregate::Total,
-        "average" | "avg" => Aggregate::Average,
-        "count" => Aggregate::Count,
-        _ => return None,
-    };
-    let rest = rest.trim().strip_prefix("of")?.trim();
-    let tag = rest.strip_prefix('#')?;
+fn aggregate_word(word: &str) -> Option<Aggregate> {
+    match word {
+        "total" | "sum" => Some(Aggregate::Total),
+        "average" | "avg" => Some(Aggregate::Average),
+        "count" => Some(Aggregate::Count),
+        _ => None,
+    }
+}
+
+fn tag_name(token: &str) -> Option<String> {
+    let tag = token.strip_prefix('#')?;
     (!tag.is_empty()
         && tag
             .chars()
             .all(|c| c.is_alphanumeric() || c == '_' || c == '-'))
-    .then(|| (function, tag.to_string()))
+    .then(|| tag.to_string())
+}
+
+/// `total of #food` and the short form the reference app's home page shows, `#food total`.
+fn aggregate_request(lowered: &str) -> Option<(Aggregate, String)> {
+    let (first, rest) = lowered.split_once(char::is_whitespace)?;
+    if let Some(tag) = tag_name(first) {
+        return Some((aggregate_word(rest.trim())?, tag));
+    }
+    let function = aggregate_word(first)?;
+    let rest = rest.trim().strip_prefix("of")?.trim();
+    Some((function, tag_name(rest)?))
 }
 
 fn aggregate(function: Aggregate, found: &[&Value]) -> Result<Value, Error> {

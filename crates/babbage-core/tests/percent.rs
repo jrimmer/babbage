@@ -102,7 +102,8 @@ fn percent_is_exact_not_a_float_trap() {
 #[test]
 fn attached_and_detached_percent_mean_different_things() {
     assert_eq!(shown("20/200 %"), "10%");
-    unsupported("20/200%");
+    // An attached percent is its fraction, so this is 20 / 2 (the reference app: `20 / 50%` is 40).
+    assert_eq!(shown("20/200%"), "10");
     assert_eq!(shown("20 / 200 %"), "10%");
     assert_eq!(shown("(20/200)%"), "0.1%");
     assert_eq!(shown("50 %"), "5,000%");
@@ -131,19 +132,27 @@ fn word_forms_are_case_and_spacing_insensitive() {
 
 #[test]
 fn undocumented_combinations_are_refused_not_guessed() {
-    for line in [
-        "10% × 10%",
-        "10% / 20%",
-        "20 / 50%",
-        "50% / 2",
-        "10%^2",
-        "2^10%",
-        "10% on 20%",
-        "10% off 20%",
-        "10%%",
-    ] {
+    for line in ["10% / 20%", "2^10%", "10% on 20%", "10% off 20%", "10%%"] {
         unsupported(line);
     }
+}
+
+#[test]
+fn percentages_multiply_divide_and_power_as_the_reference_app_does() {
+    // Sheet G (ticket 0012): The reference app gave 1%, 40, 25% and 0.01.
+    assert_eq!(shown("10% × 10%"), "1%");
+    assert_eq!(shown("20 / 50%"), "40");
+    assert_eq!(shown("50% / 2"), "25%");
+    assert_eq!(shown("10%^2"), "0.01");
+    // The rule, tried on other numbers: a percentage is its fraction, and only the product and the quotient by a
+    // plain number stay a percentage.
+    assert_eq!(shown("200% × 25%"), "50%");
+    assert_eq!(shown("30 kg / 25%"), "120 kg");
+    assert_eq!(shown("1 / 4%"), "25");
+    assert_eq!(shown("5% / 2"), "2.5%");
+    assert_eq!(shown("200%^3"), "8");
+    assert_eq!(evaluate("5 / 0%"), Err(Error::DivisionByZero));
+    assert_eq!(evaluate("5% / 0"), Err(Error::DivisionByZero));
 }
 
 #[test]
@@ -406,11 +415,11 @@ fn refusal_messages_say_which_rule_was_hit() {
         Err(Error::UnsupportedOperation(ON_OFF_NEEDS_PLAIN))
     );
     assert_eq!(
-        evaluate("10% × 10%"),
+        evaluate("10% / 20%"),
         Err(Error::UnsupportedOperation(PERCENT_COMBO))
     );
     assert_eq!(
-        evaluate("20 / 50%"),
+        evaluate("2^10%"),
         Err(Error::UnsupportedOperation(PERCENT_COMBO))
     );
     assert_eq!(

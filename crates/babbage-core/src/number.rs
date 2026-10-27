@@ -128,14 +128,14 @@ impl Number {
         Number::new(&self.0 / &rhs.0)
     }
 
-    /// The remainder after dividing by `rhs`, with the sign of `self` (`-7 mod 3` is `-1`).
+    /// The remainder after dividing by `rhs`, floored: it takes the sign of `rhs` (`-7 mod 3` is `2`, `7 mod -3` is
+    /// `-2`), as the reference app does.
     pub fn rem(&self, rhs: &Number) -> Result<Number, Error> {
         if rhs.is_zero() {
             return Err(Error::DivisionByZero);
         }
-        let q = &self.0 / &rhs.0;
-        let truncated = q.numer() / q.denom();
-        Number::new(&self.0 - &rhs.0 * BigRational::from_integer(truncated))
+        let floored = (&self.0 / &rhs.0).floor();
+        Number::new(&self.0 - &rhs.0 * floored)
     }
 
     pub fn pow(&self, exp: &Number) -> Result<Number, Error> {

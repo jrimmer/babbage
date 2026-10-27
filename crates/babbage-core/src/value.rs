@@ -75,9 +75,11 @@ pub enum Shown {
     ZoneLabel(String),
     /// The result of an `in` or `to` conversion: every digit, never `13 lb 8 oz` or `5 feet 6 inches`.
     Decimal,
+    /// An angle converted to hours: `6h 0m 0s` (the sky turns 15 degrees an hour).
+    HoursMinutesSeconds,
 }
 
-const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
+const TEMPERATURE: &str = "temperatures can be converted, added to or taken from a plain number, a percentage or the same scale, and scaled by a plain number, but not combined further";
 const NOT_YET: &str = "this combination of percentages is not defined";
 const PHRASE_NEEDS_PLAIN: &str = "this phrase needs plain numbers and, where written, a percentage";
 
@@ -519,6 +521,52 @@ impl Value {
         self.convert_exact(target).map(|v| v.tainted(approx))
     }
 
+    /// A length of time and an angle are the same amount of turning: 24 hours is 360 degrees, so 15 degrees an hour
+    /// (`12h 30m in degrees` is 187.5°, `90 degrees in hours` is `6h 0m 0s`), as the reference app has it.
+    fn time_and_angle(&self, target: &UnitExpr) -> Result<Option<Value>, Error> {
+        use crate::units::lookup;
+        let (Some(second), Some(degree)) = (lookup("s"), lookup("deg")) else {
+            return Ok(None);
+        };
+        let in_unit = |n: &Number, from: &UnitExpr, to: &UnitExpr| -> Result<Number, Error> {
+            n.mul(&from.factor_against(to)?)?
+                .div(&to.factor_against(from)?)
+        };
+        let per_degree = Number::from_i64(240);
+        if self.unit.dim() == second.dim() && target.dim() == degree.dim() {
+            let degrees = in_unit(&self.number, &self.unit, &second)?.div(&per_degree)?;
+            let number = in_unit(&degrees, &degree, target)?;
+            return Ok(Some(Value::quantity(number, target.clone())?));
+        }
+        if self.unit.dim() == degree.dim() && target.dim() == second.dim() {
+            let seconds = in_unit(&self.number, &self.unit, &degree)?.mul(&per_degree)?;
+            let number = in_unit(&seconds, &second, target)?;
+            let mut v = Value::quantity(number, target.clone())?;
+            if lookup("hour").is_some_and(|h| h == *target) {
+                v.layout = Some(Shown::HoursMinutesSeconds);
+            }
+            return Ok(Some(v));
+        }
+        Ok(None)
+    }
+
+    /// Litres per hundred kilometres and distance per volume are reciprocals: 8 L/100km is 29.4 mpg, 30 mpg is
+    /// 7.84 L/100km (`MPG` is the US gallon), as the reference app converts them. Only `L/100km` converts this
+    /// way, so no other pair of units is turned upside down by accident.
+    fn fuel_economy(&self, target: &UnitExpr) -> Result<Option<Value>, Error> {
+        let Some(per_100) = crate::units::lookup("L/100km") else {
+            return Ok(None);
+        };
+        if (self.unit != per_100 && *target != per_100)
+            || self.unit.dim() != target.dim().scaled(-1)
+        {
+            return Ok(None);
+        }
+        let si = self.number.mul(&self.unit.factor()?)?;
+        let number = Number::from_i64(1).div(&si)?.div(&target.factor()?)?;
+        Ok(Some(Value::quantity(number, target.clone())?))
+    }
+
     fn convert_exact(self, target: &UnitExpr) -> Result<Value, Error> {
         // A plain number shown as a rate of time over time: `3 hours / 3 days as hour/day` is `1 hour/day`.
         // A ratio of two amounts shown as a rate keeps its units: `8g/2 lb as grams/lb` is `4 g/lb`.
@@ -544,6 +592,12 @@ impl Value {
         if self.unit.dim() != target.dim() {
             if let Some(adapted) = self.unit.adapt_target(target) {
                 return self.convert_exact(&adapted);
+            }
+            if let Some(v) = self.time_and_angle(target)? {
+                return Ok(v);
+            }
+            if let Some(v) = self.fuel_economy(target)? {
+                return Ok(v);
             }
             return Err(mismatch(&self.unit, target));
         }
@@ -675,10 +729,29 @@ impl Value {
             };
         }
         if l.unit.has_offset() || r.unit.has_offset() {
-            let shifts = matches!(op, BinOp::Add | BinOp::Sub | BinOp::Join)
-                && l.kind == Plain
-                && r.kind == Plain;
-            if !shifts || (!l.unit.is_empty() && !r.unit.is_empty()) {
+            // the reference app (Sheet G): a temperature is added to or taken from a plain number, a percentage
+            // or a temperature of the same scale (`20 C + 5 C` is `25 °C`, `20 C + 10%` is `22 °C`), and scaled by
+            // a plain number (`20 C × 2` is `40 °C`). Two scales, or two temperatures multiplied, stay refused.
+            let bare = |v: &Value| v.unit.is_empty();
+            let allowed = match op {
+                BinOp::Add | BinOp::Sub | BinOp::Join => {
+                    (l.kind == Plain && r.kind == Plain && (bare(l) || bare(r) || l.unit == r.unit))
+                        || (l.kind == Plain && r.kind == Percent)
+                }
+                BinOp::Mul => {
+                    (l.unit.has_offset()
+                        && l.kind == Plain
+                        && r.kind != Kind::Multiplier
+                        && bare(r))
+                        || (r.unit.has_offset()
+                            && r.kind == Plain
+                            && l.kind != Kind::Multiplier
+                            && bare(l))
+                }
+                BinOp::Div => l.unit.has_offset() && l.kind == Plain && r.kind == Plain && bare(r),
+                _ => false,
+            };
+            if !allowed {
                 return Err(Error::UnsupportedOperation(TEMPERATURE));
             }
         }
@@ -694,6 +767,16 @@ impl Value {
                 Value::quantity(l.number.mul(&adjust(op, &r.number)?)?, l.unit.clone())
             }
             (BinOp::Mul, Plain, Plain) => product(l, r),
+            // the reference app (Sheet G): `10% x 10%` is `1%`, `20 / 50%` is `40`, `50% / 2` is `25%` and
+            // `10%^2` is `0.01`.
+            (BinOp::Mul, Percent, Percent) => Ok(Value::percent(l.number.mul(&r.number)?)),
+            (BinOp::Div, Plain, Percent) => {
+                Value::quantity(l.number.div(&r.number)?, l.unit.clone())
+            }
+            (BinOp::Div, Percent, Plain) if r.unit.is_empty() => {
+                Ok(Value::percent(l.number.div(&r.number)?))
+            }
+            (BinOp::Pow, Percent, Plain) => power(&Value::plain(l.number.clone()), r),
             (BinOp::Mul, Percent, Plain) => {
                 Value::quantity(l.number.mul(&r.number)?, r.unit.clone())
             }
@@ -1622,6 +1705,54 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
         Shown::Timecode(rate) => {
             let (text, exact) = crate::dates::format_timecode(&base, rate);
             Formatted { text, exact }
+        }
+        Shown::HoursMinutesSeconds => {
+            let whole = |n: &Number| {
+                Number::from_ratio(n.floor(), num_bigint::BigInt::from(1))
+                    .unwrap_or_else(|_| Number::from_i64(0))
+            };
+            let negative = base.is_negative();
+            let total = base.abs();
+            let hours = whole(
+                &total
+                    .div(&Number::from_i64(3600))
+                    .unwrap_or_else(|_| Number::from_i64(0)),
+            );
+            let after_hours = total
+                .sub(
+                    &hours
+                        .mul(&Number::from_i64(3600))
+                        .unwrap_or_else(|_| Number::from_i64(0)),
+                )
+                .unwrap_or_else(|_| Number::from_i64(0));
+            let minutes = whole(
+                &after_hours
+                    .div(&Number::from_i64(60))
+                    .unwrap_or_else(|_| Number::from_i64(0)),
+            );
+            let seconds = after_hours
+                .sub(
+                    &minutes
+                        .mul(&Number::from_i64(60))
+                        .unwrap_or_else(|_| Number::from_i64(0)),
+                )
+                .unwrap_or_else(|_| Number::from_i64(0));
+            let plain = opts.unabbreviated();
+            let (h, m, s) = (
+                format_decimal(&hours, &plain),
+                format_decimal(&minutes, &plain),
+                format_decimal(&seconds, &plain),
+            );
+            Formatted {
+                text: format!(
+                    "{}{}h {}m {}s",
+                    if negative { "-" } else { "" },
+                    h.text,
+                    m.text,
+                    s.text
+                ),
+                exact: h.exact && m.exact && s.exact,
+            }
         }
         Shown::Digits
         | Shown::Fraction

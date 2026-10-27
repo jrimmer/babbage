@@ -253,6 +253,8 @@ fn year_after(toks: &[Token], mut i: usize) -> (Option<i64>, usize) {
 pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
     let (today, seconds) = settings::local_now();
     let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    // Where in `out` a date written with a month and day but no year stands.
+    let mut yearless: Vec<usize> = Vec::new();
     let mut i = 0;
     while i < toks.len() {
         let at = toks[i].at;
@@ -363,6 +365,9 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                     None => nearest_occurrence(month, day as u32, bias),
                 };
                 if let Some(d) = days {
+                    if year.is_none() {
+                        yearless.push(out.len());
+                    }
                     push(&mut out, date_value(d));
                     i = next;
                     continue;
@@ -408,6 +413,9 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                 None => nearest_occurrence(month, day as u32, bias),
             };
             if let Some(d) = days {
+                if year.is_none() {
+                    yearless.push(out.len());
+                }
                 push(&mut out, date_value(d));
                 i = next;
                 continue;
@@ -416,7 +424,48 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
         out.push(toks[i].clone());
         i += 1;
     }
+    span_between_yearless_dates(&mut out, &yearless);
     join_date_and_time(out)
+}
+
+/// `January 10 - February 5` on a line of its own, both dates without a year, is the span from the first date
+/// forward to the second, as the reference app reads it (Sheet G): `3 weeks 5 days`, and `February 5 - January 10`
+/// is `11 months 5 days`, the span to the next January 10. It becomes `A to B` with B in the year the span ends.
+fn span_between_yearless_dates(out: &mut [Token], yearless: &[usize]) {
+    if out.len() != 3 || yearless != [0, 2] || !matches!(out[1].tok, Tok::Minus) {
+        return;
+    }
+    // The two tokens are the date values `rewrite` just made, which is what `yearless` records.
+    let day_of = |t: &Token| match &t.tok {
+        Tok::Value(v) => int(v.number()),
+        _ => None,
+    };
+    let (Some(from), Some(to)) = (day_of(&out[0]), day_of(&out[2])) else {
+        return;
+    };
+    let target = calendar::civil_from_days(to);
+    let first_year = calendar::civil_from_days(from).year;
+    let next = (first_year..)
+        .take(9)
+        .filter(|y| {
+            calendar::is_valid(Civil {
+                year: *y,
+                month: target.month,
+                day: target.day,
+            })
+        })
+        .map(|y| {
+            calendar::days_from_civil(Civil {
+                year: y,
+                month: target.month,
+                day: target.day,
+            })
+        })
+        .find(|d| *d >= from);
+    if let Some(next) = next {
+        out[1].tok = Tok::Word("to".to_string());
+        out[2].tok = Tok::Value(date_value(next));
+    }
 }
 
 /// A date followed by a time of day, with or without `at`, is one moment: `April 1, 2019 3:30pm`.

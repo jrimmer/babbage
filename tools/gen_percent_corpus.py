@@ -38,8 +38,19 @@ def frac():
     return f"{n}/{d}", Fraction(n, d)
 
 
+def scientific10(d):
+    """A value below a millionth the way the engine writes it: a mantissa of up to ten decimals, then `e` and the
+    exponent (`8.1e-9`)."""
+    e = d.adjusted()
+    mantissa = (d / Decimal(10) ** e).quantize(Decimal("1e-10"), rounding=ROUND_HALF_UP)
+    text = format(mantissa, "f").rstrip("0").rstrip(".")
+    return f"{text}e{e}"
+
+
 def fixed10(q):
     d = Decimal(q.numerator) / Decimal(q.denominator)
+    if d != 0 and abs(d) < Decimal("1e-6"):
+        return scientific10(d)
     out = format(d.quantize(Decimal("1e-10"), rounding=ROUND_HALF_UP), "f")
     return out[1:] if out.startswith("-") and set(out[1:]) <= {"0", "."} else out
 
@@ -108,8 +119,13 @@ def forms():
     out += [(f"{fa} of {px}", "plain", lambda: FA * X)]
     out += [(f"{pa} is {fa} of what", "plain", lambda: A / FA)]
     out += [(f"{fa} on {px}", "plain", lambda: X * (1 + FA)), (f"{fa} off {px}", "plain", lambda: X * (1 - FA))]
-    # documented gaps: strictly an error
-    for text in [f"{Pt}% × {Qt}%", f"{Pt}% / {Qt}%", f"{px} / {Pt}%", f"{Pt}% / {px}", f"{Pt}%^2", f"{px}^{Pt}%", f"{Pt}% on {Qt}%", f"{Pt}% off {Qt}%", f"{Pt}%%"]:
+    # The reference app (Sheet G, ticket 0012): 10% x 10% is 1%, 20 / 50% is 40, 50% / 2 is 25%, 10%^2 is 0.01
+    out += [(f"{Pt}% × {Qt}%", "percent", lambda: P * Q)]
+    out += [(f"{px} / {Pt}%", "plain", lambda: X / P)]
+    out += [(f"{Pt}% / {px}", "percent", lambda: P / X)]
+    out += [(f"{Pt}%^2", "plain", lambda: P**2)]
+    # still undefined: strictly an error
+    for text in [f"{Pt}% / {Qt}%", f"{px}^{Pt}%", f"{Pt}% on {Qt}%", f"{Pt}% off {Qt}%", f"{Pt}%%"]:
         out.append((text, "ERR:unsupported", None))
     return out
 

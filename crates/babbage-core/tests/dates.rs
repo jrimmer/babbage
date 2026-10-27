@@ -19,8 +19,9 @@ fn the_reference_date_examples() {
         ("3 weeks after March 14, 2019", "April 4, 2019"),
         ("Feb 28 + 1 month", "March 28"),
         ("January 31 2020 + 1 month", "February 29, 2020"),
-        ("February 5 - January 10", "3 weeks 5 days"),
-        ("January 10 - February 5", "-3 weeks 5 days"),
+        // Both without a year: the span forward from the first date (the reference app, Sheet G).
+        ("February 5 - January 10", "11 months 5 days"),
+        ("January 10 - February 5", "3 weeks 5 days"),
         ("Easter 2027", "March 28, 2027"),
         ("week number on march 12, 2021", "10"),
         ("day number on March 15, 2024", "75"),

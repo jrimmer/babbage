@@ -691,6 +691,18 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     i = letters_end;
                     continue;
                 }
+                // `8 L/100km`: litres per hundred kilometres is a unit of its own (the reference app keeps it).
+                if !is_call
+                    && let Some(end) = per_hundred_km(&chars, i)
+                    && let Some(unit) = crate::units::lookup("L/100km")
+                {
+                    out.push(Token {
+                        tok: Tok::Unit(unit),
+                        at,
+                    });
+                    i = end;
+                    continue;
+                }
                 if !is_call && let Some((unit, end)) = scan_unit(&chars, i) {
                     out.push(Token {
                         tok: Tok::Unit(unit),
@@ -729,6 +741,16 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     _ => None,
                 };
                 if let Some(c) = constant {
+                    // A number straight before a constant multiplies it: `2pi` and `2 pi` are 2 × pi.
+                    if matches!(
+                        out.last(),
+                        Some(Token {
+                            tok: Tok::Num(_),
+                            ..
+                        })
+                    ) {
+                        out.push(Token { tok: Tok::Star, at });
+                    }
                     out.push(Token {
                         tok: Tok::Value(Value::plain(c).approximate()),
                         at,
@@ -1414,6 +1436,38 @@ fn word_end(chars: &[(usize, char)], from: usize) -> usize {
 }
 
 /// A unit name of one word, or of two words joined by a space or hyphen (`fl oz`, `acre-foot`).
+/// Where `L/100km` (or `l/100 km`, `liters/100km`) written at `start` ends. No space is allowed around the slash:
+/// `5 L / 100 km` is a division.
+fn per_hundred_km(chars: &[(usize, char)], start: usize) -> Option<usize> {
+    let mut i = start;
+    while chars.get(i).is_some_and(|(_, c)| c.is_alphabetic()) {
+        i += 1;
+    }
+    let word: String = chars[start..i]
+        .iter()
+        .map(|(_, c)| c.to_ascii_lowercase())
+        .collect();
+    if !["l", "liter", "liters", "litre", "litres"].contains(&word.as_str()) {
+        return None;
+    }
+    for expected in ['/', '1', '0', '0'] {
+        if chars.get(i).map(|(_, c)| *c) != Some(expected) {
+            return None;
+        }
+        i += 1;
+    }
+    if chars.get(i).is_some_and(|(_, c)| *c == ' ') {
+        i += 1;
+    }
+    for expected in ['k', 'm'] {
+        if chars.get(i).map(|(_, c)| c.to_ascii_lowercase()) != Some(expected) {
+            return None;
+        }
+        i += 1;
+    }
+    (!chars.get(i).is_some_and(|(_, c)| c.is_alphanumeric())).then_some(i)
+}
+
 fn scan_unit(chars: &[(usize, char)], start: usize) -> Option<(UnitExpr, usize)> {
     let first = word_end(chars, start);
     let joined = matches!(chars.get(first).map(|(_, c)| *c), Some(' ' | '-'))

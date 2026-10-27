@@ -43,12 +43,15 @@ fn temperature_rules() {
     assert_eq!(shown("-5 °C"), "-5 °C");
     assert_eq!(shown("100 celsius in fahrenheit"), "212 °F");
     assert_eq!(shown("0 K in C"), "-273.15 °C");
+    // the reference app (Sheet G) adds, takes away and scales temperatures of one scale.
+    assert_eq!(shown("20 °C + 5 °C"), "25 °C");
+    assert_eq!(shown("20 °C × 2"), "40 °C");
+    assert_eq!(shown("2 × 20 °F"), "40 °F");
+    assert_eq!(shown("20 °C / 2"), "10 °C");
+    assert_eq!(shown("20 °C + 10%"), "22 °C");
     for refused in [
-        "20 °C + 5 °C",
-        "20 °C × 2",
-        "2 × 20 °F",
-        "20 °C / 2",
-        "20 °C + 10%",
+        "20 °C + 5 °F",
+        "20 °C × 20 °C",
         "20 °C is what % of 40 °C",
         "(20 °C)^2",
         "20 °C in kg",
@@ -60,7 +63,7 @@ fn temperature_rules() {
         );
     }
     assert!(matches!(
-        evaluate("20 °C × 2"),
+        evaluate("20 °C × 20 °C"),
         Err(Error::UnsupportedOperation(_))
     ));
     assert_eq!(evaluate("20 °C in kg"), Err(Error::IncompatibleUnits));

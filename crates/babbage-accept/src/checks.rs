@@ -351,7 +351,7 @@ fn everyday_lines(h: &mut Harness) -> anyhow::Result<()> {
         ("days until Christmas", "193 days"),
         ("Easter 2027", "March 28, 2027"),
         ("workdays in 3 weeks", "15 workdays"),
-        ("January 10 - February 5", "-3 weeks 5 days"),
+        ("January 10 - February 5", "3 weeks 5 days"),
         ("7:30am to 8:45pm", "13 hours 15 min"),
         ("01:02:03:04 + 00:00:01:00", "01:02:04:04"),
         ("20% is 500, what is 750", "30%"),

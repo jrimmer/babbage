@@ -2,7 +2,7 @@
 """Oracle for functions and word forms: statistics, rounding, gcd/lcm, permutations, operator words.
 
 Columns: expression <TAB> exact n/d. Every form is written in its function spelling and its word spelling.
-Rounding is half away from zero; the remainder keeps the sign of the dividend.
+Rounding is half away from zero; the remainder is floored (it takes the sign of the divisor, as Python's `%` does): `-7 mod 3` is 2.
 """
 import math
 import random
@@ -21,10 +21,6 @@ def num(allow_neg=False, decimals=True):
     if allow_neg and rng.random() < 0.2:
         t = "-" + t
     return t, Fraction(t)
-
-
-def trunc(q):
-    return math.floor(q) if q >= 0 else math.ceil(q)
 
 
 def round_half_away(q):
@@ -132,9 +128,9 @@ for _ in range(2500):
     emit(f"{pt} multiplied by {qt}", p * q)
     if q != 0:
         emit(f"{pt} divided by {qt}", p / q)
-        emit(f"{pt} mod {qt}", p - q * trunc(p / q))
-        emit(f"{pt} % {qt}", p - q * trunc(p / q))
-        emit(f"remainder of {pt} divided by {qt}", p - q * trunc(p / q))
+        emit(f"{pt} mod {qt}", p - q * math.floor(p / q))
+        emit(f"{pt} % {qt}", p - q * math.floor(p / q))
+        emit(f"remainder of {pt} divided by {qt}", p - q * math.floor(p / q))
     e = rng.randint(0, 5)
     emit(f"({pt}) to the power of {e}", p**e)
     # proportions

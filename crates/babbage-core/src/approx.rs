@@ -386,6 +386,11 @@ pub fn inverse_trig_degrees(f: Trig, x: &Number) -> Result<Outcome, Error> {
 }
 
 /// A trigonometric or hyperbolic function of a plain number, which means radians.
+/// Is `n` smaller than anything the working precision (about 115 digits) can tell from zero for a result near 1?
+fn is_precision_dust(n: &Number) -> bool {
+    n.abs() < Number::from_decimal_str("1e-100").expect("a literal")
+}
+
 pub fn trig_radians(f: Trig, x: &Number) -> Result<Outcome, Error> {
     let zero_gives = |at_zero: i64| {
         if x.is_zero() {
@@ -419,7 +424,7 @@ pub fn trig_radians(f: Trig, x: &Number) -> Result<Outcome, Error> {
     if let Some(n) = known {
         return exact(n);
     }
-    approximate(|cc| {
+    let outcome = approximate(|cc| {
         let v = to_float(x, cc);
         match f {
             Trig::Sin => v.sin(PRECISION_BITS, ROUNDING, cc),
@@ -435,5 +440,28 @@ pub fn trig_radians(f: Trig, x: &Number) -> Result<Outcome, Error> {
             Trig::Acosh => v.acosh(PRECISION_BITS, ROUNDING, cc),
             Trig::Atanh => v.atanh(PRECISION_BITS, ROUNDING, cc),
         }
-    })
+    })?;
+    // sin, cos and tan of a multiple of the approximate pi leave a remainder far below the working precision
+    // (`sin(2pi)` is -3.8e-116, not 0). For an argument that is not itself tiny, nothing legitimate is that small.
+    if matches!(f, Trig::Sin | Trig::Cos | Trig::Tan)
+        && x.abs() >= Number::from_decimal_str("1e-3").expect("a literal")
+        && is_precision_dust(&outcome.number)
+    {
+        return exact(int(0));
+    }
+    Ok(outcome)
+}
+
+#[cfg(test)]
+mod dust_tests {
+    use super::*;
+
+    #[test]
+    fn dust_is_strictly_below_a_hundred_digits() {
+        let n = |t: &str| Number::from_decimal_str(t).unwrap();
+        assert!(is_precision_dust(&n("1e-101")));
+        assert!(is_precision_dust(&n("-1e-101")));
+        assert!(!is_precision_dust(&n("1e-100")));
+        assert!(!is_precision_dust(&n("1e-99")));
+    }
 }

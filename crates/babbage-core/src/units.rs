@@ -47,7 +47,7 @@ impl Dim {
         !self.money.is_empty()
     }
 
-    fn scaled(&self, by: i8) -> Dim {
+    pub fn scaled(&self, by: i8) -> Dim {
         let mut d = self.clone();
         for e in &mut d.exps {
             *e = e.saturating_mul(by);
@@ -201,6 +201,9 @@ ozt | oz t,ozt,troy ounce,troy ounces,ounce troy,ounces troy | M | 0.0311034768
 ct | ct,carat,carats | M | 0.0002
 # angle (degrees; radians need an irrational factor and are not defined yet)
 deg | °,deg,degree,degrees | A | 1
+# fuel economy: distance per volume (US gallon) and volume per distance
+MPG | MPG,mpg | L-2 | 1609.344/0.003785411784
+L/100km | L/100km | L2 | 0.00000001
 arcmin | ′,arcmin,arcminute,arcminutes | A | 1/60
 arcsec | ″,arcsec,arcsecond,arcseconds | A | 1/3600
 rev | rev,revolution,revolutions | A | 360
@@ -238,6 +241,8 @@ ksi | ksi | M L-1 T-2 | 1000*0.45359237*9.80665/(0.0254^2)
 Mpsi | Mpsi | M L-1 T-2 | 1000000*0.45359237*9.80665/(0.0254^2)
 # amount
 mol | mol,mole,moles | N | 1
++m,µ,n
+molar | molar,molars,ᴍ | N L-3 | 1000
 +m,µ,n
 # electrical
 V | V,volt,volts | M L2 T-3 I-1 | 1
@@ -301,7 +306,6 @@ Yib | Yib,yobibit,yobibits | B | 1024^8
 @ fps = frame/s
 @ rpm = rev/min
 @ rps = rev/s
-@ mpg,MPG = mi/gal
 @ Bps = B/s
 @ bps = bit/s
 # data rates: bytes and bits per second with SI prefixes, and the binary ones

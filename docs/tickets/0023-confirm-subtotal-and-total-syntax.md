@@ -1,7 +1,9 @@
 # 0023 Confirm how subtotals, totals and tags are typed
 
-Status: open (asked in Sheet G)
+Status: closed (the reference app, one deliberate difference)
 Milestone: v1
 Area: sheets
 
 The reference describes subtotals as a UI action on a blank line and never gives typed text. The engine reads a line `subtotal`, `name =` with nothing after it, and `total of #tag`, `sum of`, `average of`, `avg of`, `count of`. The home page also shows `#jude total`. Check each against a real install and align.
+
+Sheet G (the reference app, 2026-10-26): `total of #jude` and `#jude total` both give `$12.00`; built. A typed `subtotal` line shows nothing in the reference app, but Babbage keeps it: the app's Make Subtotal Line writes it, so it stays (deliberate).

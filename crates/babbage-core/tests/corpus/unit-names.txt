@@ -136,6 +136,7 @@ KiBps	KiB/s
 Kib	Kib
 Kibps	Kib/s
 L	L
+L/100km	L/100km
 LAK	LAK
 LBP	LBP
 LKR	LKR
@@ -162,7 +163,7 @@ MMK	MMK
 MN	MN
 MNT	MNT
 MOP	MOP
-MPG	mi/gal
+MPG	MPG
 MPa	MPa
 MRU	MRU
 MUR	MUR
@@ -775,6 +776,8 @@ micrometers	µm
 micrometre	µm
 micrometres	µm
 micromol	µmol
+micromolar	µmolar
+micromolars	µmolar
 micromole	µmol
 micromoles	µmol
 micronewton	µN
@@ -792,6 +795,7 @@ microvolt	µV
 microvolts	µV
 microweber	µWb
 microwebers	µWb
+microᴍ	µmolar
 mile	mi
 miles	mi
 milliamp	mA
@@ -819,6 +823,8 @@ millimeters	mm
 millimetre	mm
 millimetres	mm
 millimol	mmol
+millimolar	mmolar
+millimolars	mmolar
 millimole	mmol
 millimoles	mmol
 millinewton	mN
@@ -838,20 +844,24 @@ milliwatt	mW
 milliwatts	mW
 milliweber	mWb
 milliwebers	mWb
+milliᴍ	mmolar
 min	min
 mins	min
 minute	min
 minutes	min
 mm	mm
 mmol	mmol
+mmolar	mmolar
 mo	mo
 mohm	mΩ
 mol	mol
+molar	molar
+molars	molar
 mole	mol
 moles	mol
 month	mo
 months	mo
-mpg	mi/gal
+mpg	MPG
 mph	mi/h
 ms	ms
 msiemens	msiemens
@@ -869,6 +879,8 @@ nanometers	nm
 nanometre	nm
 nanometres	nm
 nanomol	nmol
+nanomolar	nmolar
+nanomolars	nmolar
 nanomole	nmol
 nanomoles	nmol
 nanonewton	nN
@@ -877,6 +889,7 @@ nanosec	ns
 nanosecond	ns
 nanoseconds	ns
 nanosecs	ns
+nanoᴍ	nmolar
 nautical mile	NM
 nautical miles	NM
 newton	N
@@ -885,6 +898,7 @@ ng	ng
 nm	nm
 nmi	NM
 nmol	nmol
+nmolar	nmolar
 ns	ns
 ohm	Ω
 ohms	Ω
@@ -1096,6 +1110,7 @@ uk quart	imp qt
 uk quarts	imp qt
 um	µm
 umol	µmol
+umolar	µmolar
 uohm	µΩ
 us	µs
 usiemens	µsiemens
@@ -1159,6 +1174,7 @@ zettabytes	ZB
 µhenry	µhenry
 µm	µm
 µmol	µmol
+µmolar	µmolar
 µohm	µΩ
 µs	µs
 µsiemens	µsiemens
@@ -1168,6 +1184,7 @@ zettabytes	ZB
 ºF	°F
 Ω	Ω
 ฿	฿
+ᴍ	molar
 ′	arcmin
 ″	arcsec
 ₦	₦

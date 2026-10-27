@@ -126,8 +126,11 @@ fn statistics_of_one_value_and_of_even_counts() {
 
 #[test]
 fn modulo_semantics() {
-    assert_eq!(shown("-7 mod 3"), "-1");
-    assert_eq!(shown("7 mod -3"), "1");
+    // Floored, as the reference app is (Sheet G): the sign of the divisor.
+    assert_eq!(shown("-7 mod 3"), "2");
+    assert_eq!(shown("7 mod -3"), "-2");
+    assert_eq!(shown("-7 mod -3"), "-1");
+    assert_eq!(shown("7 mod 3"), "1");
     assert_eq!(shown("5.5 mod 2"), "1.5");
     assert_eq!(shown("10 m mod 3 m"), "1 m");
     assert_eq!(shown("1 km mod 300 m"), "0.1 km");

@@ -63,3 +63,7 @@ Mutation testing shows that the tests notice changes to the code that exists. It
 ## Large powers (2026-10-26)
 
 `approx::pow_large` and the fallback in `value::power`: 7 mutants, 6 caught, 1 unviable, 0 missed (after a boundary test for the 400,000 exponent limit was added). Run with `MUTATE_RE=pow_large MUTATE_TESTS="--test large_powers --test limits" bin/mutate crates/babbage-core/src/approx.rs`.
+
+## Sheet G changes (2026-10-26)
+
+`bin/mutate` limited to the changed engine lines (`MUTATE_DIFF`, the diff written with `git -c diff.mnemonicPrefix=false diff HEAD`). First run: 125 mutants, 94 caught, 15 missed, 15 unviable, 1 timeout. The misses were gaps in the tests (the tag forms `#tag average` and `#tag count`, the characters a tag name may hold, the temperature refusals, a percentage divided by a quantity, the exactness mark on `6h 0m 0s`), two redundant lines (a date-kind guard and an arithmetic bound, both removed), and the near-zero trig boundary (now a helper with its own test). Second run: 123 mutants, 106 caught, 1 missed, 15 unviable, 1 timeout. The one miss was an equivalent mutant (a percentage never carries a unit, so the check on it was redundant); the check is removed. The timeout is `per_hundred_km` with `+=` turned into `*=`, a loop that hangs, which counts as caught.
