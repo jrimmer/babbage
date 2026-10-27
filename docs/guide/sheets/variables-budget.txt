@@ -1,0 +1,6 @@
+# Monthly budget
+rent = $1,200
+utilities = $180
+groceries = $450
+rent + utilities + groceries
+line5 * 12

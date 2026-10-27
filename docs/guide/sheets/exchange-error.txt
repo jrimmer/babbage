@@ -1,0 +1,6 @@
+rate = 1.05 USD/EUR
+50 EUR in USD at rate
+€20 + €5.50
+$10 + €5
+100 cents
+50 pence + £1

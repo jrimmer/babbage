@@ -1,0 +1,7 @@
+1,000 + 250
+2 million
+1.5e3
+300000 * 3
+0xFF + 1
+255 in hex
+10 in binary

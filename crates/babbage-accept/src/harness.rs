@@ -738,6 +738,13 @@ impl Harness {
             .map_or(0, |c| c.iter().filter(|c| c["class"] == class).count()))
     }
 
+    /// Where a picture for the user guide goes.
+    pub fn guide_shot(&self, name: &str) -> PathBuf {
+        self.repo
+            .join("docs/shots/guide")
+            .join(format!("{name}.png"))
+    }
+
     /// Where a screenshot to keep goes.
     pub fn doc_shot(&self, name: &str) -> PathBuf {
         self.repo.join("docs/shots").join(name)

@@ -1,0 +1,8 @@
+# Trip
+Flights: $420 #travel
+Hotel: $360 #travel
+Dinner: $85 #food
+Lunch: $32 #food
+subtotal
+total of #food
+average of #travel

@@ -1,0 +1,7 @@
+# Weekend trip
+Hotel: $180 + $20
+Dinner for two: 2 * $35
+lunch was $55 + 25% tip
+rent = $900
+rent * 12
+line3 * 2

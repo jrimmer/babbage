@@ -1,0 +1,7 @@
+@width 1300
+sqrt(144)
+sin(30°)
+5 root of 32
+fact(6)
+monthly payment on $250,000 over 30 years at 6.5%
+$1,000 after 10 years at 5% compounding monthly

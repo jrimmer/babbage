@@ -1,0 +1,90 @@
+{
+ "intro": "Everything Babbage does, from your first line to every setting, with screenshots. New here? Start with Getting started.",
+ "groups": [
+  {
+   "title": "Start here",
+   "chapters": [
+    {
+     "file": "01-getting-started",
+     "title": "Getting started",
+     "description": "Install Babbage, open it, and write your first sheet."
+    },
+    {
+     "file": "02-basics",
+     "title": "The basics",
+     "description": "Lines, answers, headings, comments and the words Babbage skips."
+    }
+   ]
+  },
+  {
+   "title": "Calculate",
+   "chapters": [
+    {
+     "file": "03-numbers-and-percentages",
+     "title": "Numbers and percentages",
+     "description": "Arithmetic, exact fractions, number forms and percentages."
+    },
+    {
+     "file": "04-units",
+     "title": "Units and conversions",
+     "description": "Convert lengths, weights, volumes, speeds, temperatures and more."
+    },
+    {
+     "file": "05-money",
+     "title": "Money",
+     "description": "Currencies, cents, tips, tax and price maths."
+    },
+    {
+     "file": "06-variables-and-totals",
+     "title": "Variables and totals",
+     "description": "Name a value, reuse earlier lines, and add up a sheet."
+    },
+    {
+     "file": "07-dates-and-times",
+     "title": "Dates and times",
+     "description": "Date maths, durations, workdays and time zones."
+    },
+    {
+     "file": "08-functions-and-finance",
+     "title": "Functions and finance",
+     "description": "Roots, trigonometry, logarithms, statistics, loans and more."
+    }
+   ]
+  },
+  {
+   "title": "Answers and sheets",
+   "chapters": [
+    {
+     "file": "09-answers-and-formats",
+     "title": "Answers and formats",
+     "description": "Copy an answer, and show it as a fraction, in scientific form or rounded."
+    },
+    {
+     "file": "10-sheets-and-files",
+     "title": "Sheets and files",
+     "description": "The sidebar, renaming, exporting, and where your sheets live."
+    }
+   ]
+  },
+  {
+   "title": "Reference",
+   "chapters": [
+    {
+     "file": "11-keyboard",
+     "title": "The keyboard",
+     "description": "Every shortcut."
+    },
+    {
+     "file": "12-settings",
+     "title": "Settings",
+     "description": "Every setting, pane by pane."
+    },
+    {
+     "file": "13-updates-and-privacy",
+     "title": "Updates and privacy",
+     "description": "What Babbage keeps, and the one thing it can ask the network."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+5 km in miles
+6 ft in cm
+150 pounds in kg
+60 mph in km/h
+2.5 hours in hours and minutes
+1 GiB in MiB
+100 Mbps in MB/s

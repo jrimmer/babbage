@@ -47,8 +47,11 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("settings-editing", settings_editing),
     ("settings-styling", settings_styling),
     ("answer-menu", answer_menu),
+    ("answer-repeating", answer_repeating),
     ("answer-formats-follow-text", answer_formats_follow_text),
     ("showcase", showcase),
+    ("guide-sheets", guide_sheets),
+    ("guide-screens", guide_screens),
     ("updates-interval", updates_interval),
     ("updates-install", updates_install),
     ("variables", variables),
@@ -2003,6 +2006,242 @@ fn showcase(h: &mut Harness) -> anyhow::Result<()> {
     app.finish()
 }
 
+/// One picture per sheet in docs/guide/sheets: the lines of the file are typed into a fresh sheet on the fixed clock,
+/// in a window wide enough that no line wraps and as tall as the sheet. An optional first line `@width WIDTH` or
+/// `@size WIDTH HEIGHT` (points) overrides that. A line that has an answer must show one, so the guide never pictures a sheet that does
+/// not work.
+fn guide_sheets(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = h.repo.join("docs/guide/sheets");
+    let mut files: Vec<PathBuf> = std::fs::read_dir(&dir)
+        .with_context(|| format!("read {}", dir.display()))?
+        .filter_map(Result::ok)
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|e| e == "txt"))
+        .collect();
+    files.sort();
+    ensure!(!files.is_empty(), "no sheets in {}", dir.display());
+    let zones = tzdir(h);
+    for file in files {
+        let name = file
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .context("a sheet name")?
+            .to_owned();
+        let text = std::fs::read_to_string(&file)?;
+        let mut lines: Vec<&str> = text.lines().collect();
+        let mut dims = vec![1060, 0];
+        if let Some(width) = lines.first().and_then(|l| l.strip_prefix("@width ")) {
+            dims[0] = width
+                .trim()
+                .parse()
+                .with_context(|| format!("{name}: bad @width"))?;
+            lines.remove(0);
+            dims[1] = (36 * (lines.len() as u32 + 1) + 130).max(330);
+        } else if let Some(size) = lines.first().and_then(|l| l.strip_prefix("@size ")) {
+            dims = size
+                .split_whitespace()
+                .filter_map(|n| n.parse().ok())
+                .collect();
+            ensure!(dims.len() == 2, "{name}: bad @size line");
+            lines.remove(0);
+        } else {
+            dims[1] = (36 * (lines.len() as u32 + 1) + 130).max(330);
+        }
+        let mut app = h.launch(
+            &name,
+            None,
+            &[
+                ("TZ", "UTC"),
+                ("BABBAGE_NOW", FIXED_NOW),
+                ("BABBAGE_TZDIR", &zones),
+            ],
+        )?;
+        for line in &lines {
+            h.type_line(line)?;
+        }
+        let s = app.wait_for("every line", T, |s| {
+            s["lines"].as_array().is_some_and(|l| l.len() > lines.len())
+        })?;
+        // A picture of an error, named `...-error`, is meant to show one.
+        for (i, line) in lines.iter().enumerate().filter(|_| !name.contains("error")) {
+            let shown = &s["lines"][i];
+            ensure!(
+                shown["error"].is_null(),
+                "{name}: line {} ({line:?}) is an error: {}",
+                i + 1,
+                shown["error"]
+            );
+        }
+        h.resize(&app, dims[0], dims[1])?;
+        h.hover(&app, dims[0] as f32 - 6., dims[1] as f32 - 6.)?;
+        settle();
+        h.save_window_shot(&app, &h.guide_shot(&name))?;
+        app.finish()?;
+    }
+    Ok(())
+}
+
+/// Puts the window at `width` by `height` points, moves the pointer out of the way and keeps a picture of the window
+/// for the user guide.
+fn guide_picture(
+    h: &mut Harness,
+    app: &App,
+    name: &str,
+    width: u32,
+    height: u32,
+) -> anyhow::Result<()> {
+    h.resize(app, width, height)?;
+    h.hover(app, width as f32 - 6., height as f32 - 6.)?;
+    guide_snap(h, app, name)
+}
+
+/// A picture of the window as it is, after the paint has settled.
+fn guide_snap(h: &mut Harness, app: &App, name: &str) -> anyhow::Result<()> {
+    settle();
+    h.save_window_shot(app, &h.guide_shot(name))
+}
+
+/// The pictures of the guide that are not just a sheet: the window and its sidebar, the answer menu, the name list,
+/// the Settings panes. Each is taken from a fresh app on the fixed clock.
+fn guide_screens(h: &mut Harness) -> anyhow::Result<()> {
+    let zones = tzdir(h);
+    let config = h.logs.join("guide-screens.settings");
+    std::fs::write(
+        &config,
+        "custom_zones = HQ = Europe/Berlin; Lab = Asia/Tokyo\nglobals = rent = $900; tip = 18%\ntax = VAT 15%\n",
+    )?;
+    let config = config.to_string_lossy().into_owned();
+    let plain = [
+        ("TZ", "UTC"),
+        ("BABBAGE_NOW", FIXED_NOW),
+        ("BABBAGE_TZDIR", zones.as_str()),
+    ];
+    let configured = [
+        ("TZ", "UTC"),
+        ("BABBAGE_NOW", FIXED_NOW),
+        ("BABBAGE_TZDIR", zones.as_str()),
+        ("BABBAGE_CONFIG_FILE", config.as_str()),
+    ];
+    let sheet_count =
+        |n: usize| move |s: &Value| s["sheets"].as_array().is_some_and(|a| a.len() == n);
+
+    // The window with two sheets, and the sidebar with four.
+    let mut app = h.launch("guide-window", None, &plain)?;
+    for line in [
+        "# Weekend trip",
+        "Hotel: $180 + $20",
+        "Dinner for two: 2 * $35",
+        "lunch was $55 + 25% tip",
+        "rent = $900",
+        "rent * 12",
+    ] {
+        h.type_line(line)?;
+    }
+    let s = app.wait_for("the first sheet", T, |s| answer(s, 5) == Some("$10,800.00"))?;
+    let first = s["current"].as_str().context("current")?.to_owned();
+    let mut second = String::new();
+    for (n, lines) in [
+        (2, &["# Groceries", "milk = $4.50", "3 * milk"][..]),
+        (3, &["# Budget", "salary = $4,200", "salary * 12"][..]),
+        (4, &["15% of 240"][..]),
+    ] {
+        h.press(&["ctrl"], "n")?;
+        app.wait_for("a new sheet", T, sheet_count(n))?;
+        for line in lines {
+            h.type_line(line)?;
+        }
+        if n == 2 {
+            second = app.state()?["current"]
+                .as_str()
+                .context("current")?
+                .to_owned();
+        }
+    }
+    app.wait_for("the last sheet", T, |s| answer(s, 0) == Some("36"))?;
+    guide_picture(h, &app, "sidebar", 900, 520)?;
+    let s = app.state()?;
+    let bar = Sidebar::of(&s)?;
+    let (x, y) = bar.card(sheet_index(&s, &first)?);
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("the first sheet again", T, |s| {
+        s["current"] == first.as_str()
+    })?;
+    guide_picture(h, &app, "window-parts", 1000, 560)?;
+
+    // The card menu, the name being typed, and the notice after an export.
+    let s = app.state()?;
+    let (x, y) = bar.card(sheet_index(&s, &second)?);
+    h.click(&app, x, y, "right", 1)?;
+    app.wait_for("the card menu", T, |s| s["menu"] == second.as_str())?;
+    guide_picture(h, &app, "sheet-menu", 900, 520)?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the menu closed", T, |s| s["menu"].is_null())?;
+    h.press(&[], "F2")?;
+    app.wait_for("rename mode", T, |s| s["rename"].is_string())?;
+    h.press(&["ctrl"], "a")?;
+    h.type_text("Budget")?;
+    guide_picture(h, &app, "sheet-rename", 900, 520)?;
+    h.press(&[], "Escape")?;
+    app.wait_for("rename cancelled", T, |s| s["rename"].is_null())?;
+    h.press(&["ctrl", "shift"], "e")?;
+    app.wait_for("the export notice", T, |s| !s["notice"].is_null())?;
+    guide_picture(h, &app, "export-notice", 900, 520)?;
+    app.finish()?;
+
+    // The name list under the caret.
+    let mut app = h.launch("guide-names", None, &plain)?;
+    h.resize(&app, 900, 340)?;
+    for line in ["monthly rent = $900", "monthly food = $400"] {
+        h.type_line(line)?;
+    }
+    h.type_text("mon")?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the name list", T, |s| !s["completion"].is_null())?;
+    guide_snap(h, &app, "completion-list")?;
+    app.finish()?;
+
+    // The answer menu on a line.
+    let mut app = h.launch("guide-answer-menu", None, &plain)?;
+    h.resize(&app, 900, 520)?;
+    for line in ["1/3", "1234567", "$1.495"] {
+        h.type_line(line)?;
+    }
+    let s = app.wait_for("the answers", T, |s| answer(s, 1) == Some("1.234567M"))?;
+    let right = f(&s["more_button"]["right"])?;
+    let from_right = f(&s["more_button"]["from_right"])?;
+    let y = f(&s["lines"][1]["y"])? + f(&s["lines"][1]["row_h"])? / 2.;
+    h.hover(&app, right - from_right - 80., y)?;
+    app.wait_for("the line hovered", T, |s| s["hover_line"] == 1)?;
+    h.click(&app, right - from_right, y, "left", 1)?;
+    app.wait_for("the menu", T, |s| s["answer_menu"]["line"] == 1)?;
+    guide_snap(h, &app, "answer-menu")?;
+    app.finish()?;
+
+    // The Settings panes.
+    for (name, env) in [
+        ("settings", &plain[..]),
+        ("settings-with-values", &configured[..]),
+    ] {
+        let mut app = h.launch(&format!("guide-{name}"), None, env)?;
+        h.resize(&app, 1200, 800)?;
+        // The toolbar moves with the window; let it paint before aiming at it.
+        settle();
+        open_settings(h, &mut app)?;
+        let panes: &[&str] = if name == "settings" {
+            &["general", "editing", "numbers", "styling", "updates"]
+        } else {
+            &["calculator", "variables", "dates"]
+        };
+        for pane in panes {
+            settings_click(h, &mut app, &format!("tab-{pane}"))?;
+            h.hover(&app, 500., 780.)?;
+            guide_snap(h, &app, &format!("settings-{pane}"))?;
+        }
+        app.finish()?;
+    }
+    Ok(())
+}
+
 /// The centre of a rectangle the state reports (`x`, `y`, `w`, `h`).
 fn centre(r: &Value) -> anyhow::Result<(f32, f32)> {
     Ok((
@@ -2745,6 +2984,93 @@ fn answer_formats_follow_text(h: &mut Harness) -> anyhow::Result<()> {
         "Outside",
         "top\nnew line\n1/3\n2/3\n$1.496\n⟦bbg line 3 dp=2 #72452f0e⟧\n⟦bbg line 4 dp=1 #411bf787⟧\n",
     )?;
+    app.finish()
+}
+
+/// `Show as Repeating` in the answer menu: a fraction that never ends shows its repeating part, the choice is kept
+/// in the sheet file with the line, a fixed number of places replaces it, and the money digits are left alone.
+fn answer_repeating(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("answer-repeating", None, &[])?;
+    let dir = app.data_dir.clone();
+    h.type_line("1/3")?;
+    h.type_line("1/6")?;
+    h.type_text("$10 / 3")?;
+    let s = app.wait_for("the answers", T, |s| {
+        answer(s, 0) == Some("0.3333333333")
+            && answer(s, 1) == Some("0.1666666667")
+            && answer(s, 2) == Some("$3.33")
+    })?;
+    let right = f(&s["more_button"]["right"])?;
+    let from_right = f(&s["more_button"]["from_right"])?;
+    let open = |h: &mut Harness, app: &mut App, s: &Value, line: usize| -> anyhow::Result<Value> {
+        let y = f(&s["lines"][line]["y"])? + f(&s["lines"][line]["row_h"])? / 2.;
+        h.hover(app, right - from_right - 80., y)?;
+        app.wait_for("the line hovered", T, |s| s["hover_line"] == line)?;
+        h.click(app, right - from_right, y, "left", 1)?;
+        app.wait_for("the menu", T, |s| s["answer_menu"]["line"] == line)
+    };
+    let item = |s: &Value, id: &str| -> anyhow::Result<(f32, f32)> {
+        let b = s["answer_menu"]["items"]
+            .as_array()
+            .context("an open menu")?
+            .iter()
+            .find(|b| b["id"] == id)
+            .with_context(|| format!("a {id} control"))?;
+        Ok((
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+        ))
+    };
+
+    let s = open(h, &mut app, &s, 0)?;
+    let (x, y) = item(&s, "repeating")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the repeating part", T, |s| {
+        answer(s, 0) == Some("0.(3)") && s["lines"][0]["format"] == "repeat=on"
+    })?;
+    ensure!(
+        s["lines"][0]["exact"] == true,
+        "a repeating answer is exact: {}",
+        s["lines"][0]["exact"]
+    );
+    let id = s["current"].as_str().context("current")?.to_owned();
+    wait_file(
+        &dir,
+        &id,
+        "1/3\n1/6\n$10 / 3\n⟦bbg line 1 repeat=on #72452f0e⟧\n",
+    )?;
+    ensure!(
+        answer(&s, 1) == Some("0.1666666667"),
+        "another line is not changed: {:?}",
+        answer(&s, 1)
+    );
+
+    // A fixed number of places replaces it, and choosing it again brings it back.
+    let (x, y) = item(&s, "dp-4")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("four places", T, |s| {
+        answer(s, 0) == Some("0.3333") && s["lines"][0]["format"] == "dp=4"
+    })?;
+    let (x, y) = item(&s, "repeating")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("repeating again", T, |s| {
+        answer(s, 0) == Some("0.(3)") && s["lines"][0]["format"] == "repeat=on"
+    })?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("repeating off", T, |s| {
+        answer(s, 0) == Some("0.3333333333") && s["lines"][0]["format"] == "repeat=off"
+    })?;
+
+    // Money keeps its cents.
+    h.press(&[], "Escape")?;
+    app.wait_for("the menu closed", T, |s| s["answer_menu"].is_null())?;
+    let s = app.state()?;
+    let s = open(h, &mut app, &s, 2)?;
+    let (x, y) = item(&s, "repeating")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("money unchanged", T, |s| {
+        answer(s, 2) == Some("$3.33") && s["lines"][2]["format"] == "repeat=on"
+    })?;
     app.finish()
 }
 

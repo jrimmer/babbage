@@ -1,0 +1,4 @@
+bill = $45
+tip = 18%
+bill * tip
+bill + bill * tip
