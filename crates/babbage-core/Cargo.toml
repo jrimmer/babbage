@@ -3,7 +3,13 @@ name = "babbage-core"
 version = "0.0.1"
 edition.workspace = true
 license.workspace = true
-description = "Exact-arithmetic calculation engine for Babbage"
+description = "An exact-arithmetic calculation engine for plain-language lines: percentages, units, money, dates and time zones"
+readme = "README.md"
+repository = "https://github.com/jrimmer/babbage"
+keywords = ["calculator", "arithmetic", "units", "natural-language", "rational"]
+categories = ["mathematics", "parser-implementations"]
+# The tests carry large corpora and fixtures, and the examples are development probes; neither is part of the library.
+exclude = ["tests/**", "examples/**"]
 
 [dependencies]
 num-bigint = "0.4"
