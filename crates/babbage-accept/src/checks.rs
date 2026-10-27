@@ -45,6 +45,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("settings-editing", settings_editing),
     ("settings-styling", settings_styling),
     ("answer-menu", answer_menu),
+    ("answer-formats-follow-text", answer_formats_follow_text),
     ("variables", variables),
     ("subtotal-style", subtotal_style),
     ("number-scrub", number_scrub),
@@ -1874,11 +1875,12 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
         "answers did not move to the right: {left:?} then {right:?}; file {:?}",
         file()
     );
-    close_settings(h, &mut app)?;
-    let (s, shot, scr) = paint(h, &mut app)?;
-    let _ = s;
-    ensure!(luminance(scr.brightest(&shot, 0., 0., 4., 4.).unwrap_or([0, 0, 0])) < 255.);
+    // The picture for the reference notes: the pane open over the sheet it has restyled (pink numbers, green units, a
+    // blue answer column with its answers on the right).
+    settings_click(h, &mut app, "color_number=#ff7a90")?;
+    settle();
     h.save_shot(&h.doc_shot("settings-styling.png"))?;
+    close_settings(h, &mut app)?;
     app.finish()
 }
 
@@ -2258,6 +2260,56 @@ fn variables(h: &mut Harness) -> anyhow::Result<()> {
     app.finish()
 }
 
+/// A sheet file edited in another editor: a line added above, and a line's text changed. The per-line choices
+/// follow their text (the fingerprint in each trailer line), a choice whose text is gone is dropped, and the file
+/// the app writes next carries the new line numbers.
+fn answer_formats_follow_text(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = h.logs.join("outside-edit-sheets");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir)?;
+    // Written as Babbage wrote it (1/3 on line 1 with two places, 2/3 on line 2 with one, $1.495 on line 3 with
+    // money digits off), then edited: "new line" was added at the top and the last line's text was changed.
+    std::fs::write(
+        dir.join("Outside.bbg"),
+        "new line\n1/3\n2/3\n$1.496\n⟦bbg line 1 dp=2 #72452f0e⟧\n⟦bbg line 2 dp=1 #411bf787⟧\n⟦bbg line 3 money=off #b93e0d76⟧\n",
+    )?;
+    let mut app = h.launch("answer-formats-follow-text", Some(&dir), &[])?;
+    let s = app.wait_for("the sheet", T, |s| answer(s, 1).is_some())?;
+    ensure!(
+        answer(&s, 1) == Some("0.33")
+            && answer(&s, 2) == Some("0.7")
+            && answer(&s, 3) == Some("$1.50")
+            && answer(&s, 0).is_none(),
+        "the choices did not follow their lines: {:?}",
+        (0..4).map(|i| answer(&s, i)).collect::<Vec<_>>()
+    );
+    ensure!(
+        s["lines"][1]["format"] == "dp=2"
+            && s["lines"][2]["format"] == "dp=1"
+            && s["lines"][3]["format"] == "",
+        "formats {:?}",
+        (0..4)
+            .map(|i| s["lines"][i]["format"].clone())
+            .collect::<Vec<_>>()
+    );
+    ensure!(
+        s["sheets"][0]["lines"] == 4,
+        "the trailer lines are not counted as lines: {}",
+        s["sheets"][0]
+    );
+    // A line added in the app moves the numbers in the next save.
+    h.press(&["ctrl"], "Home")?;
+    h.type_text("top")?;
+    h.press(&[], "Return")?;
+    app.wait_for("the line added", T, |s| answer(s, 2) == Some("0.33"))?;
+    wait_file(
+        &dir,
+        "Outside",
+        "top\nnew line\n1/3\n2/3\n$1.496\n⟦bbg line 3 dp=2 #72452f0e⟧\n⟦bbg line 4 dp=1 #411bf787⟧\n",
+    )?;
+    app.finish()
+}
+
 /// The `⋯` on an answer and its menu, with a real pointer: it shows on the line the pointer is over, the menu sets
 /// the decimal places and switches the separators, notation and money digits per line, resets them, makes a
 /// subtotal line and deletes a line; the choices are saved with the sheet and come back when it is opened again.
@@ -2356,7 +2408,7 @@ fn answer_menu(h: &mut Harness) -> anyhow::Result<()> {
     wait_file(
         &dir,
         &id,
-        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=2⟧\n",
+        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=2 #72452f0e⟧\n",
     )?;
     let (x, y) = item(&s, "reset")?;
     h.click(&app, x, y, "left", 1)?;
@@ -2389,7 +2441,7 @@ fn answer_menu(h: &mut Harness) -> anyhow::Result<()> {
     wait_file(
         &dir,
         &id,
-        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=3⟧\n⟦bbg line 2 money=off⟧\n⟦bbg line 3 group=off⟧\n⟦bbg line 4 notation=off⟧\n",
+        "1/3\n$1.495\n12345 * 3\n300000 * 3\n5 + 5\n⟦bbg line 1 dp=3 #72452f0e⟧\n⟦bbg line 2 money=off #b93e0d76⟧\n⟦bbg line 3 group=off #d07da113⟧\n⟦bbg line 4 notation=off #bc4b8ba1⟧\n",
     )?;
     app.kill_hard()?;
     let mut again = h.launch("answer-menu-again", Some(&dir), &[])?;
