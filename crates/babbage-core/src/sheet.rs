@@ -57,6 +57,9 @@ pub enum LineKind {
 pub struct Ignored {
     pub text: String,
     pub at: usize,
+    /// An unknown word straight after a number, where a unit would stand (`3 widgets`, `50 centz`): the engine
+    /// did not understand it, so the line may not mean what it says.
+    pub unclear: bool,
 }
 
 /// A skipped word that is one letter away from a unit, so it may be a typo.
@@ -685,6 +688,7 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
             ignored.extend(runs.iter().map(|(a, b)| Ignored {
                 text: text[*a..*b].to_string(),
                 at: *a,
+                unclear: false,
             }));
         }
         let (toks, ends) = lex_with_ends(masked.as_ref().map_or(text, |(t, _)| t.as_str()))?;
@@ -909,17 +913,38 @@ fn drop_unknown(
 
     refuse_a_dropped_stretch_that_stands_in_for_a_value(&toks, &drop)?;
 
-    for (t, d) in toks.iter().zip(&drop) {
+    for (i, (t, d)) in toks.iter().zip(&drop).enumerate() {
         if !*d {
             continue;
         }
         match &t.tok {
             Tok::Word(w) => {
+                // Where a unit would stand, straight after a number: a word that is not understood is flagged, and
+                // a near miss of a unit gets a hint. Prose elsewhere in the line is left alone.
+                let unclear = unknown(t)
+                    && i > 0
+                    && !drop[i - 1]
+                    && matches!(
+                        toks[i - 1].tok,
+                        Tok::Num(_)
+                            | Tok::Value(_)
+                            | Tok::Group(_)
+                            | Tok::Unit(_)
+                            | Tok::Percent { .. }
+                    );
                 ignored.push(Ignored {
                     text: w.clone(),
                     at: t.at,
+                    unclear,
                 });
-                if let Some(like) = typo_of_a_unit(w) {
+                // A hint about a likely typo only after a plain number: `$5 tip` is a tip, not a teaspoon.
+                let plain_number = i > 0
+                    && matches!(toks[i - 1].tok, Tok::Num(_))
+                    && !(i >= 2 && matches!(&toks[i - 2].tok, Tok::Unit(u) if u.dim().has_money()));
+                if unclear
+                    && plain_number
+                    && let Some(like) = typo_of_a_unit(w)
+                {
                     warnings.push(Warning {
                         text: w.clone(),
                         at: t.at,
@@ -944,6 +969,7 @@ fn drop_unknown(
                 ignored.push(Ignored {
                     text: shown.to_string(),
                     at: t.at,
+                    unclear: false,
                 });
             }
         }

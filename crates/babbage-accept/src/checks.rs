@@ -17,6 +17,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("sheet-overview", sheet_overview),
     ("error-line", error_line),
     ("ignored-dim", ignored_dim),
+    ("unclear-words", unclear_words),
     ("total", total_chip),
     ("sheets", sheets_lifecycle),
     ("sidebar-mouse", sidebar_mouse),
@@ -567,6 +568,56 @@ fn ignored_dim(h: &mut Harness) -> anyhow::Result<()> {
         "the ignored word is not dimmer than the number beside it: {dim} against {normal}"
     );
     h.save_shot(&h.doc_shot("ignored-words.png"))?;
+    app.finish()
+}
+
+/// A word the sheet skipped right after a number may be a mistake, so it is marked "unclear"; one in plain prose
+/// is not.
+fn unclear_words(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("unclear", None, &[])?;
+    h.type_line("3 widgets × 4")?;
+    h.type_text("I spent $45 on clothes")?;
+    let s = app.wait_for("the answers", T, |s| {
+        answer(s, 0) == Some("12") && answer(s, 1) == Some("$45.00")
+    })?;
+    let unclear = |s: &Value, i: usize| -> Vec<String> {
+        s["lines"][i]["unclear"]
+            .as_array()
+            .map(|a| {
+                a.iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let class_of = |s: &Value, i: usize, text: &str| -> Option<String> {
+        s["lines"][i]["spans"]
+            .as_array()?
+            .iter()
+            .find(|x| x["text"] == text)
+            .and_then(|x| x["class"].as_str().map(str::to_owned))
+    };
+    ensure!(
+        unclear(&s, 0) == ["widgets"],
+        "unclear words in the first line: {:?}",
+        unclear(&s, 0)
+    );
+    ensure!(
+        class_of(&s, 0, "widgets").as_deref() == Some("unclear"),
+        "widgets is {:?}",
+        class_of(&s, 0, "widgets")
+    );
+    ensure!(
+        unclear(&s, 1).is_empty(),
+        "plain prose is marked unclear: {:?}",
+        unclear(&s, 1)
+    );
+    ensure!(
+        class_of(&s, 1, "clothes").as_deref() == Some("ignored"),
+        "clothes is {:?}",
+        class_of(&s, 1, "clothes")
+    );
     app.finish()
 }
 
@@ -1945,8 +1996,10 @@ fn showcase(h: &mut Harness) -> anyhow::Result<()> {
         "the totals: {:?}",
         (0..16).map(|i| answer(&s, i)).collect::<Vec<_>>()
     );
+    h.resize(&app, 1060, 740)?;
+    h.hover(&app, 1050., 730.)?;
     settle();
-    h.save_shot(&h.doc_shot("showcase.png"))?;
+    h.save_window_shot(&app, &h.doc_shot("showcase.png"))?;
     app.finish()
 }
 

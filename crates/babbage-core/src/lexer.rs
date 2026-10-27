@@ -297,7 +297,47 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         .map(unit_products)
         .map(crate::dates::rewrite)
         .map(split_date_shifts)
+        .map(cents)
         .map(power_words)
+}
+
+/// `50 cents` is a hundredth of a dollar: the currency of the amount beside it in the line (`50 cents + €1` is in
+/// euros), else the region's dollar. `50 pence` is a hundredth of a pound. Best effort: a line whose currency is
+/// unclear stays as it is.
+pub fn cents(toks: Vec<Token>) -> Vec<Token> {
+    let money = |u: &UnitExpr| u.dim().has_money() && u.is_single();
+    let beside = toks.iter().find_map(|t| match &t.tok {
+        Tok::Value(v) if money(v.unit()) => Some(v.unit().clone()),
+        Tok::Unit(u) if money(u) => Some(u.clone()),
+        _ => None,
+    });
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        if let (Tok::Num(n), Some(Tok::Word(w))) = (&toks[i].tok, toks.get(i + 1).map(|t| &t.tok)) {
+            let unit = match w.to_lowercase().as_str() {
+                "cent" | "cents" => beside
+                    .clone()
+                    .or_else(|| crate::units::lookup(crate::settings::dollar_code())),
+                "penny" | "pennies" | "pence" => crate::units::lookup("GBP"),
+                _ => None,
+            };
+            if let Some(unit) = unit
+                && let Ok(amount) = n.div(&Number::from_i64(100))
+                && let Ok(v) = Value::quantity(amount, unit)
+            {
+                out.push(Token {
+                    tok: Tok::Value(v),
+                    at: toks[i].at,
+                });
+                i += 2;
+                continue;
+            }
+        }
+        out.push(toks[i].clone());
+        i += 1;
+    }
+    out
 }
 
 /// `5 squared` is `5^2` and `2 cubed` is `2^3`, after anything that ends an operand (a number, a quantity, a

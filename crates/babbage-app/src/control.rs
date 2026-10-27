@@ -147,6 +147,7 @@ pub fn report(v: &SheetView) -> Value {
                 "exact": ans.is_none_or(|a| a.exact),
                 "error": ans.and_then(|a| a.error.clone()),
                 "ignored": result.map(|r| r.ignored.iter().map(|x| x.text.clone()).collect::<Vec<_>>()).unwrap_or_default(),
+                "unclear": result.map(|r| r.ignored.iter().filter(|x| x.unclear).map(|x| x.text.clone()).collect::<Vec<_>>()).unwrap_or_default(),
                 "warnings": result.map(|r| r.warnings.iter().map(|x| x.text.clone()).collect::<Vec<_>>()).unwrap_or_default(),
                 "y": layout.map(|l| f32::from(l.top + px(v.wrap.top_row(i) as f32 * ROW_H))),
                 "h": v.wrap.rows_of(i) as f32 * ROW_H,

@@ -288,9 +288,11 @@ fn a_misspelt_unit_after_a_number_is_ignored_but_warned_about() {
 }
 
 #[test]
-fn near_miss_words_that_survive_are_flagged() {
+fn a_near_miss_in_prose_before_a_number_is_not_flagged() {
+    // `was` is near `wa`, but it stands before the number, in prose: no hint.
     let r = run(&["lunch was $55"]);
-    assert!(r[0].warnings.iter().any(|w| w.text == "was"));
+    assert!(r[0].warnings.is_empty());
+    assert!(r[0].ignored.iter().all(|i| !i.unclear));
 }
 
 #[test]

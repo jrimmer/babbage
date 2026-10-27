@@ -718,7 +718,7 @@ impl SheetView {
                     self.ed.redo();
                 }
                 "a" => self.ed.select_all(),
-                // Comment the lines out, or back in (the expected behaviour's Command-/).
+                // Comment the lines out, or back in (Ctrl-/).
                 "/" => self.ed.toggle_comment(),
                 "c" => {
                     if self.ed.has_selection() {
@@ -1251,41 +1251,57 @@ impl SheetView {
             .bg(c.sidebar)
             .child(
                 div()
-                    .id("new-sheet")
                     .mx(px(8.))
                     .mt(px(14.))
                     .mb(px(10.))
                     .h(px(32.))
                     .flex()
+                    .flex_row()
                     .items_center()
-                    .justify_center()
-                    .gap(px(8.))
-                    .rounded(px(8.))
-                    .text_size(px(14.))
-                    .text_color(c.muted)
-                    .hover(|d| d.bg(c.raised))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|this, _, window, cx| {
-                            window.focus(&this.focus);
-                            this.new_sheet(cx);
-                        }),
+                    .justify_between()
+                    .child(
+                        div()
+                            .pl(px(8.))
+                            .text_size(px(18.))
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(c.text)
+                            .child("Babbage"),
                     )
                     .child(
                         div()
-                            .w(px(18.))
-                            .h(px(18.))
-                            .rounded(px(9.))
-                            .bg(c.muted)
+                            .id("new-sheet")
+                            .h(px(32.))
+                            .px(px(10.))
                             .flex()
                             .items_center()
-                            .justify_center()
-                            .text_color(c.sidebar)
-                            .text_size(px(15.))
-                            .font_weight(FontWeight::BOLD)
-                            .child("+"),
-                    )
-                    .child("New Sheet"),
+                            .gap(px(6.))
+                            .rounded(px(8.))
+                            .text_size(px(14.))
+                            .text_color(c.muted)
+                            .hover(|d| d.bg(c.raised))
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|this, _, window, cx| {
+                                    window.focus(&this.focus);
+                                    this.new_sheet(cx);
+                                }),
+                            )
+                            .child(
+                                div()
+                                    .w(px(18.))
+                                    .h(px(18.))
+                                    .rounded(px(9.))
+                                    .bg(c.muted)
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .text_color(c.sidebar)
+                                    .text_size(px(15.))
+                                    .font_weight(FontWeight::BOLD)
+                                    .child("+"),
+                            )
+                            .child("Sheet"),
+                    ),
             )
             .child(
                 div()
@@ -1654,6 +1670,7 @@ pub fn class_color(c: &Colors, class: Class) -> Hsla {
         Class::Comment => c.comment,
         Class::Heading => c.text,
         Class::Ignored => c.ignored,
+        Class::Unclear => c.ignored,
         Class::Warn => c.ignored,
     }
 }
@@ -1690,6 +1707,13 @@ pub fn runs_for(
             Some(UnderlineStyle {
                 thickness: px(1.),
                 color: Some(color),
+                wavy: false,
+            })
+        } else if class == Class::Unclear {
+            // Faint and plain: the word was skipped, and the line may not mean what it says.
+            Some(UnderlineStyle {
+                thickness: px(1.),
+                color: Some(c.ignored),
                 wavy: false,
             })
         } else if class == Class::Warn {

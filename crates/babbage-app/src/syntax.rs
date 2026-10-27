@@ -18,6 +18,8 @@ pub enum Class {
     Heading,
     /// A word the engine skipped.
     Ignored,
+    /// A skipped word straight after a number, where a unit would stand: not understood, so it is underlined.
+    Unclear,
     /// A skipped word one letter from a unit.
     Warn,
 }
@@ -34,6 +36,7 @@ impl Class {
             Class::Comment => "comment",
             Class::Heading => "heading",
             Class::Ignored => "ignored",
+            Class::Unclear => "unclear",
             Class::Warn => "warn",
         }
     }
@@ -212,7 +215,12 @@ pub fn spans(line: &str, result: Option<&LineResult>) -> Vec<Span> {
 fn carve_ignored(mut spans: Vec<Span>, result: Option<&LineResult>) -> Vec<Span> {
     let Some(r) = result else { return spans };
     for ig in &r.ignored {
-        carve(&mut spans, ig.at..ig.at + ig.text.len(), Class::Ignored);
+        let class = if ig.unclear {
+            Class::Unclear
+        } else {
+            Class::Ignored
+        };
+        carve(&mut spans, ig.at..ig.at + ig.text.len(), class);
     }
     for w in &r.warnings {
         carve(&mut spans, w.at..w.at + w.text.len(), Class::Warn);
@@ -467,9 +475,10 @@ mod tests {
         let s = spans(line, r.first());
         for ig in &r[0].ignored {
             assert!(
-                s.iter()
-                    .any(|x| matches!(x.class, Class::Ignored | Class::Warn)
-                        && line[x.range.clone()] == ig.text),
+                s.iter().any(
+                    |x| matches!(x.class, Class::Ignored | Class::Unclear | Class::Warn)
+                        && line[x.range.clone()] == ig.text
+                ),
                 "{ig:?} in {s:?}"
             );
         }

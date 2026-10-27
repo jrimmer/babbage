@@ -417,7 +417,7 @@ impl Harness {
         };
         let pid: u32 = std::fs::read_to_string(&pid_file)?.trim().parse()?;
         let reader = BufReader::new(stream.try_clone()?);
-        let app = App {
+        let mut app = App {
             name: name.to_owned(),
             pid,
             stream,
@@ -436,6 +436,11 @@ impl Harness {
             );
             std::thread::sleep(Duration::from_millis(50));
         }
+        self.focus(&app)?;
+        // Keys sent before the first paint can be lost, which left a sheet empty on a busy machine.
+        app.wait_for("the first paint", Duration::from_secs(20), |s| {
+            s["scale"].is_number()
+        })?;
         self.focus(&app)?;
         Ok(app)
     }
@@ -597,6 +602,26 @@ impl Harness {
             std::fs::create_dir_all(d)?;
         }
         self.grim(&["-o", "HEADLESS-2", &out.to_string_lossy()])?;
+        Ok(())
+    }
+
+    /// Saves a PNG of `app`'s window alone, as the compositor lays it out (its size in points; the picture has
+    /// the output's scale).
+    pub fn save_window_shot(&self, app: &App, out: &Path) -> anyhow::Result<()> {
+        self.dismiss_banner()?;
+        if let Some(d) = out.parent() {
+            std::fs::create_dir_all(d)?;
+        }
+        let w = self.window_of(app.pid)?;
+        let n = |v: &Value| v.as_f64().unwrap_or(0.).round() as i64;
+        let region = format!(
+            "{},{} {}x{}",
+            n(&w["at"][0]),
+            n(&w["at"][1]),
+            n(&w["size"][0]),
+            n(&w["size"][1])
+        );
+        self.grim(&["-g", &region, &out.to_string_lossy()])?;
         Ok(())
     }
 
