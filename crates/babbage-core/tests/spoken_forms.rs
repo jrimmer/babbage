@@ -147,3 +147,38 @@ fn total_alone_adds_every_line_above() {
     let alone = evaluate_sheet(&["total"], &opts);
     assert!(matches!(alone[0].kind, LineKind::Text));
 }
+
+/// The answer of one line as a sheet gives it, where a word that is not understood is skipped; `None` for an error.
+fn in_sheet(line: &str) -> Option<String> {
+    use babbage_core::LineKind;
+    match &evaluate_sheet(&[line], &SheetOptions::default())[0].kind {
+        LineKind::Value(v) => Some(format_value(v, &FormatOptions::default()).text),
+        _ => None,
+    }
+}
+
+#[test]
+fn near_misses_of_the_spoken_forms_are_left_alone() {
+    // `round` is dropped only for `to N dp` (or places) after the number.
+    assert_eq!(in_sheet("round 2.567 to 1 dp").as_deref(), Some("2.6"));
+    assert_eq!(in_sheet("round 2.567 in 1 dp"), None);
+    assert_eq!(in_sheet("round 2.567 to 1 inch"), None);
+    assert_eq!(in_sheet("round 2.567 to foo dp").as_deref(), Some("3"));
+    // `discount` is `off` only after a percentage and before on/off.
+    assert_eq!(in_sheet("discount on $200"), None);
+    assert_eq!(in_sheet("30% discount $200"), None);
+    assert_eq!(in_sheet("30% tax on $200").as_deref(), Some("$260.00"));
+    // A factorial of a bracket takes the whole bracket, wherever it stands in the line.
+    assert_eq!(in_sheet("1 + (2 + 3)!").as_deref(), Some("121"));
+    assert_eq!(in_sheet("2 * (1 + 2)!").as_deref(), Some("12"));
+}
+
+#[test]
+fn total_alone_counts_declaration_lines_like_the_chip() {
+    use babbage_core::LineKind;
+    let results = evaluate_sheet(&["rent = $900", "$10", "total"], &SheetOptions::default());
+    let LineKind::Value(v) = &results[2].kind else {
+        panic!("a value");
+    };
+    assert_eq!(format_value(v, &FormatOptions::default()).text, "$910.00");
+}

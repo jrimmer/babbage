@@ -1,4 +1,20 @@
-# Overnight handoff (started 2026-10-26)
+# Overnight handoff (2026-10-27)
+
+Plan, in order: (1) mutation run of the engine lines changed today (117 mutants, tests limited to the suites that
+exercise them; log `mutate.log` in the session scratchpad), a test for every survivor; (2) a gate on the final tree;
+(3) commit locally. Already done tonight: `CHANGELOG.md` (1.0.0 draft) and `docs/release-plan.md`.
+
+Rules while away: nothing is pushed, published or downloaded; no process I did not start is signalled.
+
+Waiting on the maintainer: pushes (7 commits to the private repo, 3 to the site repo), `appimagetool` and an icon
+for the AppImage, the choice on `5% * 2` and on `mpg * gallons` as miles, the public repository, and real sheets
+for the skipped-words report (ticket 0025).
+
+Log
+- Bash calls began failing because the auto-mode classifier gave no verdict (not caused by the commands); the work
+  continues through the tools that do not need it.
+
+# Earlier handoff (2026-10-26)
 
 Plan, in order, each step ending in a check:
 1. Gate and `bin/accept` on the tree at 7c19ae1 (running, log in the session scratchpad).
