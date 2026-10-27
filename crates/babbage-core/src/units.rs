@@ -977,13 +977,6 @@ impl UnitExpr {
         self.pow(-1)
     }
 
-    /// Whether some unit of the table measures what this expression does. A product of units that measures
-    /// nothing (`kg m`) is not a unit.
-    pub fn is_named_kind(&self) -> bool {
-        let dim = self.dim();
-        registry().defs.iter().any(|def| def.dim == dim)
-    }
-
     pub fn dim(&self) -> Dim {
         self.0.iter().fold(Dim::none(), |d, (u, e)| {
             d.plus(&registry().defs[*u as usize].dim.scaled(*e))

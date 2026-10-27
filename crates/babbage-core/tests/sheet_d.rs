@@ -104,12 +104,15 @@ fn an_hour_typed_h_stays_h_after_a_slash() {
 }
 
 #[test]
-fn a_product_of_units_is_a_unit_only_if_it_measures_something() {
+fn a_product_of_units_keeps_every_unit_typed() {
     all(&[
         ("2 N m", "2 N⋅m"),
         ("3 W s", "3 W s"),
-        ("3 kg m", "3 kg"),
-        ("3 kg m + 2 kg", "5 kg"),
+        // the reference app prints `3 kg`; dropping the `m` would turn momentum into a flow rate.
+        ("3 kg m", "3 kg m"),
+        ("3 kg m/s", "3 kg m/s"),
+        ("2 kg m²", "2 kg m²"),
+        ("3 kg m + 2 kg m", "5 kg m"),
         ("5 feet 3 inches", "5 feet 3 inches"),
     ]);
 }

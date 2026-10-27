@@ -204,11 +204,8 @@ fn unit_products(toks: Vec<Token>) -> Vec<Token> {
             && a.dim() != b.dim()
         {
             let product = a.times(b);
-            // `3 kg m` measures nothing: the second unit is ignored, as a stray word is.
-            if product.is_named_kind() {
-                let last = out.len() - 1;
-                out[last].tok = Tok::Unit(product);
-            }
+            let last = out.len() - 1;
+            out[last].tok = Tok::Unit(product);
             continue;
         }
         out.push(t);
