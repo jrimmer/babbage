@@ -84,6 +84,17 @@ impl Releases {
         }
         let api = format!("/api/v1/repos/{repo}/releases");
         files.push((api, json!(listed).to_string().into_bytes()));
+        Ok(Self::spawn(listener, files))
+    }
+
+    /// Starts serving `files` as they are: each (path, bytes) pair is one file at that path.
+    pub fn start_files(files: Vec<(String, Vec<u8>)>) -> anyhow::Result<Releases> {
+        Ok(Self::spawn(TcpListener::bind("127.0.0.1:0")?, files))
+    }
+
+    fn spawn(listener: TcpListener, files: Vec<(String, Vec<u8>)>) -> Releases {
+        let addr = listener.local_addr().expect("the listener's address");
+        let base = format!("http://{addr}");
         let paths = Arc::new(Mutex::new(Vec::new()));
         let stop = Arc::new(AtomicBool::new(false));
         {
@@ -98,12 +109,12 @@ impl Releases {
                 }
             });
         }
-        Ok(Releases {
+        Releases {
             base,
             addr,
             paths,
             stop,
-        })
+        }
     }
 
     /// Every path asked for so far.

@@ -43,6 +43,11 @@ pub fn compute_with(lines: &[String], settings: &Settings) -> Computed {
     compute_with_formats(lines, &[], settings)
 }
 
+/// `compute_formatted` under `settings` instead of the machine's (the command mode changes decimal places this way).
+pub fn compute_in(lines: &[String], formats: &[LineFormat], settings: &Settings) -> Computed {
+    compute_with_formats(lines, formats, settings)
+}
+
 fn compute_with_formats(lines: &[String], formats: &[LineFormat], settings: &Settings) -> Computed {
     scoped(settings, || compute_scoped(lines, formats, settings))
 }

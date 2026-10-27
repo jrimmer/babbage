@@ -1,0 +1,75 @@
+#!/bin/bash
+# Packages the release build into dist/ (git-ignored):
+#   babbage-VERSION-ARCH.tar.gz      the babbage program, a bbg link to it, LICENSE and README.md
+#   babbage-VERSION-ARCH.AppImage    the same program as one file, when appimagetool is on PATH
+#   a .sha256 beside each file, install.sh, and babbage-version.txt (the version install.sh reads first)
+# VERSION is the version in crates/babbage-app/Cargo.toml. The release build runs first (bin/build). Nothing is
+# downloaded: when appimagetool or the icon is missing, the AppImage is skipped and the script says what is missing.
+# Scratch files go under ~/.cache, not /tmp.
+# Usage: bin/package
+set -euo pipefail
+[ -n "${BABBAGE_LOWPRIO:-}" ] || exec "$(dirname "$0")/lowprio" "$0" "$@"
+cd "$(dirname "$0")/.."
+
+bin/build
+
+version=$(sed -n 's/^version = "\(.*\)"/\1/p' crates/babbage-app/Cargo.toml | head -n 1)
+arch=$(uname -m)
+name="babbage-$version-$arch"
+dist=dist
+mkdir -p "$dist"
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+mkdir -p "$cache"
+stage=$(mktemp -d "$cache/babbage-package.XXXXXX")
+trap 'rm -rf "$stage"' EXIT
+
+# The tarball: a flat folder, so install.sh can unpack it straight into ~/.local/share/babbage.
+mkdir "$stage/tar"
+cp target/release/babbage "$stage/tar/babbage"
+ln -s babbage "$stage/tar/bbg"
+cp LICENSE README.md "$stage/tar/"
+tar -czf "$dist/$name.tar.gz" -C "$stage/tar" babbage bbg LICENSE README.md
+(cd "$dist" && sha256sum "$name.tar.gz" >"$name.tar.gz.sha256")
+echo "wrote $dist/$name.tar.gz"
+
+# The AppImage needs appimagetool and the icon; without either it is skipped, and the tarball is still made.
+missing=()
+command -v appimagetool >/dev/null 2>&1 || missing+=("appimagetool on PATH (https://github.com/AppImage/appimagetool/releases)")
+[ -f packaging/babbage.svg ] || missing+=("packaging/babbage.svg (the AppImage icon)")
+if [ "${#missing[@]}" -eq 0 ]; then
+    appdir="$stage/Babbage.AppDir"
+    mkdir -p "$appdir/usr/bin"
+    cp target/release/babbage "$appdir/usr/bin/babbage"
+    cp packaging/babbage.svg "$appdir/babbage.svg"
+    cp packaging/babbage.svg "$appdir/.DirIcon"
+    cat >"$appdir/babbage.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Babbage
+Comment=A notepad calculator
+Exec=babbage %U
+Icon=babbage
+Terminal=false
+Categories=Utility;Calculator;
+DESKTOP
+    # Started as bbg (the name the AppImage was run under, or BABBAGE_AS), the program runs its command-line mode.
+    cat >"$appdir/AppRun" <<'APPRUN'
+#!/bin/sh
+here=$(dirname "$(readlink -f "$0")")
+case "$(basename "${ARGV0:-$0}")" in bbg) export BABBAGE_AS=bbg ;; esac
+exec "$here/usr/bin/babbage" "$@"
+APPRUN
+    chmod 755 "$appdir/AppRun"
+    ARCH="$arch" appimagetool "$appdir" "$dist/$name.AppImage"
+    (cd "$dist" && sha256sum "$name.AppImage" >"$name.AppImage.sha256")
+    echo "wrote $dist/$name.AppImage"
+else
+    echo "AppImage not built. Missing:"
+    printf '  %s\n' "${missing[@]}"
+fi
+
+printf '%s\n' "$version" >"$dist/babbage-version.txt"
+(cd "$dist" && sha256sum babbage-version.txt >babbage-version.txt.sha256)
+cp install.sh "$dist/install.sh"
+echo "dist/ holds: $(cd "$dist" && ls | tr '\n' ' ')"

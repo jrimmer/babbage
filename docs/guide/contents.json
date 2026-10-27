@@ -83,6 +83,11 @@
      "file": "13-updates-and-privacy",
      "title": "Updates and privacy",
      "description": "What Babbage keeps, and the one thing it can ask the network."
+    },
+    {
+     "file": "14-command-line",
+     "title": "The command line",
+     "description": "Answer an expression or a sheet from a terminal with bbg."
     }
    ]
   }
