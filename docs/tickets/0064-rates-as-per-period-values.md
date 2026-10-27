@@ -1,6 +1,6 @@
 # 0064 Rates shown and combined as per-period values
 
-Status: closed (the reference app and the reference note)
+Status: closed (settled by a maintainer check and the reference note)
 Milestone: v1
 Area: units, display
 

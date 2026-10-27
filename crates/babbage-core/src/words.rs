@@ -232,7 +232,7 @@ fn pace(toks: &[Token]) -> Option<Result<Expr, Error>> {
 }
 
 /// `1978 to 2021` is 43 and `10 to 25` is 15: two plain numbers joined by `to` are how far apart they are, a
-/// plain number, as the reference app prints it.
+/// plain number, as expected.
 fn number_span(toks: &[Token]) -> Option<Result<Expr, Error>> {
     let [a, to, b] = toks else {
         return None;

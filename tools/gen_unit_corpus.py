@@ -3,7 +3,7 @@
 
 Run: .oracle-venv/bin/python tools/gen_unit_corpus.py > crates/babbage-core/tests/corpus/units.tsv
 Columns: expression <TAB> exact n/d (value in the base unit) <TAB> 10dp display with the base unit.
-The reference app-specific constants the reference documents (month, year, the 1 kilovolt `KV`) are
+The app-specific constants the reference documents (month, year, the 1 kilovolt `KV`) are
 hand formulas from the reference, not pint, because pint disagrees with them on purpose.
 """
 import sys

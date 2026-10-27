@@ -102,7 +102,7 @@ fn percent_is_exact_not_a_float_trap() {
 #[test]
 fn attached_and_detached_percent_mean_different_things() {
     assert_eq!(shown("20/200 %"), "10%");
-    // An attached percent is its fraction, so this is 20 / 2 (the reference app: `20 / 50%` is 40).
+    // An attached percent is its fraction, so this is 20 / 2 (the expected behaviour: `20 / 50%` is 40).
     assert_eq!(shown("20/200%"), "10");
     assert_eq!(shown("20 / 200 %"), "10%");
     assert_eq!(shown("(20/200)%"), "0.1%");
@@ -139,7 +139,7 @@ fn undocumented_combinations_are_refused_not_guessed() {
 
 #[test]
 fn percentages_multiply_divide_and_power_as_the_reference_app_does() {
-    // Sheet G (ticket 0012): The reference app gave 1%, 40, 25% and 0.01.
+    // Sheet G (ticket 0012): The expected answer is 1%, 40, 25% and 0.01.
     assert_eq!(shown("10% × 10%"), "1%");
     assert_eq!(shown("20 / 50%"), "40");
     assert_eq!(shown("50% / 2"), "25%");

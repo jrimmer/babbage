@@ -804,7 +804,7 @@ fn factor_in_context(def: &UnitDef, workday_context: bool) -> Number {
 }
 
 /// A unit's factor to SI under the current settings: a workday is the work-hours setting. The volume units are
-/// the same whatever the reference app volume setting says: it changed none of them.
+/// the same whatever the expected behaviour volume setting says: it changed none of them.
 fn factor_now(def: &UnitDef) -> Number {
     match def.symbol {
         "workday" => Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600),
@@ -1162,7 +1162,7 @@ impl UnitExpr {
     }
 }
 
-/// Units an answer writes as words, as the reference app does: `3 hours/day`, `$99.00/week`, `5,400 frames`.
+/// Units an answer writes as words, as expected: `3 hours/day`, `$99.00/week`, `5,400 frames`.
 /// A word is plural when the amount is not one and singular after a slash. Minutes and seconds stay `min` and `s`.
 const WORD_UNITS: &[(&str, &str)] = &[
     ("h", "hour"),
@@ -1235,7 +1235,7 @@ impl UnitExpr {
             .filter(|(_, e)| e.is_negative())
             .map(|(u, e)| (*u, -*e))
             .collect();
-        // A speed made by division reads `10 km / 2 hours` as `5 km/hour`, as the reference app prints it;
+        // A speed made by division reads `10 km / 2 hours` as `5 km/hour`, as expected;
         // `mph` is a unit of its own and keeps its name.
         let hour = lookup("h").and_then(|h| h.0.first().map(|(id, _)| *id));
         let down_text: Vec<String> = down

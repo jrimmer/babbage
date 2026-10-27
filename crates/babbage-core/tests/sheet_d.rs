@@ -1,5 +1,5 @@
 //! The rules behind the owner's Sheet D answers, tested beyond the lines the owner typed: where each rule stops, and
-//! what it must leave alone. The lines themselves are replayed in owner_reference.rs.
+//! what it must leave alone. The lines themselves are replayed in the tests.
 
 use babbage_core::settings::{Settings, scoped};
 use babbage_core::zones::Zone;
@@ -125,7 +125,7 @@ fn a_product_of_units_keeps_every_unit_typed() {
     all(&[
         ("2 N m", "2 N⋅m"),
         ("3 W s", "3 W s"),
-        // the reference app prints `3 kg`; dropping the `m` would turn momentum into a flow rate.
+        // the expected answer is `3 kg`; dropping the `m` would turn momentum into a flow rate.
         ("3 kg m", "3 kg m"),
         ("3 kg m/s", "3 kg m/s"),
         ("2 kg m²", "2 kg m²"),
@@ -141,7 +141,7 @@ fn an_amount_below_a_millionth_is_scientific() {
         ("0.00000000004", "4e-11"),
         ("-0.000000002", "-2e-9"),
         ("0.0000000015", "1.5e-9"),
-        // the reference app: a millionth is still a decimal, a ten-millionth is not.
+        // the expected behaviour: a millionth is still a decimal, a ten-millionth is not.
         ("0.00001", "0.00001"),
         ("0.000001", "0.000001"),
         ("0.0000001", "1e-7"),
@@ -283,12 +283,12 @@ fn a_skipped_dotted_run_is_shown_as_ignored_not_dropped_silently() {
 #[test]
 fn interest_spread_over_a_period_is_the_total_over_the_time() {
     all(&[
-        // One year: The reference app agrees to every digit.
+        // One year: The expected behaviour agrees to every digit.
         (
             "hourly interest on $1k for 1 year at 4% compounding quarterly",
             "$0.0046320835",
         ),
-        // Three years: the total interest over all of it (the reference app spreads it over one year's hours).
+        // Three years: the total interest over all of it (the expected behaviour spreads it over one year's hours).
         (
             "daily interest on $1k for 3 years at 4% compounding quarterly",
             "$0.12",

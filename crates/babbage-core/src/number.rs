@@ -129,7 +129,7 @@ impl Number {
     }
 
     /// The remainder after dividing by `rhs`, floored: it takes the sign of `rhs` (`-7 mod 3` is `2`, `7 mod -3` is
-    /// `-2`), as the reference app does.
+    /// `-2`), as expected.
     pub fn rem(&self, rhs: &Number) -> Result<Number, Error> {
         if rhs.is_zero() {
             return Err(Error::DivisionByZero);

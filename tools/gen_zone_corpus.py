@@ -66,7 +66,7 @@ for name, iana in {**CITIES, **ALIASES, **COUNTRIES, **{k.title(): v for k, v in
     PLACES[name] = ZoneInfo(iana)
 for abbr, hours in ABBREVIATIONS.items():
     PLACES[abbr] = timezone(timedelta(hours=hours))
-# The US abbreviations name their region, daylight saving included, as the reference app reads them.
+# The US abbreviations name their region, daylight saving included, as expected.
 US_REGIONS = {"EST": "America/New_York", "EDT": "America/New_York", "CST": "America/Chicago", "CDT": "America/Chicago",
               "MST": "America/Denver", "MDT": "America/Denver", "PST": "America/Los_Angeles", "PDT": "America/Los_Angeles",
               "AKST": "America/Anchorage", "AKDT": "America/Anchorage", "HST": "Pacific/Honolulu"}
@@ -196,7 +196,7 @@ def span_hours(delta):
 for _ in range(800):
     a, b = rng.sample(names, 2)
     off = lambda z: NOW.astimezone(z).utcoffset()
-    want = span_hours(off(PLACES[b]) - off(PLACES[a]))  # the second place minus the first, as the reference app prints it
+    want = span_hours(off(PLACES[b]) - off(PLACES[a]))  # the second place minus the first, as expected
     connector = rng.choice(["and", "&"])
     add(f"time difference between {spell(a)} {connector} {spell(b)}", want)
 

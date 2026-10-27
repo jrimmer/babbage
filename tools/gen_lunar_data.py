@@ -5,7 +5,7 @@
 sky: the new year is the start of the month after the one holding the December solstice (second new moon after
 it, the third when a leap month 11 or 12 intervenes), in China Standard Time. That method agrees with the
 lunardate table in 199 of its 200 years (the exception, 1916, is a historical time-zone quirk), and gives
-9 February 2100, as the reference app does. Each entry is the number of days after 21 January, the earliest
+9 February 2100, as expected. Each entry is the number of days after 21 January, the earliest
 the festival falls.
 
 Run from the repository root: .oracle-venv/bin/python tools/gen_lunar_data.py  (the years from 2100 need the

@@ -126,7 +126,7 @@ fn statistics_of_one_value_and_of_even_counts() {
 
 #[test]
 fn modulo_semantics() {
-    // Floored, as the reference app is (Sheet G): the sign of the divisor.
+    // Floored, as the expected behaviour is (Sheet G): the sign of the divisor.
     assert_eq!(shown("-7 mod 3"), "2");
     assert_eq!(shown("7 mod -3"), "-2");
     assert_eq!(shown("-7 mod -3"), "-1");

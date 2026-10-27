@@ -343,7 +343,7 @@ fn the_floating_total_adds_every_result_except_subtotal_lines() {
 }
 
 /// Lines that cannot all be added: the sum starts again from the line that does not fit, so the Total is the sum of
-/// the lines since the last such line, plain numbers joining the unit (Sheets C and F of the reference app,
+/// the lines since the last such line, plain numbers joining the unit (Sheets C and F of the expected behaviour,
 /// ticket 0050).
 #[test]
 fn a_total_restarts_at_a_line_that_does_not_fit() {

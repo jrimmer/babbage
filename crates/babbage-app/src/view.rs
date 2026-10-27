@@ -718,7 +718,7 @@ impl SheetView {
                     self.ed.redo();
                 }
                 "a" => self.ed.select_all(),
-                // Comment the lines out, or back in (the reference app's Command-/).
+                // Comment the lines out, or back in (the expected behaviour's Command-/).
                 "/" => self.ed.toggle_comment(),
                 "c" => {
                     if self.ed.has_selection() {

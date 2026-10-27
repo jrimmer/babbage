@@ -160,7 +160,7 @@ fn underscores_in_the_fraction_and_the_exponent() {
 
 #[test]
 fn text_shaped_like_a_date_that_is_not_one_is_arithmetic() {
-    // the reference app prints `2019-02-30` as 1,987, which is 2019 - 02 - 30.
+    // the expected answer is `2019-02-30` as 1,987, which is 2019 - 02 - 30.
     all(&[
         ("2019-02-30", "1,987"),
         ("1 + 2019-13-45 + 2", "1,964"),

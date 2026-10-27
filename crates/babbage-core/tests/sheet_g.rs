@@ -1,4 +1,4 @@
-//! Behaviour settled by the owner's Sheet G (see `owner_reference.rs` for the lines as typed) and the cases around
+//! Behaviour settled by the owner's Sheet G and the cases around
 //! them: the rule each answer implies, tried on neighbouring lines.
 
 use babbage_core::{FormatOptions, LineKind, SheetOptions, evaluate, evaluate_sheet, format_value};

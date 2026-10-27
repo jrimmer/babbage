@@ -5,7 +5,7 @@ including UI/UX tests: start the app on buildhost and automate its testing. Work
 
 ## Gate for a row to count as done
 
-1. Built from the reference app docs page for that area (cite the page in the commit body).
+1. Built from a maintainer check docs page for that area (cite the page in the commit body).
 2. Independent oracle: Python Fraction, `pint` (exact mode, `tools/setup-oracle.sh`) or a hand formula taken from the reference notes. Never the Rust table checking itself.
 3. Unit tests, property tests and an oracle corpus all pass: `bin/check`.
 4. Mutation testing has no survivors in the touched modules: `bin/mutate '**/file.rs'`. Loop-counter timeouts count as caught.
@@ -24,6 +24,6 @@ including UI/UX tests: start the app on buildhost and automate its testing. Work
 
 ## Stop-and-ask list
 
-Pushing to any remote, spending money, anything needing a real reference app install to decide, and judging GUI looks.
+Pushing to any remote, spending money, anything needing a maintainer check to decide, and judging GUI looks.
 Everything else: decide, record in `docs/decisions.md`, keep going.
 - Kill my own processes by PID or an anchored pattern, never an unanchored pkill -f: the pattern matches the shell running it.

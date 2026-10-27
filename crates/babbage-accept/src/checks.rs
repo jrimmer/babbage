@@ -14,7 +14,7 @@ pub type Check = fn(&mut Harness) -> anyhow::Result<()>;
 
 pub const CHECKS: &[(&str, Check)] = &[
     ("sum", sum_shows_39),
-    ("reference-sheet", reference_sheet),
+    ("sheet-overview", sheet_overview),
     ("error-line", error_line),
     ("ignored-dim", ignored_dim),
     ("total", total_chip),
@@ -47,6 +47,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("settings-styling", settings_styling),
     ("answer-menu", answer_menu),
     ("answer-formats-follow-text", answer_formats_follow_text),
+    ("showcase", showcase),
     ("updates-interval", updates_interval),
     ("updates-install", updates_install),
     ("variables", variables),
@@ -347,21 +348,19 @@ fn everyday_lines(h: &mut Harness) -> anyhow::Result<()> {
         ],
     )?;
     let lines = [
-        ("10 June + 3 weeks", "July 1"),
+        ("June 3 + 3 weeks", "June 24"),
         ("days until Christmas", "193 days"),
         ("Easter 2027", "March 28, 2027"),
         ("workdays in 3 weeks", "15 workdays"),
-        ("January 10 - February 5", "3 weeks 5 days"),
         ("7:30am to 8:45pm", "13 hours 15 min"),
-        ("01:02:03:04 + 00:00:01:00", "01:02:04:04"),
-        ("20% is 500, what is 750", "30%"),
-        ("2/10 as fraction", "1/5"),
-        ("meters in 10 km", "10,000 m"),
-        ("6pm Sydney in Chicago", "3:00 AM"),
-        ("$500/workday * 4 weeks", "$10,000.00"),
-        ("day of the week on January 24, 1984", "Tuesday"),
-        ("New Year 2025", "January 1, 2025"),
-        ("June 1st 2024", "June 1"),
+        ("00:10:00:00 + 00:00:30:00", "00:10:30:00"),
+        ("15% of 240", "36"),
+        ("3/8 as fraction", "3/8"),
+        ("meters in 5 km", "5,000 m"),
+        ("9am London in Tokyo", "5:00 PM"),
+        ("$300/workday * 3 weeks", "$4,500.00"),
+        ("day of the week on March 3, 2025", "Monday"),
+        ("Christmas 2026", "December 25, 2026"),
     ];
     let s = answers_for(h, &mut app, &lines);
     app.finish()?;
@@ -417,23 +416,44 @@ fn sum_shows_39(h: &mut Harness) -> anyhow::Result<()> {
     app.finish()
 }
 
+const SHEET: [(&str, &str); 19] = [
+    ("18 + 24 + 36", "78"),
+    ("$120 + $85 + $42 + $310 + $64", "$621.00"),
+    ("48 × 25", "1,200"),
+    ("(600mm × 400mm × 1,200mm) / 8", "36M mm³"),
+    ("300mm x 300mm x 300mm", "27M mm³"),
+    ("line4 / line5", "1.3333333333"),
+    ("$95 × 6", "$570.00"),
+    ("72 × 1.45", "104.4"),
+    ("64 × 2.25", "144"),
+    ("7/16", "0.4375"),
+    ("40 × line10", "17.5"),
+    ("$28 × 96", "$2,688.00"),
+    ("$35 × 12", "$420.00"),
+    ("30,000 / 12 / 52", "48.0769230769"),
+    ("512 × 8", "4,096"),
+    ("512 × 6", "3,072"),
+    ("0.81 – .04", "0.77"),
+    (".003 ×5", "0.015"),
+    ("600,000 / (600,000 + 150,000)", "0.8"),
+];
 
-fn reference_sheet(h: &mut Harness) -> anyhow::Result<()> {
-    let mut app = h.launch("reference", None, &[])?;
-    for (i, (line, _)) in REFERENCE.iter().enumerate() {
-        if i + 1 < REFERENCE.len() {
+fn sheet_overview(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("sheet-overview", None, &[])?;
+    for (i, (line, _)) in SHEET.iter().enumerate() {
+        if i + 1 < SHEET.len() {
             h.type_line(line)?;
         } else {
             h.type_text(line)?;
         }
     }
     let s = app.wait_for("all 19 answers", Duration::from_secs(30), |s| {
-        REFERENCE
+        SHEET
             .iter()
             .enumerate()
             .all(|(i, (_, want))| answer(s, i) == Some(*want))
     })?;
-    for (i, (line, want)) in REFERENCE.iter().enumerate() {
+    for (i, (line, want)) in SHEET.iter().enumerate() {
         ensure!(
             s["lines"][i]["text"] == *line,
             "line {} typed as {}",
@@ -466,7 +486,7 @@ fn reference_sheet(h: &mut Harness) -> anyhow::Result<()> {
             i + 1
         );
     }
-    h.save_shot(&h.doc_shot("reference-sheet.png"))?;
+    h.save_shot(&h.doc_shot("sheet-overview.png"))?;
     app.finish()
 }
 
@@ -1884,6 +1904,49 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
     settle();
     h.save_shot(&h.doc_shot("settings-styling.png"))?;
     close_settings(h, &mut app)?;
+    app.finish()
+}
+
+/// A small sheet of the kind the project page shows: variables, a percentage, conversions, a date and a time span.
+/// The picture is kept in docs/shots, and the answers are checked so the page never shows a wrong one.
+fn showcase(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("showcase", None, &[])?;
+    let lines = [
+        "# Weekend trip",
+        "flights = $412 × 2",
+        "hotel = 3 × $138",
+        "meals = 4 × $65",
+        "fuel = 14 × $3.89",
+        "fees = 8% of hotel",
+        "total = flights + hotel + meals + fuel + fees",
+        "total / 4",
+        "",
+        "// units, dates and times",
+        "150 lb in kg",
+        "5 km in miles",
+        "20% of 85",
+        "June 3, 2027 + 3 weeks",
+        "7:30am to 8:45pm",
+        "1/3 + 1/6",
+    ];
+    for line in &lines[..lines.len() - 1] {
+        h.type_line(line)?;
+    }
+    h.type_text(lines[lines.len() - 1])?;
+    let s = app.wait_for("the answers", T, |s| {
+        answer(s, 6) == Some("$1,585.58")
+            && answer(s, 10) == Some("68.0388555 kg")
+            && answer(s, 13) == Some("June 24, 2027")
+            && answer(s, 14) == Some("13 hours 15 min")
+            && answer(s, 15) == Some("0.5")
+    })?;
+    ensure!(
+        answer(&s, 7) == Some("$396.40") && answer(&s, 12) == Some("17"),
+        "the totals: {:?}",
+        (0..16).map(|i| answer(&s, i)).collect::<Vec<_>>()
+    );
+    settle();
+    h.save_shot(&h.doc_shot("showcase.png"))?;
     app.finish()
 }
 

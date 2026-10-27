@@ -78,7 +78,7 @@ pub enum Func {
     AsinD,
     AcosD,
     AtanD,
-    /// Cotangent and cosecant, with their hyperbolic, inverse and degree variants (reference app 3.16).
+    /// Cotangent and cosecant, with their hyperbolic, inverse and degree variants (expected behaviour 3.16).
     Cot,
     Csc,
     Coth,

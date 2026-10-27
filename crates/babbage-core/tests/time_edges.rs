@@ -118,7 +118,7 @@ fn playback_speed_needs_a_time_and_a_speed() {
 fn timestamps_are_written_in_full() {
     assert_eq!(shown("June 15, 2024 to timestamp"), "1718452800");
     assert_eq!(shown("current timestamp"), "1718452800");
-    // A date from a timestamp ends with the zone's name (the reference app: `... AM PST`); here the zone is UTC.
+    // A date from a timestamp ends with the zone's name (the expected behaviour: `... AM PST`); here the zone is UTC.
     assert_eq!(shown("1718452800 to date"), "12:00 PM UTC");
     assert_eq!(shown("0 to date"), "January 1, 1970");
     assert_eq!(
@@ -133,7 +133,7 @@ fn timestamps_are_written_in_full() {
 
 #[test]
 fn iso_dates_are_read_strictly() {
-    // A date that is not one is arithmetic (the reference app prints `2019-02-30` as 1,987).
+    // A date that is not one is arithmetic (the expected answer is `2019-02-30` as 1,987).
     assert_eq!(shown("2019-02-30"), "1,987");
     assert_eq!(shown("2019-13-01"), "2,005");
     assert_eq!(shown("2019-00-10"), "2,009");

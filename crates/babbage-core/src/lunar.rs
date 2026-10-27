@@ -1,7 +1,7 @@
 //! Holidays that follow the Hebrew, Islamic and Chinese calendars, as days since 1970-01-01.
 //!
 //! Hanukkah comes from the Hebrew calendar rules (Dershowitz and Reingold), Ramadan from the arithmetic Islamic
-//! calendar, and Chinese New Year from a table (`chinese_new_year.rs`). The reference app gives the evening a
+//! calendar, and Chinese New Year from a table (`chinese_new_year.rs`). The expected answer is the evening a
 //! festival begins and the day it ends: `Hanukkah 2026` is December 4, though the first full day is the 5th.
 
 use crate::calendar::{self, Civil};

@@ -334,7 +334,7 @@ fn period_start(rest: &[Token]) -> Option<i64> {
 }
 
 /// `days left in 2026`: the days from today to the last day of that year. A month is not accepted: the owner's
-/// the reference app shows no answer for `days left in March`.
+/// there is no expected answer for `days left in March`.
 fn days_left_in(rest: &[Token]) -> Result<Expr, Error> {
     let (today, _) = settings::local_now();
     let this_year = calendar::civil_from_days(today).year;

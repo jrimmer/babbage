@@ -178,7 +178,7 @@ fn normalise_name(name: &str) -> String {
 }
 
 /// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to the running
-/// sum (`$10`, then `3 gallons`) do not make the Total an error: as the reference app shows (Sheets C and F), the
+/// sum (`$10`, then `3 gallons`) do not make the Total an error: as expected (Sheets C and F), the
 /// sum starts again from the line that does not fit, so the Total is the sum of the lines since the last one that
 /// did not fit, plain numbers joining whatever unit the sum has. `$10`, `5`, `3 gallons` is `3 gal`; the nineteen
 /// lines of the target screenshot are `$39,506.77`.
@@ -378,7 +378,7 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
     let text = blank_text(raw, &blanks);
     result.tags = tags;
 
-    // A statistics word on a line of its own shows no answer in the reference app (Sheet G), not an error.
+    // A statistics word on a line of its own shows no answer in the expected behaviour (Sheet G), not an error.
     if matches!(
         text.trim().to_lowercase().as_str(),
         "average" | "avg" | "count" | "median"
@@ -602,7 +602,7 @@ fn tag_name(token: &str) -> Option<String> {
     .then(|| tag.to_string())
 }
 
-/// `total of #food` and the short form the reference app's home page shows, `#food total`.
+/// `total of #food` and the short form the expected behaviour's home page shows, `#food total`.
 fn aggregate_request(lowered: &str) -> Option<(Aggregate, String)> {
     let (first, rest) = lowered.split_once(char::is_whitespace)?;
     if let Some(tag) = tag_name(first) {
@@ -706,7 +706,7 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
     }
 }
 
-/// `01.05.2005` is not a date and not a number: The reference app gives `1 day` for `01.05.2005 + 1 day`, as if
+/// `01.05.2005` is not a date and not a number: The expected answer is `1 day` for `01.05.2005 + 1 day`, as if
 /// the dotted run were not there. This blanks each run of digits joined by two or more dots, keeping the offsets,
 /// and returns the runs so the line can show them as skipped.
 fn mask_dotted_numbers(text: &str) -> (String, Vec<(usize, usize)>) {

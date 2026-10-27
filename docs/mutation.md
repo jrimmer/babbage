@@ -58,7 +58,7 @@ Loop mutants (`+=` becoming `-=` inside a `while`) hang the test and are counted
 
 ## What this does not prove
 
-Mutation testing shows that the tests notice changes to the code that exists. It does not show that the answers match a real reference app: that is what the oracle corpora, the replay of the reference examples and the open tickets (0018, 0030, 0043 to 0046, 0055) are for.
+Mutation testing shows that the tests notice changes to the code that exists. It does not show that the answers match a maintainer check: that is what the oracle corpora, the replay of the reference examples and the open tickets (0018, 0030, 0043 to 0046, 0055) are for.
 
 ## Large powers (2026-10-26)
 

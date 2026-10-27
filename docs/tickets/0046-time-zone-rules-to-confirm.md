@@ -1,6 +1,6 @@
 # 0046 Time zone choices to confirm, and data to extend
 
-Status: half closed (the reference app)
+Status: half closed (settled by a maintainer check)
 Milestone: v1
 Area: time zones
 
@@ -15,6 +15,6 @@ Data to extend after v1: the full country list, the large city dataset and airpo
 
 The bundled database is out of date for two places; see ticket 0053.
 
-The reference app: `time difference between Sydney and Chicago` is `-16 hours` and the reverse is `16 hours`, so the answer is the second place minus the first (the engine has the opposite sign). `IST` is India (ticket 0072). `time in Tokyo when it is 9am in London` and airport codes work (ticket 0073).
+The expected behaviour: `time difference between Sydney and Chicago` is `-16 hours` and the reverse is `16 hours`, so the answer is the second place minus the first (the engine has the opposite sign). `IST` is India (ticket 0072). `time in Tokyo when it is 9am in London` and airport codes work (ticket 0073).
 
 The sign of `time difference between A and B` is fixed (second place minus the first). Still open: `IST` (0072) and the `time in X when it is T in Y` form and airport codes (0073).

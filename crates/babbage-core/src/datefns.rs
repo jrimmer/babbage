@@ -230,7 +230,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::ToDate => to_date(&args[0]),
         DateFn::ToTimestamp => {
             let (day, rest) = date_arg(&args[0])?;
-            // A date with no time is midday, as the reference app does (`April 1, 2019` is 12:00 local).
+            // A date with no time is midday, as expected (`April 1, 2019` is 12:00 local).
             let rest = if args[0].is_bare_date() {
                 Number::from_ratio(num_bigint::BigInt::from(1), num_bigint::BigInt::from(2))?
             } else {
@@ -255,7 +255,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::TimeIn => {
             let zone = zone_arg(&args[0])?;
             let now = settings::now_utc_seconds();
-            // To the minute, as the reference app shows it (`7:29 PM`), and a bare time of day even when it is
+            // To the minute, as expected (`7:29 PM`), and a bare time of day even when it is
             // already tomorrow there (`time in Thailand` at 1:12 PM in Los Angeles is `3:12 AM`).
             let wall = (now + zone.offset_at(now)).rem_euclid(86_400);
             Ok(Value::clock(Number::from_i64(wall - wall % 60)))
@@ -270,7 +270,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::ZoneDifference => {
             let (a, b) = (zone_arg(&args[0])?, zone_arg(&args[1])?);
             let now = settings::now_utc_seconds();
-            // How far ahead the second place is of the first, as the reference app prints it.
+            // How far ahead the second place is of the first, as expected.
             Ok(Value::quantity(
                 Number::from_i64(b.offset_at(now) - a.offset_at(now)),
                 unit("s"),
@@ -430,7 +430,7 @@ pub fn midpoint(a: &Value, b: &Value) -> Result<Value, Error> {
         return Err(Error::IncompatibleUnits);
     }
     // Two dates written with no time are two middays, so their midpoint is a whole day, the later one when the
-    // gap is odd: `halfway between January 1 and March 1` is `January 31`, as the reference app prints it.
+    // gap is odd: `halfway between January 1 and March 1` is `January 31`, as expected.
     let half = a.number().add(b.number())?.div(&Number::from_i64(2))?;
     if a.is_bare_date() && b.is_bare_date() && !half.is_integer() {
         let up = half.floor() + num_bigint::BigInt::from(1);
@@ -495,7 +495,7 @@ fn zone_convert(v: &Value, from: &Value, to: &Value) -> Result<Value, Error> {
     let day = i64::try_from(&there.div(&day_seconds)?.floor()).map_err(|_| Error::Overflow)?;
     if written_day == Some(day) {
         let into_day = there.sub(&Number::from_i64(day).mul(&day_seconds)?)?;
-        // UTC is read on the 24-hour clock (`noon PST in UTC` is `19:00`), as the reference app does.
+        // UTC is read on the 24-hour clock (`noon PST in UTC` is `19:00`), as expected.
         return Ok(if to == Zone::Fixed(0) {
             Value::clock_24(into_day)
         } else {

@@ -55,7 +55,7 @@ fn int(n: &Number) -> Option<i64> {
 enum Bias {
     Next,
     Last,
-    /// This year's, whatever the month, as the reference app reads it: `January 1` in October is `January 1` of
+    /// This year's, whatever the month, as expected: `January 1` in October is `January 1` of
     /// this year, and `halfway between January 1 and March 1` is `January 31`.
     ThisYear,
 }
@@ -279,7 +279,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
             }
             match w.as_str() {
                 "now" => {
-                    // The current time is shown to the minute, as the reference app does (`12:55 PM`).
+                    // The current time is shown to the minute, as expected (`12:55 PM`).
                     let moment = Number::from_ratio(
                         BigInt::from(today * 86_400 + seconds - seconds % 60),
                         BigInt::from(86_400),
@@ -429,7 +429,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
 }
 
 /// `January 10 - February 5` on a line of its own, both dates without a year, is the span from the first date
-/// forward to the second, as the reference app reads it (Sheet G): `3 weeks 5 days`, and `February 5 - January 10`
+/// forward to the second, as expected (Sheet G): `3 weeks 5 days`, and `February 5 - January 10`
 /// is `11 months 5 days`, the span to the next January 10. It becomes `A to B` with B in the year the span ends.
 fn span_between_yearless_dates(out: &mut [Token], yearless: &[usize]) {
     if out.len() != 3 || yearless != [0, 2] || !matches!(out[1].tok, Tok::Minus) {
@@ -512,7 +512,7 @@ fn year_after_month(toks: &[Token], i: usize) -> (Option<i64>, usize) {
     }
 }
 
-/// `3:30 PM` style: no leading zero, `AM`/`PM` in upper case (the US region, as the reference app prints it),
+/// `3:30 PM` style: no leading zero, `AM`/`PM` in upper case (the US region, as expected),
 /// seconds only when there are some.
 pub fn format_clock(seconds: &Number) -> String {
     let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
@@ -550,7 +550,7 @@ pub fn format_clock_24(seconds: &Number) -> String {
     }
 }
 
-/// A time of day on its own never shows seconds, as the reference app prints it: `3:45:30 pm` reads `3:45 PM`.
+/// A time of day on its own never shows seconds, as expected: `3:45:30 pm` reads `3:45 PM`.
 /// A date with a time keeps them (`December 10, 2024 at 9:31:23 AM`).
 pub fn format_clock_minutes(seconds: &Number) -> String {
     let whole = BigInt::div_floor(seconds.numer(), seconds.denom());
@@ -584,7 +584,7 @@ pub fn format_date(days: &Number) -> String {
     let this_year = calendar::civil_from_days(today).year;
     // A date with a time reads `Yesterday at 6:35 PM` or `Tomorrow at 12:30 AM` a day either side of today, as
     // just the time (`12:55 PM`) today, and otherwise always carries its year (`November 1, 2026 at 10:30 PM`),
-    // as the reference app prints it.
+    // as expected.
     if !seconds.is_zero() {
         let clock = format_clock(&seconds);
         return match day - today {
@@ -640,7 +640,7 @@ pub(crate) fn split_seconds(seconds: &Number) -> (bool, i64, Number) {
 /// A length of time as `3 weeks 5 days` or `4 hours 32 minutes 24 seconds`.
 pub fn format_timespan(seconds: &Number) -> (String, bool) {
     let (negative, total, fraction) = split_seconds(seconds);
-    // Weeks, days and hours are written out; minutes and seconds are `min` and `s`, as the reference app does
+    // Weeks, days and hours are written out; minutes and seconds are `min` and `s`, as expected
     // (`8 hours 35 min`, `3 hours 5 min 10 s`).
     let parts = [
         (total / 604_800, "week", true),

@@ -148,7 +148,7 @@ impl Zone {
     }
 }
 
-/// The US abbreviations name their region, daylight saving included, as the reference app reads them:
+/// The US abbreviations name their region, daylight saving included, as expected:
 /// `noon PST in UTC` on 26 October is 19:00, because Los Angeles is on summer time.
 const US_REGIONS: &[(&str, &str)] = &[
     ("est", "America/New_York"),
@@ -203,7 +203,7 @@ const REGIONS: &[(&str, &str)] = &[
 
 /// Cities and short names that are not the last part of an IANA name.
 /// Airport codes, each standing for the zone of the airport (`7:30am LAX to Japan`). `IST` is left out: it is India's
-/// zone abbreviation, as the reference app reads it.
+/// zone abbreviation, as expected.
 const AIRPORTS: &[(&str, &str)] = &[
     ("atl", "America/New_York"),
     ("lax", "America/Los_Angeles"),

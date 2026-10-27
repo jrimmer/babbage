@@ -153,7 +153,7 @@ fn a_yearless_date_is_this_year_unless_the_line_says_until_or_since() {
         ("December 1 as yyyy", "2024"),
         ("January 5 as yyyy", "2024"),
     ]);
-    // A date with no year is this year's whatever the month, as the reference app reads it (Sheet D, lines 21, 22):
+    // A date with no year is this year's whatever the month, as expected (Sheet D, lines 21, 22):
     // late in December, `January 5` is still this January.
     assert_eq!(at(1_734_696_000, "January 5 as yyyy"), "2024");
     assert_eq!(at(1_734_696_000, "December 25 as yyyy"), "2024");
@@ -224,7 +224,7 @@ fn today_tomorrow_yesterday_and_now() {
         ("now as hh:mm a", "12:00 PM"),
         ("now as m:ss", "0:00"),
     ]);
-    // `now` is read to the minute, as the reference app shows it (`12:55 PM`).
+    // `now` is read to the minute, as expected (`12:55 PM`).
     assert_eq!(run_at(NOW + 45, "now as HH:mm:ss").unwrap(), "12:00:00");
     assert_eq!(run_at(NOW + 86_400, "tomorrow as EEEE").unwrap(), "Monday");
 }
@@ -546,7 +546,7 @@ fn a_year_after_a_day_and_month_has_four_digits() {
 
 #[test]
 fn a_time_of_day_shows_no_seconds_but_a_day_with_a_time_keeps_them() {
-    // the reference app prints `3:45:30 pm` as `3:45 PM` (Sheet D, line 9).
+    // the expected answer is `3:45:30 pm` as `3:45 PM` (Sheet D, line 9).
     all(&[
         ("5pm + 0.5 seconds", "5:00 PM"),
         ("5pm + 90.25 seconds", "5:01 PM"),

@@ -214,7 +214,7 @@ def first_ramadan(year):
             return first, date(*islamic.to_gregorian(hijri, 10, 1))
 
 
-# Festivals are given as the evening they begin and the day they end, as the reference app does.
+# Festivals are given as the evening they begin and the day they end, as expected.
 for y in range(1583, 2600):
     kislev25 = date(*hebrew.to_gregorian(y + 3761, 9, 25))
     add(f"Hanukkah {y}", "text", shown(kislev25 - timedelta(1)))

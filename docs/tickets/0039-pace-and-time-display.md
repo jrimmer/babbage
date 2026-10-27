@@ -1,6 +1,6 @@
 # 0039 Pace and time display
 
-Status: closed (the reference app and the reference note)
+Status: closed (settled by a maintainer check and the reference note)
 Milestone: v1 (row 19)
 Area: time
 

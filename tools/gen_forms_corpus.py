@@ -119,7 +119,7 @@ for _ in range(1500):
     ppi = rng.randint(50, 600)
     px = cm / 100 / INCH * ppi
     if px < 100000:
-        rows.append((f"{num(cm)} cm in px at {ppi} ppi", f"{dec(px)}px"))  # The reference app writes pixels with no space
+        rows.append((f"{num(cm)} cm in px at {ppi} ppi", f"{dec(px)}px"))  # The expected answer is pixels with no space
     count = rng.randint(1, 99999)
     cm_out = Fraction(count, ppi) * INCH * 100
     rows.append((f"{count} px in cm at {ppi} dpi", f"{dec(cm_out)} cm"))

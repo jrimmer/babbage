@@ -522,7 +522,7 @@ impl Value {
     }
 
     /// A length of time and an angle are the same amount of turning: 24 hours is 360 degrees, so 15 degrees an hour
-    /// (`12h 30m in degrees` is 187.5°, `90 degrees in hours` is `6h 0m 0s`), as the reference app has it.
+    /// (`12h 30m in degrees` is 187.5°, `90 degrees in hours` is `6h 0m 0s`), as the expected behaviour has it.
     fn time_and_angle(&self, target: &UnitExpr) -> Result<Option<Value>, Error> {
         use crate::units::lookup;
         let (Some(second), Some(degree)) = (lookup("s"), lookup("deg")) else {
@@ -551,7 +551,7 @@ impl Value {
     }
 
     /// Litres per hundred kilometres and distance per volume are reciprocals: 8 L/100km is 29.4 mpg, 30 mpg is
-    /// 7.84 L/100km (`MPG` is the US gallon), as the reference app converts them. Only `L/100km` converts this
+    /// 7.84 L/100km (`MPG` is the US gallon), as the expected behaviour converts them. Only `L/100km` converts this
     /// way, so no other pair of units is turned upside down by accident.
     fn fuel_economy(&self, target: &UnitExpr) -> Result<Option<Value>, Error> {
         let Some(per_100) = crate::units::lookup("L/100km") else {
@@ -729,7 +729,7 @@ impl Value {
             };
         }
         if l.unit.has_offset() || r.unit.has_offset() {
-            // the reference app (Sheet G): a temperature is added to or taken from a plain number, a percentage
+            // the expected behaviour (Sheet G): a temperature is added to or taken from a plain number, a percentage
             // or a temperature of the same scale (`20 C + 5 C` is `25 °C`, `20 C + 10%` is `22 °C`), and scaled by
             // a plain number (`20 C × 2` is `40 °C`). Two scales, or two temperatures multiplied, stay refused.
             let bare = |v: &Value| v.unit.is_empty();
@@ -767,7 +767,7 @@ impl Value {
                 Value::quantity(l.number.mul(&adjust(op, &r.number)?)?, l.unit.clone())
             }
             (BinOp::Mul, Plain, Plain) => product(l, r),
-            // the reference app (Sheet G): `10% x 10%` is `1%`, `20 / 50%` is `40`, `50% / 2` is `25%` and
+            // the expected behaviour (Sheet G): `10% x 10%` is `1%`, `20 / 50%` is `40`, `50% / 2` is `25%` and
             // `10%^2` is `0.01`.
             (BinOp::Mul, Percent, Percent) => Ok(Value::percent(l.number.mul(&r.number)?)),
             (BinOp::Div, Plain, Percent) => {
@@ -1061,7 +1061,7 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
         .div(&Number::from_i64(86_400))?
         .mul(&sign_n)?;
     // A date written with no time is midday, so hours added to it make a time: `Tuesday next week + 72 hours`
-    // is `November 6, 2026 at 12:00 PM`, as the reference app prints it.
+    // is `November 6, 2026 at 12:00 PM`, as expected.
     let sub_day = ["h", "min", "s"].iter().any(|u| by.unit == lookup(u));
     let start = if date.is_bare_date() && sub_day {
         date.number.add(&Number::from_ratio(
@@ -1369,7 +1369,7 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
-    // `$500/month / 30 days` is `$16.67/day` in the reference app: a monthly money rate spread over a number of
+    // `$500/month / 30 days` is `$16.67/day` in the expected behaviour: a monthly money rate spread over a number of
     // days. That is the one form kept; any other rate over a length of time keeps both units (`$100/day / 2 hours`
     // is not `$50/hour`).
     if let Some((_, rest)) = l.unit.currency_split()
@@ -1484,7 +1484,7 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             if !v.unit.is_empty() {
                 let plural = v.number.abs() != Number::from_i64(1);
                 let symbol = v.unit.display(plural);
-                // the reference app writes pixels and degrees with no space (`128.3464566929px`, `180°`), CSS
+                // the expected answer is pixels and degrees with no space (`128.3464566929px`, `180°`), CSS
                 // units the same way, and a rate that has no numerator unit straight after the number (`30/week`).
                 if !matches!(symbol.as_str(), "px" | "em" | "rem" | "°") && !symbol.starts_with('/')
                 {

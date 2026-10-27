@@ -9,7 +9,7 @@ fn shown(line: &str) -> String {
 
 #[test]
 fn several_quantities_in_a_row_are_a_sum() {
-    // Several time units written in a row print as a timespan, as the reference app does.
+    // Several time units written in a row print as a timespan, as expected.
     assert_eq!(shown("5 hours 30 minutes"), "5 hours 30 min");
     assert_eq!(shown("5 hours 30 minutes to seconds"), "19,800 s");
     assert_eq!(shown("1 m 50 cm"), "1.5 m");
@@ -43,7 +43,7 @@ fn temperature_rules() {
     assert_eq!(shown("-5 °C"), "-5 °C");
     assert_eq!(shown("100 celsius in fahrenheit"), "212 °F");
     assert_eq!(shown("0 K in C"), "-273.15 °C");
-    // the reference app (Sheet G) adds, takes away and scales temperatures of one scale.
+    // the expected behaviour (Sheet G) adds, takes away and scales temperatures of one scale.
     assert_eq!(shown("20 °C + 5 °C"), "25 °C");
     assert_eq!(shown("20 °C × 2"), "40 °C");
     assert_eq!(shown("2 × 20 °F"), "40 °F");

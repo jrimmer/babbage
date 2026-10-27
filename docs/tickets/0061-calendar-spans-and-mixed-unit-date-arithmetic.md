@@ -8,4 +8,4 @@ The reference notes show: `April 1, 2019 − 3 months 5 days | 27 December 2018`
 
 Built: a date moved by several lengths in turn (`April 1, 2019 − 3 months 5 days` is December 27, 2018; `2 months 3 days after June 5` is August 8; `June 5 + 1 year 2 months 3 weeks`), the calendar span between two dates (`3 March to 30 May` is `2 months 3 weeks 6 days`), `3 March to 30 May in days` and `10 March to 17 March in workdays`, and `April 1 through April 30 in days`. Year-less dates in a range are all this year. Two examples remain listed only for the page's day-first date style. Open: dotted dates (`01.05.2005 + 3 years 2 months 3 weeks`), which depend on the region's day order (Sheet D asks).
 
-Settled by the reference app (Sheet D line 47): `01.05.2005 + 1 day` is `1 day`. A dotted run is neither a date nor a number and is skipped, so the region's day order does not matter for it.
+Settled by a maintainer check (Sheet D line 47): `01.05.2005 + 1 day` is `1 day`. A dotted run is neither a date nor a number and is skipped, so the region's day order does not matter for it.

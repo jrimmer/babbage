@@ -438,7 +438,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 continue;
             }
             // Text shaped like a date that is not one (`2019-02-30`) is plain arithmetic, as in the owner's
-            // the reference app, where it is `2019 - 02 - 30`.
+            // the expected behaviour, where it is `2019 - 02 - 30`.
             '0'..='9' if iso_shape_at(&chars, i) && iso_at(&chars, i).is_some() => {
                 let (v, next) = iso_at(&chars, i).expect("checked by the guard");
                 out.push(Token {
@@ -691,7 +691,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     i = letters_end;
                     continue;
                 }
-                // `8 L/100km`: litres per hundred kilometres is a unit of its own (the reference app keeps it).
+                // `8 L/100km`: litres per hundred kilometres is a unit of its own (the expected behaviour keeps it).
                 if !is_call
                     && let Some(end) = per_hundred_km(&chars, i)
                     && let Some(unit) = crate::units::lookup("L/100km")
@@ -757,7 +757,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     });
                 } else {
                     // A name straight against a bracket (`foo(45)`) is a call of a function that does not
-                    // exist, which the reference app shows no answer for; with a space (`price (5)`) it is prose.
+                    // exist, which there is no expected answer for; with a space (`price (5)`) it is prose.
                     let glued_to_bracket = chars.get(end).is_some_and(|(_, c)| *c == '(');
                     let connector = ["and", "for", "the", "per", "off", "from", "with"]
                         .iter()
