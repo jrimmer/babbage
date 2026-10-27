@@ -38,6 +38,9 @@ def number_text(q, places):
         if a >= floor:
             idx = i
     if idx is None:
+        # An amount that would read as nothing keeps its digits: $0.0046320835, not $0.00.
+        if q != 0 and abs(q) < Fraction(1, 2 * 10**places):
+            return digits(q, 10, True)
         return digits(q, places, False)
     while True:
         sym, shift, _ = STEPS[idx]

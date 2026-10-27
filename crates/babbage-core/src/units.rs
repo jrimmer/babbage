@@ -107,6 +107,8 @@ pub struct UnitExpr(Vec<(UnitId, i8)>, Spelling);
 #[derive(Clone, Copy, Debug, Default)]
 struct Spelling {
     short_hour: bool,
+    /// Typed `mph`, which keeps that name; `miles/hour` reads `mi/hour`.
+    mph: bool,
 }
 
 impl PartialEq for Spelling {
@@ -182,9 +184,9 @@ tbsp | tbsp,tablespoon,tablespoons | L3 | 0.003785411784/256
 tsp | tsp,teaspoon,teaspoons | L3 | 0.003785411784/768
 bsh | bsh,bushel,bushels | L3 | 0.03523907016688
 imp gal | imperial gallon,imperial gallons,imp gal,imp gallon,uk gallon,uk gallons | L3 | 4.54609/1000
-imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 0.568261*2/1000
+imp qt | imperial quart,imperial quarts,imp qt,imp quart,uk quart,uk quarts | L3 | 1.13652/1000
 imp pt | imperial pint,imperial pints,imp pt,imp pint,imp pints,uk pint,uk pints | L3 | 0.568261/1000
-imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 0.568261/20/1000
+imp fl oz | imperial fluid ounce,imperial fluid ounces,imperial fl oz,imp fl oz,imp floz,uk fluid ounce,uk fluid ounces | L3 | 4.54609/160/1000
 af | af,acre foot,acre feet,acre-foot | L3 | 4046.8564224*0.3048
 # mass
 g | g,gram,grams,gramme,grammes | M | 0.001
@@ -764,7 +766,8 @@ pub fn lookup(name: &str) -> Option<UnitExpr> {
     let reg = registry();
     if let Some(u) = reg.by_name.get(name) {
         let mut u = u.clone();
-        u.1.short_hour = matches!(name, "h" | "hr");
+        u.1.short_hour = name == "h";
+        u.1.mph = name == "mph";
         return Some(u);
     }
     if name.len() >= 4 && name.chars().all(char::is_alphabetic) {
@@ -837,8 +840,11 @@ impl UnitExpr {
         }
         parts.retain(|(_, e)| *e != 0);
         parts.sort_by_key(|(u, _)| *u);
-        let short_hour = self.1.short_hour || other.1.short_hour;
-        UnitExpr(parts, Spelling { short_hour })
+        let spelling = Spelling {
+            short_hour: self.1.short_hour || other.1.short_hour,
+            mph: self.1.mph || other.1.mph,
+        };
+        UnitExpr(parts, spelling)
     }
 
     /// The currency when this is exactly one currency unit, as in `$` or `CHF`.
@@ -1164,9 +1170,10 @@ const WORD_UNITS: &[(&str, &str)] = &[
 impl UnitExpr {
     /// How this unit reads in an answer. `plural` is whether the amount in front of it is not one.
     pub fn display(&self, plural: bool) -> String {
-        // Miles per hour is written `mph`, however it was reached.
+        // Miles per hour keeps the name `mph` when it was typed that way.
         if let (Some(mile), Some(hour)) = (lookup("mi"), lookup("h"))
             && let ([(m, 1)], [(h, 1)]) = (&mile.0[..], &hour.0[..])
+            && self.1.mph
             && self.0.len() == 2
             && self.0.contains(&(*m, 1))
             && self.0.contains(&(*h, -1))

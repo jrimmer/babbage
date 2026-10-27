@@ -9,7 +9,7 @@ from decimal import Decimal, ROUND_HALF_UP, getcontext
 from fractions import Fraction
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from unitwords import suffix
+from unitwords import suffix, tiny
 
 getcontext().prec = 200
 rng = random.Random(0xF04A)
@@ -17,6 +17,9 @@ rows = []
 
 
 def dec(q, places=10):
+    t = tiny(q) if places == 10 else None
+    if t:
+        return t
     d = Decimal(q.numerator) / Decimal(q.denominator)
     text = format(d.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP), "f")
     neg = text.startswith("-")

@@ -76,6 +76,36 @@ pub fn interest_on(
     )
 }
 
+/// `hourly interest on $1k for 3 years at 4% compounding quarterly`: the interest earned over the whole time, spread
+/// evenly over the time: that many hours, days, weeks, months or years (`code` 1 to 5) in every year of it. A day is a
+/// 365.2425th of a year, as for loans.
+///
+/// the reference app spreads the interest over a single year's hours, days or weeks however long the time is,
+/// so for three years it answers three times too much; the two agree for one year. This is a deliberate difference.
+pub fn interest_each(
+    principal: &Value,
+    time: &Value,
+    rate_value: &Value,
+    per_year: i64,
+    code: i64,
+) -> Result<Value, Error> {
+    let total = interest_on(principal, time, rate_value, per_year)?;
+    let days = Number::from_decimal_str("365.2425")?;
+    let per_year_count = match code {
+        1 => days.mul(&int(24))?,
+        2 => days,
+        3 => days.div(&int(7))?,
+        4 => int(12),
+        5 => int(1),
+        _ => return Err(Error::OutOfDomain),
+    };
+    let periods = years(time)?.mul(&per_year_count)?;
+    if periods.is_zero() || periods.is_negative() {
+        return Err(Error::OutOfDomain);
+    }
+    Value::binary(BinOp::Div, &total, &Value::plain(periods))
+}
+
 pub fn present_value(
     future: &Value,
     time: &Value,

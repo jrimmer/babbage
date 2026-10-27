@@ -102,6 +102,11 @@ pub fn local_offset_at(utc: i64) -> i64 {
     local_zone().offset_at(utc)
 }
 
+/// The local zone's short name at this instant (`PST`).
+pub fn local_abbreviation_at(utc: i64) -> String {
+    local_zone().abbreviation_at(utc)
+}
+
 /// Seconds east of UTC for local time right now.
 pub fn local_offset_seconds() -> i64 {
     local_offset_at(now_utc_seconds())

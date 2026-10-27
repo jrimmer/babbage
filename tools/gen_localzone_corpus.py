@@ -11,6 +11,10 @@ from datetime import date, datetime, timedelta, timezone
 zoneinfo.reset_tzpath(to=[])
 from zoneinfo import ZoneInfo
 
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import zone_label, offset_label
+
 rng = random.Random(0x10CA1)
 MONTHS = list(calendar.month_name)[1:]
 ZONES = ["America/New_York", "America/Los_Angeles", "Europe/London", "Australia/Sydney", "Asia/Kolkata",
@@ -68,7 +72,7 @@ for name in ZONES:
         off = int(aware.utcoffset().total_seconds())
         z = "Z" if off == 0 else f"{'+' if off > 0 else '-'}{abs(off) // 3600:02}:{abs(off) % 3600 // 60:02}"
         rows.append((name, f"{lit} as iso8601", f"{d.year:04}-{d.month:02}-{d.day:02}T{secs // 3600:02}:{secs % 3600 // 60:02}:00{z}"))
-        rows.append((name, f"{stamp} to date", shown(d, secs, today_here)))
+        rows.append((name, f"{stamp} to date", shown(d, secs, today_here) + " " + zone_label(aware)))
         utc = aware.astimezone(timezone.utc)
         rows.append((name, f"{utc.year:04}-{utc.month:02}-{utc.day:02}T{utc.hour:02}:{utc.minute:02}:00Z to date", shown(d, secs, today_here)))
     here = datetime(2024, 6, 15, 12, tzinfo=timezone.utc).astimezone(zone)

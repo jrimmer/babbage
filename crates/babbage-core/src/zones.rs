@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
 use chrono::{DateTime, Offset, TimeZone};
-use chrono_tz::{TZ_VARIANTS, Tz};
+use chrono_tz::{OffsetName, TZ_VARIANTS, Tz};
 
 /// The IANA release the bundled database carries.
 pub const BUNDLED_RELEASE: &str = "2025b";
@@ -67,6 +67,42 @@ impl Zone {
                         .local_minus_utc(),
                 )
             }),
+        }
+    }
+
+    /// The zone's short name at this instant: `PST`, `CET`, or `UTC+8` for a zone that has none.
+    pub fn abbreviation_at(self, utc: i64) -> String {
+        let named = match self {
+            Zone::Fixed(_) => None,
+            Zone::Loaded(loaded) => loaded
+                .rules
+                .find_local_time_type(utc)
+                .ok()
+                .map(|t| t.time_zone_designation().to_string()),
+            Zone::Named(tz) => DateTime::from_timestamp(utc, 0).and_then(|instant| {
+                tz.offset_from_utc_datetime(&instant.naive_utc())
+                    .abbreviation()
+                    .map(str::to_string)
+            }),
+        };
+        match named {
+            Some(name) if !name.is_empty() && !name.starts_with(['+', '-']) => name,
+            _ => {
+                let seconds = self.offset_at(utc);
+                if seconds == 0 {
+                    "UTC".to_string()
+                } else {
+                    let (sign, abs) = if seconds < 0 {
+                        ('-', -seconds)
+                    } else {
+                        ('+', seconds)
+                    };
+                    match (abs / 3600, abs % 3600 / 60) {
+                        (h, 0) => format!("UTC{sign}{h}"),
+                        (h, m) => format!("UTC{sign}{h}:{m:02}"),
+                    }
+                }
+            }
         }
     }
 

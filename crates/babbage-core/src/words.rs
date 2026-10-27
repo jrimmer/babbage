@@ -833,6 +833,27 @@ fn after_or_for(body: &[Token]) -> Option<Vec<&[Token]>> {
 }
 
 fn finance_forms(toks: &[Token]) -> Option<Result<Expr, Error>> {
+    // `daily interest on $1k for 3 years at 4%`: the interest spread over the days (or hours, weeks, months, years).
+    // `daily interest on $1M over 30 years at 6.5%` is the loan form below.
+    for (code, names) in [
+        (1, &["hourly"][..]),
+        (2, &["daily"]),
+        (3, &["weekly"]),
+        (4, &["monthly"]),
+        (5, &["yearly", "annual", "annually"]),
+    ] {
+        if names.iter().any(|n| is_word(toks.first(), n)) && words_at(toks, 1, &["interest", "on"])
+        {
+            let (body, per_year) = compounding(&toks[3..]);
+            if let Some(parts) = after_or_for(body) {
+                return Some(call_with(
+                    &parts,
+                    vec![number_node(per_year), number_node(code)],
+                    Func::InterestEach,
+                ));
+            }
+        }
+    }
     if words_at(toks, 0, &["interest", "on"]) {
         let (body, per_year) = compounding(&toks[2..]);
         let parts = after_or_for(body)?;

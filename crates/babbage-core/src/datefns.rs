@@ -612,7 +612,11 @@ fn to_date(v: &Value) -> Result<Value, Error> {
                 seconds = seconds.div(&thousand)?;
             }
             let local = settings::utc_to_wall(&seconds)?;
-            Ok(Value::date(local.div(&seconds_per_day())?))
+            let instant = i64::try_from(&seconds.floor()).map_err(|_| Error::Overflow)?;
+            Ok(Value::date_with_zone(
+                local.div(&seconds_per_day())?,
+                settings::local_abbreviation_at(instant),
+            ))
         }
         _ => Err(Error::UnsupportedOperation(
             "`to date` needs a timestamp, a date or a date string",

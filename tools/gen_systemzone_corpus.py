@@ -10,6 +10,10 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from unitwords import zone_label, offset_label
+
 ROOT = Path(__file__).resolve().parent.parent / "crates/babbage-core/tests/fixtures/zoneinfo"
 PLACES = {
     "Casablanca": "Africa/Casablanca", "Vancouver": "America/Vancouver", "Edmonton": "America/Edmonton",
@@ -88,7 +92,7 @@ for name in names:
             continue
         stamp = int((naive.replace(tzinfo=z) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
         add(PLACES[name], f"{literal(d, secs)} to timestamp", stamp)
-        add(PLACES[name], f"{stamp} to date", shown(d, secs, here.date()))
+        add(PLACES[name], f"{stamp} to date", shown(d, secs, here.date()) + " " + zone_label(naive.replace(tzinfo=z)))
 
 for row in rows:
     print("\t".join(map(str, row)))

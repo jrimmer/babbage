@@ -23,7 +23,7 @@ pub fn eval(expr: &Expr) -> Result<Value, Error> {
             }
             Node::Convert(u) => {
                 let x = stack.pop().expect("well-formed expression");
-                stack.push(x.convert(u)?);
+                stack.push(x.convert(u)?.converted());
             }
             Node::PerUnit(u) => {
                 let x = stack.pop().expect("well-formed expression");

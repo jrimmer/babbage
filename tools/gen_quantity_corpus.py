@@ -58,8 +58,8 @@ def num():
     return t, Fraction(t)
 
 
-def fixed10(q):
-    t = tiny(q)
+def fixed10(q, sci=True):
+    t = tiny(q) if sci else None
     if t:
         return t
     d = Decimal(q.numerator) / Decimal(q.denominator)
@@ -71,7 +71,7 @@ def emit(text, kind, q=None, unit=""):
     if kind.startswith("ERR"):
         print(f"{text}\t{kind}\t-\t-")
         return
-    shown = fixed10(q * (100 if kind == "percent" else 1))
+    shown = fixed10(q * (100 if kind == "percent" else 1), sci=kind != "percent")
     shown += "%" if kind == "percent" else suffix(unit, q)
     print(f"{text}\t{kind}\t{q.numerator}/{q.denominator}\t{shown}")
 

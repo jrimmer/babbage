@@ -94,6 +94,7 @@ pub enum Func {
     /// (principal, time, rate, compounding periods per year)
     Compound,
     InterestOn,
+    InterestEach,
     PresentValue,
     /// (invested, returned)
     ReturnMultiple,
@@ -184,6 +185,7 @@ impl Func {
             | Func::TimeBySteps
             | Func::TimeByGrowth
             | Func::GrowthRate => Arity::Exactly(4),
+            Func::InterestEach => Arity::Exactly(5),
             Func::StdDev => Arity::AtLeast(2),
             _ => Arity::Exactly(1),
         }
@@ -562,6 +564,13 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
         Func::StdDev => standard_deviation(args),
         Func::Compound => finance::compound(&args[0], &args[1], &args[2], whole(&args[3])?),
         Func::InterestOn => finance::interest_on(&args[0], &args[1], &args[2], whole(&args[3])?),
+        Func::InterestEach => finance::interest_each(
+            &args[0],
+            &args[1],
+            &args[2],
+            whole(&args[3])?,
+            whole(&args[4])?,
+        ),
         Func::PresentValue => {
             finance::present_value(&args[0], &args[1], &args[2], whole(&args[3])?)
         }

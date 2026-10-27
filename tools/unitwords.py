@@ -30,8 +30,8 @@ def suffix(unit, amount):
 
 
 def tiny(q):
-    """An amount below a hundred-millionth is written in scientific form, `1e-9` or `-4e-11`; else None."""
-    if q == 0 or abs(q) >= Fraction(1, 10**8):
+    """An amount below a millionth is written in scientific form, `1e-9` or `-4e-11`; else None."""
+    if q == 0 or abs(q) >= Fraction(1, 10**6):
         return None
     getcontext().prec = 4000
     d = Decimal(abs(q).numerator) / Decimal(abs(q).denominator)
@@ -42,3 +42,21 @@ def tiny(q):
         exp += 1
     text = format(mantissa, "f").rstrip("0").rstrip(".")
     return ("-" if q < 0 else "") + f"{text}e{exp}"
+
+
+def offset_label(seconds):
+    """A zone with no name of its own: `UTC`, `UTC+8`, `UTC-5:30`."""
+    if seconds == 0:
+        return "UTC"
+    sign, abs_s = ("-", -seconds) if seconds < 0 else ("+", seconds)
+    h, m = abs_s // 3600, abs_s % 3600 // 60
+    return f"UTC{sign}{h}" if m == 0 else f"UTC{sign}{h}:{m:02}"
+
+
+def zone_label(aware):
+    """The zone's short name at a moment, as a timestamp's `to date` ends with it (`PST`); an offset-only name
+    such as `+03` becomes `UTC+3`."""
+    name = aware.tzname() or ""
+    if name and name[0] not in "+-":
+        return name
+    return offset_label(int(aware.utcoffset().total_seconds()))

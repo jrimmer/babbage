@@ -71,6 +71,10 @@ pub enum Shown {
     Scientific,
     /// `5' 6"` reads `5 feet 6 inches`.
     FeetInches,
+    /// A date and time from a timestamp: it ends with the zone's short name, `December 10, 2024 at 1:31:23 AM PST`.
+    ZoneLabel(String),
+    /// The result of an `in` or `to` conversion: every digit, never `13 lb 8 oz` or `5 feet 6 inches`.
+    Decimal,
 }
 
 const TEMPERATURE: &str = "temperatures can be converted, and a plain number added or subtracted, but not combined further";
@@ -147,6 +151,13 @@ impl Value {
         self.kind == Kind::Date && self.number.is_integer() && self.layout != Some(Shown::Timed)
     }
 
+    /// A date and time read from a timestamp, ending with the name of the zone it is shown in.
+    pub fn date_with_zone(days: Number, zone: String) -> Value {
+        let mut v = Value::date(days);
+        v.layout = Some(Shown::ZoneLabel(zone));
+        v
+    }
+
     pub fn date(days: Number) -> Value {
         Value {
             number: days,
@@ -178,6 +189,14 @@ impl Value {
         let mut v = Value::quantity(total, foot)?;
         v.layout = Some(Shown::FeetInches);
         Ok(v)
+    }
+
+    /// This value as the answer of a conversion: a quantity shown as a decimal in the unit asked for.
+    pub fn converted(mut self) -> Value {
+        if self.kind == Kind::Plain && !self.unit.is_empty() && self.layout.is_none() {
+            self.layout = Some(Shown::Decimal);
+        }
+        self
     }
 
     /// A length written `6"`, in inches and shown as feet and inches.
@@ -1267,9 +1286,13 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
-    // `$500/month / 30 days` is `$16.67/day`: a money rate over a length of time takes that time as its period.
-    if l.unit.currency_split().is_some()
-        && is_length_of_time(r)
+    // `$500/month / 30 days` is `$16.67/day` in the reference app: a monthly money rate spread over a number of
+    // days. That is the one form kept; any other rate over a length of time keeps both units (`$100/day / 2 hours`
+    // is not `$50/hour`).
+    if let Some((_, rest)) = l.unit.currency_split()
+        && let (Some(month), Some(day)) = (crate::units::lookup("mo"), crate::units::lookup("day"))
+        && rest == month.recip()
+        && r.unit == day
         && let Some(per) = l.unit.with_period(&r.unit)
     {
         return Value::quantity(l.number.div(&r.number)?, per);
@@ -1339,7 +1362,18 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
                 exact: a.exact && b.exact,
             }
         }
-        Kind::Plain if v.layout.is_some() && !v.unit.is_empty() => format_layout(v, opts),
+        Kind::Plain
+            if v.layout.is_some() && v.layout != Some(Shown::Decimal) && !v.unit.is_empty() =>
+        {
+            format_layout(v, opts)
+        }
+        Kind::Plain if opts.compound_units && feet_and_inches(v) => {
+            let composite = Value {
+                layout: Some(Shown::FeetInches),
+                ..v.clone()
+            };
+            format_layout(&composite, opts)
+        }
         Kind::Plain if opts.compound_units && pounds_and_ounces(v).is_some() => {
             let (base, units) = pounds_and_ounces(v).expect("checked by the guard");
             format_parts(&base, &units, opts)
@@ -1367,9 +1401,15 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
             f
         }
         Kind::Date => Formatted {
-            text: crate::dates::format_date(&v.number),
+            text: match &v.layout {
+                Some(Shown::ZoneLabel(zone)) if !v.number.is_integer() => {
+                    format!("{} {zone}", crate::dates::format_date(&v.number))
+                }
+                _ => crate::dates::format_date(&v.number),
+            },
             exact: true,
         },
+        // (`Value::date_with_zone` below makes these.)
         Kind::Clock => Formatted {
             text: if v.layout == Some(Shown::Clock24) {
                 crate::dates::format_clock_24_minutes(&v.number)
@@ -1412,6 +1452,15 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
     }
     let abbreviated = opts.abbreviate_large && v.number.abs() >= Number::from_i64(100_000);
     let mut f = match (currency.minor_digits, abbreviated, opts.fixed_money_digits) {
+        // An amount that would read as nothing in cents keeps its digits: `$0.0046320835`, not `$0.00`.
+        (Some(minor), false, true)
+            if !v.number.is_zero()
+                && v.number.abs()
+                    < Number::from_ratio(1.into(), (2 * 10_i64.pow(minor)).into())
+                        .unwrap_or_else(|_| Number::from_i64(0)) =>
+        {
+            format_decimal(&v.number, opts)
+        }
         (Some(minor), false, true) => {
             let mut fixed = opts.with_places(minor.min(opts.decimal_places())).ok()?;
             fixed.trim_trailing_zeros = false;
@@ -1477,6 +1526,11 @@ fn radix_text(n: &Number, radix: u8) -> String {
             format!("{sign}{digits}{subscript}")
         }
     }
+}
+
+/// A part of a foot reads in inches: `5.5 ft` is `5 feet 6 inches`, but not after a conversion.
+fn feet_and_inches(v: &Value) -> bool {
+    v.layout.is_none() && !v.number.is_integer() && v.unit.symbol() == "ft"
 }
 
 /// A part of a pound reads in ounces: `13.5 lb` is `13 lb 8 oz`. The weight in kilograms and the units to show it in.
@@ -1564,7 +1618,9 @@ fn format_layout(v: &Value, opts: &FormatOptions) -> Formatted {
         | Shown::Timed
         | Shown::Pace(_)
         | Shown::Scientific
-        | Shown::Clock24 => {
+        | Shown::Clock24
+        | Shown::ZoneLabel(_)
+        | Shown::Decimal => {
             unreachable!("written out before this is called")
         }
     }

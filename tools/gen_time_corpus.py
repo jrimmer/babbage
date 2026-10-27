@@ -11,7 +11,7 @@ from decimal import Decimal
 from fractions import Fraction
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from unitwords import suffix as unit_suffix
+from unitwords import suffix as unit_suffix, offset_label
 
 rng = random.Random(0x71E5)
 TODAY = date(2024, 6, 15)
@@ -269,9 +269,9 @@ for offset in OFFSETS:
         # a date with no time is midday, as the reference app treats it
         add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} to timestamp", int((datetime(d.year, d.month, d.day, 12, tzinfo=tz) - EPOCH).total_seconds()), offset)
         local_view = local
-        add(f"{stamp} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today), offset)
+        add(f"{stamp} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today) + " " + offset_label(offset), offset)
         if stamp * 1000 >= 10**11:
-            add(f"{stamp * 1000} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today), offset)
+            add(f"{stamp * 1000} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today) + " " + offset_label(offset), offset)
         zone = "Z" if offset == 0 else f"{'+' if offset > 0 else '-'}{abs(offset) // 3600:02}:{abs(offset) % 3600 // 60:02}"
         iso = f"{local.year:04}-{local.month:02}-{local.day:02}T{local.hour:02}:{local.minute:02}:{local.second:02}{zone}"
         add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} {clock_literal(0)} to timestamp", int((datetime(d.year, d.month, d.day, tzinfo=tz) - EPOCH).total_seconds()), offset)

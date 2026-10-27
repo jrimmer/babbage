@@ -118,13 +118,17 @@ fn playback_speed_needs_a_time_and_a_speed() {
 fn timestamps_are_written_in_full() {
     assert_eq!(shown("June 15, 2024 to timestamp"), "1718452800");
     assert_eq!(shown("current timestamp"), "1718452800");
-    assert_eq!(shown("1718452800 to date"), "12:00 PM");
+    // A date from a timestamp ends with the zone's name (the reference app: `... AM PST`); here the zone is UTC.
+    assert_eq!(shown("1718452800 to date"), "12:00 PM UTC");
     assert_eq!(shown("0 to date"), "January 1, 1970");
     assert_eq!(
         shown("99999999999 to date"),
-        "November 16, 5138 at 9:46:39 AM"
+        "November 16, 5138 at 9:46:39 AM UTC"
     );
-    assert_eq!(shown("100000000000 to date"), "March 3, 1973 at 9:46:40 AM");
+    assert_eq!(
+        shown("100000000000 to date"),
+        "March 3, 1973 at 9:46:40 AM UTC"
+    );
 }
 
 #[test]
