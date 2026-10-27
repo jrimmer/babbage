@@ -59,13 +59,14 @@ fn load() -> Settings {
         std::env::var("BABBAGE_NOW").ok().as_deref(),
         std::env::var("BABBAGE_TZDIR").ok().as_deref(),
     );
-    // "System" (the default) follows the language and region the session is set to.
-    let chosen = file.lines().any(|line| {
+    // Only a file that asks for "System" follows the language and region the session is set to; otherwise a sheet
+    // reads the same on every machine (`1.5` is one and a half).
+    let wants_system = file.lines().any(|line| {
         without_comment(line)
             .split_once('=')
-            .is_some_and(|(k, v)| k.trim() == "number_format" && v.trim() != "system")
+            .is_some_and(|(k, v)| k.trim() == "number_format" && v.trim() == "system")
     });
-    if !chosen {
+    if wants_system {
         let locale = ["LC_ALL", "LC_NUMERIC", "LANG"]
             .iter()
             .find_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty()));

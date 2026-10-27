@@ -9,7 +9,7 @@ use gpui::{
     AnyElement, App, Bounds, ClipboardItem, Context, EntityInputHandler, FocusHandle, Focusable,
     FontWeight, Hsla, KeyDownEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
     Pixels, Point, ScrollWheelEvent, ShapedLine, SharedString, TextRun, UTF16Selection,
-    UnderlineStyle, Window, div, point, prelude::*, px, size,
+    UnderlineStyle, Window, div, point, prelude::*, px, relative, size,
 };
 
 use crate::appprefs;
@@ -1414,11 +1414,22 @@ impl SheetView {
             (None, Some(e)) => (shortened(e, TOTAL_ERROR_CHARS), true),
             _ => return None,
         };
+        // The Total adds the amounts at the bottom of the sheet; lines of another kind above them are not added, and
+        // the note says how many, so a stray line that restarted the sum does not go unnoticed.
+        let n = self.computed.left_out;
+        let note = (n > 0).then(|| {
+            format!(
+                "{n} {} above not added",
+                if n == 1 { "line" } else { "lines" }
+            )
+        });
         Some(
             div()
                 .absolute()
                 .right(px(22.))
                 .bottom(px(16.))
+                // Never wider than the answers column (30% of the pane), so it cannot run out over the sheet.
+                .max_w(relative(0.3))
                 .px(px(14.))
                 .py(px(7.))
                 .rounded(px(9.))
@@ -1426,28 +1437,32 @@ impl SheetView {
                 .border_1()
                 .border_color(c.line)
                 .flex()
-                .gap(px(8.))
-                .items_baseline()
+                .flex_col()
+                .items_end()
+                .gap(px(2.))
                 .text_size(px(15.))
-                .child(div().text_color(c.muted).text_size(px(13.)).child("Total"))
                 .child(
                     div()
-                        .font_weight(FontWeight::MEDIUM)
-                        .when(failed, |d| d.text_color(c.warn).text_size(px(13.)))
-                        .child(SharedString::from(value)),
+                        .max_w_full()
+                        .flex()
+                        .gap(px(8.))
+                        .items_baseline()
+                        .child(div().text_color(c.muted).text_size(px(13.)).child("Total"))
+                        .child(
+                            div()
+                                .min_w(px(0.))
+                                .truncate()
+                                .font_weight(FontWeight::MEDIUM)
+                                .when(failed, |d| d.text_color(c.warn).text_size(px(13.)))
+                                .child(SharedString::from(value)),
+                        ),
                 )
-                .when(self.computed.left_out > 0, |d| {
-                    let n = self.computed.left_out;
-                    d.child(
-                        div()
-                            .text_color(c.warn)
-                            .text_size(px(12.))
-                            .child(SharedString::from(format!(
-                                "{n} {} left out",
-                                if n == 1 { "line" } else { "lines" }
-                            ))),
-                    )
-                }),
+                .children(note.map(|text| {
+                    div()
+                        .text_color(c.warn)
+                        .text_size(px(12.))
+                        .child(SharedString::from(text))
+                })),
         )
     }
 }
@@ -1496,6 +1511,7 @@ impl Render for SheetView {
             .children(sidebar)
             .child(
                 div()
+                    .relative()
                     .flex_1()
                     .min_w(px(0.))
                     .h_full()
@@ -1513,9 +1529,9 @@ impl Render for SheetView {
                             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
                             .on_scroll_wheel(cx.listener(Self::on_scroll))
                             .child(crate::element::SheetElement { view: entity }),
-                    ),
+                    )
+                    .children(chip),
             )
-            .children(chip)
             .children(panel)
             .children(answer_menu)
             .children(completion)

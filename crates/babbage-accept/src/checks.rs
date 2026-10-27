@@ -32,6 +32,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("sheet-functions", sheet_functions),
     ("everyday-lines", everyday_lines),
     ("number-format", number_format),
+    ("number-format-system", number_format_system),
     ("scrolling", scrolling),
     ("mouse-editing", mouse_editing),
     ("drag-select", drag_select),
@@ -371,6 +372,38 @@ fn everyday_lines(h: &mut Harness) -> anyhow::Result<()> {
     let s = answers_for(h, &mut app, &lines);
     app.finish()?;
     s.map(|_| ())
+}
+
+/// "System" is opt-in: with no choice made a sheet reads `1.5` as one and a half whatever the language of the session,
+/// and a file that says `number_format = system` follows the language.
+fn number_format_system(h: &mut Harness) -> anyhow::Result<()> {
+    let german = [("LC_ALL", "de_DE.UTF-8")];
+    let mut app = h.launch("number-format-default", None, &german)?;
+    h.type_text("1.5 + 1")?;
+    let s = app.wait_for("the answer", T, |s| answer(s, 0) == Some("2.5"))?;
+    ensure!(
+        s["number_format"] == "NorthAmerica",
+        "{}",
+        s["number_format"]
+    );
+    app.finish()?;
+
+    let config = h.logs.join("number-format-system.settings");
+    std::fs::write(&config, "number_format = system\n")?;
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch(
+        "number-format-system",
+        None,
+        &[("LC_ALL", "de_DE.UTF-8"), ("BABBAGE_CONFIG_FILE", &config)],
+    )?;
+    h.type_text("1,5 + 1")?;
+    let s = app.wait_for("the answer", T, |s| answer(s, 0) == Some("2,5"))?;
+    ensure!(
+        s["number_format"] == "WesternEurope",
+        "{}",
+        s["number_format"]
+    );
+    app.finish()
 }
 
 fn number_format(h: &mut Harness) -> anyhow::Result<()> {
@@ -2020,9 +2053,9 @@ fn showcase(h: &mut Harness) -> anyhow::Result<()> {
         "150 lb in kg",
         "5 km in miles",
         "20% of 85",
+        "1/3 + 1/6",
         "June 3, 2027 + 3 weeks",
         "7:30am to 8:45pm",
-        "1/3 + 1/6",
     ];
     for line in &lines[..lines.len() - 1] {
         h.type_line(line)?;
@@ -2031,9 +2064,9 @@ fn showcase(h: &mut Harness) -> anyhow::Result<()> {
     let s = app.wait_for("the answers", T, |s| {
         answer(s, 6) == Some("$1,585.58")
             && answer(s, 10) == Some("68.0388555 kg")
-            && answer(s, 13) == Some("June 24, 2027")
-            && answer(s, 14) == Some("13 hours 15 min")
-            && answer(s, 15) == Some("0.5")
+            && answer(s, 13) == Some("0.5")
+            && answer(s, 14) == Some("June 24, 2027")
+            && answer(s, 15) == Some("13 hours 15 min")
     })?;
     ensure!(
         answer(&s, 7) == Some("$396.40") && answer(&s, 12) == Some("17"),

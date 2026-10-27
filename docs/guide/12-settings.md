@@ -45,12 +45,12 @@ See [Sheets and files](10-sheets-and-files.html) for more on the sidebar.
 
 | Setting | Choices | Default | What it does |
 |---|---|---|---|
-| Number format | System, 1,234.56, 1.234,56, 1 234,56 | System | How numbers are typed and shown: the grouping mark and the decimal mark |
+| Number format | 1,234.56, 1.234,56, 1 234,56, System | 1,234.56 | How numbers are typed and shown: the grouping mark and the decimal mark |
 | Decimal places | 0 to 10 | 10 | The most places an answer shows after the point |
 | Use notation for large numbers | On, Off | On | `300000` reads `300k` and `16777216` reads `16.777216M` |
 | Thousands separators in answers | On, Off | On | `1,000` and not `1000` |
 
-The three number formats are North American style (`1,234.56`), Western European (`1.234,56`) and Eastern European, where a space groups the thousands and either a comma or a point is read as the decimal mark (`1 234,56`). **System** follows the session's locale, read from `LC_ALL`, then `LC_NUMERIC`, then `LANG`. German, Spanish, Italian, Portuguese, Dutch and some other languages use `1.234,56`. French, the Slavic and Nordic languages and some others use `1 234,56`. Anything else uses `1,234.56`.
+The three number formats are North American style (`1,234.56`), Western European (`1.234,56`) and Eastern European, where a space groups the thousands and either a comma or a point is read as the decimal mark (`1 234,56`). The default is `1,234.56` on every machine, so a sheet reads the same wherever it is opened. **System** follows the session's locale, read from `LC_ALL`, then `LC_NUMERIC`, then `LANG`. German, Spanish, Italian, Portuguese, Dutch and some other languages use `1.234,56`. French, the Slavic and Nordic languages and some others use `1 234,56`. Anything else uses `1,234.56`.
 
 Any of these can be overridden for a single answer from the answer's `⋯` menu; see [Answers and formats](09-answers-and-formats.html).
 

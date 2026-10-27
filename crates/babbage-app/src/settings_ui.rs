@@ -148,12 +148,12 @@ pub const PANES: &[Pane] = &[
                 hint: "How numbers are typed and shown",
                 control: Control::Choice {
                     options: &[
-                        ("system", "System"),
                         ("north-america", "1,234.56"),
                         ("western-europe", "1.234,56"),
                         ("eastern-europe", "1 234,56"),
+                        ("system", "System"),
                     ],
-                    default: "system",
+                    default: "north-america",
                 },
             },
             Item {

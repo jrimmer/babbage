@@ -78,9 +78,9 @@ The window has three parts side by side.
 | **Sheet** (middle) | The place you type. Line numbers run down the left edge, and your text sits beside them. |
 | **Answers column** (right) | The answer to each line, level with the line it belongs to. At its top are three buttons: **Settings**, **Help** and the **sidebar** toggle. |
 
-A small **Total** chip floats at the bottom right of the answers column. It adds up the sheet's lines for you. If
-some lines cannot be added to the rest, say a length and a price, the chip says how many it left out. See
-[Variables and totals](06-variables-and-totals.html).
+A small **Total** chip floats at the bottom right of the answers column. It adds up the amounts at the bottom of the
+sheet for you. If lines above them are a different kind, say a length among prices, the chip says how many it did not
+add. See [Variables and totals](06-variables-and-totals.html).
 
 ![The Babbage window with the sidebar, the sheet and the answers column](img/window-parts.webp)
 

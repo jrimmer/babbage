@@ -125,9 +125,13 @@ There are four ways to add up a sheet. All of them add numbers, money, quantitie
 
 The window shows a **Total** chip in the bottom right corner. It adds up every line that has an answer, except subtotal and `total` lines (which would count lines twice). It disappears when the sheet has no answers. The chip shows `≈` before a total that is only approximate, and shows the error in place of a number when the lines cannot be added at all.
 
-![Three lines that do not all add up, and the Total chip saying how many were left out](img/totals-left-out.webp)
+![Three lines that do not all add up, and the Total chip saying how many lines above were not added](img/totals-left-out.webp)
 
-If a line cannot be added to the running sum, such as `3 gallons` after `$10`, the sum starts again from that line. The chip then says how many lines it left out, for example **2 lines left out**: the lines before the restart. Plain numbers join whatever unit the sum already has, so `$10`, `5` and `3 gallons` come to `3 gal`, with the first two left out.
+The chip adds the run of lines at the bottom that can be added to each other. If a line cannot be added to the running sum, such as `3 gallons` after `$10`, the sum starts again from that line, and the lines before it are not part of the Total. A note under the Total says how many, for example **2 lines above not added**.
+
+The note is how you tell whether the Total covers what you think it does. No note means every line is in the Total. A note on a sheet of one kind of amount, such as a budget, usually means a stray line of another kind restarted the sum, so look for it. On a sheet that mixes kinds on purpose, such as units, dates and prices together, the note is expected.
+
+Plain numbers join whatever unit the sum already has, so `$10`, `5` and `3 gallons` come to `3 gal`, with the first two not added.
 
 Percentages are applied to the total at the end, so a `10%` line raises the sum by ten percent.
 
