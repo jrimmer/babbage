@@ -7,6 +7,8 @@ use gpui::{
     prelude::*, px,
 };
 
+use babbage_core::FormatOptions;
+
 use crate::chrome::Rect;
 use crate::linefmt::LineFormat;
 use crate::theme::Colors;
@@ -50,19 +52,20 @@ pub fn origin(pane_right: f32, row_y: f32, window_h: f32) -> (f32, f32) {
 }
 
 /// What a control does to a line's format. `None` for controls that are not a format change.
-pub fn change(id: &str, f: LineFormat) -> Option<LineFormat> {
-    let flip = |v: Option<bool>| Some(!v.unwrap_or(true));
+pub fn change(id: &str, f: LineFormat, base: &FormatOptions) -> Option<LineFormat> {
+    // A switch flips what the line shows now: its own choice, else what the settings say.
+    let flip = |own: Option<bool>, setting: bool| Some(!own.unwrap_or(setting));
     match id {
         "group" => Some(LineFormat {
-            group: flip(f.group),
+            group: flip(f.group, base.group_thousands),
             ..f
         }),
         "notation" => Some(LineFormat {
-            notation: flip(f.notation),
+            notation: flip(f.notation, base.abbreviate_large),
             ..f
         }),
         "money" => Some(LineFormat {
-            money: flip(f.money),
+            money: flip(f.money, base.fixed_money_digits),
             ..f
         }),
         // Repeating is off unless chosen, and it replaces a fixed number of places (and the other way round).
@@ -92,7 +95,8 @@ impl SheetView {
     }
 
     fn menu_do(&mut self, id: &str, line: usize, cx: &mut Context<Self>) {
-        if let Some(next) = change(id, self.ed.format(line)) {
+        let base = crate::prefs::current().format_options();
+        if let Some(next) = change(id, self.ed.format(line), &base) {
             self.set_line_format(line, next, cx);
             return;
         }
@@ -136,8 +140,11 @@ impl SheetView {
             f32::from(l.bounds.top() + l.bounds.size.height),
         );
         let f = self.ed.format(line);
-        let places = f.places.unwrap_or(MAX_PLACES);
-        let on = |v: Option<bool>| v.unwrap_or(true);
+        // What the line shows now: its own choices over the settings.
+        let base = crate::prefs::current().format_options();
+        let places = f
+            .places
+            .unwrap_or_else(|| base.decimal_places().min(MAX_PLACES));
         let rect_of = |id: &str| {
             items()
                 .into_iter()
@@ -246,9 +253,9 @@ impl SheetView {
                 .child(SharedString::from(format!("{places} dp"))),
         );
         for (id, label, active) in [
-            ("group", ",", on(f.group)),
-            ("notation", "M", on(f.notation)),
-            ("money", "$", on(f.money)),
+            ("group", ",", f.group.unwrap_or(base.group_thousands)),
+            ("notation", "M", f.notation.unwrap_or(base.abbreviate_large)),
+            ("money", "$", f.money.unwrap_or(base.fixed_money_digits)),
         ] {
             let id: &'static str = id;
             menu = menu.child(

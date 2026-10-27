@@ -295,6 +295,19 @@ Zib | Zib,zebibit,zebibits | B | 1024^7
 Yib | Yib,yobibit,yobibits | B | 1024^8
 # compound aliases
 @ mph = mi/h
+@ ml = mL
+@ cl = cL
+@ dl = dL
+@ kl = kL
+@ KB = kB
+@ mF = mfarad
+@ uF,µF = µfarad
+@ mH = mhenry
+@ uH,µH = µhenry
+@ mS = msiemens
+@ uS,µS = µsiemens
+@ mT = mtesla
+@ uT,µT = µtesla
 @ kohm,kohms = kΩ
 @ khz = kHz
 @ ghz = GHz

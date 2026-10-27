@@ -18,6 +18,10 @@ use crate::value::{Kind, Value};
 pub enum Func {
     Abs,
     Fact,
+    /// `not true`: the opposite truth value.
+    Not,
+    /// `int(3.9)`: the whole part, toward zero.
+    Trunc,
     Round,
     Floor,
     Ceil,
@@ -196,6 +200,11 @@ impl Func {
 const NAMES: &[(&str, Func)] = &[
     ("abs", Func::Abs),
     ("fact", Func::Fact),
+    ("not", Func::Not),
+    ("int", Func::Trunc),
+    ("trunc", Func::Trunc),
+    ("truncate", Func::Trunc),
+    ("half", Func::Half),
     ("round", Func::Round),
     ("floor", Func::Floor),
     ("ceil", Func::Ceil),
@@ -426,6 +435,13 @@ pub fn call(func: Func, args: &[Value]) -> Result<Value, Error> {
                 factorial(n)?,
                 BigInt::one(),
             )?))
+        }
+        Func::Not => args[0]
+            .as_bool()
+            .map(|b| Value::boolean(!b))
+            .ok_or(Error::UnsupportedOperation("not needs true or false")),
+        Func::Trunc => {
+            args[0].map_number(|n| round_to_multiple(n, &Number::from_i64(1), Rounding::Truncate))
         }
         Func::Round | Func::Floor | Func::Ceil => {
             let mode = match func {
@@ -895,6 +911,8 @@ pub enum Rounding {
     Nearest,
     Up,
     Down,
+    /// Toward zero.
+    Truncate,
 }
 
 /// Rounds `n` to a multiple of `step` (a positive number). Ties go away from zero.
@@ -908,6 +926,8 @@ pub fn round_to_multiple(n: &Number, step: &Number, mode: Rounding) -> Result<Nu
     let has_fraction = !q.is_integer();
     let rounded = match mode {
         Rounding::Down => whole,
+        Rounding::Truncate if has_fraction && q.is_negative() => whole.add(&Number::from_i64(1))?,
+        Rounding::Truncate => whole,
         Rounding::Up if has_fraction => whole.add(&Number::from_i64(1))?,
         Rounding::Up => whole,
         Rounding::Nearest => {

@@ -1,6 +1,6 @@
 # 0011 Show repeating decimals exactly
 
-Status: open
+Status: built (the answer menu's Show as Repeating, kept per line as repeat=on, period capped at 50 digits)
 Milestone: v1.1
 Area: formatting, precision
 

@@ -222,8 +222,9 @@ fn comparison_symbols_and_their_lone_prefixes() {
         ("1 <= 1", "true"),
         ("1 >= 2", "false"),
     ]);
-    // a lone = or ! is not half of a two-character operator
-    fails(&["1 = 1", "5 =5", "5!", "5 ! = 5", "1 ! 2"]);
+    // a lone = is not half of a two-character operator, and a ! that is neither a factorial nor `not` is refused
+    fails(&["1 = 1", "5 =5", "5 ! = 5", "1 ! 2"]);
+    all(&[("5!", "120"), ("not true", "false"), ("!false", "true")]);
 }
 
 #[test]

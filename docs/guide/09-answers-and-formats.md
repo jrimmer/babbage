@@ -35,6 +35,8 @@ Subtotal and delete are edits to the sheet, so **Ctrl+Z** takes them back.
 The dots set how many places the answer is cut to. A third with 4 places reads `0.3333`, and a **≈** marks it
 as rounded. With 0 places, answers are whole numbers: `7 / 2` reads `4`. With 2 places, `1 / 8` reads `0.13`.
 
+The slider starts at what the line shows now, which is the **Decimal places** setting until you choose a number.
+
 Choosing a number of places also turns off large-number notation for that line, so a number reads in full. If
 you want the notation as well, switch **M** on afterwards.
 
@@ -59,8 +61,9 @@ replaces a chosen number of places. Choose it again to turn it off.
 
 ### The three switches
 
-The **,**, **M** and **$** buttons are lit when the feature is on and dim when it is off. A line you have
-not touched shows them as on. Click one to turn the feature off for this line, click again to turn it back on.
+The **,**, **M** and **$** buttons are lit when the feature is on and dim when it is off. They show what the line
+shows now: a line you have not touched follows the settings, so a switch that is off in Settings is dim. One click
+flips that for this line, and the next click flips it back.
 
 What each switch does on a number:
 

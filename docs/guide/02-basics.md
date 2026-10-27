@@ -97,8 +97,17 @@ line counted and which did not. Nothing is hidden: the skipped words stay in the
 When a skipped word comes straight after a number, a value, a unit or a percentage, Babbage cannot be sure you
 meant it as plain text, so it draws a thin underline under it. Look at `3 widgets * 4`. `widgets` follows the
 number 3, and is underlined. The answer, `12`, is still given. The underline is a prompt to check that you meant
-it. If you typed `5 kmm` meaning kilometres, the line answers `5` and the underline on `kmm` is the clue that
-something was not understood.
+it.
+
+A skipped name that stands straight before a bracket, with a space between, is underlined the same way, because it
+may be a function that was not understood. `price (5)` answers `5`, with a thin underline under `price`. A name
+with no space before the bracket, such as `foo(45)`, is an error instead.
+
+### The wavy underline
+
+When the skipped word comes right after a plain number and is one letter away from a unit, the underline is wavy.
+If you typed `5 kmm` meaning kilometers, the line answers `5` and `kmm` has a wavy underline. Hold the pointer over
+it and a tip reads "Did you mean km?". The tip is not shown after an amount of money: `$45 on` stays quiet.
 
 A word that sits among other words is not underlined. In `I spent $45 on clothes` the whole line is prose around
 one amount. It answers `$45.00` and nothing is underlined.

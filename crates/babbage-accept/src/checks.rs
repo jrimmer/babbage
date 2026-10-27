@@ -18,6 +18,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("error-line", error_line),
     ("ignored-dim", ignored_dim),
     ("unclear-words", unclear_words),
+    ("typo-hint", typo_hint),
     ("total", total_chip),
     ("sheets", sheets_lifecycle),
     ("sidebar-mouse", sidebar_mouse),
@@ -575,6 +576,32 @@ fn ignored_dim(h: &mut Harness) -> anyhow::Result<()> {
     app.finish()
 }
 
+/// A word one letter from a unit, straight after a number, gets a tip with the unit it may have meant.
+fn typo_hint(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("typo-hint", None, &[])?;
+    h.type_text("5 kmm")?;
+    let s = app.wait_for("the answer", T, |s| answer(s, 0) == Some("5"))?;
+    settle();
+    let s2 = app.state()?;
+    let word = s2["lines"][0]["spans"]
+        .as_array()
+        .context("spans")?
+        .iter()
+        .find(|x| x["text"] == "kmm")
+        .context("a span for kmm")?
+        .clone();
+    let (x0, x1) = (f(&word["x0"])?, f(&word["x1"])?);
+    let y = f(&s["lines"][0]["y"])? + f(&s["lines"][0]["row_h"])? / 2.;
+    h.hover(&app, (x0 + x1) / 2., y)?;
+    let tip = app.wait_for("the hint", T, |s| {
+        s["tooltip"]["value"] == "Did you mean km?"
+    })?;
+    ensure!(tip["tooltip"]["name"] == "kmm", "{}", tip["tooltip"]);
+    h.hover(&app, f(&s["text_x"])? + 700., y)?;
+    app.wait_for("the hint gone", T, |s| s["tooltip"].is_null())?;
+    app.finish()
+}
+
 /// A word the sheet skipped right after a number may be a mistake, so it is marked "unclear"; one in plain prose
 /// is not.
 fn unclear_words(h: &mut Harness) -> anyhow::Result<()> {
@@ -886,6 +913,19 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
     let name = trashed[0].file_name().to_string_lossy().into_owned();
     ensure!(name.starts_with("Mouse."), "{name}");
     ensure!(std::fs::read_to_string(trashed[0].path())? == "7 + 7\n");
+
+    // Ctrl+Shift+T brings it back, and a second one finds the trash empty.
+    h.press(&["ctrl", "shift"], "t")?;
+    let s = app.wait_for("the sheet restored", T, |s| {
+        s["current"] == "Mouse" && s["sheets"].as_array().is_some_and(|a| a.len() == 2)
+    })?;
+    ensure!(s["lines"][0]["text"] == "7 + 7", "the restored text");
+    ensure!(dir.join("Mouse.bbg").is_file());
+    ensure!(std::fs::read_dir(dir.join(".trash"))?.flatten().count() == 0);
+    h.press(&["ctrl", "shift"], "t")?;
+    app.wait_for("the empty trash said so", T, |s| {
+        s["notice"] == "The trash is empty"
+    })?;
     app.finish()
 }
 

@@ -1394,6 +1394,12 @@ fn power(l: &Value, r: &Value) -> Result<Value, Error> {
     let (number, approximate) = match l.number.pow(&r.number) {
         Ok(n) => (n, false),
         Err(Error::Overflow) => (crate::approx::pow_large(&l.number, &r.number)?.number, true),
+        // A fraction as the exponent is a root: exact when the root is rational (`4 ^ 0.5` is 2), approximate
+        // otherwise. A quantity keeps its whole exponents only.
+        Err(Error::NonIntegerExponent) if l.unit.is_empty() => {
+            let o = crate::approx::pow_rational(&l.number, &r.number)?;
+            (o.number, !o.exact)
+        }
         Err(e) => return Err(e),
     };
     let value = if l.unit.is_empty() {

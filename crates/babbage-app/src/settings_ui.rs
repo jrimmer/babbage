@@ -209,6 +209,8 @@ pub const PANES: &[Pane] = &[
                         ("AUD", "AUD"),
                         ("CAD", "CAD"),
                         ("NZD", "NZD"),
+                        ("SGD", "SGD"),
+                        ("HKD", "HKD"),
                     ],
                     default: "USD",
                 },
@@ -216,7 +218,7 @@ pub const PANES: &[Pane] = &[
             Item {
                 key: "custom_zones",
                 label: "Your own names for places",
-                hint: "Name = Zone; the zone as in Asia/Tokyo",
+                hint: "Name = Zone, like Asia/Tokyo",
                 control: Control::Text {
                     placeholder: "HQ = Europe/Berlin; Lab = Asia/Tokyo",
                 },
@@ -443,7 +445,8 @@ pub fn item_rects(pane: usize) -> Vec<(String, Rect)> {
                 out.push((item.key.to_string(), r(WINDOW_W - 100., y, 52., 28.)))
             }
             Control::Choice { options, .. } => {
-                let each = 88.;
+                // Up to 88 wide each; a longer row of choices shares what is left of the window.
+                let each = 88_f32.min((WINDOW_W - CONTROL_X - 24.) / options.len() as f32);
                 for (k, (value, _)) in options.iter().enumerate() {
                     out.push((
                         format!("{}={value}", item.key),

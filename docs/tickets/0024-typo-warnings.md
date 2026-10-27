@@ -1,6 +1,6 @@
 # 0024 Typo warnings: tune and surface them
 
-Status: open
+Status: partly built (the tip shows what a near-miss word may mean; tuning which words warn is open)
 Milestone: v1
 Area: sheets, UI
 

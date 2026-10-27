@@ -419,6 +419,25 @@ impl SheetView {
         cx.notify();
     }
 
+    /// Brings back the sheet moved to the trash last (Ctrl+Shift+T) and opens it.
+    fn restore_trashed(&mut self, cx: &mut Context<Self>) {
+        self.saver.flush();
+        match self.book.restore_last() {
+            Ok(Some(id)) => {
+                if let Ok(fresh) = self.book.list()
+                    && let Some(info) = fresh.into_iter().find(|s| s.id == id)
+                {
+                    self.sheets.insert(0, info);
+                }
+                self.open_sheet(id, cx);
+                self.notice = Some("Restored from the trash".to_owned());
+            }
+            Ok(None) => self.notice = Some("The trash is empty".to_owned()),
+            Err(e) => self.notice = Some(e.to_string()),
+        }
+        cx.notify();
+    }
+
     /// Writes the open sheet, with its answers, as text, CSV, HTML and PDF into the sheetbook's `exports` folder
     /// (Ctrl+Shift+E) and says where in the notice.
     fn export_current(&mut self, cx: &mut Context<Self>) {
@@ -579,7 +598,11 @@ impl SheetView {
         let m = &ks.modifiers;
         let (ctrl, shift, alt) = (m.control, m.shift, m.alt);
         let key = ks.key.as_str();
-        if (self.panel.is_some() || self.answer_menu.is_some()) && key == "escape" {
+        // Escape in a text box of the Settings window cancels that edit only; the window stays.
+        if (self.panel.is_some() || self.answer_menu.is_some())
+            && key == "escape"
+            && self.settings_edit.is_none()
+        {
             self.panel = None;
             self.answer_menu = None;
             cx.notify();
@@ -631,6 +654,10 @@ impl SheetView {
                 }
                 "delete" if shift => {
                     self.delete_current(cx);
+                    true
+                }
+                "t" if shift => {
+                    self.restore_trashed(cx);
                     true
                 }
                 "e" if shift => {
@@ -969,6 +996,41 @@ impl SheetView {
 
     /// The variable the pointer is on, with its value: the answer of the line that defines it.
     fn variable_at(&self, p: Point<Pixels>) -> Option<HoverVar> {
+        self.hover_at(p, |view, line, span| {
+            if span.class != crate::syntax::Class::Variable {
+                return None;
+            }
+            let name = view.ed.line(line)[span.range.clone()].to_string();
+            let (_, at) = view
+                .computed
+                .names
+                .get(line)?
+                .iter()
+                .find(|(n, _)| *n == name)?;
+            let value = view.answer_for(*at)?.text.clone()?;
+            Some((name, value))
+        })
+    }
+
+    /// What a mistyped unit looks like, for the pointer over a word marked with a wavy underline.
+    fn hint_at(&self, p: Point<Pixels>) -> Option<HoverVar> {
+        self.hover_at(p, |view, line, span| {
+            if span.class != crate::syntax::Class::Warn {
+                return None;
+            }
+            let result = view.computed.results.get(line)?;
+            let w = result.warnings.iter().find(|w| w.at == span.range.start)?;
+            Some((w.text.clone(), format!("Did you mean {}?", w.looks_like)))
+        })
+    }
+
+    /// A tip for the span of a text line under the pointer, as `pick` makes it: `(name, text)`. The pointer has to be
+    /// over the span itself, not past the end of the line it ends.
+    fn hover_at(
+        &self,
+        p: Point<Pixels>,
+        pick: impl Fn(&SheetView, usize, &crate::syntax::Span) -> Option<(String, String)>,
+    ) -> Option<HoverVar> {
         let l = self.layout.as_ref()?;
         let (pos, in_answers) = self.position_at(p)?;
         if in_answers || p.x < l.text_x || self.ed.line(pos.line).is_empty() {
@@ -982,25 +1044,15 @@ impl SheetView {
             .map(|(n, _)| n.clone())
             .collect();
         let line = self.ed.line(pos.line);
-        let span = crate::syntax::spans_in(line, self.computed.results.get(pos.line), &names)
-            .into_iter()
-            .find(|s| {
-                s.class == crate::syntax::Class::Variable
-                    && s.range.start <= pos.col
-                    && pos.col <= s.range.end
-            })?;
-        let name = line[span.range.clone()].to_string();
-        let (_, at) = self
-            .computed
-            .names
-            .get(pos.line)?
-            .iter()
-            .find(|(n, _)| *n == name)?;
-        let value = self.answer_for(*at)?.text.clone()?;
+        let spans = crate::syntax::spans_in(line, self.computed.results.get(pos.line), &names);
+        let (span, (name, value)) = spans.iter().find_map(|s| {
+            (s.range.start <= pos.col && pos.col <= s.range.end)
+                .then(|| pick(self, pos.line, s).map(|t| (s, t)))
+                .flatten()
+        })?;
         let sh = self.shown_line(pos.line);
         let (from, to) = (sh.to_shown(span.range.start), sh.to_shown(span.range.end));
         let k = self.wrap.row_containing(pos.line, from);
-        // The pointer has to be over the name itself, not past the end of the line it ends.
         let shaped = l.shaped.get(pos.line).and_then(Option::as_ref)?;
         let row_start = self.wrap.row_span(pos.line, k, sh.text.len()).0;
         let x0 = shaped.x_for_index(row_start);
@@ -1103,7 +1155,9 @@ impl SheetView {
             self.hover_line = over;
             cx.notify();
         }
-        let var = self.variable_at(ev.position);
+        let var = self
+            .variable_at(ev.position)
+            .or_else(|| self.hint_at(ev.position));
         if var != self.hover_var {
             self.hover_var = var;
             cx.notify();
@@ -1356,7 +1410,8 @@ impl SheetView {
         let t = self.computed.total.as_ref()?;
         let (value, failed) = match (&t.text, &t.error) {
             (Some(v), _) => (format!("{}{v}", if t.exact { "" } else { "≈ " }), false),
-            (None, Some(e)) => (e.clone(), true),
+            // A long reason is cut short, so the chip never runs off the window's edge.
+            (None, Some(e)) => (shortened(e, TOTAL_ERROR_CHARS), true),
             _ => return None,
         };
         Some(
@@ -1734,6 +1789,18 @@ pub fn answer_min_w() -> f32 {
     ANSWER_MIN_W
 }
 
+/// The most characters of an error the Total chip shows.
+const TOTAL_ERROR_CHARS: usize = 44;
+
+/// `text` cut to at most `max` characters, with an ellipsis when something was left off.
+fn shortened(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_owned();
+    }
+    let cut: String = text.chars().take(max.saturating_sub(1)).collect();
+    format!("{}…", cut.trim_end())
+}
+
 impl SheetView {
     pub fn answer_for(&self, line: usize) -> Option<&Answer> {
         self.computed.answers.get(line)
@@ -1758,5 +1825,19 @@ impl SheetView {
 
     pub fn set_layout(&mut self, l: Layout) {
         self.layout = Some(l);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shortened;
+
+    #[test]
+    fn a_long_error_is_cut_with_an_ellipsis_and_a_short_one_is_kept() {
+        assert_eq!(shortened("different units", 44), "different units");
+        let long = "temperatures can be converted, added to or taken from a plain number";
+        let cut = shortened(long, 44);
+        assert!(cut.chars().count() <= 44 && cut.ends_with('…'), "{cut}");
+        assert_eq!(shortened("ééééé", 3), "éé…");
     }
 }

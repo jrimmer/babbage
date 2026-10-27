@@ -52,13 +52,51 @@ pub fn without_comment(line: &str) -> &str {
 fn load() -> Settings {
     let file = read_file();
     *FILE_TEXT.write().expect("settings lock") = Some(file.clone());
-    from_parts(
+    let mut settings = from_parts(
         &file,
         std::env::var("TZ").ok().as_deref(),
         std::fs::read_link("/etc/localtime").ok().as_deref(),
         std::env::var("BABBAGE_NOW").ok().as_deref(),
         std::env::var("BABBAGE_TZDIR").ok().as_deref(),
-    )
+    );
+    // "System" (the default) follows the language and region the session is set to.
+    let chosen = file.lines().any(|line| {
+        without_comment(line)
+            .split_once('=')
+            .is_some_and(|(k, v)| k.trim() == "number_format" && v.trim() != "system")
+    });
+    if !chosen {
+        let locale = ["LC_ALL", "LC_NUMERIC", "LANG"]
+            .iter()
+            .find_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty()));
+        settings.number_format = number_format_for_locale(locale.as_deref().unwrap_or("C"));
+    }
+    settings
+}
+
+/// The number format a locale name asks for (`de_DE.UTF-8`, `fr_FR`, `en_US`): a decimal comma with dots between
+/// groups for German, Spanish, Italian, Portuguese, Dutch and a few others; a decimal comma with spaces between
+/// groups for French, the Slavic and Nordic languages and some others; otherwise the decimal point.
+pub fn number_format_for_locale(locale: &str) -> NumberFormat {
+    let name = locale.split(['.', '@']).next().unwrap_or("");
+    let (language, region) = name.split_once('_').unwrap_or((name, ""));
+    match (language, region) {
+        // These regions write the decimal point.
+        ("de", "CH") | ("es", "MX" | "US" | "PR" | "GT" | "HN" | "NI" | "PA" | "SV" | "DO") => {
+            NumberFormat::NorthAmerica
+        }
+        (
+            "de" | "es" | "it" | "pt" | "nl" | "da" | "el" | "tr" | "id" | "hr" | "sl" | "ro"
+            | "is" | "vi",
+            _,
+        ) => NumberFormat::WesternEurope,
+        (
+            "fr" | "ru" | "uk" | "pl" | "cs" | "sk" | "sv" | "nb" | "no" | "nn" | "fi" | "hu"
+            | "bg" | "lt" | "lv" | "et" | "sr",
+            _,
+        ) => NumberFormat::EasternEurope,
+        _ => NumberFormat::NorthAmerica,
+    }
 }
 
 /// The settings now: read from the file on first use, and again after `set` changes one. Each reading is kept for
@@ -456,5 +494,24 @@ mod tests {
         assert_eq!(s.number_format, NumberFormat::NorthAmerica);
         assert_eq!(s.work_hours_per_day, None);
         assert_eq!(s.now_utc_seconds, Some(1_718_452_800));
+    }
+
+    #[test]
+    fn the_system_number_format_follows_the_locale() {
+        for (locale, want) in [
+            ("en_US.UTF-8", NumberFormat::NorthAmerica),
+            ("C", NumberFormat::NorthAmerica),
+            ("POSIX", NumberFormat::NorthAmerica),
+            ("de_DE.UTF-8", NumberFormat::WesternEurope),
+            ("de_CH", NumberFormat::NorthAmerica),
+            ("pt_BR", NumberFormat::WesternEurope),
+            ("es_ES@euro", NumberFormat::WesternEurope),
+            ("es_MX", NumberFormat::NorthAmerica),
+            ("fr_FR.UTF-8", NumberFormat::EasternEurope),
+            ("ru_RU", NumberFormat::EasternEurope),
+            ("ja_JP", NumberFormat::NorthAmerica),
+        ] {
+            assert_eq!(number_format_for_locale(locale), want, "{locale}");
+        }
     }
 }

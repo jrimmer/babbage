@@ -191,8 +191,12 @@ fn arithmetic_errors() {
     assert_eq!(evaluate("0^0"), Err(Error::ZeroToTheZero));
     assert_eq!(evaluate("0^-1"), Err(Error::DivisionByZero));
     assert_eq!(evaluate("0^(3-3)"), Err(Error::ZeroToTheZero));
-    assert_eq!(evaluate("2^0.5"), Err(Error::NonIntegerExponent));
-    assert_eq!(evaluate("2^(1/2)"), Err(Error::NonIntegerExponent));
+    // A fraction as the exponent is a root: exact when it is rational, otherwise approximate; a quantity or a
+    // negative base is still refused.
+    assert_eq!(evaluate("4^0.5"), Ok(Number::from_i64(2)));
+    assert_eq!(evaluate("4^(1/2)"), Ok(Number::from_i64(2)));
+    assert!(evaluate("2^0.5").is_ok());
+    assert_eq!(evaluate("(-4)^0.5"), Err(Error::OutOfDomain));
     assert_eq!(evaluate("2^(1/3*3)"), Ok(Number::from_i64(2)));
     assert_eq!(evaluate("1 + 1/0"), Err(Error::DivisionByZero));
     assert_eq!(evaluate("(1/0) * 0"), Err(Error::DivisionByZero));

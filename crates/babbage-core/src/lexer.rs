@@ -297,8 +297,153 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         .map(unit_products)
         .map(crate::dates::rewrite)
         .map(split_date_shifts)
+        .map(spoken_forms)
         .map(cents)
         .map(power_words)
+}
+
+/// The index of the `(` that the `)` ending `toks` closes.
+fn matching_open(toks: &[Token]) -> Option<usize> {
+    let mut depth = 0;
+    for (i, t) in toks.iter().enumerate().rev() {
+        match t.tok {
+            Tok::RParen => depth += 1,
+            Tok::LParen => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// A few forms written in words or with a different mark, put into the forms the parser reads: `15 percent of 80`
+/// and `15 % of 80` are `15%`; `30% discount on $200` is `30% off $200`; `5 factorial` and `5!` are `fact(5)`.
+/// Elsewhere these words are prose, as before.
+pub fn spoken_forms(toks: Vec<Token>) -> Vec<Token> {
+    let is_word = |t: Option<&Token>, words: &[&str]| matches!(t.map(|t| &t.tok), Some(Tok::Word(w)) if words.iter().any(|k| w.eq_ignore_ascii_case(k)));
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    let mut i = 0;
+    while i < toks.len() {
+        let t = &toks[i];
+        let after_number = out
+            .last()
+            .is_some_and(|p| matches!(p.tok, Tok::Num(_) | Tok::Value(_) | Tok::RParen));
+        let before_percent_word = is_word(toks.get(i + 1), &["of", "off", "on"]);
+        match &t.tok {
+            // `round 2.567 to 1 dp` is `2.567 to 1 dp`: the places say how far to round.
+            Tok::Word(w)
+                if i == 0
+                    && w.eq_ignore_ascii_case("round")
+                    && toks.windows(3).any(|k| {
+                        is_word(Some(&k[0]), &["to"])
+                            && matches!(k[1].tok, Tok::Num(_))
+                            && is_word(
+                                Some(&k[2]),
+                                &["dp", "dps", "decimal", "decimals", "places", "place"],
+                            )
+                    }) => {}
+            Tok::Word(w)
+                if w.eq_ignore_ascii_case("percent") && after_number && before_percent_word =>
+            {
+                out.push(Token {
+                    tok: Tok::Percent { attached: true },
+                    at: t.at,
+                });
+            }
+            Tok::Percent { attached: false } if after_number && before_percent_word => {
+                out.push(Token {
+                    tok: Tok::Percent { attached: true },
+                    at: t.at,
+                });
+            }
+            Tok::Word(w)
+                if w.eq_ignore_ascii_case("discount")
+                    && matches!(out.last().map(|p| &p.tok), Some(Tok::Percent { .. }))
+                    && is_word(toks.get(i + 1), &["on", "off"]) =>
+            {
+                out.push(Token {
+                    tok: Tok::Word("off".to_string()),
+                    at: t.at,
+                });
+                i += 1;
+            }
+            // `(2 + 3)!` is `fact(2 + 3)`: the name goes before the bracket that closes just ahead.
+            Tok::Word(w)
+                if w.eq_ignore_ascii_case("factorial")
+                    && matches!(out.last().map(|p| &p.tok), Some(Tok::RParen))
+                    && matching_open(&out).is_some() =>
+            {
+                let open = matching_open(&out).expect("checked by the guard");
+                let at = out[open].at;
+                out.insert(
+                    open,
+                    Token {
+                        tok: Tok::Word("fact".to_string()),
+                        at,
+                    },
+                );
+            }
+            Tok::Word(w)
+                if w.eq_ignore_ascii_case("factorial")
+                    && matches!(
+                        out.last().map(|p| &p.tok),
+                        Some(Tok::Num(_) | Tok::Value(_))
+                    ) =>
+            {
+                let operand = out.pop().expect("checked by the guard");
+                let at = operand.at;
+                out.push(Token {
+                    tok: Tok::Word("fact".to_string()),
+                    at,
+                });
+                out.push(Token {
+                    tok: Tok::LParen,
+                    at,
+                });
+                out.push(operand);
+                out.push(Token {
+                    tok: Tok::RParen,
+                    at: t.at,
+                });
+            }
+            // `CHF 5` is `5 CHF`, where an operand is expected (a currency with a symbol is read as `EUR 5` already).
+            Tok::Unit(u)
+                if u.dim().has_money()
+                    && u.is_single()
+                    && matches!(toks.get(i + 1).map(|n| &n.tok), Some(Tok::Num(_)))
+                    && matches!(
+                        out.last().map(|p| &p.tok),
+                        None | Some(
+                            Tok::Plus
+                                | Tok::Minus
+                                | Tok::Star
+                                | Tok::Slash
+                                | Tok::LParen
+                                | Tok::Comma
+                                | Tok::Op(_)
+                        )
+                    ) =>
+            {
+                // The positions stay in order, as later steps that slice the line expect.
+                out.push(Token {
+                    tok: toks[i + 1].tok.clone(),
+                    at: t.at,
+                });
+                out.push(Token {
+                    tok: t.tok.clone(),
+                    at: toks[i + 1].at,
+                });
+                i += 1;
+            }
+            _ => out.push(t.clone()),
+        }
+        i += 1;
+    }
+    out
 }
 
 /// `50 cents` is a hundredth of a dollar: the currency of the amount beside it in the line (`50 cents + €1` is in
@@ -319,7 +464,7 @@ pub fn cents(toks: Vec<Token>) -> Vec<Token> {
                 "cent" | "cents" => beside
                     .clone()
                     .or_else(|| crate::units::lookup(crate::settings::dollar_code())),
-                "penny" | "pennies" | "pence" => crate::units::lookup("GBP"),
+                "penny" | "pennies" | "pence" | "p" => crate::units::lookup("GBP"),
                 _ => None,
             };
             if let Some(unit) = unit
@@ -583,6 +728,13 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 simple(Tok::Op(BinOp::Ne), &mut out);
                 i += 2;
                 continue;
+            }
+            // `5!` is a factorial and `!true` is `not true`.
+            '!' => {
+                let after_operand =
+                    i > 0 && (chars[i - 1].1.is_ascii_digit() || chars[i - 1].1 == ')');
+                let word = if after_operand { "factorial" } else { "not" };
+                simple(Tok::Word(word.to_string()), &mut out);
             }
             '<' | '>' => {
                 let next = chars.get(i + 1).map(|(_, d)| *d);

@@ -423,7 +423,20 @@ pub fn parse(toks: &[Token]) -> Result<Expr, Error> {
                     },
                     _ => unreachable!("outer pattern admits only operators and words"),
                 };
-                pop_for(op, &mut ops, &mut out);
+                // `40 hours * $25 / hour` is 40 hours times a rate, `$25` per hour, so the hours cancel: a bare unit
+                // after `/` belongs to the operand just before it, not to the whole product.
+                let per_unit_of_last_factor = op == BinOp::Div
+                    && matches!(
+                        toks.get(index + 1),
+                        Some(Token {
+                            tok: Tok::Unit(_),
+                            ..
+                        })
+                    )
+                    && matches!(ops.last(), Some(Pending::Bin(BinOp::Mul)));
+                if !per_unit_of_last_factor {
+                    pop_for(op, &mut ops, &mut out);
+                }
                 ops.push(Pending::Bin(op));
                 want_operand = true;
             }

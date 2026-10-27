@@ -37,7 +37,7 @@ The common operations also work as words.
 
 Any other word in a line is skipped, so `5 + 3 apples` is `8`. See [The basics](02-basics.html) for how skipped words are shown.
 
-A percent sign touching a number is a percentage (`10%`). A `%` with spaces around it and a number after it is the remainder, so `10 % 3` is `1`.
+A percent sign touching a number is a percentage (`10%`). A `%` with spaces around it and a number after it is the remainder, so `10 % 3` is `1` and `15 % 4` is `3`. After `of`, a spaced `%` is a percentage again: `15 % of 200` is `30`.
 
 ### Comparisons and bit operations
 
@@ -47,7 +47,18 @@ On whole numbers, `&`, `|`, `xor`, `<<` and `>>` work on the bits: `6 & 3` is `2
 
 ## Powers and roots
 
-`^` takes a whole-number exponent, negative ones included: `2 ^ -2` is `0.25`. For squares and cubes you can also write the word after the number:
+`^` takes a whole-number exponent, negative ones included: `2 ^ -2` is `0.25`. A fraction as the exponent is a root, so `x ^ 0.5` is the square root of `x`:
+
+| You type | Answer |
+|---|---|
+| `4 ^ 0.5` | `2` |
+| `8 ^ (1/3)` | `2` |
+| `100 ^ 1.5` | `1,000` |
+| `2 ^ 0.5` | `1.4142135624` (marked **≈**) |
+
+The answer is exact when the root is exact, and carries the **≈** mark when it is not. A negative base with a fractional exponent is an error, and so is a quantity such as `4 m` raised to one.
+
+For squares and cubes you can also write the word after the number:
 
 | You type | Answer |
 |---|---|
@@ -55,7 +66,7 @@ On whole numbers, `&`, `|`, `xor`, `<<` and `>>` work on the bits: `6 & 3` is `2
 | `2 cubed` | `8` |
 | `3 squared + 4 squared` | `25` |
 
-For roots use `sqrt` and `cbrt`:
+`sqrt` and `cbrt` are other ways to write roots:
 
 | You type | Answer |
 |---|---|
@@ -65,7 +76,11 @@ For roots use `sqrt` and `cbrt`:
 | `sqrt(1/4)` | `0.5` |
 | `cbrt(27)` | `3` |
 
-A fractional exponent such as `4 ^ 0.5` is refused with "exponent must be a whole number". Use `sqrt` or `cbrt` instead. `0 ^ 0` is an error, and so is `1/0`. Other functions are in [Functions and finance](08-functions-and-finance.html).
+`0 ^ 0` is an error, and so is `1/0`. Other functions are in [Functions and finance](08-functions-and-finance.html).
+
+## Factorial
+
+Put `!` after a number or a bracket, or say `factorial`: `5!` is `120`, `5 factorial` is `120` and `(2 + 3)!` is `120`. The number must be a whole number of zero or more.
 
 ## Exact or approximate
 
@@ -169,7 +184,7 @@ Arithmetic gives a decimal answer. To show any answer in another base, end the l
 
 ## Percentages
 
-A percentage is a number with its own kind. `10%` is exactly one tenth, and Babbage keeps it that way, so none of the answers below drift. Attach the `%` to the number (`15% of 80`; `15 percent of 80` is not understood). In the "what percent" questions below you can spell the sign out as `percent`.
+A percentage is a number with its own kind. `10%` is exactly one tenth, and Babbage keeps it that way, so none of the answers below drift. The sign can touch the number (`15% of 80`), stand apart from it (`15 % of 200`) or be spelled out (`15 percent of 80`).
 
 ![Percentages of, off, on, and as a percent](img/percentages.webp)
 
@@ -186,6 +201,8 @@ A percentage is a number with its own kind. `10%` is exactly one tenth, and Babb
 | `5.5% of 1000` | `55` |
 | `150% of 40` | `60` |
 | `1% of 1 million` | `10,000` |
+| `15 percent of 80` | `12` |
+| `15 % of 200` | `30` |
 
 A fraction or a decimal works wherever a percentage does: `1/2 of 40` is `20`, `0.25 of 80` is `20`, and `half of 80` is `40`.
 
@@ -218,6 +235,7 @@ Put the percentage after a plus or minus and it applies to the number on its lef
 | `20% off 80` | `64` |
 | `20% on $80` | `$96.00` |
 | `20% on 80` | `96` |
+| `30% discount on $200` | `$140.00` |
 
 ### What percent is it
 

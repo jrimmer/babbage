@@ -1,6 +1,6 @@
 # 0084 Gaps found while writing the user guide
 
-Status: open
+Status: mostly built (what is left is listed at the end)
 Milestone: v1
 Area: engine, app
 
@@ -22,3 +22,14 @@ Found by running every example of the guide through the engine and reading the a
 14. **Rates and labels.** `3 hours x $25/hour` and `40 hours * $25/hour` are right but labeled `/hour`; `$25/hour * 40 hours` is correct. `25 mpg * 10 gallons` is `250 MPG gal`, `$15/hour * 1 year` is `$131.4873k`, `100 EUR in USD at 1/0.92 USD/EUR` is garbage, a currency code before an amount works only for currencies that have a symbol (`EUR 5` works, `CHF 5` is an error), and `100 + 5% * 2` is `100.1`.
 15. **A long Total chip.** When the lines of a sheet cannot be added (a length and a temperature), the Total chip shows the whole error sentence and it runs off the left edge of the window. It should be cut short, with the full text on hover.
 16. **A hint that overlaps its neighbor.** In Settings, Calculator, the hint under "Your own names for places" wraps onto the "Sales tax" row.
+
+## Status after the fixes (2026-10-27)
+
+Built: 1 (fractional powers), 2 (the did-you-mean tip), 3 (Escape in Settings), 4 (Ctrl+Shift+T restores the last trashed sheet; there is still no "open the sheets folder" button), 5, 6 (`total` alone), 7 (System follows the locale), 8 (SGD and HKD), 9 (`not`, factorials, `int`, `half(...)`, `round ... to N dp`, a bracket after an unknown name is marked), 12 (pence, `percent`, `% of`, `discount on`), 13 (the `ml`, `cl`, `dl`, `KB` and electrical symbols), 14 (a per-unit after a product), 15, 16, and the `CHF 5` form.
+
+Left open:
+- `mpg * gallons` is `250 MPG gal`, not miles (mpg is a unit of its own by decision), and `1 rpm in Hz` is refused because a revolution is an angle.
+- `5% * 2` is `0.1`, so `100 + 5% * 2` is `100.1`; whether a percentage times a number stays a percentage is a decision to make.
+- Date and time forms from item 10, still refused (see ticket 0078), and `100 EUR in USD at 1/0.92 USD/EUR`: write the rate as one number, `at 1.087 USD/EUR`.
+- An unknown place after a time (`12pm HQ in New York`) answers in the local zone with `HQ` underlined; it is not refused.
+- Large quantities abbreviate (`1M B`) by decision; the answer menu's `M` switch turns it off for a line.

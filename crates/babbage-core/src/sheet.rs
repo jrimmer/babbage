@@ -523,6 +523,26 @@ fn run_statement(
 ) {
     let lowered = text.trim().to_lowercase();
     let (target, op, rhs_text) = split_assignment(text);
+    // `total` on a line of its own adds up every line above it, whatever subtotals lie between. Like a subtotal
+    // line it is not counted again by the lines below or by the floating total.
+    if matches!(lowered.as_str(), "total" | "grand total" | "sum") {
+        let counted: Vec<Value> = st.results[..index.min(st.results.len())]
+            .iter()
+            .filter(|r| !r.subtotal && (opts.declarations_in_totals || r.declares.is_none()))
+            .filter_map(LineResult::counted_value)
+            .collect();
+        if counted.is_empty() {
+            result.kind = LineKind::Text;
+        } else {
+            let range: Vec<&Value> = counted.iter().collect();
+            result.subtotal = true;
+            result.kind = match add_up(&range) {
+                Ok(v) => LineKind::Value(v),
+                Err(e) => LineKind::Error(e),
+            };
+        }
+        return;
+    }
     if lowered == "subtotal" || (target.is_some() && rhs_text.trim().is_empty() && op.is_none()) {
         result.subtotal = true;
         let counted: Vec<Value> = st.results[st.subtotal_start.min(index)..]
@@ -921,8 +941,7 @@ fn drop_unknown(
             Tok::Word(w) => {
                 // Where a unit would stand, straight after a number: a word that is not understood is flagged, and
                 // a near miss of a unit gets a hint. Prose elsewhere in the line is left alone.
-                let unclear = unknown(t)
-                    && i > 0
+                let after_operand = i > 0
                     && !drop[i - 1]
                     && matches!(
                         toks[i - 1].tok,
@@ -932,6 +951,9 @@ fn drop_unknown(
                             | Tok::Unit(_)
                             | Tok::Percent { .. }
                     );
+                // A name straight before a bracket is a call that was not understood (`cotd(45)`), never prose.
+                let before_bracket = matches!(toks.get(i + 1).map(|n| &n.tok), Some(Tok::LParen));
+                let unclear = unknown(t) && (after_operand || before_bracket);
                 ignored.push(Ignored {
                     text: w.clone(),
                     at: t.at,

@@ -119,6 +119,7 @@ JMD	JMD
 JOD	JOD
 JPY	¥
 K	K
+KB	kB
 KBps	kB/s
 KES	KES
 KGS	KGS
@@ -362,6 +363,7 @@ centimeter	cm
 centimeters	cm
 centimetre	cm
 centimetres	cm
+cl	cL
 cm	cm
 coulomb	coulomb
 coulombs	coulomb
@@ -488,6 +490,7 @@ degC	°C
 degF	°F
 degree	deg
 degrees	deg
+dl	dL
 dm	dm
 dollar	$
 dollars	$
@@ -666,6 +669,7 @@ kilowatt	kW
 kilowatts	kW
 kiloweber	kWb
 kilowebers	kWb
+kl	kL
 km	km
 kmh	km/h
 kn	NM/h
@@ -692,9 +696,13 @@ ly	ly
 m	m
 mA	mA
 mAh	mAh
+mF	mfarad
+mH	mhenry
 mHz	mHz
 mL	mL
 mN	mN
+mS	msiemens
+mT	mtesla
 mV	mV
 mW	mW
 mWb	mWb
@@ -849,6 +857,7 @@ min	min
 mins	min
 minute	min
 minutes	min
+ml	mL
 mm	mm
 mmol	mmol
 mmolar	mmolar
@@ -1093,8 +1102,12 @@ troy ounces	ozt
 tsp	tsp
 uA	µA
 uAh	µAh
+uF	µfarad
+uH	µhenry
 uHz	µHz
 uN	µN
+uS	µsiemens
+uT	µtesla
 uV	µV
 uWb	µWb
 ufarad	µfarad
@@ -1165,8 +1178,12 @@ zettabytes	ZB
 °F	°F
 µA	µA
 µAh	µAh
+µF	µfarad
+µH	µhenry
 µHz	µHz
 µN	µN
+µS	µsiemens
+µT	µtesla
 µV	µV
 µWb	µWb
 µfarad	µfarad

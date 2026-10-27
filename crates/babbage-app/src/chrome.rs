@@ -67,6 +67,7 @@ pub const KEYS: &[(&str, &str)] = &[
     ("Ctrl+B", "Show or hide the sidebar"),
     ("F2", "Rename the open sheet"),
     ("Ctrl+Shift+Delete", "Move the open sheet to the trash"),
+    ("Ctrl+Shift+T", "Bring back the last sheet from the trash"),
     ("Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"),
     ("Ctrl+A, C, X, V", "Select all, copy, cut, paste"),
     ("Ctrl+/", "Comment the lines in or out"),

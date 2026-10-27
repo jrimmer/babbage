@@ -59,7 +59,7 @@ Pixels, points, `em` and `rem` are lengths. A pixel is 1/96 inch, a point 1/72 i
 |---|---|
 | Length | `mm` `cm` `m` `km`, `inch` `ft` `yd` `mile`, `NM` (nautical mile), `furlong`, `fathom`, `light year`, `px` `pt` `em` `rem` |
 | Area | `m²` (or `m2`, `square meters`), `sq ft`, `km²`, `acre`, `hectare` (`ha`), `are` |
-| Volume | `L` `mL` `cL` `dL` `kL`, `m³`, `cup`, `tbsp`, `tsp`, `floz`, `pint`, `quart`, `gallon`, `bushel`, `acre foot`, imperial `imp gal` `imp pt` `imp fl oz` |
+| Volume | `L` `mL` `cL` `dL` `kL` (`ml`, `cl`, `dl` and `kl` work too), `m³`, `cup`, `tbsp`, `tsp`, `floz`, `pint`, `quart`, `gallon`, `bushel`, `acre foot`, imperial `imp gal` `imp pt` `imp fl oz` |
 | Mass | `mg` `g` `kg`, `mcg`, `oz` `lb` `stone` `ton` (short), `tonne` (`t`), `troy ounce` (`oz t`), `carat` |
 | Time | `ms` `µs` `ns`, `s` `min` `h` `day` `week` `month` `year`, `workday` |
 | Temperature | `°C` (`C`, `celsius`), `°F` (`F`, `fahrenheit`), `K` (`kelvin`) |
@@ -70,9 +70,9 @@ Pixels, points, `em` and `rem` are lengths. A pixel is 1/96 inch, a point 1/72 i
 | Energy | `J` `kJ` `MJ`, `Wh` `kWh` `MWh`, `cal`, `kcal` |
 | Power | `mW` `W` `kW` `MW` `GW`, `hp` (mechanical), `metric hp` (`cv`), `ehp` |
 | Force and pressure | `N` `kN`, `lbf`, `Pa` `kPa` `MPa`, `bar` `mbar`, `atm`, `psi` |
-| Electrical | `V` `mV` `kV`, `A` `mA`, `Ω` `kΩ` `MΩ`, `Ah` `mAh`, `coulomb`, `farad`, `henry`, `siemens`, `weber`, `tesla` |
+| Electrical | `V` `mV` `kV`, `A` `mA`, `Ω` `kΩ` `MΩ`, `Ah` `mAh`, `coulomb`, `farad` (`mF`, `uF` or `µF`), `henry` (`mH`, `uH` or `µH`), `siemens` (`mS`, `uS` or `µS`), `weber`, `tesla` (`mT`, `uT` or `µT`) |
 | Chemistry | `mol` `mmol`, `molar` |
-| Data | `bit`, `B` (byte), `kB` `MB` `GB` `TB` `PB`, `KiB` `MiB` `GiB` `TiB`, `kb` `Mb` `Gb`, `Kib` `Mib` `Gib` |
+| Data | `bit`, `B` (byte), `kB` (or `KB`) `MB` `GB` `TB` `PB`, `KiB` `MiB` `GiB` `TiB`, `kb` `Mb` `Gb`, `Kib` `Mib` `Gib` |
 | Data rates | `Mbps` `Gbps` `kbps` `bps`, `MBps` `GBps`, `MiBps`, or any data unit per time (`MB/s`) |
 | Video | `frame`, `fps` |
 | Money | one unit per currency; see [Money](05-money.html) |
@@ -81,7 +81,8 @@ Examples, each checked: `1 hp in W` is `745.6998715823 W`, `1 metric hp in W` is
 
 Some details worth knowing:
 
-- Write the capital `L` on a prefixed liter: `500 mL`, `2 cL`, `1 dL`. A lower-case `ml` is not recognized and the word is skipped. `1.5 l` alone is fine, and `milliliters` and `millilitres` work in full.
+- Prefixed liters can be written with a capital or a small `l`: `5 ml` and `5 mL` are both `5 mL`, and `cl`, `dl` and `kl` work the same way. `1.5 l` alone is fine, and `milliliters` and `millilitres` work in full.
+- The electrical prefixes print as the SI name: `5 mF` is `5 mfarad`, `5 uF` and `5 µF` are `5 µfarad`, `5 mH` is `5 mhenry`, `5 mS` is `5 msiemens` and `5 mT` is `5 mtesla`.
 - Gallons, quarts, pints, cups and fluid ounces are US measures. Put `imperial` or `uk` in front for the imperial ones: `1 imperial gallon in liters` is `4.54609 L`.
 - `ton` is the short ton (2,000 lb) and `tonne` is 1,000 kg.
 - `hp` is mechanical horsepower, exactly 550 ft·lbf per second. For the metric and electrical kinds write `metric hp` or `cv` (735.49875 W) and `ehp` (746 W).
@@ -119,7 +120,7 @@ A speed is a length over a time, written with a slash, `per`, or the word `over`
 | `90 km over 3 days` | `30 km/day` |
 | `50 knots in km/h` | `92.6 km/h` |
 
-The unit comes back the way you wrote the hour. `h` stays `km/h`, while `hours` and `hr` after a slash read `km/hour`. Use a rate in a product and the time cancels:
+The unit comes back the way you wrote the hour. `h` stays `km/h`, while `hours` and `hr` after a slash read `km/hour`. Use a rate in a product and the time cancels. A bare unit after a slash belongs to the factor just before it, so `40 hours * $25 / hour` is `$1,000.00`, the same as `$25/hour * 40 hours`:
 
 | You type | Answer |
 |---|---|
@@ -177,7 +178,7 @@ Babbage keeps the decimal and binary families apart, as the names do.
 | Decimal bits | `kb` `Mb` `Gb` `Tb` | 1,000 |
 | Binary bits | `Kib` `Mib` `Gib` `Tib` | 1,024 |
 
-A byte is 8 bits. Case matters: `MB` is megabytes and `Mb` is megabits. The kilobyte is written `kB` with a small k.
+A byte is 8 bits. Case matters: `MB` is megabytes and `Mb` is megabits. The kilobyte is written `kB`, and `KB` is read as the same unit: `5 KB` is `5 kB`.
 
 | You type | Answer |
 |---|---|
@@ -202,6 +203,6 @@ A byte is 8 bits. Case matters: `MB` is megabytes and `Mb` is megabits. The kilo
 
 ## Mixing units and words
 
-A word that is not a unit is skipped, so `10 km walked` is `10 km`. A unit you mistype is flagged with a "did you mean" when it is one letter away from a real one (`5 kmm`). If two units measure different things, the line says so: `1 kg in km` is an error ("these units measure different things"). A unit Babbage does not know is skipped like any other word, and then the conversion is not done, so check that the answer ends in the unit you asked for.
+A word that is not a unit is skipped, so `10 km walked` is `10 km`. A word right after a plain number that is one letter away from a real unit gets a wavy underline, and the pointer over it shows "Did you mean km?" (`5 kmm`). If two units measure different things, the line says so: `1 kg in km` is an error ("these units measure different things"). A unit Babbage does not know is skipped like any other word, and then the conversion is not done, so check that the answer ends in the unit you asked for.
 
 Units also work inside [variables and totals](06-variables-and-totals.html) and with [dates and times](07-dates-and-times.html).

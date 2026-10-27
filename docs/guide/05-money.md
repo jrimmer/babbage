@@ -19,6 +19,7 @@ Put a symbol straight in front of the number, or a currency code after it.
 | `5 EUR` | `€5.00` |
 | `5 GBP` | `£5.00` |
 | `5 CHF` | `5.00 CHF` |
+| `CHF 5` | `5.00 CHF` |
 | `1000 JPY` | `¥1,000` |
 | `1,000 EUR` | `€1,000.00` |
 
@@ -41,7 +42,7 @@ These symbols go in front of the number: `$` `€` `£` `¥` `₹` `₩` `₽` `
 
 ### Codes and words
 
-Any three-letter ISO currency code works after a number, in capitals: `5 CAD` is `C$5.00`, `5 AUD` is `A$5.00`, `5 INR` is `₹5.00`, `5 SEK` is `5.00 SEK`. A currency with a symbol also takes its code in front (`EUR 5`, `GBP 5`, `USD 5`). Codes in lower case, such as `5 eur`, are not understood.
+Any three-letter ISO currency code works after a number, in capitals: `5 CAD` is `C$5.00`, `5 AUD` is `A$5.00`, `5 INR` is `₹5.00`, `5 SEK` is `5.00 SEK`. A code may also stand in front of the amount: `CHF 5` is `5.00 CHF`, and `EUR 5`, `GBP 5` and `USD 5` work the same way. Codes in lower case, such as `5 eur`, are not understood.
 
 A few words work too: `5 dollars`, `5 dollar`, `5 euros`, `5 euro` and `5 yen`. The word `pounds` is a weight (`5 pounds` is `5 lb`), so write money in pounds sterling as `£5` or `5 GBP`.
 
@@ -71,14 +72,16 @@ Money is shown to the cent but kept exact. `$0.1 + $0.2` is `$0.30`, and `$10.00
 | `$5 - 250 cents` | `$2.50` |
 | `100 cents in dollars` | `$1.00` |
 | `50 pence` | `£0.50` |
+| `50p` | `£0.50` |
+| `£2 + 50p` | `£2.50` |
 | `50 pence + £1` | `£1.50` |
 | `5 pennies` | `£0.05` |
 
-Alone, `cents` means hundredths of the dollar your sheet uses. `penny`, `pennies` and `pence` always mean pence. A bare `p` is not pence: write `50 pence`, not `50p`.
+Alone, `cents` means hundredths of the dollar your sheet uses. `penny`, `pennies` and `pence` always mean pence. `50p` is 50 pence too.
 
 ## Which dollar
 
-A bare `$` is one dollar currency, chosen in Settings. **Settings → Calculator → What $ means** offers USD, AUD, CAD and NZD, and USD is the default.
+A bare `$` is one dollar currency, chosen in Settings. **Settings → Calculator → What $ means** offers USD, AUD, CAD, NZD, SGD and HKD, and USD is the default.
 
 | What $ means | `$` stands for | A US dollar is written |
 |---|---|---|
@@ -86,6 +89,8 @@ A bare `$` is one dollar currency, chosen in Settings. **Settings → Calculator
 | AUD | Australian dollar | `US$` |
 | CAD | Canadian dollar | `US$` |
 | NZD | New Zealand dollar | `US$` |
+| SGD | Singapore dollar | `US$` |
+| HKD | Hong Kong dollar | `US$` |
 
 Whatever the choice, the dollar you chose prints with a plain `$`, and the other dollars print with their own prefix. With AUD chosen, `$5 + A$5` is `$10.00`, `US$5 + US$5` is `US$10.00`, and `$5 + US$5` is an error because they are different currencies. On the default, `US$5 + $5` is `$10.00` and `$5 + A$5` is an error.
 
@@ -155,6 +160,7 @@ A percentage after a minus takes it off, or write the percentage first with `off
 | `$120 - 25%` | `$90.00` |
 | `25% off $120` | `$90.00` |
 | `20% off $80` | `$64.00` |
+| `30% discount on $200` | `$140.00` |
 | `$100 - 20% - 10%` | `$72.00` |
 | `$100 * (1 - 20%)` | `$80.00` |
 | `$100 * 80%` | `$80.00` |
@@ -209,7 +215,7 @@ Multiply a rate by the time, or use `at`:
 | `$18/hour * 37.5 hours/week * 4 weeks` | `$2,700.00` |
 | `$9.99/month * 12 months` | `$119.88` |
 
-Write the rate first, then the time (`$25/hour * 40 hours`). With the hours first and a multiplication sign, `3 hours x $25/hour`, the amount comes out right but is still labeled `/hour`. Use `3 hours at $25/hour` instead.
+The time can come first, too: `40 hours * $25 / hour` is `$1,000.00`, the same as `$25/hour * 40 hours`.
 
 `at` also goes the other way: `$500 at $20/hour` is `25 hours`, the time that money buys.
 

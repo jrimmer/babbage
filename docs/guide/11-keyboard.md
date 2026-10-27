@@ -17,6 +17,7 @@ stray character into your sheet.
 | **Ctrl+B** | Show or hide the sidebar. |
 | **F2** | Rename the open sheet. |
 | **Ctrl+Shift+Delete** | Move the open sheet to the trash. |
+| **Ctrl+Shift+T** | Bring back the sheet moved to the trash last, and open it. |
 | **Ctrl+Shift+E** | Export the open sheet as text, CSV, HTML and PDF. |
 | **Ctrl+Q** | Save and quit. |
 
@@ -148,7 +149,7 @@ Any key closes the card's menu. A sheet moved to the trash is not erased: see
 | **Esc** | Close the open panel or menu. |
 
 In a text field in the Settings panel, type and press **Enter** to save the value, or **Esc** to throw away what you
-typed.
+typed. **Esc** there cancels that edit only; the panel stays open.
 
 When you rename a variable that later lines use, Babbage may offer to rename those uses too. Click **Update** to
 change them or **Keep** to leave them. What it does on its own is a setting under Editing: **When a variable is
@@ -162,6 +163,7 @@ renamed**.
 | Ctrl+B | Sidebar |
 | F2 | Rename sheet |
 | Ctrl+Shift+Delete | Trash |
+| Ctrl+Shift+T | Bring back the last trashed sheet |
 | Ctrl+Shift+E | Export |
 | Ctrl+Q | Quit |
 | Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y | Undo / redo |

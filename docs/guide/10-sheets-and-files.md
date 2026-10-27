@@ -64,13 +64,9 @@ Babbage then opens the sheet that was next to it in the list (or a fresh empty o
 
 ### Getting a sheet back
 
-Babbage has no Trash window, so you restore a sheet from the file manager:
+Press **Ctrl+Shift+T** to bring back the sheet you moved to the trash last. It returns under its old name, or as `name (restored)` if a sheet with that name exists, and it opens at once. The notice says **Restored from the trash**. Press it again to bring back the one before, and so on. With nothing in the trash the notice says "The trash is empty".
 
-1. Open the sheets folder (see [Where sheets are stored](#where-sheets-are-stored)) and then the hidden `.trash` folder inside it. In most file managers **Ctrl+H** shows hidden folders.
-2. Find the file. A trashed sheet called `Budget` is named like `Budget.1761600000000.bbg`; the number is the moment it was trashed.
-3. Move it back up into the sheets folder and rename it to end in plain `.bbg`, for example `Budget.bbg`.
-
-The sidebar looks at the folder about every second, so the sheet shows up again within moments. The trash is never emptied by Babbage; clear it yourself when you want the space.
+You can also move a file out of the hidden `.trash` folder inside your sheets folder by hand, renaming it to end in plain `.bbg`. The trash is never emptied by Babbage; clear it yourself when you want the space.
 
 ## Saving
 

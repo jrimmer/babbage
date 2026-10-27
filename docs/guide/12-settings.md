@@ -2,7 +2,7 @@
 
 Every setting lives in one window, in eight panes. Each control takes effect the moment you change it and is written to a small settings file, so there is no Save button and nothing to restart.
 
-Open the window with the gear button at the right end of the toolbar above the sheet (next to the help button and the sidebar button). Click the gear again, or press **Escape**, to close it. The panes are listed down the left; click one to see its settings.
+Open the window with the gear button at the right end of the toolbar above the sheet (next to the help button and the sidebar button). Click the gear again, or press **Escape** when no text box is being edited, to close it. The panes are listed down the left; click one to see its settings.
 
 ![The Settings window on the General pane](img/settings-general.webp)
 
@@ -13,7 +13,7 @@ Open the window with the gear button at the right end of the toolbar above the s
 | Switch | Click it to turn the setting on or off |
 | Row of choices | Click the one you want; the chosen one is filled in |
 | Stepper | Click **−** or **+**; the value is shown between them, with its unit |
-| Text field | Click it, type, then press **Enter** to keep the text. Pressing **Escape** closes the window and does not keep what you typed. Entering nothing and pressing Enter clears the setting |
+| Text field | Click it, type, then press **Enter** to keep the text. Pressing **Escape** cancels that edit, keeps the old value and leaves the window open. Entering nothing and pressing Enter clears the setting |
 | Color swatches | Click a color, or **Default** to go back to the built-in one |
 | Button | Click it to do something (the only one is **Check now**) |
 
@@ -50,7 +50,7 @@ See [Sheets and files](10-sheets-and-files.html) for more on the sidebar.
 | Use notation for large numbers | On, Off | On | `300000` reads `300k` and `16777216` reads `16.777216M` |
 | Thousands separators in answers | On, Off | On | `1,000` and not `1000` |
 
-The three number formats are North American style (`1,234.56`), Western European (`1.234,56`) and Eastern European, where a space groups the thousands and either a comma or a point is read as the decimal mark (`1 234,56`). With **System** left selected, Babbage uses the `1,234.56` style.
+The three number formats are North American style (`1,234.56`), Western European (`1.234,56`) and Eastern European, where a space groups the thousands and either a comma or a point is read as the decimal mark (`1 234,56`). **System** follows the session's locale, read from `LC_ALL`, then `LC_NUMERIC`, then `LANG`. German, Spanish, Italian, Portuguese, Dutch and some other languages use `1.234,56`. French, the Slavic and Nordic languages and some others use `1 234,56`. Anything else uses `1,234.56`.
 
 Any of these can be overridden for a single answer from the answer's `⋯` menu; see [Answers and formats](09-answers-and-formats.html).
 
@@ -62,7 +62,7 @@ Any of these can be overridden for a single answer from the answer's `⋯` menu;
 |---|---|---|---|
 | Currency codes, not symbols | On, Off | Off | `5.00 EUR` and not `€5.00` |
 | Hide trailing zeros on money | On, Off | Off | `$5` and not `$5.00` |
-| What $ means | USD, AUD, CAD, NZD | USD | The dollar a bare `$` stands for |
+| What $ means | USD, AUD, CAD, NZD, SGD, HKD | USD | The dollar a bare `$` stands for |
 | Your own names for places | Text | empty | Names for time zones, written `Name = Zone` and separated by `;`, for example `HQ = Europe/Berlin; Lab = Asia/Tokyo` |
 | Sales tax | Text | empty | A name and a rate, such as `VAT 15%`, that your lines can then use by name |
 

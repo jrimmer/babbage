@@ -279,6 +279,51 @@ impl SheetBook {
         }
         unreachable!("the loop above ends when a free trash name is found")
     }
+
+    /// Brings back the sheet most recently moved to the trash, under its old name or, when that is taken again,
+    /// `name (restored)`, `name (restored 2)` and so on. None when the trash is empty.
+    pub fn restore_last(&self) -> Result<Option<SheetId>> {
+        let trash = self.trash_dir();
+        let Ok(entries) = fs::read_dir(&trash) else {
+            return Ok(None);
+        };
+        // Trash names are `<name>.<milliseconds>[-n].bbg`; the newest has the biggest stamp, then the biggest n.
+        let mut newest: Option<((u128, u32), String, PathBuf)> = None;
+        for entry in entries.flatten() {
+            let file = entry.file_name().to_string_lossy().into_owned();
+            let Some(stem) = file.strip_suffix(&format!(".{EXT}")) else {
+                continue;
+            };
+            let Some((name, tail)) = stem.rsplit_once('.') else {
+                continue;
+            };
+            let (stamp, n) = tail.split_once('-').unwrap_or((tail, "0"));
+            let (Ok(stamp), Ok(n)) = (stamp.parse::<u128>(), n.parse::<u32>()) else {
+                continue;
+            };
+            if newest.as_ref().is_none_or(|(key, _, _)| (stamp, n) > *key) {
+                newest = Some(((stamp, n), name.to_owned(), entry.path()));
+            }
+        }
+        let Some((_, name, from)) = newest else {
+            return Ok(None);
+        };
+        let mut id = SheetId::new(&name)?;
+        for n in 1.. {
+            if !self.exists(&id) {
+                break;
+            }
+            let label = if n == 1 {
+                format!("{name} (restored)")
+            } else {
+                format!("{name} (restored {n})")
+            };
+            id = SheetId::new(&label)?;
+        }
+        let to = self.path_of(&id);
+        fs::rename(&from, &to).ctx(|| format!("restore {} from the trash", from.display()))?;
+        Ok(Some(id))
+    }
 }
 
 #[cfg(test)]
@@ -405,6 +450,26 @@ mod tests {
         assert!(b.list().unwrap().is_empty());
         assert!(gone.starts_with(b.trash_dir()));
         assert_eq!(fs::read_to_string(&gone).unwrap(), "keep me\n");
+    }
+
+    #[test]
+    fn restore_brings_back_the_newest_trashed_sheet_and_never_overwrites() {
+        let (_d, b) = book();
+        assert_eq!(b.restore_last().unwrap(), None);
+        let a = b.create_named("Budget", &["1 + 1"]).unwrap();
+        b.delete(&a).unwrap();
+        std::thread::sleep(Duration::from_millis(3));
+        let c = b.create_named("Trip", &["2 + 2"]).unwrap();
+        b.delete(&c).unwrap();
+        let back = b.restore_last().unwrap().unwrap();
+        assert_eq!(back.0, "Trip");
+        assert_eq!(b.read(&back).unwrap(), vec!["2 + 2".to_owned()]);
+        // The name is taken again: the next one comes back beside it.
+        b.create_named("Budget", &["9"]).unwrap();
+        let back = b.restore_last().unwrap().unwrap();
+        assert_eq!(back.0, "Budget (restored)");
+        assert_eq!(b.read(&back).unwrap(), vec!["1 + 1".to_owned()]);
+        assert_eq!(b.restore_last().unwrap(), None);
     }
 
     #[test]

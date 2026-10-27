@@ -112,17 +112,18 @@ A line of three or more dashes (`---`) is a divider. With "Divider lines reset v
 
 ## Totals
 
-There are three ways to add up a sheet. All of them add numbers, money, quantities and lengths of time.
+There are four ways to add up a sheet. All of them add numbers, money, quantities and lengths of time.
 
 | You want | Use |
 |---|---|
 | The sum of the whole sheet | The **Total** chip at the bottom of the window |
+| Everything above a line | `total` alone on a line |
 | The sum of a stretch of lines | A `subtotal` line |
 | The sum of tagged lines | `total of #tag` |
 
 ### The Total chip
 
-The window shows a **Total** chip in the bottom right corner. It adds up every line that has an answer, except subtotal lines (which would count lines twice). It disappears when the sheet has no answers. The chip shows `≈` before a total that is only approximate, and shows the error in place of a number when the lines cannot be added at all.
+The window shows a **Total** chip in the bottom right corner. It adds up every line that has an answer, except subtotal and `total` lines (which would count lines twice). It disappears when the sheet has no answers. The chip shows `≈` before a total that is only approximate, and shows the error in place of a number when the lines cannot be added at all.
 
 ![Three lines that do not all add up, and the Total chip saying how many were left out](img/totals-left-out.webp)
 
@@ -131,6 +132,20 @@ If a line cannot be added to the running sum, such as `3 gallons` after `$10`, t
 Percentages are applied to the total at the end, so a `10%` line raises the sum by ten percent.
 
 Declaration lines (`rent = $900`) count in the total like any other line.
+
+### Total on a line
+
+Type `total` (or `grand total`, or `sum`) alone on a line. It adds every line above it, whatever subtotals lie between, so a sheet with two subtotals still gets one sum of all its lines:
+
+```
+$10
+$20
+subtotal
+$5
+total
+```
+
+The subtotal answers `$30.00` and `total` answers `$35.00`. The `total` line is not counted again by the **Total** chip or by lines below it, and a second `total` further down does not add the first. With nothing above it, the line is empty and has no answer.
 
 ### Subtotals
 

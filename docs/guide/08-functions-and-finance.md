@@ -23,7 +23,7 @@ Function names are not case sensitive. A function takes its values in brackets s
 | `5 root of 32`, `root 5 of 32` | `2` |
 | `root 5 of 100` | `2.5118864315` |
 
-The exponent after `^` has to be a whole number. For fractional powers use a root: `sqrt` for a half, `cbrt` for a third, `root N of` for any other root. `sqrt(-1)` and other out-of-range values answer with an error rather than a guess.
+A fraction as the exponent is a root: `4 ^ 0.5` is `2`, `8 ^ (1/3)` is `2`, `100 ^ 1.5` is `1,000` and `2 ^ 0.5` is `1.4142135624`. `sqrt` for a half, `cbrt` for a third and `root N of` for any other root say the same thing in words. A negative base with a fractional exponent, `sqrt(-1)` and other out-of-range values answer with an error rather than a guess.
 
 ## Logarithms and exponentials
 
@@ -85,9 +85,11 @@ Hyperbolic functions are `sinh`, `cosh`, `tanh`, `coth`, `csch` and the inverses
 | `round(3.7)` | `4` |
 | `round(2.5)` | `3` (halves go away from zero: `round(-2.5)` is `-3`) |
 | `floor(-3.2)` | `-4` |
+| `int(3.9)`, `trunc(3.9)`, `truncate(3.9)` | `3` (cut toward zero) |
 | `ceil(3.2)`, `ceiling(3.2)` | `4` |
 | `abs(-5)` | `5` |
 | `3.14159 to 2 dp` | `3.14` |
+| `round 2.567 to 1 dp` | `2.6` |
 | `3.14159 to 2 decimal places` | `3.14` |
 | `1234.5678 rounded` | `1,235` |
 | `2.5 rounded up` | `3` |
@@ -103,7 +105,8 @@ Hyperbolic functions are `sinh`, `cosh`, `tanh`, `coth`, `csch` and the inverses
 
 | You type | Answer |
 |---|---|
-| `fact(6)` | `720` |
+| `fact(6)`, `6!`, `6 factorial` | `720` |
+| `(2 + 3)!` | `120` |
 | `gcd(20, 30)`, `gcd of 20 and 30`, `gcd 12, 18` | `10`, `10`, `6` |
 | `lcm(4, 6)`, `lcm 4, 6, 10` | `12`, `60` |
 | `10 mod 3`, `10 % 3` | `1` |
@@ -115,7 +118,7 @@ Hyperbolic functions are `sinh`, `cosh`, `tanh`, `coth`, `csch` and the inverses
 | `25 combinations 3` | `2,300` |
 | `3 combinations of 5` | `10` |
 
-`fact` needs a whole number of zero or more. `gcd` and `lcm` take any number of whole numbers. Very large factorials show in the short notation of your Numbers settings.
+`fact`, `!` and `factorial` need a whole number of zero or more. `gcd` and `lcm` take any number of whole numbers. Very large factorials show in the short notation of your Numbers settings.
 
 ## Statistics
 
@@ -151,7 +154,7 @@ Other list helpers:
 | `midpoint(10, 20)` | `15` |
 | `midpoint between 10 and 20` | `15` |
 | `halfway between 10 and 20` | `15` |
-| `half of 50` | `25` |
+| `half of 50`, `half(50)` | `25` |
 | `random number between 1 and 6` | A whole number from 1 to 6, new each time the sheet is worked out. |
 
 ## Logic and bits
@@ -166,6 +169,7 @@ Comparisons answer `true` or `false`:
 | `(5 > 3) and (2 > 1)` | `true` |
 | `true or false` | `true` |
 | `true xor true` | `false` |
+| `not true`, `!true` | `false` |
 | `true && false` | `false` |
 
 On whole numbers of zero or more, `and`, `or`, `xor`, `&` and the bar `|` work on the bits, and `<<` and `>>` shift them:
