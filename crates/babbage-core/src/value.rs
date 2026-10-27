@@ -1540,6 +1540,8 @@ fn format_value_digits(v: &Value, opts: &FormatOptions) -> Formatted {
 
 /// `$2,985.00`, `-$5.00`, `$386.8M`, `5.00 CHF`, `$30.00/day`; None when the value is not money.
 fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
+    // Money is written in the currency's own digits, never as a repeating decimal.
+    let opts = &opts.with_repeating(false);
     let (currency, rest) = v.unit.currency_split()?;
     if rest.symbol().contains('·') || rest.dim().has_money() {
         return None;

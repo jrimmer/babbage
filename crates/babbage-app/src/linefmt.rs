@@ -1,5 +1,5 @@
 //! How one line's answer is written, set from the answer's menu: decimal places, thousands separators, the
-//! `k`/`M`/`G` notation and fixed money digits. A line with none of them set follows the settings.
+//! `k`/`M`/`G` notation, fixed money digits and repeating decimals. A line with none of them set follows the settings.
 //!
 //! A line's choices are kept in the sheet file as one trailer line, `⟦bbg line 3 dp=4 group=off #a1b2c3d4⟧`, so a
 //! sheet keeps how its answers are written. The `#` part is a fingerprint of the line's text: a file edited in
@@ -20,6 +20,8 @@ pub struct LineFormat {
     pub notation: Option<bool>,
     /// Money with its currency's fixed digits (`$5.00`).
     pub money: Option<bool>,
+    /// A number that never ends shown with its repeating part in brackets (`0.(3)`).
+    pub repeating: Option<bool>,
 }
 
 impl LineFormat {
@@ -43,6 +45,9 @@ impl LineFormat {
         if let Some(m) = self.money {
             o.fixed_money_digits = m;
         }
+        if let Some(r) = self.repeating {
+            o.repeating = r;
+        }
         o
     }
 
@@ -61,6 +66,9 @@ impl LineFormat {
         }
         if let Some(m) = self.money {
             parts.push(format!("money={}", flag(m)));
+        }
+        if let Some(r) = self.repeating {
+            parts.push(format!("repeat={}", flag(r)));
         }
         parts.join(" ")
     }
@@ -82,6 +90,7 @@ impl LineFormat {
                 "group" => f.group = flag,
                 "notation" => f.notation = flag,
                 "money" => f.money = flag,
+                "repeat" => f.repeating = flag,
                 _ => {}
             }
         }
@@ -243,8 +252,12 @@ mod tests {
             group: Some(false),
             notation: Some(true),
             money: Some(false),
+            repeating: Some(true),
         };
-        assert_eq!(f.to_text(), "dp=4 group=off notation=on money=off");
+        assert_eq!(
+            f.to_text(),
+            "dp=4 group=off notation=on money=off repeat=on"
+        );
         assert_eq!(LineFormat::from_text(&f.to_text()), f);
         assert_eq!(
             LineFormat::from_text("dp=99 group=maybe junk"),

@@ -1,6 +1,6 @@
 //! The menu behind the `⋯` on an answer: copy the answer, choose how many decimal places it shows, switch the
-//! thousands separators, the `k`/`M`/`G` notation and fixed money digits on or off, make a subtotal line, delete the
-//! line. Every control has a fixed place (`items`) so the acceptance checks can aim at it with a real pointer.
+//! thousands separators, the `k`/`M`/`G` notation and fixed money digits on or off, show a number that never ends
+//! with its repeating part, make a subtotal line, delete the line. Every control has a fixed place (`items`) so the acceptance checks can aim at it with a real pointer.
 
 use gpui::{
     AnyElement, ClipboardItem, Context, FontWeight, MouseButton, SharedString, Window, div,
@@ -13,7 +13,7 @@ use crate::theme::Colors;
 use crate::view::{ROW_H, SheetView};
 
 pub const MENU_W: f32 = 290.;
-pub const MENU_H: f32 = 242.;
+pub const MENU_H: f32 = 272.;
 /// The `⋯` button: its centre is this far from the pane's right edge, and it has this radius.
 pub const MORE_FROM_RIGHT: f32 = 36.;
 pub const MORE_RADIUS: f32 = 12.;
@@ -31,8 +31,9 @@ pub fn items() -> Vec<(String, Rect)> {
     v.push(("notation".to_string(), r(66., 94., 40., 28.)));
     v.push(("money".to_string(), r(114., 94., 40., 28.)));
     v.push(("reset".to_string(), r(206., 94., 70., 28.)));
-    v.push(("subtotal".to_string(), r(8., 164., MENU_W - 16., 30.)));
-    v.push(("delete".to_string(), r(8., 204., MENU_W - 16., 30.)));
+    v.push(("repeating".to_string(), r(8., 164., MENU_W - 16., 30.)));
+    v.push(("subtotal".to_string(), r(8., 194., MENU_W - 16., 30.)));
+    v.push(("delete".to_string(), r(8., 234., MENU_W - 16., 30.)));
     v
 }
 
@@ -64,6 +65,12 @@ pub fn change(id: &str, f: LineFormat) -> Option<LineFormat> {
             money: flip(f.money),
             ..f
         }),
+        // Repeating is off unless chosen, and it replaces a fixed number of places (and the other way round).
+        "repeating" => Some(LineFormat {
+            repeating: Some(!f.repeating.unwrap_or(false)),
+            places: None,
+            ..f
+        }),
         "reset" => Some(LineFormat::default()),
         _ => id
             .strip_prefix("dp-")
@@ -71,6 +78,7 @@ pub fn change(id: &str, f: LineFormat) -> Option<LineFormat> {
             .filter(|k| *k <= MAX_PLACES)
             .map(|k| LineFormat {
                 places: Some(k),
+                repeating: None,
                 ..f
             }),
     }
@@ -185,8 +193,8 @@ impl SheetView {
                     .child(label)
             };
         menu = menu.child(action("copy", "Copy Answer", false, cx));
-        // A divider under the copy row, one above the subtotal row and one above delete.
-        for y in [42., 158., 198.] {
+        // A divider under the copy row, one above the repeating row and one above delete.
+        for y in [42., 158., 228.] {
             menu = menu.child(
                 div()
                     .absolute()
@@ -297,6 +305,16 @@ impl SheetView {
                         "Display up to {places} decimal places"
                     ))),
             )
+            .child(action(
+                "repeating",
+                if f.repeating == Some(true) {
+                    "✓ Show as Repeating"
+                } else {
+                    "Show as Repeating"
+                },
+                false,
+                cx,
+            ))
             .child(action("subtotal", "Make Subtotal Line", false, cx))
             .child(action("delete", "Delete Line", true, cx));
         Some(menu.into_any_element())

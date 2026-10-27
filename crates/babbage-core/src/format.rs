@@ -81,6 +81,9 @@ pub struct FormatOptions {
     /// Hide the trailing zeros of money (`$5` for `$5.00`, `$5.5` for `$5.50`).
     pub money_trim_zeros: bool,
     pub number_format: NumberFormat,
+    /// Write a number that never ends as its repeating part in brackets, `0.(3)`, when the period fits in
+    /// `MAX_REPEAT_PERIOD` digits; a longer one is written as usual.
+    pub repeating: bool,
 }
 
 impl FormatOptions {
@@ -99,6 +102,7 @@ impl FormatOptions {
             currency_codes: false,
             money_trim_zeros: false,
             number_format: NumberFormat::NorthAmerica,
+            repeating: false,
         })
     }
 
@@ -114,6 +118,15 @@ impl FormatOptions {
             currency_codes: false,
             money_trim_zeros: false,
             number_format: NumberFormat::NorthAmerica,
+            repeating: false,
+        }
+    }
+
+    /// The same options with repeating decimals on or off.
+    pub fn with_repeating(&self, repeating: bool) -> FormatOptions {
+        FormatOptions {
+            repeating,
+            ..self.clone()
         }
     }
 
@@ -294,7 +307,68 @@ fn power_of_ten(exp: u32) -> Number {
     .expect("small power of ten")
 }
 
+/// The longest repeating part, in digits, that is written in full.
+pub const MAX_REPEAT_PERIOD: usize = 50;
+/// Digits tried before the repeating part must have started and ended: a fraction that has not repeated by then
+/// is written as usual.
+const MAX_REPEAT_SEARCH: usize = 150;
+
+/// `0.1(6)` for 1/6: the digits of a fraction whose decimal expansion never ends, with the part that repeats in
+/// brackets. None when the expansion ends (the ordinary path writes it) or the repeating part is longer than
+/// `MAX_REPEAT_PERIOD`.
+fn format_repeating(n: &Number, opts: &FormatOptions) -> Option<Formatted> {
+    let denom = n.denom();
+    let (whole, mut rem) = n.numer().abs().div_rem(denom);
+    let mut digits: Vec<u8> = Vec::new();
+    let mut seen: std::collections::HashMap<BigInt, usize> = std::collections::HashMap::new();
+    let start = loop {
+        if rem.is_zero() || digits.len() >= MAX_REPEAT_SEARCH {
+            return None;
+        }
+        if let Some(&at) = seen.get(&rem) {
+            break at;
+        }
+        seen.insert(rem.clone(), digits.len());
+        let ten_times: BigInt = &rem * 10;
+        let (digit, next) = ten_times.div_rem(denom);
+        digits.push(u8::try_from(digit).expect("a decimal digit"));
+        rem = next;
+    };
+    if digits.len() - start > MAX_REPEAT_PERIOD {
+        return None;
+    }
+    let digit_text = |part: &[u8]| {
+        part.iter()
+            .map(|d| char::from(b'0' + d))
+            .collect::<String>()
+    };
+    let mut text = String::new();
+    if n.is_negative() {
+        text.push('-');
+    }
+    if opts.group_thousands {
+        push_grouped(
+            &mut text,
+            &whole.to_string(),
+            opts.number_format.group_mark(),
+        );
+    } else {
+        text.push_str(&whole.to_string());
+    }
+    text.push(opts.number_format.decimal_mark());
+    text.push_str(&digit_text(&digits[..start]));
+    text.push('(');
+    text.push_str(&digit_text(&digits[start..]));
+    text.push(')');
+    Some(Formatted { text, exact: true })
+}
+
 fn format_plain(n: &Number, opts: &FormatOptions) -> Formatted {
+    if opts.repeating
+        && let Some(f) = format_repeating(n, opts)
+    {
+        return f;
+    }
     let negative = n.is_negative();
     let numer = n.numer().abs();
     let denom = n.denom();
