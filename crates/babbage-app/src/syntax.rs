@@ -1,4 +1,4 @@
-//! Splits a sheet line into coloured spans. It only looks at the text and at what the engine reported
+//! Splits a sheet line into colored spans. It only looks at the text and at what the engine reported
 //! (ignored words, warnings, label, line kind); it never evaluates anything itself.
 
 use std::ops::Range;
@@ -265,7 +265,7 @@ fn scan(line: &str) -> Vec<Span> {
                     }
                 }
             }
-            // A number glued to a currency symbol before it takes the symbol's colour.
+            // A number glued to a currency symbol before it takes the symbol's color.
             let class = if matches!(spans.last(), Some(s) if s.class == Class::Currency && s.range.end == i)
             {
                 Class::Currency

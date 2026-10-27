@@ -266,7 +266,7 @@ for offset in OFFSETS:
         secs = rng.randrange(0, 86400)
         local = datetime(d.year, d.month, d.day, tzinfo=tz) + timedelta(seconds=secs)
         stamp = int((local - EPOCH).total_seconds())
-        # a date with no time is midday, as the expected behaviour treats it
+        # a date with no time is midday
         add(f"{MONTHS[d.month - 1]} {d.day}, {d.year} to timestamp", int((datetime(d.year, d.month, d.day, 12, tzinfo=tz) - EPOCH).total_seconds()), offset)
         local_view = local
         add(f"{stamp} to date", shown_date(local_view.date(), local_view.hour * 3600 + local_view.minute * 60 + local_view.second, local_today) + " " + offset_label(offset), offset)

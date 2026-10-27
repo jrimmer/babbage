@@ -572,7 +572,7 @@ impl Editor {
     }
 
     /// Comments the lines of the selection out with `// `, or takes the comment off when every line that has text
-    /// already starts with one (the expected behaviour's Command-/). The caret and the selection keep their place in the text.
+    /// already starts with one (Command-/). The caret and the selection keep their place in the text.
     pub fn toggle_comment(&mut self) {
         let (a, b) = self.selection();
         let first = a.line;

@@ -32,7 +32,7 @@
     {
      "file": "05-money",
      "title": "Money",
-     "description": "Currencies, cents, tips, tax and price maths."
+     "description": "Currencies, cents, tips, tax and price math."
     },
     {
      "file": "06-variables-and-totals",
@@ -42,7 +42,7 @@
     {
      "file": "07-dates-and-times",
      "title": "Dates and times",
-     "description": "Date maths, durations, workdays and time zones."
+     "description": "Date math, durations, workdays and time zones."
     },
     {
      "file": "08-functions-and-finance",

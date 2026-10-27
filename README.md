@@ -22,4 +22,4 @@ bin/accept     # end-to-end checks against the real window, in a nested headless
 ```
 
 `bin/accept` never opens a window on your desktop. The roadmap is in [docs/roadmap.md](docs/roadmap.md) and the
-decisions behind the behaviour in [docs/decisions.md](docs/decisions.md).
+decisions behind the behavior in [docs/decisions.md](docs/decisions.md).

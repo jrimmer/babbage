@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Independent oracle for percentage forms.
 
-Each form is a direct formula from a maintainer check percentage reference, computed
+Each form is a direct formula from the documented percentage rules, computed
 with Fraction. Nothing here parses text, so it shares no logic with the engine.
 
 Columns: expression <TAB> kind (plain|percent|ERR:div0|ERR:unsupported) <TAB> exact n/d <TAB> 10dp display
@@ -119,7 +119,7 @@ def forms():
     out += [(f"{fa} of {px}", "plain", lambda: FA * X)]
     out += [(f"{pa} is {fa} of what", "plain", lambda: A / FA)]
     out += [(f"{fa} on {px}", "plain", lambda: X * (1 + FA)), (f"{fa} off {px}", "plain", lambda: X * (1 - FA))]
-    # The expected behaviour (Sheet G, ticket 0012): 10% x 10% is 1%, 20 / 50% is 40, 50% / 2 is 25%, 10%^2 is 0.01
+    # Ticket 0012: 10% x 10% is 1%, 20 / 50% is 40, 50% / 2 is 25%, 10%^2 is 0.01
     out += [(f"{Pt}% × {Qt}%", "percent", lambda: P * Q)]
     out += [(f"{px} / {Pt}%", "plain", lambda: X / P)]
     out += [(f"{Pt}% / {px}", "percent", lambda: P / X)]

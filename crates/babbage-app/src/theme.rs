@@ -1,4 +1,4 @@
-//! Colours. One dark theme ships; Omarchy's `colors.toml` replaces its main colours when it can be read,
+//! Colors. One dark theme ships; Omarchy's `colors.toml` replaces its main colors when it can be read,
 //! and the file is watched so a theme switch shows without restarting.
 
 use std::path::PathBuf;
@@ -64,7 +64,7 @@ impl Colors {
         Colors::from_palette(&Palette::default())
     }
 
-    /// These colours with the ones the settings change laid over them.
+    /// These colors with the ones the settings change laid over them.
     pub fn with_overrides(mut self) -> Colors {
         use crate::appprefs::color;
         if let Some(c) = color("color_number") {
@@ -112,7 +112,7 @@ impl Colors {
     }
 }
 
-/// The few colours a theme file may set; everything else is derived from them.
+/// The few colors a theme file may set; everything else is derived from them.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Palette {
     pub background: u32,
@@ -141,7 +141,7 @@ impl Default for Palette {
 }
 
 /// `key = "#rrggbb"` lines of an Omarchy `colors.toml`. Keys this does not know are ignored, and a
-/// value that is not a colour keeps the default, so a half-written file never breaks the app.
+/// value that is not a color keeps the default, so a half-written file never breaks the app.
 pub fn parse_palette(src: &str) -> Palette {
     let mut p = Palette::default();
     let get = |key: &str| -> Option<u32> {
@@ -201,7 +201,7 @@ fn load(file: &Option<PathBuf>) -> (Colors, Option<SystemTime>) {
     }
 }
 
-/// Reads the theme file again and lays the settings' colours over it: after a colour setting changed.
+/// Reads the theme file again and lays the settings' colors over it: after a color setting changed.
 pub fn reload(cx: &mut App) {
     let (colors, _) = load(&theme_file());
     let colors = colors.with_overrides();
@@ -211,7 +211,7 @@ pub fn reload(cx: &mut App) {
     }
 }
 
-/// Sets the colours global and follows the theme file for changes (checked once a second: a theme
+/// Sets the colors global and follows the theme file for changes (checked once a second: a theme
 /// switch replaces the file, and polling its time needs no file-watching dependency).
 pub fn install(cx: &mut App) {
     let file = theme_file();

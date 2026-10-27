@@ -1,7 +1,7 @@
 //! A sheet with its answers as plain text, CSV, HTML or PDF.
 //!
 //! The store knows nothing of the engine: the caller says what each line shows. The plain-text form writes a
-//! line, then ` | ` and its answer, the way the reference's examples are laid out; the CSV form has one
+//! line, then ` | ` and its answer, laid out as in the guide; the CSV form has one
 //! `line,answer` row per line and a last `Total` row; the HTML form is one self-contained page; the PDF form
 //! is a plain document in a monospaced font, one page after another, with the answers in a column on the right.
 

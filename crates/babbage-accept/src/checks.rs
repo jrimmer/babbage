@@ -513,11 +513,11 @@ fn error_line(h: &mut Harness) -> anyhow::Result<()> {
     let s = app.state()?;
     let shot = h.shot()?;
     let scr = Screen::of(h, &app, &s)?;
-    // The message is in the warning colour: more red than blue, unlike the white answers.
+    // The message is in the warning color: more red than blue, unlike the white answers.
     let p = scr.answer_cell(&shot, &s, 1)?;
     ensure!(
         p[0] as i32 > p[2] as i32 + 40,
-        "the error text is not in the warning colour: {p:?}"
+        "the error text is not in the warning color: {p:?}"
     );
     let ok = scr.answer_cell(&shot, &s, 0)?;
     ensure!(
@@ -866,7 +866,7 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
     })?;
     ensure!(s["lines"][0]["text"] == "1 + 1");
     h.press(&[], "Escape")?;
-    let s = app.wait_for("the rename cancelled", T, |s| s["rename"].is_null())?;
+    let s = app.wait_for("the rename canceled", T, |s| s["rename"].is_null())?;
     ensure!(s["current"] == first.as_str() && sheet_names(&s).len() == 2);
     ensure!(dir.join(format!("{first}.bbg")).is_file());
 
@@ -1756,7 +1756,7 @@ fn right_edge(s: &Value) -> anyhow::Result<f32> {
     Ok(f(&s["window"]["x"])? + f(&s["window"]["w"])?)
 }
 
-/// Is `p` within `tol` of the 0xRRGGBB colour on every channel?
+/// Is `p` within `tol` of the 0xRRGGBB color on every channel?
 fn near(p: [u8; 3], rgb: u32, tol: i32) -> bool {
     [(rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255]
         .iter()
@@ -1764,7 +1764,7 @@ fn near(p: [u8; 3], rgb: u32, tol: i32) -> bool {
         .all(|(&want, got)| (want as i32 - got as i32).abs() <= tol)
 }
 
-/// Styling settings, painted: colours, the answer column, alignment, text and heading size, and digit widths.
+/// Styling settings, painted: colors, the answer column, alignment, text and heading size, and digit widths.
 fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
     let config = h.logs.join("settings-styling.settings");
     let _ = std::fs::remove_file(&config);
@@ -1875,7 +1875,7 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
         settings_click(h, &mut app, "heading_size-")?;
     }
 
-    // Colours: the number, the unit, and the variable colour paint the chosen colour.
+    // Colors: the number, the unit, and the variable color paint the chosen color.
     settings_click(h, &mut app, "color_number=#ff7a90")?;
     settings_click(h, &mut app, "color_unit=#62c25a")?;
     let (s, shot, scr) = look(h, &mut app)?;
@@ -1888,14 +1888,14 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
     );
     ensure!(
         num.is_some_and(|p| near(p, 0xff7a90, 24)),
-        "numbers are not the chosen colour: {num:?}"
+        "numbers are not the chosen color: {num:?}"
     );
     let (lx, ly, lx1, ly1) = region(&s, 4, false)?;
     let unit = ink_extent(&scr, &shot, (lx, ly, lx1, ly1), 90.).context("the unit line")?;
     let kg = scr.brightest(&shot, unit.1 - 30., ly, unit.1 + 2., ly1);
     ensure!(
         kg.is_some_and(|p| near(p, 0x62c25a, 24)),
-        "units are not the chosen colour: {kg:?}"
+        "units are not the chosen color: {kg:?}"
     );
     ensure!(
         file().contains("color_number = #ff7a90") && file().contains("color_unit = #62c25a"),
@@ -1908,10 +1908,10 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
     let back = scr.brightest(&shot, r.0, r.1, r.2, r.3);
     ensure!(
         back.is_some_and(|p| !near(p, 0xff7a90, 40)),
-        "numbers kept the old colour: {back:?}"
+        "numbers kept the old color: {back:?}"
     );
 
-    // The answer column: its colour and which side its text sits on.
+    // The answer column: its color and which side its text sits on.
     settings_click(h, &mut app, "answer_background=#20283a")?;
     let (s, shot, scr) = look(h, &mut app)?;
     let (ax, aw, wh) = (
@@ -1953,7 +1953,7 @@ fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
         "answers did not move to the right: {left:?} then {right:?}; file {:?}",
         file()
     );
-    // The picture for the reference notes: the pane open over the sheet it has restyled (pink numbers, green units, a
+    // The picture for the settings notes: the pane open over the sheet it has restyled (pink numbers, green units, a
     // blue answer column with its answers on the right).
     settings_click(h, &mut app, "color_number=#ff7a90")?;
     settle();
@@ -2183,7 +2183,7 @@ fn guide_screens(h: &mut Harness) -> anyhow::Result<()> {
     h.type_text("Budget")?;
     guide_picture(h, &app, "sheet-rename", 900, 520)?;
     h.press(&[], "Escape")?;
-    app.wait_for("rename cancelled", T, |s| s["rename"].is_null())?;
+    app.wait_for("rename canceled", T, |s| s["rename"].is_null())?;
     h.press(&["ctrl", "shift"], "e")?;
     app.wait_for("the export notice", T, |s| !s["notice"].is_null())?;
     guide_picture(h, &app, "export-notice", 900, 520)?;
@@ -2243,7 +2243,7 @@ fn guide_screens(h: &mut Harness) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// The centre of a rectangle the state reports (`x`, `y`, `w`, `h`).
+/// The center of a rectangle the state reports (`x`, `y`, `w`, `h`).
 fn centre(r: &Value) -> anyhow::Result<(f32, f32)> {
     Ok((
         f(&r["x"])? + f(&r["w"])? / 2.,

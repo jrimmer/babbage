@@ -21,4 +21,4 @@ assert_eq!(shown.text, "17");
 The crate has no interface of its own. The documented API is the crate root and the `format`, `number`,
 `settings`, `sheet`, `value`, `zones` and `error` modules; the other modules are internals.
 
-MIT licence.
+MIT license.

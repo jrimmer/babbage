@@ -138,7 +138,7 @@ pub struct Registry {
 
 /// Where each line comes from: `symbol | names | dimension | exact factor to SI base`, then optional
 /// `+prefixes` lines that add SI-prefixed copies. `@names = unit expression` defines a compound alias.
-/// Factors are exact (`*`, `/`, `^` over decimals). Where the reference lists a rounded value, the
+/// Factors are exact (`*`, `/`, `^` over decimals). Where a published table lists a rounded value, the
 /// exact standard definition is used and the difference is recorded in docs/units.md.
 const TABLE: &str = r#"
 # time
@@ -348,7 +348,7 @@ pub const RESERVED_WORDS: &[&str] = &[
     "in", "a", "as", "to", "is", "of", "on", "off", "what", "percent", "into", "cast", "at",
 ];
 
-/// ISO 4217 codes from the reference, with the digits after the point where they are not 2.
+/// ISO 4217 codes, with the digits after the point where they are not 2.
 const FIAT: &str = "AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD:3 BIF:0 BMD BND BOB BRL BSD BTN BWP BYN BZD \
 CAD CDF CHF CLF:4 CLP:0 CNY COP CRC CUC CVE CZK DJF:0 DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GGP GHS GIP GMD GNF:0 \
 GTQ GYD HKD HNL HRK HTG HUF IDR ILS IMP INR IQD:3 IRR ISK:0 JEP JMD JOD:3 JPY:0 KES KGS KHR KMF:0 KPW KRW:0 KWD:3 KYD KZT \
@@ -804,7 +804,7 @@ fn factor_in_context(def: &UnitDef, workday_context: bool) -> Number {
 }
 
 /// A unit's factor to SI under the current settings: a workday is the work-hours setting. The volume units are
-/// the same whatever the expected behaviour volume setting says: it changed none of them.
+/// the same whatever the volume setting says: it changes none of them.
 fn factor_now(def: &UnitDef) -> Number {
     match def.symbol {
         "workday" => Number::from_i64(i64::from(crate::settings::work_hours_per_day()) * 3600),
@@ -1062,7 +1062,7 @@ impl UnitExpr {
             parts.sort_by_key(|(u, _)| *u);
             return Some(UnitExpr::from_parts(parts));
         }
-        // Only a length to a power (`cm³`, `ft²`), not a named volume such as a litre or a product of lengths.
+        // Only a length to a power (`cm³`, `ft²`), not a named volume such as a liter or a product of lengths.
         let [(_, k)] = self.0.as_slice() else {
             return None;
         };
@@ -1187,7 +1187,7 @@ impl UnitExpr {
         {
             return "mph".to_string();
         }
-        // A newton metre is the torque unit, with the dot operator between the two.
+        // A newton meter is the torque unit, with the dot operator between the two.
         if let (Some(newton), Some(metre)) = (lookup("N"), lookup("m"))
             && self.0.len() == 2
             && self.0.iter().all(|(_, e)| *e == 1)

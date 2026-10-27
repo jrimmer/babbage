@@ -14,7 +14,7 @@ Open the window with the gear button at the right end of the toolbar above the s
 | Row of choices | Click the one you want; the chosen one is filled in |
 | Stepper | Click **−** or **+**; the value is shown between them, with its unit |
 | Text field | Click it, type, then press **Enter** to keep the text. Pressing **Escape** closes the window and does not keep what you typed. Entering nothing and pressing Enter clears the setting |
-| Colour swatches | Click a colour, or **Default** to go back to the built-in one |
+| Color swatches | Click a color, or **Default** to go back to the built-in one |
 | Button | Click it to do something (the only one is **Check now**) |
 
 If a setting cannot be saved, the notice at the bottom of the sidebar says why.
@@ -87,18 +87,18 @@ See [Variables and totals](06-variables-and-totals.html) for how variables and d
 
 | Setting | Choices | Default | What it does |
 |---|---|---|---|
-| Number colour | nine colours, or Default | Default | The colour of numbers in the sheet's text |
-| Unit colour | nine colours, or Default | Default | The colour of units such as `kg`, `mm`, `hours` |
-| Currency colour | nine colours, or Default | Default | The colour of `$`, `€`, `£` and other money |
-| Variable colour | nine colours, or Default | Default | The colour of names you defined |
-| Answer column colour | seven dark colours, or Default | Default | The background behind the answers |
+| Number color | nine colors, or Default | Default | The color of numbers in the sheet's text |
+| Unit color | nine colors, or Default | Default | The color of units such as `kg`, `mm`, `hours` |
+| Currency color | nine colors, or Default | Default | The color of `$`, `€`, `£` and other money |
+| Variable color | nine colors, or Default | Default | The color of names you defined |
+| Answer column color | seven dark colors, or Default | Default | The background behind the answers |
 | Answers line up on the | Left, Right | Left | Whether answers sit against the left or the right of their column |
 | Font | Noto, JetBrains, Liberation, Serif | Noto | The font for the sheet's text and answers: Noto Sans, JetBrainsMono Nerd Font, Liberation Sans or Liberation Serif. |
 | Text size | 14 to 26 pt | 21 pt | The size of the sheet's text |
 | Heading size | 100% to 160%, in steps of 10 | 100% | How large a heading reads against ordinary text |
 | Digits all the same width | On, Off | Off | Every digit takes the same width, so columns of numbers line up |
 
-The rest of the colours (background, sidebar, text and so on) are not settings. On a desktop that has an Omarchy theme, Babbage takes its main colours from the current theme and follows it when you switch themes, without restarting. Otherwise it uses its built-in dark colours.
+The rest of the colors (background, sidebar, text and so on) are not settings. On a desktop that has an Omarchy theme, Babbage takes its main colors from the current theme and follows it when you switch themes, without restarting. Otherwise it uses its built-in dark colors.
 
 ## Dates & Times
 
@@ -134,7 +134,7 @@ Settings are lines of the form `name = value` in a plain text file:
 
 or `$XDG_CONFIG_HOME/babbage/settings` if that variable is set. Setting `BABBAGE_CONFIG_FILE` to a path makes Babbage use that file instead.
 
-Changing a control in the window rewrites just that line (adding it if it is not there) and leaves the rest of the file alone, so you can keep your own lines and comments in it. A comment starts with a `#` at the start of a line or after a space, so a colour such as `#ff7a90` is still read as a value. For example:
+Changing a control in the window rewrites just that line (adding it if it is not there) and leaves the rest of the file alone, so you can keep your own lines and comments in it. A comment starts with a `#` at the start of a line or after a space, so a color such as `#ff7a90` is still read as a value. For example:
 
 ```text
 # my settings
@@ -152,4 +152,4 @@ Two settings have no control in the window and are only available in the file:
 | `timezone = Europe/Paris` | Sets the time zone Babbage treats as local. Left out (or set to `system`), Babbage follows the computer's own zone |
 | `update_skip = 1.2.3` | The version you chose **Skip this version** for; written for you |
 
-A line the app does not recognise is ignored, and a value that is not one of the allowed choices falls back to the default.
+A line the app does not recognize is ignored, and a value that is not one of the allowed choices falls back to the default.

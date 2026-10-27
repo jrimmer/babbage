@@ -80,7 +80,7 @@ pub fn global_variables() -> Vec<String> {
         .collect()
 }
 
-/// A colour the settings file holds, `#rrggbb`; None for `default` or anything else.
+/// A color the settings file holds, `#rrggbb`; None for `default` or anything else.
 pub fn color(key: &str) -> Option<u32> {
     let v = raw(key)?;
     let hex = v.trim().strip_prefix('#')?;

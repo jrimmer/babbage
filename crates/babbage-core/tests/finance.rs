@@ -23,7 +23,7 @@ fn the_reference_compound_interest_examples() {
         ),
         ("interest on $1,000 after 3 years @ 7%", "$225.04"),
         ("present value of $1,000 after 20 years at 10%", "$148.64"),
-        // `for` reads as `after`, as the reference note writes it.
+        // `for` reads as `after`.
         ("$1,000 for 3 years at 7%", "$1,225.04"),
         ("$1,000 for 3 years at 7% compounding monthly", "$1,232.93"),
         (

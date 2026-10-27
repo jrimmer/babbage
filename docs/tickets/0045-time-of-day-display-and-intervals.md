@@ -12,6 +12,6 @@ Choices made without a real install to check:
 - A Unix timestamp from 100,000,000,000 up is read as milliseconds.
 Confirm each against a real install.
 
-The expected behaviour: a malformed ISO date is a subtraction (ticket 0071); times of day print upper case in the US region (ticket 0068).
+A maintainer check: a malformed ISO date is a subtraction (ticket 0071); times of day print upper case in the US region (ticket 0068).
 
 Settled: a malformed ISO date is a subtraction (0071); times print in upper case (0068). The other choices in this ticket (12-hour display, midnight roll-over, `5pm` as a time of day, milliseconds from 100,000,000,000) were not contradicted by a maintainer check.

@@ -238,7 +238,7 @@ fn collapse_groups(toks: &[Token]) -> Result<Vec<Token>, Error> {
     Ok(out)
 }
 
-/// Parses one line, recognising the multi-word forms before falling back to plain expressions.
+/// Parses one line, recognizing the multi-word forms before falling back to plain expressions.
 pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
     let grouped;
     let toks = if toks.iter().any(|t| t.tok == Tok::LParen) {

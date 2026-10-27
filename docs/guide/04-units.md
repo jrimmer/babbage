@@ -81,7 +81,7 @@ Examples, each checked: `1 hp in W` is `745.6998715823 W`, `1 metric hp in W` is
 
 Some details worth knowing:
 
-- Write the capital `L` on a prefixed litre: `500 mL`, `2 cL`, `1 dL`. A lower-case `ml` is not recognised and the word is skipped. `1.5 l` alone is fine, and `milliliters` and `millilitres` work in full.
+- Write the capital `L` on a prefixed liter: `500 mL`, `2 cL`, `1 dL`. A lower-case `ml` is not recognized and the word is skipped. `1.5 l` alone is fine, and `milliliters` and `millilitres` work in full.
 - Gallons, quarts, pints, cups and fluid ounces are US measures. Put `imperial` or `uk` in front for the imperial ones: `1 imperial gallon in liters` is `4.54609 L`.
 - `ton` is the short ton (2,000 lb) and `tonne` is 1,000 kg.
 - `hp` is mechanical horsepower, exactly 550 ft·lbf per second. For the metric and electrical kinds write `metric hp` or `cv` (735.49875 W) and `ehp` (746 W).

@@ -3,8 +3,8 @@
 
 Run: .oracle-venv/bin/python tools/gen_unit_corpus.py > crates/babbage-core/tests/corpus/units.tsv
 Columns: expression <TAB> exact n/d (value in the base unit) <TAB> 10dp display with the base unit.
-The app-specific constants the reference documents (month, year, the 1 kilovolt `KV`) are
-hand formulas from the reference, not pint, because pint disagrees with them on purpose.
+The app-specific constants documented in docs/units.md (month, year, the 1 kilovolt `KV`) are
+hand formulas, not pint, because pint disagrees with them on purpose.
 """
 import sys
 from decimal import Decimal, ROUND_HALF_UP, getcontext
@@ -70,7 +70,7 @@ GROUPS = {
     + pre("kMGTPEZY", "B", "byte"),
 }
 
-# Hand formulas from the reference, in the group's base unit.
+# Hand formulas, in the group's base unit.
 HAND = {
     ("s", "s"): [("mo", Fraction("30.436875") * 86400), ("yr", Fraction("365.2425") * 86400)],
     ("m", "m"): [("px", Fraction("0.0254") / 96)],

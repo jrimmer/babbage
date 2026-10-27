@@ -186,7 +186,7 @@ pub struct Formatted {
     pub exact: bool,
 }
 
-/// Symbols from the reference, smallest first: `k` thousand, `M` million, `G` billion, `T` trillion.
+/// Symbols for large amounts, smallest first: `k` thousand, `M` million, `G` billion, `T` trillion.
 const LARGE: [(&str, u32, u32); 4] = [("k", 3, 5), ("M", 6, 6), ("G", 9, 9), ("T", 12, 12)];
 
 /// An amount below a millionth is written in scientific form, `1e-12`, as expected for

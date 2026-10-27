@@ -301,7 +301,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
                 }
                 // A weekday on its own is the next one after today: on a Monday, `Monday` is a week away.
                 // `Tuesday next week`, `Friday last week`, `Monday this week`: that day of the week, with the
-                // week starting on Sunday as it does in the owner's region.
+                // week starting on Sunday as it does in the US region.
                 name if WEEKDAYS.iter().any(|d| d.eq_ignore_ascii_case(name))
                     && matches!(toks.get(i + 2).map(|t| &t.tok), Some(Tok::Unit(u))
                         if crate::units::lookup("week").is_some_and(|k| &k == u))
@@ -429,7 +429,7 @@ pub fn rewrite(toks: Vec<Token>) -> Vec<Token> {
 }
 
 /// `January 10 - February 5` on a line of its own, both dates without a year, is the span from the first date
-/// forward to the second, as expected (Sheet G): `3 weeks 5 days`, and `February 5 - January 10`
+/// forward to the second, `3 weeks 5 days`, and `February 5 - January 10`
 /// is `11 months 5 days`, the span to the next January 10. It becomes `A to B` with B in the year the span ends.
 fn span_between_yearless_dates(out: &mut [Token], yearless: &[usize]) {
     if out.len() != 3 || yearless != [0, 2] || !matches!(out[1].tok, Tok::Minus) {

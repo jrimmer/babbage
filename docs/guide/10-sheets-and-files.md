@@ -6,7 +6,7 @@ This chapter covers the sidebar, making, switching, renaming and trashing sheets
 
 ## The sidebar
 
-The sidebar sits on the left. At the top is the **Babbage** name and a **+ Sheet** button. Below it is one card for each sheet, and at the bottom is a **General** folder pill and, when there is something to say, a short notice in a warm colour (for example where an export went, or that a sheet was moved to the trash).
+The sidebar sits on the left. At the top is the **Babbage** name and a **+ Sheet** button. Below it is one card for each sheet, and at the bottom is a **General** folder pill and, when there is something to say, a short notice in a warm color (for example where an export went, or that a sheet was moved to the trash).
 
 ![The sidebar with several sheet cards](img/sidebar.webp)
 

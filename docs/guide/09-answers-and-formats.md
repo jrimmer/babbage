@@ -26,7 +26,7 @@ formats, so you can see each change as you make it. **Esc**, or a click anywhere
 | **Reset** | Clears every choice made on this line, so it follows the settings again. |
 | **Show as Repeating** | Writes a number that never ends with its repeating part in brackets: `1/3` as `0.(3)`. A tick shows when it is on. See below. |
 | **Make Subtotal Line** | Adds a line reading `subtotal` straight below this one. See [Variables and totals](06-variables-and-totals.html). |
-| **Delete Line** | Removes the whole line, text and answer. Shown in the warning colour. The last remaining line is emptied instead. |
+| **Delete Line** | Removes the whole line, text and answer. Shown in the warning color. The last remaining line is emptied instead. |
 
 Subtotal and delete are edits to the sheet, so **Ctrl+Z** takes them back.
 

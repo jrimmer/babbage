@@ -43,7 +43,7 @@ fn temperature_rules() {
     assert_eq!(shown("-5 °C"), "-5 °C");
     assert_eq!(shown("100 celsius in fahrenheit"), "212 °F");
     assert_eq!(shown("0 K in C"), "-273.15 °C");
-    // the expected behaviour (Sheet G) adds, takes away and scales temperatures of one scale.
+    // Temperatures of one scale can be added, taken away and scaled.
     assert_eq!(shown("20 °C + 5 °C"), "25 °C");
     assert_eq!(shown("20 °C × 2"), "40 °C");
     assert_eq!(shown("2 × 20 °F"), "40 °F");

@@ -153,7 +153,7 @@ fn a_yearless_date_is_this_year_unless_the_line_says_until_or_since() {
         ("December 1 as yyyy", "2024"),
         ("January 5 as yyyy", "2024"),
     ]);
-    // A date with no year is this year's whatever the month, as expected (Sheet D, lines 21, 22):
+    // A date with no year is this year's whatever the month:
     // late in December, `January 5` is still this January.
     assert_eq!(at(1_734_696_000, "January 5 as yyyy"), "2024");
     assert_eq!(at(1_734_696_000, "December 25 as yyyy"), "2024");
@@ -546,7 +546,7 @@ fn a_year_after_a_day_and_month_has_four_digits() {
 
 #[test]
 fn a_time_of_day_shows_no_seconds_but_a_day_with_a_time_keeps_them() {
-    // the expected answer is `3:45:30 pm` as `3:45 PM` (Sheet D, line 9).
+    // `3:45:30 pm` is answered as `3:45 PM`.
     all(&[
         ("5pm + 0.5 seconds", "5:00 PM"),
         ("5pm + 90.25 seconds", "5:01 PM"),

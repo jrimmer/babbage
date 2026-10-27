@@ -38,7 +38,7 @@ a sheet is also the name of the sheet in the sidebar, so a heading there names t
 
 ## Comments
 
-Start a line with `//` to make it a comment. Babbage does not read it, and it is drawn in a quiet colour.
+Start a line with `//` to make it a comment. Babbage does not read it, and it is drawn in a quiet color.
 
 ```
 // milk is cheap this week
@@ -108,7 +108,7 @@ Nothing is ever turned into an error just because a word was skipped.
 ## Errors on a line
 
 When Babbage cannot make sense of a line that looks like a calculation, the answer column shows a short
-message, in a warning colour, in place of an answer.
+message, in a warning color, in place of an answer.
 
 | You type | The answer column says |
 |---|---|

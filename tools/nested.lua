@@ -11,7 +11,7 @@ hl.config({ misc = { disable_hyprland_logo = true, disable_splash_rendering = tr
 -- The one window tiles to fill HEADLESS-2, as a lone window does for a user.
 -- Animations are off because the window-open fade and pop-in last longer
 -- than a check takes to connect, so an early grim caught the window shrunk
--- and blended with the wallpaper colour.
+-- and blended with the wallpaper color.
 hl.config({
   general = { gaps_in = 0, gaps_out = 0, border_size = 0 },
   decoration = { rounding = 0, dim_inactive = false, active_opacity = 1.0, inactive_opacity = 1.0 },

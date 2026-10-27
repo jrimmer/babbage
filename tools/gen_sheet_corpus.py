@@ -2,7 +2,7 @@
 """Independent simulator for sheets: variables, line references, subtotals, tags, headings, dividers.
 
 Values are (kind, Fraction, money) with kind plain|percent and money False|True (USD). The rules are
-written from the reference's sheet pages; nothing here parses text, so it shares no logic with the engine.
+written from the documented sheet rules; nothing here parses text, so it shares no logic with the engine.
 
 Format: `SHEET <n>` then `<line text>\t<expected>` per line, where expected is the displayed answer or one of
 .blank .heading .divider .comment .error .text.
@@ -124,7 +124,7 @@ def literal():
 
 def counted(r):
     """The value other lines see: money from a line that is not a declaration is rounded to cents (half away
-    from zero), because the reference says "the rounded answer of currencies is used in subtotals and line
+    from zero), because the rule is "the rounded answer of currencies is used in subtotals and line
     references"; a variable keeps every digit."""
     kind, q, money = r[1]
     if r[0] != "value" or r[2] or kind != "plain" or not money:

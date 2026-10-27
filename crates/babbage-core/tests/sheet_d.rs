@@ -1,4 +1,4 @@
-//! The rules behind the owner's Sheet D answers, tested beyond the lines the owner typed: where each rule stops, and
+//! The rules behind a set of date, rate and interest answers, tested beyond the lines given: where each rule stops, and
 //! what it must leave alone. The lines themselves are replayed in the tests.
 
 use babbage_core::settings::{Settings, scoped};
@@ -141,7 +141,7 @@ fn an_amount_below_a_millionth_is_scientific() {
         ("0.00000000004", "4e-11"),
         ("-0.000000002", "-2e-9"),
         ("0.0000000015", "1.5e-9"),
-        // the expected behaviour: a millionth is still a decimal, a ten-millionth is not.
+        // a millionth is still a decimal, a ten-millionth is not.
         ("0.00001", "0.00001"),
         ("0.000001", "0.000001"),
         ("0.0000001", "1e-7"),
@@ -210,7 +210,7 @@ fn a_comma_after_a_stray_word_is_part_of_the_remark() {
 fn money_per_month_over_a_length_of_time_takes_that_time_as_its_period() {
     all(&[
         ("$500/month / 30 days", "$16.67/day"),
-        // Any other rate over a time keeps both units: the rule is only the owner's one form.
+        // Any other rate over a time keeps both units: the rule is only that one form.
         ("$100/day / 2 hours", "50 $/(hour·day)"),
         ("$500/month / 2 weeks", "250 $/(week·month)"),
         ("100 m/s / 2 s", "50 m/s²"),
@@ -283,12 +283,12 @@ fn a_skipped_dotted_run_is_shown_as_ignored_not_dropped_silently() {
 #[test]
 fn interest_spread_over_a_period_is_the_total_over_the_time() {
     all(&[
-        // One year: The expected behaviour agrees to every digit.
+        // One year: the simple model agrees to every digit.
         (
             "hourly interest on $1k for 1 year at 4% compounding quarterly",
             "$0.0046320835",
         ),
-        // Three years: the total interest over all of it (the expected behaviour spreads it over one year's hours).
+        // Three years: the total interest over all of it (the simple model spreads it over one year's hours).
         (
             "daily interest on $1k for 3 years at 4% compounding quarterly",
             "$0.12",

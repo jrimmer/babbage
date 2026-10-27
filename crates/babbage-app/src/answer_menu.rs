@@ -14,7 +14,7 @@ use crate::view::{ROW_H, SheetView};
 
 pub const MENU_W: f32 = 290.;
 pub const MENU_H: f32 = 272.;
-/// The `⋯` button: its centre is this far from the pane's right edge, and it has this radius.
+/// The `⋯` button: its center is this far from the pane's right edge, and it has this radius.
 pub const MORE_FROM_RIGHT: f32 = 36.;
 pub const MORE_RADIUS: f32 = 12.;
 /// The most decimal places the slider offers.

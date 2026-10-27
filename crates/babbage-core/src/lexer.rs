@@ -477,8 +477,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                 i = next;
                 continue;
             }
-            // Text shaped like a date that is not one (`2019-02-30`) is plain arithmetic, as in the owner's
-            // the expected behaviour, where it is `2019 - 02 - 30`.
+            // Text shaped like a date that is not one (`2019-02-30`) is plain arithmetic, `2019 - 02 - 30`.
             '0'..='9' if iso_shape_at(&chars, i) && iso_at(&chars, i).is_some() => {
                 let (v, next) = iso_at(&chars, i).expect("checked by the guard");
                 out.push(Token {
@@ -731,7 +730,7 @@ fn lex_raw(src: &str) -> Result<Vec<Token>, Error> {
                     i = letters_end;
                     continue;
                 }
-                // `8 L/100km`: litres per hundred kilometres is a unit of its own (the expected behaviour keeps it).
+                // `8 L/100km`: liters per hundred kilometres is a unit of its own.
                 if !is_call
                     && let Some(end) = per_hundred_km(&chars, i)
                     && let Some(unit) = crate::units::lookup("L/100km")

@@ -14,7 +14,7 @@ fn int(n: i64) -> Number {
     Number::from_i64(n)
 }
 
-/// 365.2425 days, the reference's year, in seconds.
+/// 365.2425 days, the year used for loans, in seconds.
 fn year_in_seconds() -> Number {
     Number::from_decimal_str("31556952").expect("a plain integer")
 }
@@ -80,7 +80,7 @@ pub fn interest_on(
 /// evenly over the time: that many hours, days, weeks, months or years (`code` 1 to 5) in every year of it. A day is a
 /// 365.2425th of a year, as for loans.
 ///
-/// the expected behaviour spreads the interest over a single year's hours, days or weeks however long the time is,
+/// A simpler model spreads the interest over a single year's hours, days or weeks however long the time is,
 /// so for three years it answers three times too much; the two agree for one year. This is a deliberate difference.
 pub fn interest_each(
     principal: &Value,

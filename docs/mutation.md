@@ -41,8 +41,8 @@ After the last run, one real gap (a Western-European number with a point and no 
 - `workdays_between` recursed forever on a zero-length span (`workdays in 2024`): a stack overflow that would crash the app.
 - Adding workdays walked one day at a time, so `June 5 + 99999999999 workdays` never returned; it now skips whole weeks.
 - `New Year`, `Valentine's Day` and `June 1st 2024` never parsed.
-- An ISO date was only recognised at the start of a line (`1 + 2019-04-01` was read as a subtraction).
-- In a sheet, `sqrt(16)` answered 16 (the function name was dropped as prose), found by replaying the reference examples.
+- An ISO date was only recognized at the start of a line (`1 + 2019-04-01` was read as a subtraction).
+- In a sheet, `sqrt(16)` answered 16 (the function name was dropped as prose), found by replaying the maintainer's examples.
 
 ## Survivors accepted as equivalent
 
@@ -58,7 +58,7 @@ Loop mutants (`+=` becoming `-=` inside a `while`) hang the test and are counted
 
 ## What this does not prove
 
-Mutation testing shows that the tests notice changes to the code that exists. It does not show that the answers match a maintainer check: that is what the oracle corpora, the replay of the reference examples and the open tickets (0018, 0030, 0043 to 0046, 0055) are for.
+Mutation testing shows that the tests notice changes to the code that exists. It does not show that the answers match a maintainer check: that is what the oracle corpora, the replay of the maintainer's examples and the open tickets (0018, 0030, 0043 to 0046, 0055) are for.
 
 ## Large powers (2026-10-26)
 

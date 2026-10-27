@@ -81,7 +81,7 @@ for _ in range(3000):
     else:
         rows.append((f"{lead}{num(a)} is {num(b)}%{sep}what is {num(c)}%", dec(x * Fraction(1) )))
 
-UNITS = {  # symbol, plural name, seconds or metres per unit
+UNITS = {  # symbol, plural name, seconds or meters per unit
     "time": [("s", "seconds", Fraction(1)), ("min", "minutes", Fraction(60)), ("h", "hours", Fraction(3600)),
              ("day", "days", Fraction(86400)), ("wk", "weeks", Fraction(604800))],
     "length": [("m", "meters", Fraction(1)), ("km", "kilometers", Fraction(1000)), ("cm", "centimeters", Fraction(1, 100)),

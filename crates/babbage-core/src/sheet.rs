@@ -181,7 +181,7 @@ fn normalise_name(name: &str) -> String {
 }
 
 /// Sums values, applying any percentages to the running result at the end. Lines that cannot be added to the running
-/// sum (`$10`, then `3 gallons`) do not make the Total an error: as expected (Sheets C and F), the
+/// sum (`$10`, then `3 gallons`) do not make the Total an error: the
 /// sum starts again from the line that does not fit, so the Total is the sum of the lines since the last one that
 /// did not fit, plain numbers joining whatever unit the sum has. `$10`, `5`, `3 gallons` is `3 gal`; the nineteen
 /// lines of the target screenshot are `$39,506.77`.
@@ -381,7 +381,7 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
     let text = blank_text(raw, &blanks);
     result.tags = tags;
 
-    // A statistics word on a line of its own shows no answer in the expected behaviour (Sheet G), not an error.
+    // A statistics word on a line of its own shows no answer, not an error.
     if matches!(
         text.trim().to_lowercase().as_str(),
         "average" | "avg" | "count" | "median"
@@ -605,7 +605,7 @@ fn tag_name(token: &str) -> Option<String> {
     .then(|| tag.to_string())
 }
 
-/// `total of #food` and the short form the expected behaviour's home page shows, `#food total`.
+/// `total of #food` and the short form `#food total`.
 fn aggregate_request(lowered: &str) -> Option<(Aggregate, String)> {
     let (first, rest) = lowered.split_once(char::is_whitespace)?;
     if let Some(tag) = tag_name(first) {

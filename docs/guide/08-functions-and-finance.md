@@ -1,6 +1,6 @@
 # Functions and finance
 
-Babbage has the usual maths functions, written either as `name(value)` or in words (`square root of 16`), plus loan, interest and growth calculations that read like sentences. Answers are exact where they can be: `sqrt(16)` is `4` and `1/3` stays a true third until it has to be shown as a decimal.
+Babbage has the usual math functions, written either as `name(value)` or in words (`square root of 16`), plus loan, interest and growth calculations that read like sentences. Answers are exact where they can be: `sqrt(16)` is `4` and `1/3` stays a true third until it has to be shown as a decimal.
 
 ![Roots, trigonometry, factorial, a loan payment and compound growth](img/functions-finance.webp)
 
@@ -197,7 +197,7 @@ A line can also choose between answers with `if`: `if 5 > 3 then 10 else 20` is 
 
 ## Interest and growth
 
-Money maths is exact, so the cents agree with a calculator you can check by hand. Write the amount, the time and the rate. Say how often interest compounds with `compounding monthly` (or `compounded quarterly`); without it, interest compounds once a year. The words you can use are `annually`, `yearly`, `semiannually`, `quarterly`, `monthly`, `weekly` and `daily`.
+Money math is exact, so the cents agree with a calculator you can check by hand. Write the amount, the time and the rate. Say how often interest compounds with `compounding monthly` (or `compounded quarterly`); without it, interest compounds once a year. The words you can use are `annually`, `yearly`, `semiannually`, `quarterly`, `monthly`, `weekly` and `daily`.
 
 | You type | Answer |
 |---|---|

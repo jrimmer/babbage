@@ -209,7 +209,7 @@ Multiply a rate by the time, or use `at`:
 | `$18/hour * 37.5 hours/week * 4 weeks` | `$2,700.00` |
 | `$9.99/month * 12 months` | `$119.88` |
 
-Write the rate first, then the time (`$25/hour * 40 hours`). With the hours first and a multiplication sign, `3 hours x $25/hour`, the amount comes out right but is still labelled `/hour`. Use `3 hours at $25/hour` instead.
+Write the rate first, then the time (`$25/hour * 40 hours`). With the hours first and a multiplication sign, `3 hours x $25/hour`, the amount comes out right but is still labeled `/hour`. Use `3 hours at $25/hour` instead.
 
 `at` also goes the other way: `$500 at $20/hour` is `25 hours`, the time that money buys.
 

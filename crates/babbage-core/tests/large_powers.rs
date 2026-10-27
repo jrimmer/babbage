@@ -1,5 +1,5 @@
 //! A power whose exact value would not fit the number size limit falls back to about 115 digits and is marked
-//! approximate, never silently. The reference values are Python `Fraction` powers (exact), printed to 58 digits.
+//! approximate, never silently. The expected values are Python `Fraction` powers (exact), printed to 58 digits.
 
 use babbage_core::{Number, Value, evaluate};
 

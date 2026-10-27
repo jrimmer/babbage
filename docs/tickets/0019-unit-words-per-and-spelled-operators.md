@@ -4,4 +4,4 @@ Status: open
 Milestone: v1
 Area: units, parser
 
-Natural spellings of compound units. Not in the unit reference text fetched; confirm against the app first.
+Natural spellings of compound units. Not in the unit notes fetched; to confirm in a maintainer check.

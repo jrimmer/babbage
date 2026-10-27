@@ -90,7 +90,7 @@ monthly r
 
 Typing `monthly r` and pressing Esc opens a list holding `monthly rate` and `monthly rent`. Matching ignores case and works on the end of the line: `20 + monthly re` completes the last words.
 
-If you would rather use **Tab**, choose it in Settings, Editing, under "Key that finishes a variable name". The Variables you have defined show in their own colour (Settings, Styling, "Variable colour").
+If you would rather use **Tab**, choose it in Settings, Editing, under "Key that finishes a variable name". The Variables you have defined show in their own color (Settings, Styling, "Variable color").
 
 ### Renaming
 

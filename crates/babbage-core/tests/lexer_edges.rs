@@ -36,12 +36,12 @@ fn m_is_minutes_only_beside_a_number_and_a_unit_of_time() {
         ("5m 3h in minutes", "185 min"),
         ("1 week 5m in minutes", "10,085 min"),
         ("7 m 2 s in seconds", "422 s"),
-        // away from a time unit it stays metres
+        // away from a time unit it stays meters
         ("2 km 5 m in m", "2,005 m"),
         ("5 m in cm", "500 cm"),
         ("5m + 3m in m", "8 m"),
     ]);
-    // after an operator it is not part of a run of quantities, so it stays metres and cannot meet hours
+    // after an operator it is not part of a run of quantities, so it stays meters and cannot meet hours
     fails(&["3h + 5m", "5m + 3h"]);
 }
 

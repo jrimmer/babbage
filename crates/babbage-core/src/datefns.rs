@@ -323,7 +323,7 @@ fn elapsed(f: DateFn) -> Result<Value, Error> {
                 first + i64::from(calendar::days_in_month(civil.year, civil.month)),
             )
         }
-        // A week starts on Sunday in the owner's region: `week percentage` on a Monday afternoon is about 22%.
+        // A week starts on Sunday in the US region: `week percentage` on a Monday afternoon is about 22%.
         DateFn::ElapsedWeek => {
             let sunday = today - (i64::from(calendar::weekday(today)) + 1) % 7;
             (sunday, sunday + 7)

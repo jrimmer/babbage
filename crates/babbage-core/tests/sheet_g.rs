@@ -1,5 +1,5 @@
-//! Behaviour settled by the owner's Sheet G and the cases around
-//! them: the rule each answer implies, tried on neighbouring lines.
+//! Behavior settled for dates, percents and temperatures, with the cases around
+//! them: the rule each answer implies, tried on neighboring lines.
 
 use babbage_core::{FormatOptions, LineKind, SheetOptions, evaluate, evaluate_sheet, format_value};
 
@@ -162,7 +162,7 @@ fn molar_is_moles_per_litre() {
 
 #[test]
 fn two_dates_without_a_year_subtract_to_the_span_forward_from_the_first() {
-    // Sheet G (ticket 0041): `January 10 - February 5` is `3 weeks 5 days`, and `February 5 - January 10` is the
+    // Ticket 0041: `January 10 - February 5` is `3 weeks 5 days`, and `February 5 - January 10` is the
     // span on to the next January 10.
     let at_noon = |line: &str| {
         let s = babbage_core::settings::Settings::at(1_793_039_340);

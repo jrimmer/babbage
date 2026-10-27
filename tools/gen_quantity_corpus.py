@@ -1,5 +1,5 @@
 #!/usr/bin/env .oracle-venv/bin/python
-"""Semantic oracle for quantity arithmetic, from the reference's unit rules, factors from pint.
+"""Semantic oracle for quantity arithmetic, from the documented unit rules, factors from pint.
 
 Run: .oracle-venv/bin/python tools/gen_quantity_corpus.py > crates/babbage-core/tests/corpus/quantity.tsv
 Columns: expression <TAB> kind (plain|percent|ERR:incompatible) <TAB> exact n/d <TAB> 10dp display with unit.

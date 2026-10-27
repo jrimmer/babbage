@@ -3,7 +3,7 @@
 Babbage is a notepad calculator. You type lines of plain language and numbers, and the answer to each line
 appears beside it. There is no equals key and no mode to switch: write what you mean and read the result.
 
-![A sheet with a heading, labelled lines, a variable and the answer to every line](img/first-sheet.webp)
+![A sheet with a heading, labeled lines, a variable and the answer to every line](img/first-sheet.webp)
 
 This chapter gets Babbage onto your machine, shows you the window, and walks you through your first five minutes.
 

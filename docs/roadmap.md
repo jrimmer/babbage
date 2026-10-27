@@ -25,15 +25,15 @@ Status as of 2026-10-26. Every row ships only after a Python-oracle differential
 | 19 | Clock time, timespans, lap times, video timecode | done: 82k oracle lines for clock times, timespans, lap times and timecode; timecode syntax beyond the basics is ticket 0044, display choices are 0045 |
 | 20 | Time zones and cities (bundled tzdb) | done: 8k lines against Python zoneinfo plus 8k against the machine's own rules; the bundled database is 2025b and the app reads the machine's (ticket 0053) |
 | 21 | Finance formulas: compound interest, present value, returns, loans, sales tax (CPI, income tax tables: post-v1) | done |
-| 22 | Number locale settings | done: three number formats, underscore separators, the user's own zone with daylight saving, the region dollar, tax setting; the volume setting has no effect in the expected behaviour, so there is none (ticket 0049) |
-| 23 | Sheets, sheetbooks, own file format | done as `babbage-store`: one `.bbg` text file per sheet (our own format, by the owner's choice, not the expected behaviour's own file format), atomic writes, a debounced autosaver, a sheetbook with create, rename and move-to-trash, and export of a sheet as text, CSV, HTML and PDF (`Ctrl+Shift+E`, read back by `qpdf` and `pdftotext` in `bin/accept`); importing reference-format files is dropped (owner decision, ticket 0051) |
-| 24 | gpui front end | done: sidebar, editor, answer column, total chip, Omarchy theme; 46 end-to-end checks in a nested Hyprland, keyboard and mouse included (`bin/accept`); gaps against the reference are ticket 0052 and judging looks is yours |
+| 22 | Number locale settings | done: three number formats, underscore separators, the user's own zone with daylight saving, the region dollar, tax setting; the volume setting has no effect in a maintainer check, so there is none (ticket 0049) |
+| 23 | Sheets, sheetbooks, own file format | done as `babbage-store`: one `.bbg` text file per sheet (our own format, by the maintainer's choice, no other app's format), atomic writes, a debounced autosaver, a sheetbook with create, rename and move-to-trash, and export of a sheet as text, CSV, HTML and PDF (`Ctrl+Shift+E`, read back by `qpdf` and `pdftotext` in `bin/accept`); importing other apps' files is dropped (maintainer decision, ticket 0051) |
+| 24 | gpui front end | done: sidebar, editor, answer column, total chip, Omarchy theme; 46 end-to-end checks in a nested Hyprland, keyboard and mouse included (`bin/accept`); gaps against the maintainer's notes are ticket 0052 and judging looks is yours |
 
 All 24 rows are built. Every row has tests, and the engine rows have a mutation record (`docs/mutation.md`). What is left is filed as tickets: things that need a maintainer check to settle (0018, 0030, 0043 to 0046, 0055), shipped data (0035 to 0038, 0047), and app gaps (0052). `bin/check` runs 621 tests across 52 suites over about 663,000 generated and corpus lines, and `bin/accept` passes 46 of 46 checks in the nested Hyprland.
 
 Row 3 leftovers: fraction display, multipliers and the proportion forms are built (ticket 0014). Phrase forms inside parentheses work too (ticket 0013).
 
-Updates: Babbage can check for a new version of itself through praeco, weekly by default and off-able, and says so in the reference notes, the Settings pane and the announcement text (`docs/updates.md`, ticket 0052 unit 7). It is the only thing in v1 that uses the network.
+Updates: Babbage can check for a new version of itself through praeco, weekly by default and off-able, and says so in the maintainer's notes, the Settings pane and the announcement text (`docs/updates.md`, ticket 0052 unit 7). It is the only thing in v1 that uses the network.
 
 Open scope question: PDF and HTML export, Alfred/Raycast, URL schemes and its Studio edition are not in the list. The first two need no outside data, so by your rule they would be v1. I assumed they are not wanted on Linux.
 

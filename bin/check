@@ -43,7 +43,7 @@ if cargo tree --locked -p babbage-core -e normal,build --prefix none | grep -E '
 fi
 echo ok
 step "guard: no copyleft-only licence in the app's tree"
-# A dual licence such as "Apache-2.0 OR GPL-2.0-only" is used under its permissive side.
+# A dual license such as "Apache-2.0 OR GPL-2.0-only" is used under its permissive side.
 if cargo tree --locked -p babbage-app -e normal,build --prefix none -f '{p}|{l}' | grep -iE 'gpl' | grep -viE 'MIT|Apache|BSD|ISC|Unlicense|Zlib'; then
   echo "a copyleft-only crate is in the app's tree" >&2
   exit 1

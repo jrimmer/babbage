@@ -186,7 +186,7 @@ def trig_cases():
                 emit_approx(f"{name}({t})", fn(x))
             emit_approx(f"asinh({t})", asinh(x))
             emit_approx(f"atan({t})", atan(x))
-            # The reciprocal functions of expected behaviour 3.16: cot, csc and their hyperbolic and inverse forms.
+            # The reciprocal functions: cot, csc and their hyperbolic and inverse forms.
             for name, fn in (("cot", lambda v: 1 / tan(v)), ("csc", lambda v: 1 / sin(v)),
                              ("coth", lambda v: 1 / tanh(v)), ("csch", lambda v: 1 / sinh(v))):
                 emit_approx(f"{name}({t})", fn(x))

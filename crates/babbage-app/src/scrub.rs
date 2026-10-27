@@ -71,7 +71,7 @@ impl Scrubbable {
     }
 }
 
-/// How many steps a pointer move of `dx` pixels makes (towards the right is up).
+/// How many steps a pointer move of `dx` pixels makes (toward the right is up).
 pub fn steps_for(dx: f32) -> i64 {
     (dx / PIXELS_PER_STEP).round() as i64
 }

@@ -59,7 +59,7 @@ for _ in range(6000):
 
 BAD_DATES = ["2019-00-10", "2019-13-01", "2019-02-30", "2019-04-31", "2019-06-00", "2019-06-32", "2021-02-29", "1900-02-29"]
 for date in BAD_DATES:
-    # Text shaped like a date that is not one is arithmetic in the expected behaviour: `2019-02-30` is 2019 - 02 - 30.
+    # Text shaped like a date that is not one is arithmetic: `2019-02-30` is 2019 - 02 - 30.
     y, mo, d = (int(p) for p in date.split("-"))
     rows.append((date, f"{y - mo - d:,}"))
     rows.append((f"{date}T10:00", "ERR"))

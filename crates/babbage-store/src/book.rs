@@ -10,7 +10,7 @@ use crate::format::{count_lines, decode, encode, title_of};
 use crate::{Error, IoContext, Result};
 
 const EXT: &str = "bbg";
-/// The first name of the file, before the owner chose `.bbg`: sheets saved so are renamed when the book opens.
+/// The first name of the file, before `.bbg` was chosen: sheets saved so are renamed when the book opens.
 const LEGACY_EXT: &str = "babbage";
 const TRASH: &str = ".trash";
 /// Names the book gives sheets itself start with this; any other name was chosen by the user.

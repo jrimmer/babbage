@@ -395,7 +395,7 @@ impl SheetView {
         cx.notify();
     }
 
-    /// Moves the current sheet to the trash and opens a neighbour (or a fresh sheet if it was the last).
+    /// Moves the current sheet to the trash and opens a neighbor (or a fresh sheet if it was the last).
     fn delete_current(&mut self, cx: &mut Context<Self>) {
         self.saver.flush();
         let gone = self.current.clone();
@@ -842,7 +842,7 @@ impl SheetView {
     }
 
     /// Up and Down inside a line that wraps move between its rows, keeping the caret's x. Returns false when the
-    /// caret is already on the first (or last) row, so the move goes to the neighbouring line.
+    /// caret is already on the first (or last) row, so the move goes to the neighboring line.
     fn vertical_in_line(&mut self, delta: isize, extend: bool) -> bool {
         let head = self.ed.head();
         let rows = self.wrap.rows_of(head.line);

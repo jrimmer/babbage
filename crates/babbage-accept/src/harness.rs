@@ -378,7 +378,7 @@ impl Harness {
             exports.push_str(&format!("export {k}={}\n", shell_quote(v)));
         }
         // A fake HOME and no session bus: the app can reach neither the user's files nor the desktop.
-        // The theme file does not exist, so the built-in colours are drawn and pixels never depend on
+        // The theme file does not exist, so the built-in colors are drawn and pixels never depend on
         // the user's theme.
         let script = format!(
             "#!/bin/bash\necho $$ > {pid}\nexport HOME={home}\nexport BABBAGE_DATA_DIR={data}\nexport BABBAGE_THEME_FILE={theme}\nexport XDG_STATE_HOME={home}/state\nexport XDG_CONFIG_HOME={home}/config\nexport XDG_DATA_HOME={home}/data\nexport DBUS_SESSION_BUS_ADDRESS={bus}\nexport BABBAGE_UPDATES=off\n{exports}exec {bin} --control {sock} > {out} 2> {err}\n",

@@ -526,7 +526,7 @@ fn what_a_sheet_ignores_is_reported_where_it_stood() {
 
 #[test]
 fn a_time_or_timecode_glued_to_letters_is_not_one_even_when_the_letters_are_dropped() {
-    // In a sheet unknown words are dropped, so a time that did swallow its neighbours would answer; it must refuse.
+    // In a sheet unknown words are dropped, so a time that did swallow its neighbors would answer; it must refuse.
     for line in [
         "lunch01:02:03:04",
         "01:02:03:04apples",

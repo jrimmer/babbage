@@ -14,7 +14,7 @@ args=()
 for f in "$@"; do args+=(-f "$f"); done
 rm -rf mutants.out
 status=0
-# Throttled on purpose: this is the owner's workstation, and heavy runs must not swamp it.
+# Throttled on purpose: this is a workstation, and heavy runs must not swamp it.
 re_args=()
 [ -n "${MUTATE_RE:-}" ] && re_args=(--re "$MUTATE_RE")
 diff_args=()

@@ -62,7 +62,7 @@ fn a_week_is_five_workdays_as_in_the_reference() {
         ("1 week > 4 workdays", "true"),
         ("1 week < 6 workdays", "true"),
         ("$500/workday in $/week", "$2,500.00/week"),
-        // Checked in a maintainer check by the owner.
+        // Checked by a maintainer.
         ("1 day in workdays", "0.7142857143 workdays"),
         ("1 month in workdays", "21.740625 workdays"),
         ("1 year in workdays", "260.8875 workdays"),

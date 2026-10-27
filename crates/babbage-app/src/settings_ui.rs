@@ -38,7 +38,7 @@ pub enum Control {
     },
     /// Free text, taken with Enter.
     Text { placeholder: &'static str },
-    /// A colour from a few, or the default.
+    /// A color from a few, or the default.
     Swatches { palette: &'static [u32] },
     /// A button that does something and sets nothing; its id is the item's key.
     Button { label: &'static str },
@@ -60,12 +60,12 @@ pub struct Pane {
     pub items: &'static [Item],
 }
 
-/// Colours for text.
+/// Colors for text.
 const TEXT_COLORS: &[u32] = &[
     0xff7a90, 0xffb86c, 0xf1fa8c, 0x62c25a, 0x7dcfff, 0x7aa2f7, 0xbb9af7, 0xf0b4f0, 0xe6e6e6,
 ];
 
-/// Colours for the answer column.
+/// Colors for the answer column.
 const PANEL_COLORS: &[u32] = &[
     0x151515, 0x262626, 0x20283a, 0x2d2238, 0x1f3328, 0x3a2a22, 0x101820,
 ];
@@ -259,7 +259,7 @@ pub const PANES: &[Pane] = &[
         items: &[
             Item {
                 key: "color_number",
-                label: "Number colour",
+                label: "Number color",
                 hint: "In the sheet's text",
                 control: Control::Swatches {
                     palette: TEXT_COLORS,
@@ -267,7 +267,7 @@ pub const PANES: &[Pane] = &[
             },
             Item {
                 key: "color_unit",
-                label: "Unit colour",
+                label: "Unit color",
                 hint: "kg, mm, hours",
                 control: Control::Swatches {
                     palette: TEXT_COLORS,
@@ -275,7 +275,7 @@ pub const PANES: &[Pane] = &[
             },
             Item {
                 key: "color_currency",
-                label: "Currency colour",
+                label: "Currency color",
                 hint: "$, €, £",
                 control: Control::Swatches {
                     palette: TEXT_COLORS,
@@ -283,7 +283,7 @@ pub const PANES: &[Pane] = &[
             },
             Item {
                 key: "color_variable",
-                label: "Variable colour",
+                label: "Variable color",
                 hint: "Names you defined",
                 control: Control::Swatches {
                     palette: TEXT_COLORS,
@@ -291,7 +291,7 @@ pub const PANES: &[Pane] = &[
             },
             Item {
                 key: "answer_background",
-                label: "Answer column colour",
+                label: "Answer column color",
                 hint: "Behind the answers",
                 control: Control::Swatches {
                     palette: PANEL_COLORS,

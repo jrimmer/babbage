@@ -33,7 +33,7 @@ pub fn raw(key: &str) -> Option<String> {
 }
 
 /// A settings line without its comment. A comment starts at a `#` that begins the line or follows a space and is
-/// followed by one (or ends the line), so a colour such as `#ff7a90` is a value and not a comment.
+/// followed by one (or ends the line), so a color such as `#ff7a90` is a value and not a comment.
 pub fn without_comment(line: &str) -> &str {
     if line.trim_start().starts_with('#') {
         return "";

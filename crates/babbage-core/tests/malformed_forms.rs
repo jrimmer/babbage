@@ -1,5 +1,5 @@
 //! What each date, time and zone form does with a line that is almost, but not quite, its shape: the exact
-//! answer or the exact error. A form that starts accepting or refusing a neighbouring shape changes one of
+//! answer or the exact error. A form that starts accepting or refusing a neighboring shape changes one of
 //! these, so a broken guard or index cannot go unnoticed. Reviewed by hand when written.
 
 use babbage_core::settings::{Settings, scoped};
