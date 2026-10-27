@@ -182,6 +182,47 @@ pub fn workdays_between(from: i64, to: i64) -> i64 {
     count
 }
 
+/// How many of the days `from` up to but not including `to` are holidays on a weekday (so already not workdays).
+fn weekday_holidays(from: i64, to: i64) -> i64 {
+    if to <= from {
+        return 0;
+    }
+    crate::settings::holidays_in(from, to)
+        .into_iter()
+        .filter(|d| weekday(*d) < 5)
+        .count() as i64
+}
+
+/// `workdays_between` less the holidays in the settings that fall on a weekday in the range.
+pub fn workdays_between_off(from: i64, to: i64) -> i64 {
+    let (lo, hi) = (from.min(to), from.max(to));
+    let n = workdays_between(lo, hi) - weekday_holidays(lo, hi);
+    if to < from { -n } else { n }
+}
+
+/// `add_workdays`, with the holidays in the settings not counting as workdays: the day lands past (or, going back,
+/// before) every holiday it would have crossed.
+pub fn add_workdays_off(from: i64, n: i64) -> i64 {
+    let mut day = from;
+    let mut left = n;
+    // Each round adds the workdays still owed, then as many more as holidays were crossed; the owed count shrinks
+    // by a factor on each round, so this ends quickly.
+    for _ in 0..200 {
+        if left == 0 {
+            break;
+        }
+        let next = add_workdays(day, left);
+        let crossed = if left > 0 {
+            weekday_holidays(day.saturating_add(1), next.saturating_add(1))
+        } else {
+            weekday_holidays(next, day)
+        };
+        day = next;
+        left = if left > 0 { crossed } else { -crossed };
+    }
+    day
+}
+
 /// The day that is `n` workdays after `from` (Monday to Friday only; before it for negative `n`).
 ///
 /// Five workdays from a weekday is exactly seven days, so whole weeks are skipped in one step and only

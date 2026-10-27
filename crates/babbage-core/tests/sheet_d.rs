@@ -325,3 +325,28 @@ fn a_silly_pile_of_unit_powers_is_an_answer_or_an_error_never_a_panic() {
         let _ = run(line);
     }
 }
+
+#[test]
+fn money_can_show_its_code_and_hide_trailing_zeros() {
+    let with = |f: fn(&mut FormatOptions), line: &str| {
+        let mut o = FormatOptions::default();
+        f(&mut o);
+        at(NOW, line, &o)
+    };
+    assert_eq!(with(|_| {}, "$5 + $0.5"), "$5.50");
+    assert_eq!(with(|o| o.money_trim_zeros = true, "$5"), "$5");
+    assert_eq!(with(|o| o.money_trim_zeros = true, "$5 + $0.5"), "$5.5");
+    assert_eq!(with(|o| o.money_trim_zeros = true, "$5.25"), "$5.25");
+    assert_eq!(with(|o| o.currency_codes = true, "$5"), "5.00 USD");
+    assert_eq!(with(|o| o.currency_codes = true, "€3 + €1"), "4.00 EUR");
+    assert_eq!(
+        with(
+            |o| {
+                o.currency_codes = true;
+                o.money_trim_zeros = true
+            },
+            "$5"
+        ),
+        "5 USD"
+    );
+}

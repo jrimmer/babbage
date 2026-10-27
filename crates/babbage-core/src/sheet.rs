@@ -23,6 +23,8 @@ pub struct SheetOptions {
     pub declarations_in_totals: bool,
     /// Settings that apply to every line: the named sales tax.
     pub settings: crate::settings::Settings,
+    /// Variables every sheet has, each a line like `rent = $900`; they survive a divider line.
+    pub globals: Vec<String>,
 }
 
 impl Default for SheetOptions {
@@ -32,6 +34,7 @@ impl Default for SheetOptions {
             dividers_reset_scope: true,
             declarations_in_totals: true,
             settings: crate::settings::Settings::default(),
+            globals: Vec::new(),
         }
     }
 }
@@ -121,6 +124,8 @@ impl LineResult {
 struct State {
     results: Vec<LineResult>,
     vars: HashMap<String, Value>,
+    /// The sheet's global variables, put back after a divider line clears the rest.
+    globals: HashMap<String, Value>,
     section_start: usize,
     subtotal_start: usize,
 }
@@ -133,9 +138,22 @@ fn evaluate_sheet_in_scope(lines: &[&str], opts: &SheetOptions) -> Vec<LineResul
     let mut st = State {
         results: Vec::with_capacity(lines.len()),
         vars: HashMap::new(),
+        globals: HashMap::new(),
         section_start: 0,
         subtotal_start: 0,
     };
+    for global in &opts.globals {
+        let mut scratch = State {
+            results: Vec::new(),
+            vars: std::mem::take(&mut st.vars),
+            globals: HashMap::new(),
+            section_start: 0,
+            subtotal_start: 0,
+        };
+        let _ = evaluate_line(global, 0, &mut scratch, opts);
+        st.vars = scratch.vars;
+    }
+    st.globals = st.vars.clone();
     for raw in lines {
         let index = st.results.len();
         let result = evaluate_line(raw, index, &mut st, opts);
@@ -246,7 +264,7 @@ fn evaluate_line(raw: &str, index: usize, st: &mut State, opts: &SheetOptions) -
         st.subtotal_start = index + 1;
         st.section_start = index + 1;
         if opts.dividers_reset_scope {
-            st.vars.clear();
+            st.vars = st.globals.clone();
         }
         return LineResult::new(LineKind::Divider);
     }

@@ -1,6 +1,7 @@
 //! Paints the line-number gutter, the text, the selection, the caret and the answer column of the open
 //! sheet in one pass, so each answer sits on the same row as its line by construction.
 
+use babbage_core::LineKind;
 use gpui::{
     App, Bounds, Element, ElementId, ElementInputHandler, Entity, GlobalElementId,
     InspectorElementId, IntoElement, LayoutId, Pixels, ShapedLine, SharedString, Style, TextRun,
@@ -10,7 +11,7 @@ use gpui::{
 use crate::shown::{Shown, shown_for};
 use crate::syntax::{Class, spans, spans_in};
 use crate::theme::Colors;
-use crate::view::{FONT_PX, GUTTER_W, Layout, ROW_H, SheetView, TOP_PAD, answer_min_w, runs_for};
+use crate::view::{GUTTER_W, Layout, ROW_H, SheetView, TOP_PAD, answer_min_w, runs_for};
 
 pub struct SheetElement {
     pub view: Entity<SheetView>,
@@ -113,8 +114,13 @@ impl SheetElement {
     ) {
         let c = *cx.global::<Colors>();
         let style = window.text_style();
-        let font = style.font();
-        let font_px = px(FONT_PX);
+        let mut font = style.font();
+        if crate::appprefs::mono_digits() {
+            font.features = gpui::FontFeatures(std::sync::Arc::new(vec![("tnum".to_string(), 1)]));
+        }
+        let font_px = px(crate::appprefs::font_size());
+        let heading_scale = crate::appprefs::heading_percent() as f32 / 100.;
+        let answers_right = crate::appprefs::answers_right();
         let small = px(13.);
         let row_h = px(ROW_H);
         let focus = view.focus_handle_ref().clone();
@@ -136,7 +142,16 @@ impl SheetElement {
                 |i, text, width| {
                     let sp = spans(text, computed.results.get(i));
                     let runs = runs_for(text, &sp, None, &font, &c);
-                    let l = shape(window, text, font_px, &runs);
+                    let is_heading = matches!(
+                        computed.results.get(i).map(|r| &r.kind),
+                        Some(LineKind::Heading(_))
+                    );
+                    let size = if is_heading {
+                        font_px * heading_scale
+                    } else {
+                        font_px
+                    };
+                    let l = shape(window, text, size, &runs);
                     crate::wrap::breaks(text, |b| f32::from(l.x_for_index(b)), width)
                 },
             );
@@ -216,7 +231,13 @@ impl SheetElement {
                     None
                 } else {
                     let runs = runs_for(shown_text, &sp, line_marked, &font, &c);
-                    Some(shape(window, shown_text, font_px, &runs))
+                    let heading = matches!(result.map(|r| &r.kind), Some(LineKind::Heading(_)));
+                    let size = if heading {
+                        font_px * heading_scale
+                    } else {
+                        font_px
+                    };
+                    Some(shape(window, shown_text, size, &runs))
                 };
                 // `x_of` takes a column of the shown text.
                 let x_of = |col: usize| match &text_line {
@@ -377,7 +398,12 @@ impl SheetElement {
                             strikethrough: None,
                         };
                         let l = fit(window, t, font_px, &r, max);
-                        let _ = l.paint(point(ax, ty), lh, window, cx);
+                        let at = if answers_right {
+                            (bounds.right() - px(16.) - l.width).max(ax)
+                        } else {
+                            ax
+                        };
+                        let _ = l.paint(point(at, ty), lh, window, cx);
                         if !a.exact {
                             let r = TextRun {
                                 len: "≈".len(),

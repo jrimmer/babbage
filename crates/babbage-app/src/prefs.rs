@@ -12,10 +12,46 @@ use babbage_core::zones::{Zone, ZoneSource};
 
 static SETTINGS: RwLock<Option<&'static Settings>> = RwLock::new(None);
 
-fn load() -> Settings {
-    let file = config_path()
+static FILE_TEXT: RwLock<Option<String>> = RwLock::new(None);
+
+fn read_file() -> String {
+    config_path()
         .and_then(|p| std::fs::read_to_string(p).ok())
-        .unwrap_or_default();
+        .unwrap_or_default()
+}
+
+/// The value the settings file holds for `key`, if it has a line for it.
+pub fn raw(key: &str) -> Option<String> {
+    if FILE_TEXT.read().expect("settings lock").is_none() {
+        *FILE_TEXT.write().expect("settings lock") = Some(read_file());
+    }
+    let text = FILE_TEXT.read().expect("settings lock");
+    text.as_deref()?.lines().find_map(|line| {
+        let (k, v) = without_comment(line).split_once('=')?;
+        (k.trim() == key).then(|| v.trim().to_string())
+    })
+}
+
+/// A settings line without its comment. A comment starts at a `#` that begins the line or follows a space and is
+/// followed by one (or ends the line), so a colour such as `#ff7a90` is a value and not a comment.
+pub fn without_comment(line: &str) -> &str {
+    if line.trim_start().starts_with('#') {
+        return "";
+    }
+    let bytes = line.as_bytes();
+    for (i, &b) in bytes.iter().enumerate() {
+        let before = i == 0 || bytes[i - 1].is_ascii_whitespace();
+        let after = bytes.get(i + 1).is_none_or(|c| c.is_ascii_whitespace());
+        if b == b'#' && before && after {
+            return &line[..i];
+        }
+    }
+    line
+}
+
+fn load() -> Settings {
+    let file = read_file();
+    *FILE_TEXT.write().expect("settings lock") = Some(file.clone());
     from_parts(
         &file,
         std::env::var("TZ").ok().as_deref(),
@@ -44,10 +80,8 @@ pub fn with_key(text: &str, key: &str, value: &str) -> String {
     let mut out = Vec::new();
     let mut done = false;
     for line in text.lines() {
-        let named = line
-            .split('#')
-            .next()
-            .and_then(|l| l.split_once('='))
+        let named = without_comment(line)
+            .split_once('=')
             .is_some_and(|(k, _)| k.trim() == key);
         if named && !done {
             out.push(format!("{key} = {value}"));
@@ -113,7 +147,7 @@ pub fn from_parts(
     };
     let mut zone_from_file: Option<String> = None;
     for line in file.lines() {
-        let line = line.split('#').next().unwrap_or("").trim();
+        let line = without_comment(line).trim();
         let Some((key, value)) = line.split_once('=') else {
             continue;
         };
@@ -126,6 +160,18 @@ pub fn from_parts(
                     "eastern-europe" => NumberFormat::EasternEurope,
                     _ => settings.number_format,
                 }
+            }
+            "decimal_places" => {
+                settings.decimal_places = value.parse::<u32>().ok().filter(|p| *p <= 10);
+            }
+            "notation" => settings.notation = on_off(value),
+            "group_thousands" => settings.group_thousands = on_off(value),
+            "currency_codes" => settings.currency_codes = on_off(value).unwrap_or(false),
+            "money_trim_zeros" => settings.money_trim_zeros = on_off(value).unwrap_or(false),
+            "day_first" => settings.day_first = on_off(value).unwrap_or(false),
+            "holidays" => settings.holidays = babbage_core::settings::parse_holidays(value),
+            "custom_zones" => {
+                settings.custom_zones = babbage_core::settings::parse_custom_zones(value)
             }
             "work_hours" => {
                 if let Ok(h) = value.parse::<u32>()
@@ -159,6 +205,15 @@ pub fn from_parts(
     });
     settings.now_utc_seconds = now_override.and_then(|n| n.trim().parse().ok());
     settings
+}
+
+/// `on` or `off` (also `yes`, `no`, `true`, `false`); anything else is not a choice.
+fn on_off(value: &str) -> Option<bool> {
+    match value {
+        "on" | "yes" | "true" => Some(true),
+        "off" | "no" | "false" => Some(false),
+        _ => None,
+    }
 }
 
 /// `VAT 15%` or `GST 10`: the name a line can use and its rate. A name that is a number, a unit or has no rate
@@ -195,6 +250,16 @@ fn system_zone(tz_env: Option<&str>, link: Option<&std::path::Path>) -> Option<Z
 mod tests {
     use super::*;
     use std::path::Path;
+
+    #[test]
+    fn a_colour_is_a_value_and_a_spaced_hash_a_comment() {
+        let w = without_comment;
+        assert_eq!(w("color_number = #ff7a90"), "color_number = #ff7a90");
+        assert_eq!(w("tax = VAT 15% # the rate"), "tax = VAT 15% ");
+        assert_eq!(w("# a note"), "");
+        assert_eq!(w("#note"), "");
+        assert_eq!(w("work_hours = 8 #"), "work_hours = 8 ");
+    }
 
     /// Real zoneinfo files that ship with the engine's tests, so these tests do not depend on the machine.
     fn fixtures() -> String {
@@ -295,6 +360,34 @@ mod tests {
         assert_eq!(s.number_format, NumberFormat::WesternEurope);
         assert_eq!(s.work_hours_per_day, Some(7));
         assert_eq!(zone(&s).as_deref(), Some("tz:Pacific/Auckland"));
+    }
+
+    #[test]
+    fn the_file_sets_how_answers_are_written() {
+        let s = parts(
+            "decimal_places = 4\nnotation = off\ngroup_thousands = off\ncurrency_codes = on\nmoney_trim_zeros = yes\nday_first = on\n",
+            None,
+            None,
+            None,
+        );
+        assert_eq!(s.decimal_places, Some(4));
+        assert_eq!(s.notation, Some(false));
+        assert_eq!(s.group_thousands, Some(false));
+        assert!(s.currency_codes && s.money_trim_zeros && s.day_first);
+        let o = s.format_options();
+        assert_eq!(o.decimal_places(), 4);
+        assert!(
+            !o.abbreviate_large && !o.group_thousands && o.currency_codes && o.money_trim_zeros
+        );
+        // Nothing set is what the app showed before.
+        let d = parts("", None, None, None).format_options();
+        assert_eq!(d.decimal_places(), 10);
+        assert!(
+            d.abbreviate_large && d.group_thousands && !d.currency_codes && !d.money_trim_zeros
+        );
+        // A bad value is no choice.
+        let bad = parts("decimal_places = 11\nnotation = maybe\n", None, None, None);
+        assert_eq!((bad.decimal_places, bad.notation), (None, None));
     }
 
     #[test]

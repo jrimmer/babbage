@@ -76,6 +76,10 @@ pub struct FormatOptions {
     pub fixed_money_digits: bool,
     /// Show a part of a pound in ounces, `13.5 lb` as `13 lb 8 oz`, as the app does.
     pub compound_units: bool,
+    /// Write money with its currency code (`5.00 EUR`) rather than its symbol (`€5.00`).
+    pub currency_codes: bool,
+    /// Hide the trailing zeros of money (`$5` for `$5.00`, `$5.5` for `$5.50`).
+    pub money_trim_zeros: bool,
     pub number_format: NumberFormat,
 }
 
@@ -92,6 +96,8 @@ impl FormatOptions {
             abbreviate_large: false,
             fixed_money_digits: true,
             compound_units: false,
+            currency_codes: false,
+            money_trim_zeros: false,
             number_format: NumberFormat::NorthAmerica,
         })
     }
@@ -105,6 +111,8 @@ impl FormatOptions {
             abbreviate_large: false,
             fixed_money_digits: true,
             compound_units: false,
+            currency_codes: false,
+            money_trim_zeros: false,
             number_format: NumberFormat::NorthAmerica,
         }
     }

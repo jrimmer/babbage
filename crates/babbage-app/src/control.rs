@@ -198,13 +198,13 @@ pub fn report(v: &SheetView) -> Value {
                 .iter()
                 .map(|(name, r)| json!({"name": name, "x": right + r.x, "y": top + r.y, "w": r.w, "h": r.h}))
                 .collect();
-            let (px_, py) = crate::chrome::panel_origin();
-            let items: Vec<Value> = crate::chrome::settings_items()
+            let (sx, sy) = v.settings_origin();
+            let items: Vec<Value> = crate::settings_ui::item_rects(v.settings_pane)
                 .iter()
-                .map(|(id, r)| json!({"id": id, "x": right + px_ + r.x, "y": top + crate::chrome::TOOLBAR_H + py + r.y, "w": r.w, "h": r.h}))
+                .map(|(id, r)| json!({"id": id, "x": sx + r.x, "y": sy + r.y, "w": r.w, "h": r.h}))
                 .collect();
             json!({"h": crate::chrome::TOOLBAR_H, "buttons": buttons, "settings_items": items,
-                   "panel_x": right + px_, "panel_y": top + crate::chrome::TOOLBAR_H + py})
+                   "panel_x": sx, "panel_y": sy, "settings_pane": crate::settings_ui::PANES.get(v.settings_pane).map(|p| p.id)})
         }),
         "answer_menu": v.answer_menu.and_then(|line| {
             let l = layout?;
@@ -222,6 +222,14 @@ pub fn report(v: &SheetView) -> Value {
         }),
         "more_button": layout.map(|l| json!({"from_right": crate::answer_menu::MORE_FROM_RIGHT, "radius": crate::answer_menu::MORE_RADIUS, "right": f32::from(l.bounds.right())})),
         "hover_line": v.hover_line,
+        "rename_offer": v.rename_offer.as_ref().and_then(|o| {
+            let (x, y) = v.rename_toast_origin()?;
+            let buttons: Vec<Value> = crate::rename::buttons()
+                .iter()
+                .map(|(id, r)| json!({"id": id, "x": x + r.x, "y": y + r.y, "w": r.w, "h": r.h}))
+                .collect();
+            Some(json!({"old": o.old, "new": o.new, "uses": o.edits.len(), "x": x, "y": y, "buttons": buttons}))
+        }),
         "scrubbing": v.is_scrubbing(),
         "tooltip": v.hover_var.as_ref().map(|t| json!({"name": t.name, "value": t.value, "x": t.x, "y": t.y})),
         "completion": v.complete.as_ref().map(|c| {

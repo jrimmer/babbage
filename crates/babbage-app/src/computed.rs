@@ -51,6 +51,8 @@ fn compute_scoped(lines: &[String], formats: &[LineFormat], settings: &Settings)
     let refs: Vec<&str> = lines.iter().map(String::as_str).collect();
     let opts = SheetOptions {
         settings: settings.clone(),
+        globals: crate::appprefs::global_variables(),
+        dividers_reset_scope: crate::appprefs::dividers_reset_variables(),
         ..SheetOptions::default()
     };
     let results = evaluate_sheet(&refs, &opts);

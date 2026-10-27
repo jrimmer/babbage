@@ -41,6 +41,9 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("wrapping", wrapping),
     ("line-chips", line_chips),
     ("toolbar", toolbar),
+    ("settings-window", settings_window),
+    ("settings-editing", settings_editing),
+    ("settings-styling", settings_styling),
     ("answer-menu", answer_menu),
     ("variables", variables),
     ("subtotal-style", subtotal_style),
@@ -1211,6 +1214,674 @@ fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
     app.finish()
 }
 
+/// Opens the Settings window with the toolbar button.
+fn open_settings(h: &mut Harness, app: &mut App) -> anyhow::Result<Value> {
+    let s = app.state()?;
+    let b = s["toolbar"]["buttons"]
+        .as_array()
+        .context("buttons")?
+        .iter()
+        .find(|b| b["name"] == "settings")
+        .context("the settings button")?
+        .clone();
+    h.click(
+        app,
+        f(&b["x"])? + f(&b["w"])? / 2.,
+        f(&b["y"])? + f(&b["h"])? / 2.,
+        "left",
+        1,
+    )?;
+    app.wait_for("the Settings window", T, |s| s["panel"] == "settings")
+}
+
+/// Clicks a control of the open Settings window by its id (`tab-numbers`, `notation`, `on_launch=new`, ...).
+fn settings_click(h: &mut Harness, app: &mut App, id: &str) -> anyhow::Result<()> {
+    let st = app.state()?;
+    let b = st["toolbar"]["settings_items"]
+        .as_array()
+        .context("items")?
+        .iter()
+        .find(|b| b["id"] == id)
+        .with_context(|| format!("a {id} control"))?
+        .clone();
+    h.click(
+        app,
+        f(&b["x"])? + f(&b["w"])? / 2.,
+        f(&b["y"])? + f(&b["h"])? / 2.,
+        "left",
+        1,
+    )
+}
+
+/// Closes the Settings window with Escape.
+fn close_settings(h: &mut Harness, app: &mut App) -> anyhow::Result<()> {
+    h.press(&[], "Escape")?;
+    app.wait_for("the window closed", T, |s| s["panel"].is_null())?;
+    Ok(())
+}
+
+/// The names of the sheets in the sidebar, in order.
+fn sheet_order(s: &Value) -> Vec<String> {
+    sheet_names(s)
+}
+
+/// General, Editing and Variables settings, with a real pointer and keyboard.
+fn settings_editing(h: &mut Harness) -> anyhow::Result<()> {
+    // The settings file outlives the first run, so the second run reads what the first one chose.
+    let config = h.logs.join("settings-editing.settings");
+    let _ = std::fs::remove_file(&config);
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch(
+        "settings-editing",
+        None,
+        &[("BABBAGE_CONFIG_FILE", &config)],
+    )?;
+    let dir = app.data_dir.clone();
+
+    // Editing: thousands separators as you type; a pasted foreign number converts; Tab finishes a name.
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-editing")?;
+    settings_click(h, &mut app, "group_as_you_type")?;
+    settings_click(h, &mut app, "paste_convert")?;
+    settings_click(h, &mut app, "autocomplete_key=tab")?;
+    close_settings(h, &mut app)?;
+    h.type_text("1234567")?;
+    let s = app.wait_for("separators put in", T, |s| {
+        s["lines"][0]["text"] == "1,234,567"
+    })?;
+    ensure!(
+        s["cursor"]["col"] == 9,
+        "the caret stays at the end: {}",
+        s["cursor"]
+    );
+    h.press(&["ctrl"], "a")?;
+    h.type_text("1.234,5")?;
+    h.press(&["ctrl"], "a")?;
+    h.press(&["ctrl"], "c")?;
+    h.press(&[], "End")?;
+    h.press(&[], "Return")?;
+    h.press(&["ctrl"], "v")?;
+    app.wait_for("the pasted number converted", T, |s| {
+        s["lines"][1]["text"] == "1,234.5"
+    })?;
+    // Tab finishes a variable's name now, and Escape does not.
+    h.press(&[], "Return")?;
+    h.type_line("rent = 5")?;
+    h.type_text("re")?;
+    h.press(&[], "Escape")?;
+    std::thread::sleep(Duration::from_millis(600));
+    ensure!(
+        app.state()?["lines"][3]["text"] == "re",
+        "Escape still finishes the name"
+    );
+    h.press(&[], "Tab")?;
+    app.wait_for("Tab finished the name", T, |s| {
+        s["lines"][3]["text"] == "rent"
+    })?;
+
+    // Renaming a variable: ask, then update; keep; always.
+    h.press(&["ctrl"], "a")?;
+    h.type_line("rent = 5")?;
+    h.type_text("rent + 1")?;
+    app.wait_for("both lines", T, |s| answer(s, 1) == Some("6"))?;
+    h.press(&["ctrl"], "Home")?;
+    h.press(&["ctrl", "shift"], "Right")?;
+    h.type_text("pay")?;
+    let s = app.wait_for("the offer", T, |s| s["rename_offer"]["old"] == "rent")?;
+    ensure!(
+        s["rename_offer"]["uses"] == 1 && s["lines"][1]["text"] == "rent + 1",
+        "offer {}",
+        s["rename_offer"]
+    );
+    let b = s["rename_offer"]["buttons"]
+        .as_array()
+        .context("buttons")?
+        .iter()
+        .find(|b| b["id"] == "rename-update")
+        .context("update")?
+        .clone();
+    h.click(
+        &app,
+        f(&b["x"])? + f(&b["w"])? / 2.,
+        f(&b["y"])? + f(&b["h"])? / 2.,
+        "left",
+        1,
+    )?;
+    app.wait_for("the use renamed", T, |s| {
+        s["lines"][1]["text"] == "pay + 1" && s["rename_offer"].is_null()
+    })?;
+    ensure!(answer(&app.state()?, 1) == Some("6"));
+    // One undo takes the update back, a second the typing.
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("the update undone", T, |s| {
+        s["lines"][1]["text"] == "rent + 1"
+    })?;
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("the rename undone", T, |s| {
+        s["lines"][0]["text"] == "rent = 5"
+    })?;
+    // Keep leaves the use alone and does not ask again on this line.
+    h.press(&["ctrl"], "Home")?;
+    h.press(&["ctrl", "shift"], "Right")?;
+    h.type_text("cost")?;
+    let s = app.wait_for("the offer again", T, |s| s["rename_offer"]["old"] == "rent")?;
+    let b = s["rename_offer"]["buttons"]
+        .as_array()
+        .context("buttons")?
+        .iter()
+        .find(|b| b["id"] == "rename-keep")
+        .context("keep")?
+        .clone();
+    h.click(
+        &app,
+        f(&b["x"])? + f(&b["w"])? / 2.,
+        f(&b["y"])? + f(&b["h"])? / 2.,
+        "left",
+        1,
+    )?;
+    app.wait_for("the offer gone", T, |s| s["rename_offer"].is_null())?;
+    h.press(&["ctrl"], "Home")?;
+    h.press(&[], "End")?;
+    h.type_text("s")?;
+    std::thread::sleep(Duration::from_millis(500));
+    let s = app.state()?;
+    ensure!(
+        s["rename_offer"].is_null() && s["lines"][1]["text"] == "rent + 1",
+        "Keep was ignored: {}",
+        s["rename_offer"]
+    );
+    // Always: no question.
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-editing")?;
+    settings_click(h, &mut app, "rename_variables=always")?;
+    close_settings(h, &mut app)?;
+    h.press(&["ctrl"], "a")?;
+    h.type_line("tip = 5")?;
+    h.type_text("tip + 1")?;
+    app.wait_for("both lines", T, |s| {
+        s["lines"][1]["text"] == "tip + 1" && answer(s, 1) == Some("6")
+    })?;
+    h.press(&["ctrl"], "Home")?;
+    h.press(&["ctrl", "shift"], "Right")?;
+    h.type_text("fee")?;
+    app.wait_for("renamed with no question", T, |s| {
+        s["lines"][1]["text"] == "fee + 1" && s["rename_offer"].is_null()
+    })?;
+
+    // Variables: a global variable is in every sheet; dividers keep the globals and may keep the rest.
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-variables")?;
+    settings_click(h, &mut app, "globals")?;
+    h.type_text("pay = $900; tips = 3")?;
+    h.press(&[], "Return")?;
+    close_settings(h, &mut app)?;
+    h.press(&["ctrl"], "a")?;
+    h.type_line("pay * 2")?;
+    h.type_line("mine = 5")?;
+    h.type_line("---")?;
+    h.type_line("pay + tips")?;
+    h.type_text("mine")?;
+    let s = app.wait_for("the global variables", T, |s| {
+        answer(s, 0) == Some("$1,800.00") && answer(s, 3) == Some("$903.00")
+    })?;
+    ensure!(
+        answer(&s, 4) != Some("5"),
+        "the sheet's own name survived the divider"
+    );
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-variables")?;
+    settings_click(h, &mut app, "dividers_reset")?;
+    close_settings(h, &mut app)?;
+    app.wait_for("dividers keep the names", T, |s| answer(s, 4) == Some("5"))?;
+
+    // General: the order of sheets, and a new sheet when the app opens.
+    h.press(&["ctrl"], "a")?;
+    h.type_text("zebra")?;
+    h.press(&["ctrl"], "n")?;
+    h.type_text("apple")?;
+    let s = app.wait_for("two sheets", T, |s| {
+        s["sheets"].as_array().is_some_and(|l| l.len() == 2)
+    })?;
+    ensure!(
+        sheet_order(&s) == ["apple", "zebra"],
+        "changed order: {:?}",
+        sheet_order(&s)
+    );
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-general")?;
+    settings_click(h, &mut app, "sheet_order=title")?;
+    // Newest first would be `apple, zebra` already; the title order is the same, so make it differ.
+    close_settings(h, &mut app)?;
+    h.press(&["ctrl"], "Tab")?;
+    h.press(&["ctrl"], "a")?;
+    h.type_text("mango")?;
+    app.wait_for("alphabetical", T, |s| sheet_order(s) == ["apple", "mango"])?;
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-general")?;
+    settings_click(h, &mut app, "sheet_order=modified")?;
+    settings_click(h, &mut app, "on_launch=new")?;
+    close_settings(h, &mut app)?;
+    let id = app.state()?["current"]
+        .as_str()
+        .context("current")?
+        .to_owned();
+    wait_file(&dir, &id, "mango\n")?;
+    app.kill_hard()?;
+    let mut again = h.launch(
+        "settings-editing-again",
+        Some(&dir),
+        &[("BABBAGE_CONFIG_FILE", &config)],
+    )?;
+    let s = again.wait_for("a new sheet", T, |s| {
+        s["lines"][0]["text"] == "" && s["sheets"].as_array().is_some_and(|l| l.len() == 3)
+    })?;
+    ensure!(
+        s["current"] != id.as_str(),
+        "the app opened the last sheet, not a new one"
+    );
+    again.finish()
+}
+
+/// The Settings window, panes and controls, with a real pointer: each control changes the setting, writes it to the
+/// settings file and applies it to the sheet at once.
+fn settings_window(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("settings-window", None, &[])?;
+    for line in [
+        "1/3",
+        "300000 * 3",
+        "12345 * 3",
+        "$5",
+        "$100 + VAT",
+        "12/02/1988 + 1 day",
+        "21 h in workdays",
+        "US$5",
+        "noon HQ in UTC",
+    ] {
+        h.type_line(line)?;
+    }
+    h.type_text("December 24, 2026 + 3 workdays")?;
+    let s = app.wait_for("the answers", T, |s| {
+        answer(s, 0) == Some("0.3333333333")
+            && answer(s, 1) == Some("900k")
+            && answer(s, 2) == Some("37,035")
+            && answer(s, 3) == Some("$5.00")
+            && answer(s, 5) == Some("December 3, 1988")
+            && answer(s, 6) == Some("2.625 workdays")
+            && answer(s, 7) == Some("$5.00")
+            && answer(s, 9).is_some_and(|a| a.starts_with("December 29"))
+    })?;
+    let path = s["settings_path"]
+        .as_str()
+        .context("settings path")?
+        .to_string();
+    let button = |s: &Value, name: &str| -> anyhow::Result<(f32, f32)> {
+        let b = s["toolbar"]["buttons"]
+            .as_array()
+            .context("buttons")?
+            .iter()
+            .find(|b| b["name"] == name)
+            .context("button")?;
+        Ok((
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+        ))
+    };
+    let (x, y) = button(&s, "settings")?;
+    h.click(&app, x, y, "left", 1)?;
+    let mut s = app.wait_for("the window", T, |s| s["panel"] == "settings")?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (wx, wy) = (f(&s["toolbar"]["panel_x"])?, f(&s["toolbar"]["panel_y"])?);
+    let ink = scr
+        .brightest(&shot, wx + 190., wy + 14., wx + 330., wy + 40.)
+        .unwrap_or([0, 0, 0]);
+    ensure!(
+        luminance(ink) > 150.,
+        "no title in the Settings window: {ink:?}"
+    );
+    h.save_shot(&h.doc_shot("settings-window.png"))?;
+
+    // Click a control by its id, wait for the state to show it, and read the settings file.
+    let click = |h: &mut Harness, app: &mut App, id: &str| -> anyhow::Result<Value> {
+        let st = app.state()?;
+        let b = st["toolbar"]["settings_items"]
+            .as_array()
+            .context("items")?
+            .iter()
+            .find(|b| b["id"] == id)
+            .with_context(|| format!("a {id} control"))?
+            .clone();
+        h.click(
+            app,
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+            "left",
+            1,
+        )?;
+        Ok(st)
+    };
+    let file = || std::fs::read_to_string(&path).unwrap_or_default();
+
+    // Numbers.
+    click(h, &mut app, "tab-numbers")?;
+    for _ in 0..3 {
+        click(h, &mut app, "decimal_places-")?;
+    }
+    app.wait_for("seven places", T, |s| answer(s, 0) == Some("0.3333333"))?;
+    ensure!(file().contains("decimal_places = 7"), "file {:?}", file());
+    click(h, &mut app, "notation")?;
+    app.wait_for("no notation", T, |s| answer(s, 1) == Some("900,000"))?;
+    click(h, &mut app, "group_thousands")?;
+    app.wait_for("no separators", T, |s| {
+        answer(s, 1) == Some("900000") && answer(s, 2) == Some("37035")
+    })?;
+    ensure!(file().contains("notation = off") && file().contains("group_thousands = off"));
+    click(h, &mut app, "group_thousands")?;
+    click(h, &mut app, "notation")?;
+    app.wait_for("separators and notation back", T, |s| {
+        answer(s, 1) == Some("900k") && answer(s, 2) == Some("37,035")
+    })?;
+
+    // Calculator.
+    click(h, &mut app, "tab-calculator")?;
+    click(h, &mut app, "currency_codes")?;
+    app.wait_for("money with codes", T, |s| answer(s, 3) == Some("5.00 USD"))?;
+    click(h, &mut app, "money_trim_zeros")?;
+    app.wait_for("money without zeros", T, |s| answer(s, 3) == Some("5 USD"))?;
+    click(h, &mut app, "currency_codes")?;
+    app.wait_for("symbols again", T, |s| answer(s, 3) == Some("$5"))?;
+    click(h, &mut app, "money_trim_zeros")?;
+    app.wait_for("zeros again", T, |s| answer(s, 3) == Some("$5.00"))?;
+    // Text: click the field, type a tax, press Return.
+    click(h, &mut app, "tax")?;
+    h.type_text("VAT 15%")?;
+    h.press(&[], "Return")?;
+    s = app.wait_for("the tax", T, |s| answer(s, 4) == Some("$115.00"))?;
+    ensure!(file().contains("tax = VAT 15%"), "file {:?}", file());
+    ensure!(s["panel"] == "settings", "the window stays open");
+    click(h, &mut app, "dollar=AUD")?;
+    // In an Australian region `$` is the Australian dollar and the US dollar needs its prefix.
+    app.wait_for("Australian dollars", T, |s| answer(s, 7) == Some("US$5.00"))?;
+    ensure!(file().contains("dollar = AUD"), "file {:?}", file());
+    click(h, &mut app, "dollar=USD")?;
+    app.wait_for("US dollars again", T, |s| answer(s, 7) == Some("$5.00"))?;
+
+    click(h, &mut app, "custom_zones")?;
+    h.type_text("HQ = Asia/Tokyo")?;
+    h.press(&[], "Return")?;
+    app.wait_for("the own name for a place", T, |s| {
+        answer(s, 8) == Some("03:00")
+    })?;
+    ensure!(
+        file().contains("custom_zones = HQ = Asia/Tokyo"),
+        "file {:?}",
+        file()
+    );
+
+    // Dates & Times.
+    click(h, &mut app, "tab-dates")?;
+    click(h, &mut app, "holidays")?;
+    h.type_text("12-25")?;
+    h.press(&[], "Return")?;
+    app.wait_for("the holiday skipped", T, |s| {
+        answer(s, 9).is_some_and(|a| a.starts_with("December 30"))
+    })?;
+    ensure!(file().contains("holidays = 12-25"), "file {:?}", file());
+    click(h, &mut app, "work_hours+")?;
+    app.wait_for("nine hours", T, |s| {
+        answer(s, 6) == Some("2.3333333 workdays")
+    })?;
+    click(h, &mut app, "day_first")?;
+    app.wait_for("day first", T, |s| {
+        answer(s, 5) == Some("February 13, 1988")
+    })?;
+    ensure!(
+        file().contains("work_hours = 9") && file().contains("day_first = on"),
+        "file {:?}",
+        file()
+    );
+    click(h, &mut app, "day_first")?;
+    click(h, &mut app, "work_hours-")?;
+    app.wait_for("back to the defaults", T, |s| {
+        answer(s, 5) == Some("December 3, 1988") && answer(s, 6) == Some("2.625 workdays")
+    })?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the window closed", T, |s| s["panel"].is_null())?;
+    app.finish()
+}
+
+/// The leftmost and rightmost columns, in window points, holding ink brighter than `floor` in a rectangle.
+fn ink_extent(
+    scr: &Screen,
+    shot: &Shot,
+    (x0, y0, x1, y1): (f32, f32, f32, f32),
+    floor: f32,
+) -> Option<(f32, f32)> {
+    let (ya, yb) = (scr.oy + y0 * scr.scale, scr.oy + y1 * scr.scale);
+    let (first, last) = (
+        (scr.ox + x0 * scr.scale).ceil() as usize,
+        (scr.ox + x1 * scr.scale).floor() as usize,
+    );
+    let inked = |px: usize| {
+        shot.brightest(px as f32, ya, px as f32 + 1., yb)
+            .is_some_and(|p| luminance(p) > floor)
+    };
+    let lo = (first..last).find(|&px| inked(px))?;
+    let hi = (first..last).rev().find(|&px| inked(px))?;
+    let back = |px: usize| (px as f32 - scr.ox) / scr.scale;
+    Some((back(lo), back(hi)))
+}
+
+/// Where the editor's right edge is, in window points.
+fn right_edge(s: &Value) -> anyhow::Result<f32> {
+    Ok(f(&s["window"]["x"])? + f(&s["window"]["w"])?)
+}
+
+/// Is `p` within `tol` of the 0xRRGGBB colour on every channel?
+fn near(p: [u8; 3], rgb: u32, tol: i32) -> bool {
+    [(rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255]
+        .iter()
+        .zip(p)
+        .all(|(&want, got)| (want as i32 - got as i32).abs() <= tol)
+}
+
+/// Styling settings, painted: colours, the answer column, alignment, text and heading size, and digit widths.
+fn settings_styling(h: &mut Harness) -> anyhow::Result<()> {
+    let config = h.logs.join("settings-styling.settings");
+    let _ = std::fs::remove_file(&config);
+    let config = config.to_string_lossy().into_owned();
+    let mut app = h.launch(
+        "settings-styling",
+        None,
+        &[("BABBAGE_CONFIG_FILE", &config)],
+    )?;
+    h.type_line("# Heading")?;
+    h.type_line("8888888")?;
+    h.type_line("1111111")?;
+    h.type_line("5 + 5")?;
+    h.type_text("5 kg")?;
+    app.wait_for("the answers", T, |s| {
+        answer(s, 3) == Some("10") && answer(s, 4) == Some("5 kg")
+    })?;
+    settle();
+    let file = || std::fs::read_to_string(&config).unwrap_or_default();
+    let region = |s: &Value, i: usize, answer_side: bool| -> anyhow::Result<(f32, f32, f32, f32)> {
+        let (y, rh) = (f(&s["lines"][i]["y"])?, f(&s["lines"][i]["h"])?);
+        let (tx, ax, w) = (f(&s["text_x"])?, f(&s["answer_x"])?, right_edge(s)?);
+        Ok(if answer_side {
+            (ax + 28., y + 2., w - 4., y + rh - 2.)
+        } else {
+            (tx, y + 2., ax - 12., y + rh - 2.)
+        })
+    };
+    let paint = |h: &mut Harness, app: &mut App| -> anyhow::Result<(Value, Shot, Screen)> {
+        settle();
+        let s = app.state()?;
+        let shot = h.shot()?;
+        let scr = Screen::of(h, app, &s)?;
+        Ok((s, shot, scr))
+    };
+    // The window covers the sheet, so look with it closed and come back to the Styling pane.
+    let look = |h: &mut Harness, app: &mut App| -> anyhow::Result<(Value, Shot, Screen)> {
+        close_settings(h, app)?;
+        let seen = paint(h, app)?;
+        open_settings(h, app)?;
+        settings_click(h, app, "tab-styling")?;
+        Ok(seen)
+    };
+
+    // Text size, heading size and digit widths, all measured as the width of painted ink.
+    let (s, shot, scr) = paint(h, &mut app)?;
+    let width_of = |s: &Value, shot: &Shot, scr: &Screen, i: usize| -> anyhow::Result<f32> {
+        let (lo, hi) = ink_extent(scr, shot, region(s, i, false)?, 90.).context("ink")?;
+        Ok(hi - lo)
+    };
+    let (heading0, eights0, ones0) = (
+        width_of(&s, &shot, &scr, 0)?,
+        width_of(&s, &shot, &scr, 1)?,
+        width_of(&s, &shot, &scr, 2)?,
+    );
+    open_settings(h, &mut app)?;
+    settings_click(h, &mut app, "tab-styling")?;
+    settings_click(h, &mut app, "mono_digits")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let (eights1, ones1) = (width_of(&s, &shot, &scr, 1)?, width_of(&s, &shot, &scr, 2)?);
+    // Every font installed here already has digits of one width, so the setting cannot change a line's look on
+    // this machine: it must save, and leave the layout alone.
+    ensure!(
+        (eights1 - eights0).abs() < 2.
+            && (ones1 - ones0).abs() < 2.
+            && file().contains("mono_digits = on"),
+        "the digits setting disturbed the text: {ones0} to {ones1}, {eights0} to {eights1}; file {:?}",
+        file()
+    );
+    settings_click(h, &mut app, "mono_digits")?;
+    for _ in 0..3 {
+        settings_click(h, &mut app, "heading_size+")?;
+    }
+    let (s, shot, scr) = look(h, &mut app)?;
+    let heading1 = width_of(&s, &shot, &scr, 0)?;
+    ensure!(
+        (1.2..1.4).contains(&(heading1 / heading0)) && file().contains("heading_size = 130"),
+        "a heading at 130% is {heading1} wide against {heading0}; file {:?}",
+        file()
+    );
+    ensure!(
+        (width_of(&s, &shot, &scr, 1)? - eights0).abs() < 3.,
+        "ordinary text must not change with the heading size"
+    );
+    for _ in 0..5 {
+        settings_click(h, &mut app, "font_size+")?;
+    }
+    let (s, shot, scr) = look(h, &mut app)?;
+    let eights2 = width_of(&s, &shot, &scr, 1)?;
+    ensure!(
+        (1.15..1.32).contains(&(eights2 / eights0)) && file().contains("font_size = 26"),
+        "text at 26pt is {eights2} wide against {eights0}; file {:?}",
+        file()
+    );
+    for _ in 0..5 {
+        settings_click(h, &mut app, "font_size-")?;
+    }
+    settings_click(h, &mut app, "font=Liberation Serif")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let serif = width_of(&s, &shot, &scr, 1)?;
+    ensure!(
+        (serif - eights0).abs() > 4. && file().contains("font = Liberation Serif"),
+        "the font did not change the text: {serif} against {eights0}; file {:?}",
+        file()
+    );
+    settings_click(h, &mut app, "font=Noto Sans")?;
+    for _ in 0..3 {
+        settings_click(h, &mut app, "heading_size-")?;
+    }
+
+    // Colours: the number, the unit, and the variable colour paint the chosen colour.
+    settings_click(h, &mut app, "color_number=#ff7a90")?;
+    settings_click(h, &mut app, "color_unit=#62c25a")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let num = scr.brightest(
+        &shot,
+        region(&s, 1, false)?.0,
+        region(&s, 1, false)?.1,
+        region(&s, 1, false)?.2,
+        region(&s, 1, false)?.3,
+    );
+    ensure!(
+        num.is_some_and(|p| near(p, 0xff7a90, 24)),
+        "numbers are not the chosen colour: {num:?}"
+    );
+    let (lx, ly, lx1, ly1) = region(&s, 4, false)?;
+    let unit = ink_extent(&scr, &shot, (lx, ly, lx1, ly1), 90.).context("the unit line")?;
+    let kg = scr.brightest(&shot, unit.1 - 30., ly, unit.1 + 2., ly1);
+    ensure!(
+        kg.is_some_and(|p| near(p, 0x62c25a, 24)),
+        "units are not the chosen colour: {kg:?}"
+    );
+    ensure!(
+        file().contains("color_number = #ff7a90") && file().contains("color_unit = #62c25a"),
+        "file {:?}",
+        file()
+    );
+    settings_click(h, &mut app, "color_number=default")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let r = region(&s, 1, false)?;
+    let back = scr.brightest(&shot, r.0, r.1, r.2, r.3);
+    ensure!(
+        back.is_some_and(|p| !near(p, 0xff7a90, 40)),
+        "numbers kept the old colour: {back:?}"
+    );
+
+    // The answer column: its colour and which side its text sits on.
+    settings_click(h, &mut app, "answer_background=#20283a")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let (ax, aw, wh) = (
+        f(&s["answer_x"])?,
+        f(&s["answer_w"])?,
+        f(&s["window"]["h"])?,
+    );
+    let at = |x: f32, y: f32| {
+        shot.pixel(
+            (scr.ox + x * scr.scale) as usize,
+            (scr.oy + y * scr.scale) as usize,
+        )
+    };
+    let bg = at(ax + aw - 24., wh - 90.);
+    ensure!(near(bg, 0x20283a, 6), "the answer column is {bg:?}");
+    let left = ink_extent(&scr, &shot, region(&s, 3, true)?, 90.).with_context(|| {
+        format!(
+            "the answer, region {:?} scale {} window {} {}",
+            region(&s, 3, true),
+            scr.scale,
+            scr.ox,
+            scr.oy
+        )
+    })?;
+    settings_click(h, &mut app, "answer_align=right")?;
+    let (s, shot, scr) = look(h, &mut app)?;
+    let right = ink_extent(&scr, &shot, region(&s, 3, true)?, 90.).with_context(|| {
+        format!(
+            "right: region {:?}, scale {} origin {} {}",
+            region(&s, 3, true),
+            scr.scale,
+            scr.ox,
+            scr.oy
+        )
+    })?;
+    let w = right_edge(&s)?;
+    ensure!(
+        right.1 > w - 40. && right.0 > left.0 + 60. && file().contains("answer_align = right"),
+        "answers did not move to the right: {left:?} then {right:?}; file {:?}",
+        file()
+    );
+    close_settings(h, &mut app)?;
+    let (s, shot, scr) = paint(h, &mut app)?;
+    let _ = s;
+    ensure!(luminance(scr.brightest(&shot, 0., 0., 4., 4.).unwrap_or([0, 0, 0])) < 255.);
+    h.save_shot(&h.doc_shot("settings-styling.png"))?;
+    app.finish()
+}
+
 /// The strip above the sheet: its three buttons work with a real pointer, the settings panel changes the number
 /// format and the working day (saved in the settings file and applied at once), the help panel opens and Escape
 /// closes either, and a Total that leaves lines out says so.
@@ -1272,7 +1943,7 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
     // Settings: a number format and the working day, both saved to the file and applied.
     let (x, y) = button(&s, "settings")?;
     h.click(&app, x, y, "left", 1)?;
-    let s = app.wait_for("the settings panel", T, |s| s["panel"] == "settings")?;
+    let s = app.wait_for("the settings window", T, |s| s["panel"] == "settings")?;
     let item = |s: &Value, id: &str| -> anyhow::Result<(f32, f32)> {
         let b = s["toolbar"]["settings_items"]
             .as_array()
@@ -1285,7 +1956,12 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
             f(&b["y"])? + f(&b["h"])? / 2.,
         ))
     };
-    let (x, y) = item(&s, "western-europe")?;
+    let (x, y) = item(&s, "tab-numbers")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the Numbers pane", T, |s| {
+        s["toolbar"]["settings_pane"] == "numbers"
+    })?;
+    let (x, y) = item(&s, "number_format=western-europe")?;
     h.click(&app, x, y, "left", 1)?;
     let s = app.wait_for("the European format", T, |s| {
         answer(s, 0) == Some("1.234") && s["number_format"] == "WesternEurope"
@@ -1299,14 +1975,24 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
         saved.contains("number_format = western-europe"),
         "the file {path} holds {saved:?}"
     );
-    let (x, y) = item(&s, "hours-up")?;
+    let (x, y) = item(&s, "tab-dates")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the Dates & Times pane", T, |s| {
+        s["toolbar"]["settings_pane"] == "dates"
+    })?;
+    let (x, y) = item(&s, "work_hours+")?;
     h.click(&app, x, y, "left", 1)?;
     let s = app.wait_for("nine working hours", T, |s| s["work_hours"] == 9)?;
     ensure!(
         std::fs::read_to_string(&path)?.contains("work_hours = 9"),
         "the working day was not saved"
     );
-    let (x, y) = item(&s, "north-america")?;
+    let (x, y) = item(&s, "tab-numbers")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the Numbers pane", T, |s| {
+        s["toolbar"]["settings_pane"] == "numbers"
+    })?;
+    let (x, y) = item(&s, "number_format=north-america")?;
     h.click(&app, x, y, "left", 1)?;
     app.wait_for("the American format again", T, |s| {
         answer(s, 0) == Some("1,234") && s["number_format"] == "NorthAmerica"

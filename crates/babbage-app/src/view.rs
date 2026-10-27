@@ -12,6 +12,7 @@ use gpui::{
     UnderlineStyle, Window, div, point, prelude::*, px, size,
 };
 
+use crate::appprefs;
 use crate::chrome::Panel;
 use crate::computed::{Answer, Computed, compute_formatted};
 use crate::editor_model::{Editor, History, Kind, Marked, Pos};
@@ -23,7 +24,6 @@ use crate::timefmt::describe_time;
 use crate::wrap::Wrap;
 
 pub const ROW_H: f32 = 36.;
-pub const FONT_PX: f32 = 21.;
 pub const GUTTER_W: f32 = 64.;
 pub const TOP_PAD: f32 = 14.;
 pub const SIDEBAR_W: f32 = 236.;
@@ -70,13 +70,38 @@ impl Init {
                 id
             }
         };
+        let (current, sheets) =
+            if appprefs::new_sheet_on_launch() && sheets.first().is_some_and(|s| s.lines > 0) {
+                let id = book.create::<&str>(&[])?;
+                (id, book.list()?)
+            } else {
+                (current, sheets)
+            };
         let lines = book.read(&current)?;
         Ok(Init {
-            sheets,
+            sheets: order_sheets(sheets),
             current,
             lines,
         })
     }
+}
+
+/// `sheets` in the order the settings ask for: by name, by when they were made, or (the default) as given, which is
+/// most recently changed first.
+pub fn order_sheets(mut sheets: Vec<SheetInfo>) -> Vec<SheetInfo> {
+    match appprefs::sheet_order() {
+        appprefs::SheetOrder::Modified => {}
+        appprefs::SheetOrder::Created => {
+            sheets.sort_by(|a, b| b.created.cmp(&a.created).then_with(|| a.id.cmp(&b.id)));
+        }
+        appprefs::SheetOrder::Title => sheets.sort_by(|a, b| {
+            a.display_name()
+                .to_lowercase()
+                .cmp(&b.display_name().to_lowercase())
+                .then_with(|| a.id.cmp(&b.id))
+        }),
+    }
+    sheets
 }
 
 /// A variable under the pointer: its value as the sheet shows it, and the point (window coordinates) the tip hangs
@@ -120,6 +145,9 @@ pub struct SheetView {
     pub sidebar_open: bool,
     /// The settings or help panel opened from the toolbar.
     pub panel: Option<Panel>,
+    /// The pane of the Settings window that is showing, and a text control being edited (key, text so far).
+    pub settings_pane: usize,
+    pub settings_edit: Option<(String, String)>,
     /// The line the pointer is over in the answer column (it shows the `⋯` button), and the line whose answer menu
     /// is open.
     pub hover_line: Option<usize>,
@@ -130,6 +158,11 @@ pub struct SheetView {
     pub hover_var: Option<HoverVar>,
     /// A number being dragged with Alt held.
     scrub: Option<Scrub>,
+    /// A renamed variable: the line it is declared on and the name it had, while the rename is being typed; the
+    /// offer to rename its uses; and the line the user said to leave alone.
+    pub rename_origin: Option<(usize, String)>,
+    pub rename_offer: Option<crate::rename::RenameOffer>,
+    pub rename_muted: Option<usize>,
     pub answer_focus: Option<usize>,
     pub rename: Option<Rename>,
     /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
@@ -178,11 +211,16 @@ impl SheetView {
             computed,
             sidebar_open: true,
             panel: None,
+            settings_pane: 0,
+            settings_edit: None,
             hover_line: None,
             answer_menu: None,
             complete: None,
             hover_var: None,
             scrub: None,
+            rename_origin: None,
+            rename_offer: None,
+            rename_muted: None,
             answer_focus: None,
             rename: None,
             menu: None,
@@ -218,6 +256,16 @@ impl SheetView {
             self.notice = Some(format!("Could not save: {e}"));
         }
         let Ok(fresh) = self.book.list() else { return };
+        // Ordered by name or by creation, the list is sorted afresh; by modification it keeps the order it has, so
+        // it does not shuffle while a sheet is being saved.
+        if appprefs::sheet_order() != appprefs::SheetOrder::Modified {
+            let fresh = order_sheets(fresh);
+            if fresh != self.sheets {
+                self.sheets = fresh;
+                cx.notify();
+            }
+            return;
+        }
         let mut next: Vec<SheetInfo> = Vec::with_capacity(fresh.len());
         for old in &self.sheets {
             if let Some(f) = fresh.iter().find(|f| f.id == old.id) {
@@ -444,7 +492,14 @@ impl SheetView {
     fn edited(&mut self, cx: &mut Context<Self>) {
         self.answer_focus = None;
         self.complete = None;
+        let declared: Vec<Option<String>> = self
+            .computed
+            .results
+            .iter()
+            .map(|r| r.declares.clone())
+            .collect();
         self.recompute();
+        self.check_rename(&declared, cx);
         self.saver.submit(&self.current, self.file_lines());
         self.reveal = true;
         self.scroll_to_caret();
@@ -452,6 +507,9 @@ impl SheetView {
     }
 
     fn moved(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.rename_muted.is_some_and(|l| l != self.ed.head().line) {
+            self.rename_muted = None;
+        }
         self.reveal = true;
         self.scroll_to_caret();
         window.invalidate_character_coordinates();
@@ -526,6 +584,12 @@ impl SheetView {
                 cx.stop_propagation();
                 return;
             }
+        }
+        if self.settings_edit.is_some()
+            && self.settings_edit_key(key, ks.key_char.as_deref(), ctrl, cx)
+        {
+            cx.stop_propagation();
+            return;
         }
         if self.complete.is_some() && !ctrl && self.completion_key(key, cx) {
             cx.stop_propagation();
@@ -659,6 +723,14 @@ impl SheetView {
                 }
                 "v" => {
                     if let Some(t) = cx.read_from_clipboard().and_then(|c| c.text()) {
+                        let t = if appprefs::convert_pasted_numbers() {
+                            crate::grouping::convert_foreign(
+                                &t,
+                                crate::prefs::current().number_format,
+                            )
+                        } else {
+                            t
+                        };
                         let (a, b) = self.ed.selection();
                         self.ed.replace(a, b, &t, Kind::Other);
                     }
@@ -707,11 +779,29 @@ impl SheetView {
             "enter" => self.ed.newline(),
             // Escape finishes the name of a variable being typed; Tab does nothing in a sheet (swallowing it keeps a
             // tab out of the text).
-            "escape" => self.start_completion(cx),
-            "tab" => {}
+            "escape" if !appprefs::autocomplete_on_tab() => self.start_completion(cx),
+            "tab" if appprefs::autocomplete_on_tab() => self.start_completion(cx),
+            "escape" | "tab" => {}
             _ => return false,
         }
         true
+    }
+
+    /// With thousands separators as you type: the number the caret is in, regrouped, as part of the typing step.
+    fn regroup_caret(&mut self) {
+        let head = self.ed.head();
+        let line = self.ed.line(head.line).to_string();
+        let format = crate::prefs::current().number_format;
+        if let Some((new, caret)) = crate::grouping::regroup(&line, head.col, format) {
+            let (range, text) = crate::grouping::smallest_edit(&line, &new);
+            self.ed.replace(
+                Pos::new(head.line, range.start),
+                Pos::new(head.line, range.end),
+                text,
+                Kind::Typing,
+            );
+            self.ed.set_caret(Pos::new(head.line, caret), false);
+        }
     }
 
     /// A reference drawn as a chip is one thing to the caret: after a step into it, the caret goes to the far side.
@@ -1296,6 +1386,7 @@ impl Render for SheetView {
         let panel = self.panel_view(c, cx);
         let answer_menu = self.answer_menu_view(c, cx);
         let completion = self.completion_view(c, cx);
+        let toast = self.rename_toast(c, cx);
         let tip = self.hover_var.clone().map(|t| {
             div()
                 .absolute()
@@ -1320,7 +1411,7 @@ impl Render for SheetView {
             .flex_row()
             .bg(c.background)
             .text_color(c.text)
-            .font_family("Noto Sans")
+            .font_family(SharedString::from(appprefs::font_family()))
             .text_size(px(15.))
             .children(sidebar)
             .child(
@@ -1348,6 +1439,7 @@ impl Render for SheetView {
             .children(panel)
             .children(answer_menu)
             .children(completion)
+            .children(toast)
             .children(tip)
     }
 }
@@ -1418,6 +1510,13 @@ impl EntityInputHandler for SheetView {
         };
         self.ed.marked = None;
         self.ed.replace(a, b, text, Kind::Typing);
+        if appprefs::group_as_you_type()
+            && text
+                .chars()
+                .all(|c| c.is_ascii_digit() || c == '.' || c == ',')
+        {
+            self.regroup_caret();
+        }
         self.edited(cx);
     }
 

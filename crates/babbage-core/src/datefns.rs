@@ -194,7 +194,7 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
         DateFn::Since => days(today - date_arg(&args[0])?.0),
         DateFn::Inclusive => days(date_arg(&args[1])?.0 - date_arg(&args[0])?.0 + 1),
         DateFn::WorkdaysBetween => Value::quantity(
-            Number::from_i64(calendar::workdays_between(
+            Number::from_i64(calendar::workdays_between_off(
                 date_arg(&args[0])?.0,
                 date_arg(&args[1])?.0,
             )),
@@ -207,12 +207,12 @@ pub fn call(f: DateFn, args: &[Value]) -> Result<Value, Error> {
                 + i64::try_from(&seconds.div(&Number::from_i64(86_400))?.floor())
                     .map_err(|_| Error::Overflow)?;
             Value::quantity(
-                Number::from_i64(calendar::workdays_between(today, end)),
+                Number::from_i64(calendar::workdays_between_off(today, end)),
                 unit("workday"),
             )
         }
         DateFn::WorkHoursBetween => {
-            let n = calendar::workdays_between(date_arg(&args[0])?.0, date_arg(&args[1])?.0);
+            let n = calendar::workdays_between_off(date_arg(&args[0])?.0, date_arg(&args[1])?.0);
             Value::quantity(
                 Number::from_i64(n * i64::from(settings::work_hours_per_day())),
                 unit("h"),

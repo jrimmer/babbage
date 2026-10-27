@@ -971,7 +971,7 @@ fn shift_date(date: &Value, by: &Value, sign: i64) -> Result<Value, Error> {
             return Err(Error::Overflow);
         }
         return Ok(Value::date(
-            Number::from_i64(calendar::add_workdays(day, n)).add(&fraction)?,
+            Number::from_i64(calendar::add_workdays_off(day, n)).add(&fraction)?,
         ));
     }
     let days = seconds_of(by)?
@@ -1463,7 +1463,7 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
         }
         (Some(minor), false, true) => {
             let mut fixed = opts.with_places(minor.min(opts.decimal_places())).ok()?;
-            fixed.trim_trailing_zeros = false;
+            fixed.trim_trailing_zeros = opts.money_trim_zeros;
             format_decimal(&v.number, &fixed)
         }
         (Some(minor), false, false) => {
@@ -1474,7 +1474,7 @@ fn format_money(v: &Value, opts: &FormatOptions) -> Option<Formatted> {
         }
         _ => format_decimal(&v.number, opts),
     };
-    if currency.prefix_symbol {
+    if currency.prefix_symbol && !opts.currency_codes {
         let symbol = v.unit.currency_symbol()?;
         let (sign, digits) = match f.text.strip_prefix('-') {
             Some(d) => ("-", d.to_string()),

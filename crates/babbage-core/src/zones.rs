@@ -638,6 +638,10 @@ pub fn place(words: &[&str]) -> Option<Zone> {
         return None;
     }
     let name = words.join(" ").to_lowercase();
+    // The user's own names for places come first.
+    if let Some(zone) = crate::settings::custom_zone(&name) {
+        return Some(zone);
+    }
     if let Some((_, iana)) = US_REGIONS.iter().find(|(abbr, _)| *abbr == name) {
         return Zone::named(iana);
     }

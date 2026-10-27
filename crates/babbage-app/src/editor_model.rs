@@ -227,6 +227,35 @@ impl Editor {
         self.formats = formats;
     }
 
+    /// Replaces several ranges (each inside one line, none overlapping) as one undo step. The caret stays where it
+    /// was, moved along by an edit before it on its own line.
+    pub fn replace_many(&mut self, edits: &[(Pos, Pos, String)]) {
+        if edits.is_empty() {
+            return;
+        }
+        let s = self.snap();
+        self.undo.push(s);
+        self.redo.clear();
+        self.last = Kind::Other;
+        self.marked = None;
+        let mut ordered: Vec<&(Pos, Pos, String)> = edits.iter().collect();
+        ordered.sort_by_key(|b| std::cmp::Reverse(b.0));
+        for (a, b, text) in ordered {
+            if a.line != b.line || a.line >= self.lines.len() {
+                continue;
+            }
+            let line = &mut self.lines[a.line];
+            if b.col <= line.len() && line.is_char_boundary(a.col) && line.is_char_boundary(b.col) {
+                line.replace_range(a.col..b.col, text);
+                for p in [&mut self.head, &mut self.anchor] {
+                    if p.line == a.line && p.col >= b.col {
+                        p.col = p.col + text.len() - (b.col - a.col);
+                    }
+                }
+            }
+        }
+    }
+
     /// Puts `text` on a new line after line `i`, as one undo step; the caret goes to its end.
     pub fn insert_line_after(&mut self, i: usize, text: &str) {
         let at = Pos::new(

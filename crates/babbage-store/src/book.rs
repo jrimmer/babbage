@@ -56,6 +56,8 @@ pub struct SheetInfo {
     /// Whether the user named the sheet (as opposed to the book's own `sheet-N`).
     pub named: bool,
     pub modified: SystemTime,
+    /// When the file was made (its modified time where the file system keeps no birth time).
+    pub created: SystemTime,
     /// Lines up to the last one with something on it.
     pub lines: usize,
 }
@@ -175,6 +177,10 @@ impl SheetBook {
                 named: !id.0.starts_with(AUTO_PREFIX),
                 title: title_of(&lines),
                 modified: meta.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                created: meta
+                    .created()
+                    .or_else(|_| meta.modified())
+                    .unwrap_or(SystemTime::UNIX_EPOCH),
                 lines: count_lines(&lines),
                 id,
             });

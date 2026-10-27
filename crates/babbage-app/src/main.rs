@@ -8,15 +8,19 @@
 //! test hook described in `control.rs`.
 
 mod answer_menu;
+mod appprefs;
 mod autocomplete;
 mod chrome;
 mod computed;
 mod control;
 mod editor_model;
 mod element;
+mod grouping;
 mod linefmt;
 mod prefs;
+mod rename;
 mod scrub;
+mod settings_ui;
 mod shown;
 mod syntax;
 mod theme;

@@ -1,11 +1,9 @@
 //! The strip above the sheet (settings, help, sidebar toggle) and the two panels it opens.
 //!
-//! Every clickable thing has a fixed place (`toolbar_buttons`, `settings_items`) so the acceptance checks can aim
+//! Every clickable thing has a fixed place (`toolbar_buttons`, and `settings_ui::item_rects`) so the acceptance checks can aim
 //! at it with a real pointer.
 
-use gpui::{
-    AnyElement, Context, FontWeight, MouseButton, SharedString, Window, div, prelude::*, px,
-};
+use gpui::{AnyElement, Context, FontWeight, MouseButton, Window, div, prelude::*, px};
 
 use crate::theme::Colors;
 use crate::view::SheetView;
@@ -58,49 +56,6 @@ pub fn toolbar_buttons() -> [(&'static str, Rect); 3] {
         }
     };
     [("settings", at(2)), ("help", at(1)), ("sidebar", at(0))]
-}
-
-/// The settings panel's controls, relative to the panel's top left.
-pub fn settings_items() -> Vec<(&'static str, Rect)> {
-    let row = |y: f32| Rect {
-        x: 14.,
-        y,
-        w: PANEL_W - 28.,
-        h: 30.,
-    };
-    let mut items = vec![];
-    for (i, id) in ["north-america", "western-europe", "eastern-europe"]
-        .into_iter()
-        .enumerate()
-    {
-        items.push((id, row(70. + 32. * i as f32)));
-    }
-    items.push((
-        "hours-down",
-        Rect {
-            x: 14.,
-            y: 204.,
-            w: 34.,
-            h: 30.,
-        },
-    ));
-    items.push((
-        "hours-up",
-        Rect {
-            x: 170.,
-            y: 204.,
-            w: 34.,
-            h: 30.,
-        },
-    ));
-    items
-}
-
-pub const SETTINGS_H: f32 = 300.;
-
-/// Where the panel's top left is, from the right edge of the pane and the top of the toolbar's bottom edge.
-pub fn panel_origin() -> (f32, f32) {
-    (-(PANEL_RIGHT + PANEL_W), PANEL_TOP)
 }
 
 /// Keys, as `(keys, what they do)`.
@@ -311,7 +266,7 @@ impl SheetView {
     pub fn panel_view(&self, c: Colors, cx: &mut Context<Self>) -> Option<AnyElement> {
         match self.panel? {
             Panel::Help => Some(self.help_panel(c)),
-            Panel::Settings => Some(self.settings_panel(c, cx)),
+            Panel::Settings => Some(self.settings_window(c, cx)),
         }
     }
 
@@ -351,167 +306,12 @@ impl SheetView {
             .into_any_element()
     }
 
-    fn settings_panel(&self, c: Colors, cx: &mut Context<Self>) -> AnyElement {
-        let settings = crate::prefs::current();
-        let hours = settings.work_hours_per_day.unwrap_or(8);
-        let formats = [
-            ("north-america", "1,234.56", "North America"),
-            ("western-europe", "1.234,56", "Western Europe"),
-            ("eastern-europe", "1 234,56", "Eastern Europe"),
-        ];
-        let current = match settings.number_format {
-            babbage_core::NumberFormat::NorthAmerica => "north-america",
-            babbage_core::NumberFormat::WesternEurope => "western-europe",
-            babbage_core::NumberFormat::EasternEurope => "eastern-europe",
-        };
-        let items = settings_items();
-        let rect = |id: &str| {
-            items
-                .iter()
-                .find(|(i, _)| *i == id)
-                .map(|(_, r)| *r)
-                .unwrap_or(Rect {
-                    x: 0.,
-                    y: 0.,
-                    w: 0.,
-                    h: 0.,
-                })
-        };
-        let at = |r: Rect| {
-            div()
-                .absolute()
-                .left(px(r.x))
-                .top(px(r.y))
-                .w(px(r.w))
-                .h(px(r.h))
-        };
-        let mut panel = self
-            .panel_frame(c, Some(SETTINGS_H))
-            .child(
-                div()
-                    .absolute()
-                    .left(px(14.))
-                    .top(px(14.))
-                    .text_size(px(15.))
-                    .font_weight(FontWeight::MEDIUM)
-                    .child("Settings"),
-            )
-            .child(
-                div()
-                    .absolute()
-                    .left(px(14.))
-                    .top(px(48.))
-                    .text_size(px(12.))
-                    .text_color(c.muted)
-                    .child("Number format"),
-            );
-        for (id, sample, name) in formats {
-            let selected = id == current;
-            panel = panel.child(
-                at(rect(id))
-                    .id(id)
-                    .px(px(10.))
-                    .flex()
-                    .items_center()
-                    .justify_between()
-                    .rounded(px(6.))
-                    .when(selected, |d| d.bg(c.selection))
-                    .hover(|d| d.bg(c.selection))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |this, _, _, cx| {
-                            this.change_setting("number_format", id, cx);
-                        }),
-                    )
-                    .child(SharedString::from(format!("{sample}  {name}")))
-                    .child(if selected { "✓" } else { "" }),
-            );
-        }
-        panel = panel
-            .child(
-                div()
-                    .absolute()
-                    .left(px(14.))
-                    .top(px(182.))
-                    .text_size(px(12.))
-                    .text_color(c.muted)
-                    .child("Working day"),
-            )
-            .child(
-                at(rect("hours-down"))
-                    .id("hours-down")
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .rounded(px(6.))
-                    .bg(c.line)
-                    .hover(|d| d.bg(c.selection))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |this, _, _, cx| {
-                            let h = crate::prefs::current().work_hours_per_day.unwrap_or(8);
-                            this.change_setting(
-                                "work_hours",
-                                &h.saturating_sub(1).max(1).to_string(),
-                                cx,
-                            );
-                        }),
-                    )
-                    .child("−"),
-            )
-            .child(
-                div()
-                    .absolute()
-                    .left(px(56.))
-                    .top(px(204.))
-                    .w(px(110.))
-                    .h(px(30.))
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .child(SharedString::from(format!("{hours} hours"))),
-            )
-            .child(
-                at(rect("hours-up"))
-                    .id("hours-up")
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .rounded(px(6.))
-                    .bg(c.line)
-                    .hover(|d| d.bg(c.selection))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |this, _, _, cx| {
-                            let h = crate::prefs::current().work_hours_per_day.unwrap_or(8);
-                            this.change_setting("work_hours", &(h + 1).min(24).to_string(), cx);
-                        }),
-                    )
-                    .child("+"),
-            );
-        let path = crate::prefs::settings_path().map_or_else(
-            || "no settings file".to_owned(),
-            |p| p.display().to_string(),
-        );
-        panel
-            .child(
-                div()
-                    .absolute()
-                    .left(px(14.))
-                    .top(px(250.))
-                    .w(px(PANEL_W - 28.))
-                    .text_size(px(11.))
-                    .text_color(c.muted)
-                    .child(SharedString::from(format!("Saved in {path}"))),
-            )
-            .into_any_element()
-    }
-
     /// Writes a setting to the file, applies it and works every line out again.
     pub fn change_setting(&mut self, key: &str, value: &str, cx: &mut Context<Self>) {
         match crate::prefs::set(key, value) {
             Ok(()) => {
                 self.notice = None;
+                crate::theme::reload(cx);
                 self.recompute();
             }
             Err(e) => self.notice = Some(format!("Could not save the setting: {e}")),

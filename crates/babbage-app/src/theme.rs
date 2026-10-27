@@ -64,6 +64,27 @@ impl Colors {
         Colors::from_palette(&Palette::default())
     }
 
+    /// These colours with the ones the settings change laid over them.
+    pub fn with_overrides(mut self) -> Colors {
+        use crate::appprefs::color;
+        if let Some(c) = color("color_number") {
+            self.number = hex(c);
+        }
+        if let Some(c) = color("color_unit") {
+            self.unit = hex(c);
+        }
+        if let Some(c) = color("color_currency") {
+            self.currency = hex(c);
+        }
+        if let Some(c) = color("color_variable") {
+            self.variable = hex(c);
+        }
+        if let Some(c) = color("answer_background") {
+            self.answers = hex(c);
+        }
+        self
+    }
+
     fn from_palette(p: &Palette) -> Colors {
         let sidebar = mix(p.background, 0x000000, 0.06);
         let answers = mix(p.background, p.foreground, 0.035);
@@ -180,12 +201,22 @@ fn load(file: &Option<PathBuf>) -> (Colors, Option<SystemTime>) {
     }
 }
 
+/// Reads the theme file again and lays the settings' colours over it: after a colour setting changed.
+pub fn reload(cx: &mut App) {
+    let (colors, _) = load(&theme_file());
+    let colors = colors.with_overrides();
+    if *cx.global::<Colors>() != colors {
+        cx.set_global(colors);
+        cx.refresh_windows();
+    }
+}
+
 /// Sets the colours global and follows the theme file for changes (checked once a second: a theme
 /// switch replaces the file, and polling its time needs no file-watching dependency).
 pub fn install(cx: &mut App) {
     let file = theme_file();
     let (colors, mut seen) = load(&file);
-    cx.set_global(colors);
+    cx.set_global(colors.with_overrides());
     cx.spawn(async move |cx| {
         loop {
             cx.background_executor().timer(Duration::from_secs(1)).await;
@@ -197,6 +228,7 @@ pub fn install(cx: &mut App) {
             }
             seen = modified;
             let (colors, _) = load(&file);
+            let colors = colors.with_overrides();
             if cx
                 .update(|cx| {
                     if *cx.global::<Colors>() != colors {

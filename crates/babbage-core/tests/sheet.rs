@@ -527,3 +527,47 @@ fn the_total_says_how_many_lines_it_left_out() {
     assert_eq!(left_out(&["hello"]), 0);
     assert_eq!(left_out(&[]), 0);
 }
+
+#[test]
+fn global_variables_are_in_every_sheet_and_survive_a_divider() {
+    let opts = |globals: &[&str], reset: bool| SheetOptions {
+        globals: globals.iter().map(|g| (*g).to_string()).collect(),
+        dividers_reset_scope: reset,
+        ..SheetOptions::default()
+    };
+    let lines = ["rent * 2", "mine = 5", "---", "rent + 1", "mine"];
+    let shown = |o: &SheetOptions| -> Vec<String> {
+        evaluate_sheet(&lines, o)
+            .iter()
+            .map(|r| match &r.kind {
+                babbage_core::LineKind::Value(v) => format_value(v, &FormatOptions::default()).text,
+                other => format!("{other:?}"),
+            })
+            .collect()
+    };
+    let globals = ["rent = $900", "bad line = ", "rate = 5%"];
+    let kept = shown(&opts(&globals, true));
+    assert_eq!(kept[0], "$1,800.00");
+    // After the divider the sheet's own names are gone and the global one stays.
+    assert_eq!(kept[3], "$901.00");
+    assert_ne!(
+        kept[4], "5",
+        "the sheet's own name is gone after the divider"
+    );
+    // With dividers not resetting, the sheet's own names stay too.
+    assert_eq!(shown(&opts(&globals, false))[4], "5");
+    // No globals: `rent` is nothing.
+    assert_ne!(shown(&opts(&[], true))[0], "$1,800.00");
+    // A sheet's own line wins over a global of the same name.
+    let mut own = lines.to_vec();
+    own[1] = "rent = 1";
+    let r = evaluate_sheet(&own, &opts(&["rent = $900"], true));
+    assert_eq!(
+        match &r[0].kind {
+            babbage_core::LineKind::Value(v) => format_value(v, &FormatOptions::default()).text,
+            other => format!("{other:?}"),
+        },
+        "$1,800.00",
+        "the line above the declaration still sees the global"
+    );
+}
