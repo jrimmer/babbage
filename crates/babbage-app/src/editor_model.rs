@@ -26,6 +26,8 @@ impl Pos {
 pub enum Kind {
     Typing,
     Deleting,
+    /// Dragging a number with Alt held: every step of one drag is one undo step.
+    Scrub,
     Other,
 }
 

@@ -21,6 +21,8 @@ pub struct Computed {
     pub results: Vec<LineResult>,
     pub answers: Vec<Answer>,
     pub total: Option<Answer>,
+    /// For each line, the names the sheet has defined by that line (its own included) and the line each is on.
+    pub names: Vec<Vec<(String, usize)>>,
     /// How many lines the Total leaves out because they cannot be added to the others.
     pub left_out: usize,
 }
@@ -90,10 +92,23 @@ fn compute_scoped(lines: &[String], formats: &[LineFormat], settings: &Settings)
         },
     });
     let left_out = floating_total_left_out(&results, &opts);
+    let mut defined: Vec<(String, usize)> = Vec::new();
+    let names = results
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            if let Some(name) = &r.declares {
+                defined.retain(|(n, _)| n != name);
+                defined.push((name.clone(), i));
+            }
+            defined.clone()
+        })
+        .collect();
     Computed {
         results,
         answers,
         total,
+        names,
         left_out,
     }
 }
@@ -104,6 +119,25 @@ mod tests {
 
     fn sheet(lines: &[&str]) -> Vec<String> {
         lines.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn each_line_knows_the_names_defined_by_then() {
+        let c = compute(&sheet(&[
+            "rent = $900",
+            "rent + 1",
+            "tip = 5",
+            "rent = $1,000",
+            "tip",
+        ]));
+        let at = |i: usize| -> Vec<(&str, usize)> {
+            c.names[i].iter().map(|(n, l)| (n.as_str(), *l)).collect()
+        };
+        assert_eq!(at(0), [("rent", 0)]);
+        assert_eq!(at(1), [("rent", 0)]);
+        assert_eq!(at(2), [("rent", 0), ("tip", 2)]);
+        // A name defined again points at the new line.
+        assert_eq!(at(4), [("tip", 2), ("rent", 3)]);
     }
 
     #[test]

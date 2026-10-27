@@ -527,6 +527,15 @@ impl Harness {
         Ok(())
     }
 
+    /// Holds a modifier (`alt`, `ctrl`, ...) down for `ms` milliseconds in the background, so a pointer action can
+    /// run while it is held; wait on the child to know it was let go.
+    pub fn hold(&self, modifier: &str, ms: u32) -> anyhow::Result<std::process::Child> {
+        Ok(Process::new("wtype")
+            .env("WAYLAND_DISPLAY", &self.nested.wayland)
+            .args(["-M", modifier, "-s", &ms.to_string(), "-m", modifier])
+            .spawn()?)
+    }
+
     /// Types `text` as keystrokes into the focused window.
     pub fn type_text(&self, text: &str) -> anyhow::Result<()> {
         if text.is_empty() {

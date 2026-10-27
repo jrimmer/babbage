@@ -8,7 +8,7 @@ use gpui::{
 };
 
 use crate::shown::{Shown, shown_for};
-use crate::syntax::{Class, spans};
+use crate::syntax::{Class, spans, spans_in};
 use crate::theme::Colors;
 use crate::view::{FONT_PX, GUTTER_W, Layout, ROW_H, SheetView, TOP_PAD, answer_min_w, runs_for};
 
@@ -199,7 +199,13 @@ impl SheetElement {
                 );
 
                 // Text, as shown: a reference to another line is that line's answer in a chip.
-                let typed_spans = spans(line, result);
+                let names: Vec<String> = view
+                    .computed
+                    .names
+                    .get(i)
+                    .map(|v| v.iter().map(|(n, _)| n.clone()).collect())
+                    .unwrap_or_default();
+                let typed_spans = spans_in(line, result, &names);
                 let sh: Shown = Shown::build(line, &typed_spans, i, &view.computed.answers);
                 let sp = sh.spans(&typed_spans);
                 let shown_text = sh.text.as_str();
@@ -346,10 +352,25 @@ impl SheetElement {
                     }
                     let lh = row_h;
                     let ty = y;
+                    // A subtotal is bold, under a rule that runs across the answer column.
+                    let subtotal = result.is_some_and(|r| r.subtotal);
+                    if subtotal {
+                        window.paint_quad(fill(
+                            Bounds::new(
+                                point(answer_x + px(12.), y + px(1.)),
+                                size(answer_w - px(24.), px(1.)),
+                            ),
+                            c.gutter,
+                        ));
+                    }
                     if let Some(t) = &a.text {
+                        let mut bold = font.clone();
+                        if subtotal {
+                            bold.weight = gpui::FontWeight::BOLD;
+                        }
                         let r = TextRun {
                             len: t.len(),
-                            font: font.clone(),
+                            font: bold,
                             color: c.text,
                             background_color: None,
                             underline: None,

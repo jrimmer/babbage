@@ -823,7 +823,7 @@ impl UnitExpr {
         UnitExpr(
             self.0
                 .iter()
-                .map(|(u, e)| (*u, e * n))
+                .map(|(u, e)| (*u, e.saturating_mul(n)))
                 .filter(|(_, e)| *e != 0)
                 .collect(),
             self.1,
@@ -834,7 +834,8 @@ impl UnitExpr {
         let mut parts = self.0.clone();
         for (u, e) in &other.0 {
             match parts.iter_mut().find(|(pu, _)| pu == u) {
-                Some((_, pe)) => *pe += e,
+                // Saturating: a silly pile of powers (`0°²²²°`) must not overflow an exponent.
+                Some((_, pe)) => *pe = pe.saturating_add(*e),
                 None => parts.push((*u, *e)),
             }
         }

@@ -312,3 +312,16 @@ fn an_amount_of_money_too_small_for_cents_keeps_its_digits() {
         ("$1.995", "$2.00"),
     ]);
 }
+
+#[test]
+fn a_silly_pile_of_unit_powers_is_an_answer_or_an_error_never_a_panic() {
+    // Found by the property test: products of units keep every unit, so exponents can pile up.
+    for line in [
+        "0°²²²°",
+        "5 m²²²²²²²²²²²² m²²²²²²²²²²²²",
+        "3 kg^100 kg^100 kg^100",
+        "2 s⁻¹⁻¹⁻¹⁻¹ s⁻¹⁻¹⁻¹",
+    ] {
+        let _ = run(line);
+    }
+}

@@ -18,3 +18,4 @@ cc 197ea0c46375413a277219302c37d3bb5fc96e118c9c4886c13025a1ad05869f # shrinks to
 cc 6908ea982680fc6484f94a7426c23e3ed69da95c54ebff117fea4adcb113e49e # shrinks to (a, b) = ("frames", "frames"), x = "1.0000", y = "1.0000"
 cc 0fa7e9b6e2f6d8d5f25177f62220c988a3bebe9fca38150fd7216d0b02df3cb3 # shrinks to (a, b) = ("frames", "frames"), x = "1.0000"
 cc 37093087d56be733f9d77d1a416e2abdea0cd9d3cce279758ccc48a42f99d365 # shrinks to (a, b) = ("frames", "frames"), x = "1.0000"
+cc a561531f27a93afdf590c3321b8ad3e573811fd9908b487b7dbfc48460ef32e0 # shrinks to s = "0°²²²°"

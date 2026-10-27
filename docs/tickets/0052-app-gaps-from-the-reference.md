@@ -1,6 +1,6 @@
 # 0052 Gaps between the app and the target screenshot
 
-Status: open (building: toolbar, sidebar polish and folder pill, the answer menu, variable colours and tooltips; the target screenshot and the target screenshots are the spec)
+Status: closed (built against the target screenshot and the target screenshots; what is not copied is listed at the end)
 Milestone: v1
 Area: app
 
@@ -25,3 +25,7 @@ Still to build: the answer's menu (Copy Answer, decimal places, the `,` `M` `$` 
 Done, unit 3 (`answer-menu` check, real pointer): the `⋯` shows on the answer under the pointer and opens the menu from the reference notes' screenshot: Copy Answer, a decimal-places slider (0 to 10), the `,` (thousands), `M` (k/M/G notation) and `$` (fixed money digits) switches, Reset, Make Subtotal Line and Delete Line. The choices are per line, undoable, kept in the sheet file as trailer lines (`⟦bbg line 3 dp=4⟧`, not counted as lines) and come back after a hard kill. The Total now adds the lines in order and starts again from any line that cannot be added (the owner's Sheets C and F; the screenshot's 19 lines are `$39,506.77`).
 
 Still to build: variable names in green with a hover tooltip of the value and Esc autocomplete, the subtotal's rule and bold, number scrubbing.
+
+Done, unit 4 (`variables`, `subtotal-style`, `number-scrub` checks): names the sheet defined are green where they are defined and used (the engine's names are case-sensitive and whole-word), a tip under the pointer shows the value, Escape finishes a half-typed name (one match at once, several as a list taken with Up, Down and Enter), a subtotal's answer is bold under a rule across the answer column, and holding Alt while dragging a number counts it by its last digit (thousands commas kept, one undo step per drag).
+
+Not copied, on purpose: the reference's fonts are Apple's (the app uses Noto Sans, the system font of this machine, so letter shapes differ); the folder pill shows the one sheetbook ("General") because Babbage has no folders yet; Speak Answer is left out; its Studio edition, Alfred, Raycast, URL schemes and the macOS services are not for Linux.

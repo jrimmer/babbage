@@ -42,6 +42,9 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("line-chips", line_chips),
     ("toolbar", toolbar),
     ("answer-menu", answer_menu),
+    ("variables", variables),
+    ("subtotal-style", subtotal_style),
+    ("number-scrub", number_scrub),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -1313,6 +1316,259 @@ fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
     let (ty, rh) = (f(&s["lines"][0]["y"])?, f(&s["lines"][0]["row_h"])?);
     h.click(&app, f(&s["text_x"])? + 200., ty + rh / 2., "left", 1)?;
     app.wait_for("the panel closed by a click", T, |s| s["panel"].is_null())?;
+    app.finish()
+}
+
+/// Holding Alt and dragging across a number counts it by its last digit (one step every few pixels), as one undo
+/// step; the same drag without Alt selects text and changes nothing.
+fn number_scrub(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("number-scrub", None, &[])?;
+    h.type_line("12.5 + 3")?;
+    h.type_text("1,000")?;
+    let s = app.wait_for("both answers", T, |s| {
+        answer(s, 0) == Some("15.5") && answer(s, 1) == Some("1,000")
+    })?;
+    let number = |s: &Value, line: usize, text: &str| -> anyhow::Result<(f32, f32)> {
+        let span = s["lines"][line]["spans"]
+            .as_array()
+            .context("spans")?
+            .iter()
+            .find(|x| x["class"] == "number" && x["text"] == text)
+            .with_context(|| format!("a number span {text:?}"))?;
+        Ok((
+            (f(&span["x0"])? + f(&span["x1"])?) / 2.,
+            f(&s["lines"][line]["y"])? + f(&s["lines"][line]["row_h"])? / 2.,
+        ))
+    };
+
+    // Without Alt a drag selects and changes no digit.
+    let (x, y) = number(&s, 0, "12.5")?;
+    h.drag(&app, (x - 12., y), (x + 40., y))?;
+    let plain = app.wait_for("a selection", T, |s| {
+        s["selection"].as_str().is_some_and(|t| !t.is_empty())
+    })?;
+    ensure!(
+        plain["lines"][0]["text"] == "12.5 + 3",
+        "a plain drag edited the line: {}",
+        plain["lines"][0]["text"]
+    );
+
+    // With Alt it counts: six steps to the right.
+    let mut alt = h.hold("alt", 4000)?;
+    std::thread::sleep(Duration::from_millis(400));
+    h.drag(&app, (x, y), (x + 36., y))?;
+    let s = app.wait_for("12.5 scrubbed up", T, |s| {
+        s["lines"][0]["text"] == "13.1 + 3"
+    })?;
+    ensure!(
+        answer(&s, 0) == Some("16.1"),
+        "the answer follows: {:?}",
+        answer(&s, 0)
+    );
+    alt.kill().ok();
+    alt.wait().ok();
+
+    // One undo takes the whole drag back.
+    h.press(&["ctrl"], "z")?;
+    app.wait_for("the drag undone in one step", T, |s| {
+        s["lines"][0]["text"] == "12.5 + 3"
+    })?;
+
+    // Thousands commas stay, and a drag to the left counts down.
+    let s = app.state()?;
+    let (x, y) = number(&s, 1, "1,000")?;
+    let mut alt = h.hold("alt", 4000)?;
+    std::thread::sleep(Duration::from_millis(400));
+    h.drag(&app, (x, y), (x - 12., y))?;
+    app.wait_for("1,000 scrubbed down", T, |s| s["lines"][1]["text"] == "998")?;
+    alt.kill().ok();
+    alt.wait().ok();
+    app.finish()
+}
+
+/// A subtotal line's answer is bold under a rule across the answer column; a heading is bold; other answers have
+/// neither.
+fn subtotal_style(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("subtotal-style", None, &[])?;
+    for line in ["# Costs", "$10", "$20", "subtotal", "$5"] {
+        h.type_line(line)?;
+    }
+    h.type_text("subtotal")?;
+    let s = app.wait_for("the subtotals", T, |s| {
+        answer(s, 3) == Some("$30.00") && answer(s, 5) == Some("$5.00")
+    })?;
+    ensure!(s["lines"][3]["subtotal"] == true && s["lines"][5]["subtotal"] == true);
+    ensure!(s["lines"][1]["subtotal"] == false);
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (ax, aw) = (f(&s["answer_x"])?, f(&s["answer_w"])?);
+    let band = |line: usize| -> anyhow::Result<f32> {
+        let y = f(&s["lines"][line]["y"])?;
+        Ok(luminance(
+            scr.brightest(&shot, ax + 20., y, ax + aw - 20., y + 3.)
+                .unwrap_or([0, 0, 0]),
+        ))
+    };
+    // The rule sits at the top of a subtotal's row and nowhere else; the answers' own text is lower in the row.
+    ensure!(
+        band(3)? > 70.,
+        "no rule above the subtotal at line 4: {}",
+        band(3)?
+    );
+    ensure!(
+        band(5)? > 70.,
+        "no rule above the subtotal at line 6: {}",
+        band(5)?
+    );
+    for line in [1, 2, 4] {
+        ensure!(
+            band(line)? < 60.,
+            "a rule over a plain answer at line {}: {}",
+            line + 1,
+            band(line)?
+        );
+    }
+    // Bold ink is heavier: more bright pixels in the answer's text than in a plain answer of the same text.
+    let heavy = |line: usize| -> anyhow::Result<usize> {
+        let y = f(&s["lines"][line]["y"])?;
+        let h = f(&s["lines"][line]["row_h"])?;
+        let mut n = 0;
+        let scale = f(&s["scale"])?;
+        let (ox, oy) = h_origin(&scr);
+        for py in ((oy + (y + 6.) * scale) as usize)..((oy + (y + h - 4.) * scale) as usize) {
+            for px_ in ((ox + (ax + 30.) * scale) as usize)..((ox + (ax + 130.) * scale) as usize) {
+                if luminance(shot.pixel(px_, py)) > 140. {
+                    n += 1;
+                }
+            }
+        }
+        Ok(n)
+    };
+    // `$30.00` (bold) against `$20.00` (plain): the same digit count.
+    let (plain, bold) = (heavy(2)?, heavy(3)?);
+    ensure!(
+        bold > plain,
+        "the subtotal is not heavier than a plain answer: {bold} against {plain}"
+    );
+    app.finish()
+}
+
+fn h_origin(scr: &Screen) -> (f32, f32) {
+    (scr.ox, scr.oy)
+}
+
+/// Names the sheet defined are green where they are defined and used, a tip shows the value under the pointer, and
+/// Escape finishes a half-typed name: at once when one name fits, from a list (Up, Down, Enter) when several do.
+fn variables(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("variables", None, &[])?;
+    for line in [
+        "cost of development = $9.8k",
+        "cost of development",
+        "a long variable name = 20",
+        "a long variable two = 5",
+    ] {
+        h.type_line(line)?;
+    }
+    h.type_text("a long var")?;
+    let s = app.wait_for("the names defined", T, |s| {
+        answer(s, 0) == Some("$9,800.00")
+            && answer(s, 1) == Some("$9,800.00")
+            && answer(s, 3) == Some("5")
+    })?;
+    // Green where defined and where used.
+    let green = |line: usize, text: &str| -> anyhow::Result<(f32, f32)> {
+        let span = s["lines"][line]["spans"]
+            .as_array()
+            .context("spans")?
+            .iter()
+            .find(|x| x["class"] == "variable" && x["text"] == text)
+            .with_context(|| format!("line {} has a variable span {text:?}", line + 1))?;
+        Ok((f(&span["x0"])?, f(&span["x1"])?))
+    };
+    let (x0, x1) = green(0, "cost of development")?;
+    let (u0, u1) = green(1, "cost of development")?;
+    green(2, "a long variable name")?;
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (y, rh) = (f(&s["lines"][1]["y"])?, f(&s["lines"][1]["row_h"])?);
+    for (a, b, line_y) in [(u0, u1, y), (x0, x1, f(&s["lines"][0]["y"])?)] {
+        let ink = scr
+            .brightest(&shot, a, line_y + 6., b, line_y + rh - 6.)
+            .unwrap_or([0, 0, 0]);
+        ensure!(
+            ink[1] > ink[0].saturating_add(25) && ink[1] > ink[2].saturating_add(25),
+            "a variable is not green on screen: {ink:?}"
+        );
+    }
+
+    // The tip under the pointer shows the value, and goes when the pointer leaves the name.
+    h.hover(&app, (u0 + u1) / 2., y + rh / 2.)?;
+    let s2 = app.wait_for("the tip", T, |s| s["tooltip"]["value"] == "$9,800.00")?;
+    ensure!(
+        s2["tooltip"]["name"] == "cost of development",
+        "{}",
+        s2["tooltip"]
+    );
+    let shot = h.shot()?;
+    let (tx, ty) = (f(&s2["tooltip"]["x"])?, f(&s2["tooltip"]["y"])?);
+    let ink = scr
+        .brightest(&shot, tx + 8., ty + 6., tx + 90., ty + 26.)
+        .unwrap_or([0, 0, 0]);
+    ensure!(luminance(ink) > 150., "no text in the tip: {ink:?}");
+    h.hover(&app, f(&s["text_x"])? + 900., y + rh / 2.)?;
+    app.wait_for("the tip gone", T, |s| s["tooltip"].is_null())?;
+
+    // Several names fit `a long var`: a list, chosen with Down and Enter.
+    h.press(&[], "Escape")?;
+    let s = app.wait_for("the list", T, |s| s["completion"]["candidates"].is_array())?;
+    ensure!(
+        s["completion"]["candidates"]
+            == serde_json::json!(["a long variable name", "a long variable two"])
+            && s["completion"]["selected"] == 0,
+        "the list: {}",
+        s["completion"]
+    );
+    let shot = h.shot()?;
+    let (cx0, cy0) = (f(&s["completion"]["x"])?, f(&s["completion"]["y"])?);
+    let blue = scr
+        .brightest(&shot, cx0 + 4., cy0 + 4., cx0 + 120., cy0 + 40.)
+        .unwrap_or([0, 0, 0]);
+    ensure!(luminance(blue) > 60., "the list is not drawn: {blue:?}");
+    h.press(&[], "Down")?;
+    app.wait_for("the second name", T, |s| s["completion"]["selected"] == 1)?;
+    h.press(&[], "Return")?;
+    let s = app.wait_for("the name put in", T, |s| {
+        s["lines"][4]["text"] == "a long variable two" && s["completion"].is_null()
+    })?;
+    ensure!(
+        answer(&s, 4) == Some("5"),
+        "the line is the variable: {:?}",
+        answer(&s, 4)
+    );
+
+    // One name fits: it is put in at once. Any other key closes a list without taking anything.
+    h.press(&[], "Return")?;
+    h.type_text("cost of d")?;
+    h.press(&[], "Escape")?;
+    let s = app.wait_for("the name finished", T, |s| {
+        s["lines"][5]["text"] == "cost of development"
+    })?;
+    ensure!(answer(&s, 5) == Some("$9,800.00"));
+    h.press(&[], "Return")?;
+    h.type_text("a long var")?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the list again", T, |s| {
+        s["completion"]["candidates"].is_array()
+    })?;
+    h.type_text("x")?;
+    let s = app.wait_for("the list closed by typing", T, |s| {
+        s["completion"].is_null()
+    })?;
+    ensure!(
+        s["lines"][6]["text"] == "a long varx",
+        "text {}",
+        s["lines"][6]["text"]
+    );
     app.finish()
 }
 

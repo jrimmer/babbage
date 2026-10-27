@@ -14,7 +14,6 @@ use futures::StreamExt;
 use gpui::{App, Entity, px};
 use serde_json::{Value, json};
 
-use crate::syntax::spans;
 use crate::view::{ROW_H, SheetView};
 
 type Job = (String, mpsc::Sender<String>);
@@ -111,7 +110,13 @@ pub fn report(v: &SheetView) -> Value {
             let result = v.computed.results.get(i);
             let ans = v.computed.answers.get(i);
             let shaped = layout.and_then(|l| l.shaped.get(i)).and_then(Option::as_ref);
-            let typed = spans(text, result);
+            let names: Vec<String> = v
+                .computed
+                .names
+                .get(i)
+                .map(|n| n.iter().map(|(name, _)| name.clone()).collect())
+                .unwrap_or_default();
+            let typed = crate::syntax::spans_in(text, result, &names);
             let sh = v.shown_line(i);
             let sp: Vec<Value> = typed
                 .into_iter()
@@ -136,6 +141,7 @@ pub fn report(v: &SheetView) -> Value {
                 "text": text,
                 "shown": sh.text,
                 "format": v.ed.format(i).to_text(),
+                "subtotal": result.is_some_and(|r| r.subtotal),
                 "kind": result.map_or("blank", |r| kind_name(&r.kind)),
                 "answer": ans.and_then(|a| a.text.clone()),
                 "exact": ans.is_none_or(|a| a.exact),
@@ -216,6 +222,13 @@ pub fn report(v: &SheetView) -> Value {
         }),
         "more_button": layout.map(|l| json!({"from_right": crate::answer_menu::MORE_FROM_RIGHT, "radius": crate::answer_menu::MORE_RADIUS, "right": f32::from(l.bounds.right())})),
         "hover_line": v.hover_line,
+        "scrubbing": v.is_scrubbing(),
+        "tooltip": v.hover_var.as_ref().map(|t| json!({"name": t.name, "value": t.value, "x": t.x, "y": t.y})),
+        "completion": v.complete.as_ref().map(|c| {
+            let at = v.completion_origin();
+            json!({"line": c.line, "candidates": c.candidates, "selected": c.selected,
+                   "x": at.map(|a| a.0), "y": at.map(|a| a.1), "row_h": crate::autocomplete::COMPLETION_ROW_H})
+        }),
         "number_format": format!("{:?}", crate::prefs::current().number_format),
         "work_hours": crate::prefs::current().work_hours_per_day,
         "settings_path": crate::prefs::settings_path().map(|p| p.display().to_string()),

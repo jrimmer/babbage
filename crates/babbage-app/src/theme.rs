@@ -21,6 +21,8 @@ pub struct Colors {
     pub currency: Hsla,
     pub chip_bg: Hsla,
     pub chip_text: Hsla,
+    /// A name the sheet defined.
+    pub variable: Hsla,
     pub comment: Hsla,
     pub ignored: Hsla,
     pub warn: Hsla,
@@ -79,6 +81,7 @@ impl Colors {
             currency: hex(p.currency),
             chip_bg: hex(p.chip),
             chip_text: hex(mix(p.background, 0x000000, 0.6)),
+            variable: hex(0x62c25a),
             comment: hex(mix(p.background, p.foreground, 0.45)),
             ignored: hex(mix(p.background, p.foreground, 0.38)),
             warn: hex(p.warn),

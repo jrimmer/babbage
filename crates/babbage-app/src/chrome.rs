@@ -115,6 +115,12 @@ pub const KEYS: &[(&str, &str)] = &[
     ("Ctrl+/", "Comment the lines in or out"),
     ("Ctrl+Shift+E", "Export the sheet (text, CSV, HTML, PDF)"),
     ("Alt+Right", "Focus the answer of the line"),
+    ("Alt + drag a number", "Count it up or down"),
+    ("Esc", "Finish the name of a variable being typed"),
+    (
+        "⋯ on an answer",
+        "Copy it, set its decimal places, switches, subtotal, delete",
+    ),
     ("Double / triple click", "Select a word / a line"),
     ("Ctrl+Q", "Save and quit"),
 ];

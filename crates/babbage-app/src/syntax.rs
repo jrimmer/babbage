@@ -12,6 +12,8 @@ pub enum Class {
     Unit,
     Currency,
     LineRef,
+    /// A name the sheet defined (`rent = $900`), where it is defined and where it is used.
+    Variable,
     Comment,
     Heading,
     /// A word the engine skipped.
@@ -28,6 +30,7 @@ impl Class {
             Class::Unit => "unit",
             Class::Currency => "currency",
             Class::LineRef => "lineref",
+            Class::Variable => "variable",
             Class::Comment => "comment",
             Class::Heading => "heading",
             Class::Ignored => "ignored",
@@ -107,6 +110,40 @@ fn carve(spans: &mut Vec<Span>, range: Range<usize>, class: Class) {
         }
     }
     *spans = out;
+}
+
+/// `spans`, with each use of a name the sheet defined (`names`, longest first is not required) drawn as a variable.
+/// A name matches whole, as typed (names are case-sensitive in the engine), and never inside a comment or a heading.
+pub fn spans_in(line: &str, result: Option<&LineResult>, names: &[String]) -> Vec<Span> {
+    let mut out = spans(line, result);
+    if names.is_empty()
+        || matches!(
+            result.map(|r| &r.kind),
+            Some(LineKind::Comment | LineKind::Heading(_) | LineKind::Divider)
+        )
+    {
+        return out;
+    }
+    let mut ordered: Vec<&String> = names.iter().filter(|n| !n.is_empty()).collect();
+    ordered.sort_by_key(|n| std::cmp::Reverse(n.len()));
+    let mut taken: Vec<Range<usize>> = Vec::new();
+    for name in ordered {
+        let mut from = 0;
+        while let Some(at) = line[from..].find(name.as_str()) {
+            let start = from + at;
+            let end = start + name.len();
+            from = end;
+            let word = |c: char| c.is_alphanumeric() || c == '_';
+            let before = line[..start].chars().next_back().is_some_and(word);
+            let after = line[end..].chars().next().is_some_and(word);
+            if before || after || taken.iter().any(|t| start < t.end && t.start < end) {
+                continue;
+            }
+            taken.push(start..end);
+            carve(&mut out, start..end, Class::Variable);
+        }
+    }
+    out
 }
 
 /// Spans covering all of `line`, in order, with no gaps.
@@ -454,5 +491,34 @@ mod tests {
     fn conversion_targets_are_units() {
         let c = classes("5 km in mi");
         assert!(c.contains(&("mi", Class::Unit)), "{c:?}");
+    }
+
+    #[test]
+    fn a_name_the_sheet_defined_is_a_variable_where_it_stands() {
+        let names = vec!["rent".to_string(), "total spent".to_string()];
+        let class_of = |line: &str| -> Vec<(String, Class)> {
+            spans_in(line, None, &names)
+                .into_iter()
+                .map(|s| (line[s.range].to_string(), s.class))
+                .collect()
+        };
+        let c = class_of("rent + 5");
+        assert!(c.contains(&("rent".to_string(), Class::Variable)), "{c:?}");
+        let c = class_of("total spent += $18");
+        assert!(
+            c.contains(&("total spent".to_string(), Class::Variable)),
+            "{c:?}"
+        );
+        // Whole words only, and exactly as typed.
+        for line in ["parent + 1", "rents + 1", "Rent + 1"] {
+            assert!(
+                class_of(line).iter().all(|(_, k)| *k != Class::Variable),
+                "{line}"
+            );
+        }
+        // Nothing changes for a line with no names, or the spans stay a covering of the line.
+        let all = spans_in("rent rent", None, &names);
+        assert_eq!(all.iter().map(|s| s.range.len()).sum::<usize>(), 9);
+        assert_eq!(all.iter().filter(|s| s.class == Class::Variable).count(), 2);
     }
 }

@@ -79,6 +79,25 @@ impl Init {
     }
 }
 
+/// A variable under the pointer: its value as the sheet shows it, and the point (window coordinates) the tip hangs
+/// from.
+#[derive(Clone, Debug, PartialEq)]
+pub struct HoverVar {
+    pub name: String,
+    pub value: String,
+    pub x: f32,
+    pub y: f32,
+}
+
+/// A number being scrubbed: where it is in the line, how it reads now, and where the pointer started.
+struct Scrub {
+    line: usize,
+    start: usize,
+    len: usize,
+    number: crate::scrub::Scrubbable,
+    origin_x: f32,
+}
+
 /// An editor for the lines a sheet's file holds: the text, with how each answer is written read from the trailer.
 fn editor_from_file(lines: &[String]) -> Editor {
     let (content, formats) = linefmt::split(lines);
@@ -105,6 +124,12 @@ pub struct SheetView {
     /// is open.
     pub hover_line: Option<usize>,
     pub answer_menu: Option<usize>,
+    /// The list of names Escape offers while a name is half typed.
+    pub complete: Option<crate::autocomplete::Completion>,
+    /// What a variable the pointer rests on is worth, and where to show it.
+    pub hover_var: Option<HoverVar>,
+    /// A number being dragged with Alt held.
+    scrub: Option<Scrub>,
     pub answer_focus: Option<usize>,
     pub rename: Option<Rename>,
     /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
@@ -155,6 +180,9 @@ impl SheetView {
             panel: None,
             hover_line: None,
             answer_menu: None,
+            complete: None,
+            hover_var: None,
+            scrub: None,
             answer_focus: None,
             rename: None,
             menu: None,
@@ -400,6 +428,10 @@ impl SheetView {
 
     /// After the text changed by something other than typing (a menu action): works it out, saves it, keeps the
     /// caret in view.
+    pub fn is_scrubbing(&self) -> bool {
+        self.scrub.is_some()
+    }
+
     pub fn after_edit(&mut self, cx: &mut Context<Self>) {
         self.edited(cx);
     }
@@ -411,6 +443,7 @@ impl SheetView {
     /// Called after the text changed: evaluates the whole sheet again and queues the save.
     fn edited(&mut self, cx: &mut Context<Self>) {
         self.answer_focus = None;
+        self.complete = None;
         self.recompute();
         self.saver.submit(&self.current, self.file_lines());
         self.reveal = true;
@@ -493,6 +526,10 @@ impl SheetView {
                 cx.stop_propagation();
                 return;
             }
+        }
+        if self.complete.is_some() && !ctrl && self.completion_key(key, cx) {
+            cx.stop_propagation();
+            return;
         }
         if self.rename.is_some() {
             self.rename_key(ks.key.as_str(), ks.key_char.as_deref(), ctrl, cx);
@@ -668,8 +705,10 @@ impl SheetView {
             "backspace" => self.ed.backspace(false),
             "delete" => self.ed.delete(false),
             "enter" => self.ed.newline(),
-            // Tab and Escape do nothing in a sheet; swallowing them keeps a tab out of the text.
-            "tab" | "escape" => {}
+            // Escape finishes the name of a variable being typed; Tab does nothing in a sheet (swallowing it keeps a
+            // tab out of the text).
+            "escape" => self.start_completion(cx),
+            "tab" => {}
             _ => return false,
         }
         true
@@ -803,6 +842,13 @@ impl SheetView {
         let Some((pos, in_answers)) = self.position_at(ev.position) else {
             return;
         };
+        if !in_answers
+            && ev.modifiers.alt
+            && let Some(scrub) = self.number_at(ev.position, pos)
+        {
+            self.scrub = Some(scrub);
+            return;
+        }
         if in_answers && self.on_more_button(ev.position, pos.line) {
             self.open_answer_menu(pos.line);
         } else if in_answers {
@@ -822,6 +868,59 @@ impl SheetView {
         self.moved(window, cx);
     }
 
+    /// The variable the pointer is on, with its value: the answer of the line that defines it.
+    fn variable_at(&self, p: Point<Pixels>) -> Option<HoverVar> {
+        let l = self.layout.as_ref()?;
+        let (pos, in_answers) = self.position_at(p)?;
+        if in_answers || p.x < l.text_x || self.ed.line(pos.line).is_empty() {
+            return None;
+        }
+        let names: Vec<String> = self
+            .computed
+            .names
+            .get(pos.line)?
+            .iter()
+            .map(|(n, _)| n.clone())
+            .collect();
+        let line = self.ed.line(pos.line);
+        let span = crate::syntax::spans_in(line, self.computed.results.get(pos.line), &names)
+            .into_iter()
+            .find(|s| {
+                s.class == crate::syntax::Class::Variable
+                    && s.range.start <= pos.col
+                    && pos.col <= s.range.end
+            })?;
+        let name = line[span.range.clone()].to_string();
+        let (_, at) = self
+            .computed
+            .names
+            .get(pos.line)?
+            .iter()
+            .find(|(n, _)| *n == name)?;
+        let value = self.answer_for(*at)?.text.clone()?;
+        let sh = self.shown_line(pos.line);
+        let (from, to) = (sh.to_shown(span.range.start), sh.to_shown(span.range.end));
+        let k = self.wrap.row_containing(pos.line, from);
+        // The pointer has to be over the name itself, not past the end of the line it ends.
+        let shaped = l.shaped.get(pos.line).and_then(Option::as_ref)?;
+        let row_start = self.wrap.row_span(pos.line, k, sh.text.len()).0;
+        let x0 = shaped.x_for_index(row_start);
+        let (xa, xb) = (
+            l.text_x + shaped.x_for_index(from) - x0,
+            l.text_x + shaped.x_for_index(to) - x0,
+        );
+        if p.x < xa - px(2.) || p.x > xb + px(2.) {
+            return None;
+        }
+        let y = f32::from(l.top) + (self.wrap.top_row(pos.line) + k + 1) as f32 * ROW_H;
+        Some(HoverVar {
+            name,
+            value,
+            x: f32::from(p.x) - 30.,
+            y,
+        })
+    }
+
     /// Whether `p` is on the `⋯` button of `line`, which only a line with an answer has.
     fn on_more_button(&self, p: Point<Pixels>, line: usize) -> bool {
         let Some(l) = self.layout.as_ref() else {
@@ -832,12 +931,82 @@ impl SheetView {
         has_answer && (f32::from(p.x) - centre).abs() <= crate::answer_menu::MORE_RADIUS + 4.
     }
 
+    /// The plain number under the pointer, ready to scrub.
+    fn number_at(&self, p: Point<Pixels>, pos: Pos) -> Option<Scrub> {
+        let l = self.layout.as_ref()?;
+        let line = self.ed.line(pos.line);
+        let names: Vec<String> = self
+            .computed
+            .names
+            .get(pos.line)
+            .map(|v| v.iter().map(|(n, _)| n.clone()).collect())
+            .unwrap_or_default();
+        let span = crate::syntax::spans_in(line, self.computed.results.get(pos.line), &names)
+            .into_iter()
+            .find(|s| {
+                s.class == crate::syntax::Class::Number
+                    && s.range.start <= pos.col
+                    && pos.col <= s.range.end
+            })?;
+        let number = crate::scrub::Scrubbable::parse(&line[span.range.clone()])?;
+        let sh = self.shown_line(pos.line);
+        let (from, to) = (sh.to_shown(span.range.start), sh.to_shown(span.range.end));
+        let shaped = l.shaped.get(pos.line).and_then(Option::as_ref)?;
+        let k = self.wrap.row_containing(pos.line, from);
+        let x0 = shaped.x_for_index(self.wrap.row_span(pos.line, k, sh.text.len()).0);
+        let (xa, xb) = (
+            l.text_x + shaped.x_for_index(from) - x0,
+            l.text_x + shaped.x_for_index(to) - x0,
+        );
+        if p.x < xa - px(3.) || p.x > xb + px(3.) {
+            return None;
+        }
+        Some(Scrub {
+            line: pos.line,
+            start: span.range.start,
+            len: span.range.len(),
+            number,
+            origin_x: f32::from(p.x),
+        })
+    }
+
+    /// Moves a number being scrubbed to where the pointer is.
+    fn scrub_to(&mut self, x: f32, cx: &mut Context<Self>) {
+        let Some(s) = &self.scrub else { return };
+        let text = s.number.shifted(crate::scrub::steps_for(x - s.origin_x));
+        let (line, start, len) = (s.line, s.start, s.len);
+        if text.len() == len && self.ed.line(line).get(start..start + len) == Some(text.as_str()) {
+            return;
+        }
+        self.ed.replace(
+            Pos::new(line, start),
+            Pos::new(line, start + len),
+            &text,
+            Kind::Scrub,
+        );
+        if let Some(s) = &mut self.scrub {
+            s.len = text.len();
+        }
+        self.edited(cx);
+    }
+
     fn on_mouse_move(&mut self, ev: &MouseMoveEvent, window: &mut Window, cx: &mut Context<Self>) {
+        if self.scrub.is_some() {
+            if ev.pressed_button == Some(MouseButton::Left) {
+                self.scrub_to(f32::from(ev.position.x), cx);
+            }
+            return;
+        }
         let over = self
             .position_at(ev.position)
             .and_then(|(pos, in_answers)| in_answers.then_some(pos.line));
         if over != self.hover_line {
             self.hover_line = over;
+            cx.notify();
+        }
+        let var = self.variable_at(ev.position);
+        if var != self.hover_var {
+            self.hover_var = var;
             cx.notify();
         }
         if self.selecting
@@ -851,6 +1020,7 @@ impl SheetView {
 
     fn on_mouse_up(&mut self, _: &MouseUpEvent, _: &mut Window, _: &mut Context<Self>) {
         self.selecting = false;
+        self.scrub = None;
     }
 
     fn on_scroll(&mut self, ev: &ScrollWheelEvent, _: &mut Window, cx: &mut Context<Self>) {
@@ -1125,6 +1295,21 @@ impl Render for SheetView {
         let toolbar = self.toolbar(c, cx);
         let panel = self.panel_view(c, cx);
         let answer_menu = self.answer_menu_view(c, cx);
+        let completion = self.completion_view(c, cx);
+        let tip = self.hover_var.clone().map(|t| {
+            div()
+                .absolute()
+                .left(px(t.x))
+                .top(px(t.y))
+                .px(px(12.))
+                .py(px(6.))
+                .rounded(px(10.))
+                .bg(c.raised)
+                .border_1()
+                .border_color(c.line)
+                .text_size(px(14.))
+                .child(SharedString::from(t.value))
+        });
         div()
             .key_context("Babbage")
             .track_focus(&self.focus)
@@ -1162,6 +1347,8 @@ impl Render for SheetView {
             .children(chip)
             .children(panel)
             .children(answer_menu)
+            .children(completion)
+            .children(tip)
     }
 }
 
@@ -1355,6 +1542,7 @@ pub fn class_color(c: &Colors, class: Class) -> Hsla {
         Class::Unit => c.unit,
         Class::Currency => c.currency,
         Class::LineRef => c.chip_text,
+        Class::Variable => c.variable,
         Class::Comment => c.comment,
         Class::Heading => c.text,
         Class::Ignored => c.ignored,
