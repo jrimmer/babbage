@@ -12,6 +12,7 @@ use gpui::{
     UnderlineStyle, Window, div, point, prelude::*, px, size,
 };
 
+use crate::chrome::Panel;
 use crate::computed::{Answer, Computed, compute};
 use crate::editor_model::{Editor, History, Kind, Marked, Pos};
 use crate::shown::{Shown, shown_for};
@@ -23,8 +24,8 @@ use crate::wrap::Wrap;
 pub const ROW_H: f32 = 36.;
 pub const FONT_PX: f32 = 21.;
 pub const GUTTER_W: f32 = 64.;
-pub const TOP_PAD: f32 = 22.;
-pub const SIDEBAR_W: f32 = 250.;
+pub const TOP_PAD: f32 = 14.;
+pub const SIDEBAR_W: f32 = 236.;
 /// Where the first sheet card starts, how tall a card is and how tall a row of its menu is, in points: fixed so
 /// a test can aim at them.
 pub const SIDEBAR_TOP: f32 = 56.;
@@ -91,6 +92,8 @@ pub struct SheetView {
     histories: HashMap<SheetId, History>,
     pub computed: Computed,
     pub sidebar_open: bool,
+    /// The settings or help panel opened from the toolbar.
+    pub panel: Option<Panel>,
     pub answer_focus: Option<usize>,
     pub rename: Option<Rename>,
     /// The sheet whose menu (Rename, Move to trash) is open in the sidebar.
@@ -138,6 +141,7 @@ impl SheetView {
             histories: HashMap::new(),
             computed,
             sidebar_open: true,
+            panel: None,
             answer_focus: None,
             rename: None,
             menu: None,
@@ -443,6 +447,12 @@ impl SheetView {
         let m = &ks.modifiers;
         let (ctrl, shift, alt) = (m.control, m.shift, m.alt);
         let key = ks.key.as_str();
+        if self.panel.is_some() && key == "escape" {
+            self.panel = None;
+            cx.notify();
+            cx.stop_propagation();
+            return;
+        }
         if self.menu.take().is_some() {
             // Any key closes the menu; Escape does nothing else.
             cx.notify();
@@ -755,6 +765,7 @@ impl SheetView {
     fn on_mouse_down(&mut self, ev: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         window.focus(&self.focus);
         self.menu = None;
+        self.panel = None;
         let Some((pos, in_answers)) = self.position_at(ev.position) else {
             return;
         };
@@ -860,7 +871,7 @@ impl SheetView {
                 )
                 .child(
                     div()
-                        .text_size(px(15.))
+                        .text_size(px(16.))
                         .overflow_hidden()
                         .whitespace_nowrap()
                         .text_ellipsis()
@@ -871,7 +882,7 @@ impl SheetView {
                         .flex()
                         .flex_row()
                         .justify_between()
-                        .text_size(px(12.))
+                        .text_size(px(12.5))
                         .text_color(c.muted)
                         .child(SharedString::from(describe_time(s.modified)))
                         .child(SharedString::from(count)),
@@ -938,7 +949,20 @@ impl SheetView {
                             this.new_sheet(cx);
                         }),
                     )
-                    .child("⊕")
+                    .child(
+                        div()
+                            .w(px(18.))
+                            .h(px(18.))
+                            .rounded(px(9.))
+                            .bg(c.muted)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .text_color(c.sidebar)
+                            .text_size(px(15.))
+                            .font_weight(FontWeight::BOLD)
+                            .child("+"),
+                    )
                     .child("New Sheet"),
             )
             .child(
@@ -948,6 +972,35 @@ impl SheetView {
                     .flex_col()
                     .overflow_hidden()
                     .children(cards),
+            )
+            .child(
+                div()
+                    .mx(px(8.))
+                    .mb(px(10.))
+                    .pt(px(10.))
+                    .border_t_1()
+                    .border_color(c.line)
+                    .child(
+                        div()
+                            .id("folder-pill")
+                            .h(px(36.))
+                            .px(px(12.))
+                            .rounded(px(8.))
+                            .bg(c.raised)
+                            .flex()
+                            .items_center()
+                            .gap(px(10.))
+                            .text_size(px(14.))
+                            .child(
+                                div()
+                                    .w(px(16.))
+                                    .h(px(13.))
+                                    .rounded(px(3.))
+                                    .border_2()
+                                    .border_color(c.muted),
+                            )
+                            .child("General"),
+                    ),
             )
             .when_some(self.notice.clone(), |d, n| {
                 d.child(
@@ -989,7 +1042,19 @@ impl SheetView {
                         .font_weight(FontWeight::MEDIUM)
                         .when(failed, |d| d.text_color(c.warn).text_size(px(13.)))
                         .child(SharedString::from(value)),
-                ),
+                )
+                .when(self.computed.left_out > 0, |d| {
+                    let n = self.computed.left_out;
+                    d.child(
+                        div()
+                            .text_color(c.warn)
+                            .text_size(px(12.))
+                            .child(SharedString::from(format!(
+                                "{n} {} left out",
+                                if n == 1 { "line" } else { "lines" }
+                            ))),
+                    )
+                }),
         )
     }
 }
@@ -1004,6 +1069,8 @@ impl Render for SheetView {
             None
         };
         let chip = self.total_chip(c);
+        let toolbar = self.toolbar(c, cx);
+        let panel = self.panel_view(c, cx);
         div()
             .key_context("Babbage")
             .track_focus(&self.focus)
@@ -1022,14 +1089,24 @@ impl Render for SheetView {
                     .flex_1()
                     .min_w(px(0.))
                     .h_full()
-                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
-                    .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
-                    .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
-                    .on_scroll_wheel(cx.listener(Self::on_scroll))
-                    .child(crate::element::SheetElement { view: entity }),
+                    .flex()
+                    .flex_col()
+                    .child(toolbar)
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_h(px(0.))
+                            .w_full()
+                            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                            .on_mouse_move(cx.listener(Self::on_mouse_move))
+                            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                            .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                            .on_scroll_wheel(cx.listener(Self::on_scroll))
+                            .child(crate::element::SheetElement { view: entity }),
+                    ),
             )
             .children(chip)
+            .children(panel)
     }
 }
 

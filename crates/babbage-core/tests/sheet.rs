@@ -1,4 +1,4 @@
-use babbage_core::sheet::floating_total;
+use babbage_core::sheet::{floating_total, floating_total_left_out};
 use babbage_core::{
     Error, FormatOptions, LineKind, LineResult, SheetOptions, evaluate_sheet, format_value,
 };
@@ -508,4 +508,17 @@ fn a_layout_word_at_the_start_of_a_line_is_just_a_word() {
         assert_eq!(r.len(), 1, "{line}");
     }
     assert_eq!(shown(&run(&["timespan 5 + 5"])[0]), "10");
+}
+
+#[test]
+fn the_total_says_how_many_lines_it_left_out() {
+    let left_out = |lines: &[&str]| floating_total_left_out(&run(lines), &SheetOptions::default());
+    assert_eq!(left_out(&["$10", "5", "3 gallons"]), 2);
+    assert_eq!(left_out(&["3 gallons", "5", "$10"]), 2);
+    assert_eq!(left_out(&["3 gallons", "5", "2 km", "4 kg"]), 3);
+    // Lines that can all be added leave nothing out, plain numbers joining the unit.
+    assert_eq!(left_out(&["5", "3 gallons"]), 0);
+    assert_eq!(left_out(&["5", "$10", "$20", "7"]), 0);
+    assert_eq!(left_out(&["hello"]), 0);
+    assert_eq!(left_out(&[]), 0);
 }

@@ -177,11 +177,17 @@ fn sum_in_order(values: &[&Value]) -> Result<Option<Value>, Error> {
 /// With no money among them it is the lines of the last line's kind. The reference app gave `3 gal` once for
 /// `$10`, `5`, `3 gallons` and `$10.00` twice; this follows the two.
 fn add_up(values: &[&Value]) -> Result<Value, Error> {
+    add_up_counting(values).map(|(total, _)| total)
+}
+
+/// Like `add_up`, with how many lines the sum left out because they could not be added to the others.
+fn add_up_counting(values: &[&Value]) -> Result<(Value, usize), Error> {
     let plain: Vec<&Value> = values
         .iter()
         .copied()
         .filter(|v| v.kind() == Kind::Plain)
         .collect();
+    let mut left_out = 0;
     let total = match sum_in_order(&plain) {
         Err(Error::IncompatibleUnits | Error::CurrencyRateNeeded) => {
             let last_with_unit = plain
@@ -197,6 +203,7 @@ fn add_up(values: &[&Value]) -> Result<Value, Error> {
                         && last_with_unit.is_some_and(|l| Value::binary(BinOp::Add, l, v).is_ok())
                 })
                 .collect();
+            left_out = plain.len() - same_kind.len();
             sum_in_order(&same_kind)?
         }
         other => other?,
@@ -207,7 +214,19 @@ fn add_up(values: &[&Value]) -> Result<Value, Error> {
     for p in values.iter().filter(|v| v.kind() == Kind::Percent) {
         total = Value::binary(BinOp::Add, &total, p)?;
     }
-    Ok(total)
+    Ok((total, left_out))
+}
+
+/// How many lines the floating total leaves out because they cannot be added to the others (plain numbers
+/// beside money, say). Zero when every line is in the sum.
+pub fn floating_total_left_out(results: &[LineResult], opts: &SheetOptions) -> usize {
+    let counted: Vec<Value> = results
+        .iter()
+        .filter(|r| !r.subtotal && (opts.declarations_in_totals || r.declares.is_none()))
+        .filter_map(LineResult::counted_value)
+        .collect();
+    let values: Vec<&Value> = counted.iter().collect();
+    add_up_counting(&values).map_or(0, |(_, left_out)| left_out)
 }
 
 /// Replaces `from..to` (char indexes) with spaces of the same byte length, so offsets stay meaningful.

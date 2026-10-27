@@ -1,7 +1,7 @@
 //! Runs the engine over a whole sheet and turns each result into the text the answer column shows.
 
 use babbage_core::settings::{Settings, scoped};
-use babbage_core::sheet::floating_total;
+use babbage_core::sheet::{floating_total, floating_total_left_out};
 use babbage_core::{
     FormatOptions, LineKind, LineResult, SheetOptions, evaluate_sheet, format_value,
 };
@@ -20,6 +20,8 @@ pub struct Computed {
     pub results: Vec<LineResult>,
     pub answers: Vec<Answer>,
     pub total: Option<Answer>,
+    /// How many lines the Total leaves out because they cannot be added to the others.
+    pub left_out: usize,
 }
 
 pub fn compute(lines: &[String]) -> Computed {
@@ -73,10 +75,12 @@ fn compute_scoped(lines: &[String], settings: &Settings) -> Computed {
             error: Some(e.to_string()),
         },
     });
+    let left_out = floating_total_left_out(&results, &opts);
     Computed {
         results,
         answers,
         total,
+        left_out,
     }
 }
 

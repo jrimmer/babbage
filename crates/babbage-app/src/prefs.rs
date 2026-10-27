@@ -3,28 +3,84 @@
 //! The zone comes from the system (`TZ`, then `/etc/localtime`) so "now" and bare times mean the user's own
 //! clock, daylight saving included. A small `key = value` file can override the rest.
 
-use std::sync::OnceLock;
+use std::sync::RwLock;
 
 use babbage_core::Number;
 use babbage_core::NumberFormat;
 use babbage_core::settings::{Settings, Tax};
 use babbage_core::zones::{Zone, ZoneSource};
 
-/// The settings for this run, read once.
+static SETTINGS: RwLock<Option<&'static Settings>> = RwLock::new(None);
+
+fn load() -> Settings {
+    let file = config_path()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .unwrap_or_default();
+    from_parts(
+        &file,
+        std::env::var("TZ").ok().as_deref(),
+        std::fs::read_link("/etc/localtime").ok().as_deref(),
+        std::env::var("BABBAGE_NOW").ok().as_deref(),
+        std::env::var("BABBAGE_TZDIR").ok().as_deref(),
+    )
+}
+
+/// The settings now: read from the file on first use, and again after `set` changes one. Each reading is kept for
+/// the life of the process (a settings change is rare, so the few kept copies cost nothing).
 pub fn current() -> &'static Settings {
-    static SETTINGS: OnceLock<Settings> = OnceLock::new();
-    SETTINGS.get_or_init(|| {
-        let file = config_path()
-            .and_then(|p| std::fs::read_to_string(p).ok())
-            .unwrap_or_default();
-        from_parts(
-            &file,
-            std::env::var("TZ").ok().as_deref(),
-            std::fs::read_link("/etc/localtime").ok().as_deref(),
-            std::env::var("BABBAGE_NOW").ok().as_deref(),
-            std::env::var("BABBAGE_TZDIR").ok().as_deref(),
-        )
-    })
+    if let Some(s) = *SETTINGS.read().expect("settings lock") {
+        return s;
+    }
+    let mut slot = SETTINGS.write().expect("settings lock");
+    if slot.is_none() {
+        *slot = Some(Box::leak(Box::new(load())));
+    }
+    let settings: Option<&'static Settings> = *slot;
+    settings.expect("set just above")
+}
+
+/// `text` with the line `key = value` set: the first line for the key is replaced, else one is added.
+pub fn with_key(text: &str, key: &str, value: &str) -> String {
+    let mut out = Vec::new();
+    let mut done = false;
+    for line in text.lines() {
+        let named = line
+            .split('#')
+            .next()
+            .and_then(|l| l.split_once('='))
+            .is_some_and(|(k, _)| k.trim() == key);
+        if named && !done {
+            out.push(format!("{key} = {value}"));
+            done = true;
+        } else if !named {
+            out.push(line.to_string());
+        }
+    }
+    if !done {
+        out.push(format!("{key} = {value}"));
+    }
+    out.join("\n") + "\n"
+}
+
+/// Writes `key = value` into the settings file and applies it at once.
+pub fn set(key: &str, value: &str) -> std::io::Result<()> {
+    let path = config_path().ok_or_else(|| {
+        std::io::Error::other("no settings file: neither XDG_CONFIG_HOME nor HOME is set")
+    })?;
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let text = std::fs::read_to_string(&path).unwrap_or_default();
+    let tmp = path.with_extension("tmp");
+    std::fs::write(&tmp, with_key(&text, key, value))?;
+    std::fs::rename(&tmp, &path)?;
+    *SETTINGS.write().expect("settings lock") = Some(Box::leak(Box::new(load())));
+    Ok(())
+}
+
+/// Where the settings file is (shown in the settings panel).
+pub fn settings_path() -> Option<std::path::PathBuf> {
+    config_path()
 }
 
 fn config_path() -> Option<std::path::PathBuf> {
@@ -239,6 +295,27 @@ mod tests {
         assert_eq!(s.number_format, NumberFormat::WesternEurope);
         assert_eq!(s.work_hours_per_day, Some(7));
         assert_eq!(zone(&s).as_deref(), Some("tz:Pacific/Auckland"));
+    }
+
+    #[test]
+    fn a_key_is_replaced_in_place_or_added() {
+        assert_eq!(with_key("", "work_hours", "7"), "work_hours = 7\n");
+        assert_eq!(
+            with_key(
+                "number_format = north-america # note\nwork_hours = 8\n",
+                "work_hours",
+                "6"
+            ),
+            "number_format = north-america # note\nwork_hours = 6\n"
+        );
+        assert_eq!(
+            with_key("a = 1\nwork_hours = 8\nwork_hours = 9\n", "work_hours", "5"),
+            "a = 1\nwork_hours = 5\n"
+        );
+        assert_eq!(
+            with_key("# work_hours = 8\n", "work_hours", "4"),
+            "# work_hours = 8\nwork_hours = 4\n"
+        );
     }
 
     #[test]

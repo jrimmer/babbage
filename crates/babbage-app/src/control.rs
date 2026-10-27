@@ -180,9 +180,28 @@ pub fn report(v: &SheetView) -> Value {
         "cursor": {"line": head.line, "col": head.col},
         "selection": sel,
         "composition": v.ed.marked_text(),
-        "total": v.computed.total.as_ref().map(|t| json!({"text": t.text, "exact": t.exact, "error": t.error})),
+        "total": v.computed.total.as_ref().map(|t| json!({"text": t.text, "exact": t.exact, "error": t.error, "left_out": v.computed.left_out})),
         "tzdb": babbage_core::settings::scoped(crate::prefs::current(), babbage_core::zones::current_release),
         "scroll": v.scroll(),
+        "panel": v.panel.map(crate::chrome::Panel::name),
+        "toolbar": layout.map(|l| {
+            let right = f32::from(l.bounds.right());
+            let top = f32::from(l.bounds.top()) - crate::chrome::TOOLBAR_H;
+            let buttons: Vec<Value> = crate::chrome::toolbar_buttons()
+                .iter()
+                .map(|(name, r)| json!({"name": name, "x": right + r.x, "y": top + r.y, "w": r.w, "h": r.h}))
+                .collect();
+            let (px_, py) = crate::chrome::panel_origin();
+            let items: Vec<Value> = crate::chrome::settings_items()
+                .iter()
+                .map(|(id, r)| json!({"id": id, "x": right + px_ + r.x, "y": top + crate::chrome::TOOLBAR_H + py + r.y, "w": r.w, "h": r.h}))
+                .collect();
+            json!({"h": crate::chrome::TOOLBAR_H, "buttons": buttons, "settings_items": items,
+                   "panel_x": right + px_, "panel_y": top + crate::chrome::TOOLBAR_H + py})
+        }),
+        "number_format": format!("{:?}", crate::prefs::current().number_format),
+        "work_hours": crate::prefs::current().work_hours_per_day,
+        "settings_path": crate::prefs::settings_path().map(|p| p.display().to_string()),
         "total_rows": v.wrap.total_rows(v.ed.len()),
         "text_w": layout.map(|l| f32::from(l.text_w)),
         "sidebar_open": v.sidebar_open,

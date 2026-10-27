@@ -40,6 +40,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("clipboard-lines", clipboard_lines),
     ("wrapping", wrapping),
     ("line-chips", line_chips),
+    ("toolbar", toolbar),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -949,11 +950,13 @@ fn keyboard_features(h: &mut Harness) -> anyhow::Result<()> {
 /// The row of line `line` lies inside the window's editor.
 fn row_visible(s: &Value, line: usize) -> anyhow::Result<()> {
     let (y, h) = (f(&s["lines"][line]["y"])?, f(&s["lines"][line]["h"])?);
-    let window_h = f(&s["window"]["h"])?;
+    // The pane starts below the toolbar: rows are placed in window coordinates.
+    let (top, window_h) = (f(&s["window"]["y"])?, f(&s["window"]["h"])?);
     ensure!(
-        y >= -1. && y + h <= window_h + 1.,
-        "line {} is off the window: y {y}, row {h}, window {window_h}",
-        line + 1
+        y >= top - 1. && y + h <= top + window_h + 1.,
+        "line {} is off the pane: y {y}, row {h}, pane {top} to {}",
+        line + 1,
+        top + window_h
     );
     Ok(())
 }
@@ -1167,7 +1170,8 @@ fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
             // sidebar ends.
             let right =
                 s["window"]["x"].as_f64().unwrap_or(0.) + s["window"]["w"].as_f64().unwrap_or(0.);
-            fitted = (right - f64::from(w)).abs() <= 2. && near("h", hh);
+            let bar = s["toolbar"]["h"].as_f64().unwrap_or(0.) as u32;
+            fitted = (right - f64::from(w)).abs() <= 2. && near("h", hh - bar);
             if fitted {
                 break;
             }
@@ -1200,6 +1204,114 @@ fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
             "no answer text on screen for line 1 at {w} wide"
         );
     }
+    app.finish()
+}
+
+/// The strip above the sheet: its three buttons work with a real pointer, the settings panel changes the number
+/// format and the working day (saved in the settings file and applied at once), the help panel opens and Escape
+/// closes either, and a Total that leaves lines out says so.
+fn toolbar(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("toolbar", None, &[])?;
+    h.type_line("1000 + 234")?;
+    h.type_line("$10")?;
+    h.type_line("5")?;
+    h.type_text("3 gallons")?;
+    let s = app.wait_for("the lines worked out", T, |s| {
+        answer(s, 0) == Some("1,234") && s["total"]["left_out"] == 3
+    })?;
+    ensure!(
+        s["total"]["text"] == "$10.00",
+        "a Total of clashing kinds is the money: {}",
+        s["total"]
+    );
+    let button = |s: &Value, name: &str| -> anyhow::Result<(f32, f32)> {
+        let b = s["toolbar"]["buttons"]
+            .as_array()
+            .context("toolbar buttons")?
+            .iter()
+            .find(|b| b["name"] == name)
+            .with_context(|| format!("a {name} button"))?;
+        Ok((
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+        ))
+    };
+    // Something is painted on each button.
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    for name in ["settings", "help", "sidebar"] {
+        let (x, y) = button(&s, name)?;
+        let ink = scr
+            .brightest(&shot, x - 12., y - 10., x + 12., y + 10.)
+            .unwrap_or([0, 0, 0]);
+        ensure!(
+            luminance(ink) > 60.,
+            "nothing is drawn on the {name} button: {ink:?}"
+        );
+    }
+
+    // The sidebar button hides and shows the sidebar.
+    ensure!(s["sidebar_open"] == true, "the sidebar starts open");
+    let (x, y) = button(&s, "sidebar")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("the sidebar hidden", T, |s| s["sidebar_open"] == false)?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("the sidebar shown", T, |s| s["sidebar_open"] == true)?;
+
+    // Help opens and Escape closes it.
+    let (x, y) = button(&s, "help")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("the help panel", T, |s| s["panel"] == "help")?;
+    h.press(&[], "Escape")?;
+    app.wait_for("the panel closed", T, |s| s["panel"].is_null())?;
+
+    // Settings: a number format and the working day, both saved to the file and applied.
+    let (x, y) = button(&s, "settings")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the settings panel", T, |s| s["panel"] == "settings")?;
+    let item = |s: &Value, id: &str| -> anyhow::Result<(f32, f32)> {
+        let b = s["toolbar"]["settings_items"]
+            .as_array()
+            .context("items")?
+            .iter()
+            .find(|b| b["id"] == id)
+            .with_context(|| format!("a {id} control"))?;
+        Ok((
+            f(&b["x"])? + f(&b["w"])? / 2.,
+            f(&b["y"])? + f(&b["h"])? / 2.,
+        ))
+    };
+    let (x, y) = item(&s, "western-europe")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("the European format", T, |s| {
+        answer(s, 0) == Some("1.234") && s["number_format"] == "WesternEurope"
+    })?;
+    let path = s["settings_path"]
+        .as_str()
+        .context("settings path")?
+        .to_string();
+    let saved = std::fs::read_to_string(&path)?;
+    ensure!(
+        saved.contains("number_format = western-europe"),
+        "the file {path} holds {saved:?}"
+    );
+    let (x, y) = item(&s, "hours-up")?;
+    h.click(&app, x, y, "left", 1)?;
+    let s = app.wait_for("nine working hours", T, |s| s["work_hours"] == 9)?;
+    ensure!(
+        std::fs::read_to_string(&path)?.contains("work_hours = 9"),
+        "the working day was not saved"
+    );
+    let (x, y) = item(&s, "north-america")?;
+    h.click(&app, x, y, "left", 1)?;
+    app.wait_for("the American format again", T, |s| {
+        answer(s, 0) == Some("1,234") && s["number_format"] == "NorthAmerica"
+    })?;
+    // A click in the sheet closes the panel.
+    let s = app.state()?;
+    let (ty, rh) = (f(&s["lines"][0]["y"])?, f(&s["lines"][0]["row_h"])?);
+    h.click(&app, f(&s["text_x"])? + 200., ty + rh / 2., "left", 1)?;
+    app.wait_for("the panel closed by a click", T, |s| s["panel"].is_null())?;
     app.finish()
 }
 
