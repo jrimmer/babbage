@@ -1,6 +1,6 @@
 //! Sheet files and the sheetbook (a folder of sheets).
 //!
-//! One sheet is one UTF-8 text file named `<name>.babbage`: each line of the sheet is one line of the
+//! One sheet is one UTF-8 text file named `<name>.bbg`: each line of the sheet is one line of the
 //! file, ended by `\n`, so the files read and diff like any text. A sheetbook is a directory of them.
 //! Deleting moves a file to the `.trash` folder and never removes it.
 

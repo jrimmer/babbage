@@ -1,6 +1,6 @@
 # 0083 What Sheet D left open
 
-Status: open (needs the reference app)
+Status: open, low priority (the owner said compatibility with the reference app is not absolute; these stay as documented guesses unless the owner chooses to answer Sheet E)
 Milestone: v1
 Area: engine
 

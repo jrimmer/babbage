@@ -1,4 +1,4 @@
-//! The sheetbook: a folder of `*.babbage` files.
+//! The sheetbook: a folder of `*.bbg` files.
 
 use std::fmt;
 use std::fs;
@@ -9,12 +9,14 @@ use crate::atomic::{sweep, write_atomic};
 use crate::format::{count_lines, decode, encode, title_of};
 use crate::{Error, IoContext, Result};
 
-const EXT: &str = "babbage";
+const EXT: &str = "bbg";
+/// The first name of the file, before the owner chose `.bbg`: sheets saved so are renamed when the book opens.
+const LEGACY_EXT: &str = "babbage";
 const TRASH: &str = ".trash";
 /// Names the book gives sheets itself start with this; any other name was chosen by the user.
 const AUTO_PREFIX: &str = "sheet-";
 
-/// A sheet's name: its file name without `.babbage`.
+/// A sheet's name: its file name without `.bbg`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SheetId(String);
 
@@ -87,6 +89,24 @@ pub fn data_dir() -> Option<PathBuf> {
     Some(base.join("babbage").join("sheets"))
 }
 
+/// Renames `name.babbage` to `name.bbg` where no `name.bbg` exists, so sheets saved under the first extension
+/// stay in the book. A pair with both is left alone: neither is overwritten.
+fn adopt_legacy_names(dir: &Path) {
+    let Ok(rd) = fs::read_dir(dir) else { return };
+    for entry in rd.flatten() {
+        let old = entry.path();
+        if old.extension().is_none_or(|e| e != LEGACY_EXT)
+            || !entry.file_type().is_ok_and(|t| t.is_file())
+        {
+            continue;
+        }
+        let new = old.with_extension(EXT);
+        if SheetBook::id_of(&new).is_some() && !new.exists() {
+            let _ = fs::rename(&old, &new);
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct SheetBook {
     dir: PathBuf,
@@ -98,6 +118,7 @@ impl SheetBook {
         let dir = dir.into();
         fs::create_dir_all(&dir).ctx(|| format!("create {}", dir.display()))?;
         sweep(&dir);
+        adopt_legacy_names(&dir);
         Ok(SheetBook { dir })
     }
 
@@ -132,7 +153,7 @@ impl SheetBook {
         SheetId::new(stem).ok().filter(|id| id.0 == stem)
     }
 
-    /// Every sheet, most recently modified first (ties by name). Files that are not `*.babbage`, hidden
+    /// Every sheet, most recently modified first (ties by name). Files that are not `*.bbg`, hidden
     /// files and the trash are skipped; a sheet that cannot be read as text is skipped too.
     pub fn list(&self) -> Result<Vec<SheetInfo>> {
         let rd = fs::read_dir(&self.dir).ctx(|| format!("list {}", self.dir.display()))?;
@@ -406,8 +427,8 @@ mod tests {
         let (_d, b) = book();
         b.create(&["real"]).unwrap();
         fs::write(b.dir().join("notes.txt"), "x").unwrap();
-        fs::write(b.dir().join(".hidden.babbage"), "x").unwrap();
-        fs::create_dir(b.dir().join("dir.babbage")).unwrap();
+        fs::write(b.dir().join(".hidden.bbg"), "x").unwrap();
+        fs::create_dir(b.dir().join("dir.bbg")).unwrap();
         let t = b.create(&["trashed"]).unwrap();
         b.delete(&t).unwrap();
         let l = b.list().unwrap();
@@ -416,9 +437,37 @@ mod tests {
     }
 
     #[test]
+    fn a_sheet_saved_under_the_first_extension_is_renamed_when_the_book_opens() {
+        let d = tempfile::tempdir().unwrap();
+        fs::write(d.path().join("Budget.babbage"), "rent = $900\n").unwrap();
+        fs::write(d.path().join("Both.babbage"), "old\n").unwrap();
+        fs::write(d.path().join("Both.bbg"), "new\n").unwrap();
+        fs::write(d.path().join(".hidden.babbage"), "x").unwrap();
+        let b = SheetBook::open(d.path()).unwrap();
+        assert!(!d.path().join("Budget.babbage").exists());
+        assert_eq!(
+            b.read(&SheetId::new("Budget").unwrap()).unwrap(),
+            vec!["rent = $900".to_string()]
+        );
+        // A pair is left alone: neither file is overwritten.
+        assert_eq!(
+            fs::read_to_string(d.path().join("Both.babbage")).unwrap(),
+            "old\n"
+        );
+        assert_eq!(
+            fs::read_to_string(d.path().join("Both.bbg")).unwrap(),
+            "new\n"
+        );
+        assert!(d.path().join(".hidden.babbage").exists());
+        // Opening again changes nothing.
+        SheetBook::open(d.path()).unwrap();
+        assert!(d.path().join("Budget.bbg").is_file());
+    }
+
+    #[test]
     fn a_file_that_is_not_utf8_is_skipped_by_the_listing_and_refused_by_read() {
         let (_d, b) = book();
-        fs::write(b.dir().join("bad.babbage"), [0xff, 0xfe, 0x41]).unwrap();
+        fs::write(b.dir().join("bad.bbg"), [0xff, 0xfe, 0x41]).unwrap();
         assert!(b.list().unwrap().is_empty());
         assert!(matches!(
             b.read(&SheetId::new("bad").unwrap()),

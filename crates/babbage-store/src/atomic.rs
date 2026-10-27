@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn a_write_replaces_the_file_and_leaves_no_temporary() {
         let d = tempfile::tempdir().unwrap();
-        let p = d.path().join("a.babbage");
+        let p = d.path().join("a.bbg");
         write_atomic(&p, b"one\n").unwrap();
         write_atomic(&p, b"two\n").unwrap();
         assert_eq!(read(&p), "two\n");
@@ -102,7 +102,7 @@ mod tests {
     fn a_crash_before_the_rename_keeps_the_old_file() {
         for stage in [Stage::HalfWritten, Stage::BeforeRename] {
             let d = tempfile::tempdir().unwrap();
-            let p = d.path().join("a.babbage");
+            let p = d.path().join("a.bbg");
             write_atomic(&p, b"old\n").unwrap();
             write_atomic_until(&p, b"new and longer\n", Some(stage)).unwrap();
             assert_eq!(read(&p), "old\n", "{stage:?}");
@@ -114,7 +114,7 @@ mod tests {
     #[test]
     fn a_crash_after_the_rename_has_the_new_file() {
         let d = tempfile::tempdir().unwrap();
-        let p = d.path().join("a.babbage");
+        let p = d.path().join("a.bbg");
         write_atomic(&p, b"old\n").unwrap();
         write_atomic_until(&p, b"new\n", Some(Stage::AfterRename)).unwrap();
         assert_eq!(read(&p), "new\n");
@@ -128,7 +128,7 @@ mod tests {
             std::process::abort();
         }
         let d = tempfile::tempdir().unwrap();
-        let p = d.path().join("a.babbage");
+        let p = d.path().join("a.bbg");
         write_atomic(&p, b"old\n").unwrap();
         let status = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
@@ -148,6 +148,6 @@ mod tests {
     #[test]
     fn writing_into_a_missing_folder_is_an_error() {
         let d = tempfile::tempdir().unwrap();
-        assert!(write_atomic(&d.path().join("no/such/a.babbage"), b"x").is_err());
+        assert!(write_atomic(&d.path().join("no/such/a.bbg"), b"x").is_err());
     }
 }

@@ -95,7 +95,7 @@ fn settle() {
 }
 
 fn read_sheet(dir: &Path, name: &str) -> Option<String> {
-    std::fs::read_to_string(dir.join(format!("{name}.babbage"))).ok()
+    std::fs::read_to_string(dir.join(format!("{name}.bbg"))).ok()
 }
 
 /// Waits until the sheet file on disk has exactly `want`.
@@ -108,7 +108,7 @@ fn wait_file(dir: &Path, name: &str, want: &str) -> anyhow::Result<()> {
         }
         ensure!(
             start.elapsed() < Duration::from_secs(10),
-            "{name}.babbage never became {want:?}; it holds {got:?}"
+            "{name}.bbg never became {want:?}; it holds {got:?}"
         );
         std::thread::sleep(Duration::from_millis(50));
     }
@@ -629,15 +629,13 @@ fn sheets_lifecycle(h: &mut Harness) -> anyhow::Result<()> {
         s["lines"][0]["text"] == "7 + 7",
         "the text survives a rename"
     );
-    ensure!(
-        dir.join("Budget.babbage").is_file() && !dir.join(format!("{second}.babbage")).exists()
-    );
+    ensure!(dir.join("Budget.bbg").is_file() && !dir.join(format!("{second}.bbg")).exists());
 
     // Delete moves the file to the trash.
     h.press(&["ctrl", "shift"], "Delete")?;
     let s = app.wait_for("the sheet gone", T, |s| s["current"] == first.as_str())?;
     ensure!(sheet_names(&s) == ["1 + 1"], "{:?}", sheet_names(&s));
-    ensure!(!dir.join("Budget.babbage").exists());
+    ensure!(!dir.join("Budget.bbg").exists());
     let trashed: Vec<_> = std::fs::read_dir(dir.join(".trash"))?.flatten().collect();
     ensure!(trashed.len() == 1, "{} files in the trash", trashed.len());
     let name = trashed[0].file_name().to_string_lossy().into_owned();
@@ -769,7 +767,7 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
         s["lines"][0]["text"] == "7 + 7",
         "the text survives a rename"
     );
-    ensure!(dir.join("Mouse.babbage").is_file());
+    ensure!(dir.join("Mouse.bbg").is_file());
 
     // A double click renames the sheet under it, and Escape leaves the name alone.
     let (x, y) = bar.card(sheet_index(&s, &first)?);
@@ -781,7 +779,7 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
     h.press(&[], "Escape")?;
     let s = app.wait_for("the rename cancelled", T, |s| s["rename"].is_null())?;
     ensure!(s["current"] == first.as_str() && sheet_names(&s).len() == 2);
-    ensure!(dir.join(format!("{first}.babbage")).is_file());
+    ensure!(dir.join(format!("{first}.bbg")).is_file());
 
     // Move to trash from the menu.
     let (x, y) = bar.card(sheet_index(&s, "Mouse")?);
@@ -793,7 +791,7 @@ fn sidebar_mouse(h: &mut Harness) -> anyhow::Result<()> {
         s["menu"].is_null() && s["sheets"].as_array().is_some_and(|a| a.len() == 1)
     })?;
     ensure!(s["current"] == first.as_str(), "{:?}", s["current"]);
-    ensure!(!dir.join("Mouse.babbage").exists());
+    ensure!(!dir.join("Mouse.bbg").exists());
     let trashed: Vec<_> = std::fs::read_dir(dir.join(".trash"))?.flatten().collect();
     ensure!(trashed.len() == 1, "{} files in the trash", trashed.len());
     let name = trashed[0].file_name().to_string_lossy().into_owned();
@@ -876,7 +874,7 @@ fn autosave_sigkill(h: &mut Harness) -> anyhow::Result<()> {
     // The debounce writes the sheet shortly after the last key.
     wait_file(&dir, &id, "12 + 12 + 15\n85 × 12\n")?;
     app.kill_hard()?;
-    ensure!(dir.join(format!("{id}.babbage")).is_file());
+    ensure!(dir.join(format!("{id}.bbg")).is_file());
 
     let mut again = h.launch("autosave2", Some(&dir), &[])?;
     let s = again.wait_for("the saved sheet", T, |s| answer(s, 1) == Some("1,020"))?;
