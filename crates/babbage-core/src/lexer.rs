@@ -300,6 +300,40 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
         .map(unit_products)
         .map(crate::dates::rewrite)
         .map(split_date_shifts)
+        .map(power_words)
+}
+
+/// `5 squared` is `5^2` and `2 cubed` is `2^3`, after anything that ends an operand (a number, a quantity, a
+/// bracket, a value a name stands for). Elsewhere the word is prose.
+pub fn power_words(toks: Vec<Token>) -> Vec<Token> {
+    let mut out: Vec<Token> = Vec::with_capacity(toks.len());
+    for t in toks {
+        let power = match &t.tok {
+            Tok::Word(w) if w.eq_ignore_ascii_case("squared") => Some(2),
+            Tok::Word(w) if w.eq_ignore_ascii_case("cubed") => Some(3),
+            _ => None,
+        };
+        let after_operand = out.last().is_some_and(|p| {
+            matches!(
+                p.tok,
+                Tok::Num(_) | Tok::Value(_) | Tok::Group(_) | Tok::Unit(_) | Tok::RParen
+            )
+        });
+        match power {
+            Some(n) if after_operand => {
+                out.push(Token {
+                    tok: Tok::Caret,
+                    at: t.at,
+                });
+                out.push(Token {
+                    tok: Tok::Num(Number::from_i64(n)),
+                    at: t.at,
+                });
+            }
+            _ => out.push(t),
+        }
+    }
+    out
 }
 
 /// In a run of quantities written one after another (`3h 5m 10s`), `m` next to a unit of time is minutes.

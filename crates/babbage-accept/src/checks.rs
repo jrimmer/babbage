@@ -38,6 +38,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("resize", resize_window),
     ("ime-composition", ime_composition),
     ("clipboard-lines", clipboard_lines),
+    ("wrapping", wrapping),
+    ("line-chips", line_chips),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -1198,6 +1200,222 @@ fn resize_window(h: &mut Harness) -> anyhow::Result<()> {
             "no answer text on screen for line 1 at {w} wide"
         );
     }
+    app.finish()
+}
+
+/// A reference to another line is drawn as a chip holding that line's answer, follows the line when it changes, and
+/// is one thing to the caret and to Backspace.
+fn line_chips(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("line-chips", None, &[])?;
+    h.type_line("12 + 12 + 15")?;
+    h.type_line("2 + 2")?;
+    h.type_text("line1 / line 2")?;
+    let s = app.wait_for("the chips", T, |s| s["lines"][2]["shown"] == "39 / 4")?;
+    ensure!(answer(&s, 2) == Some("9.75"), "answer {:?}", answer(&s, 2));
+    let chips: Vec<&Value> = s["lines"][2]["spans"]
+        .as_array()
+        .context("spans")?
+        .iter()
+        .filter(|x| x["class"] == "lineref")
+        .collect();
+    ensure!(chips.len() == 2, "two chips, got {chips:?}");
+    let (x0, x1) = (f(&chips[0]["x0"])?, f(&chips[0]["x1"])?);
+    // The chip is as wide as the answer it holds, which is wider than `line1` is typed... and bright text is on it.
+    ensure!(x1 > x0 + 10., "the chip has a width: {x0} to {x1}");
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (y, rh) = (f(&s["lines"][2]["y"])?, f(&s["lines"][2]["row_h"])?);
+    let ink = scr
+        .brightest(&shot, x0, y + 4., x1, y + rh - 4.)
+        .unwrap_or([0, 0, 0]);
+    ensure!(
+        luminance(ink) > 20.,
+        "nothing is painted on the chip: {ink:?}"
+    );
+
+    // It follows the line it points at.
+    h.press(&["ctrl"], "Home")?;
+    h.press(&[], "Down")?;
+    h.press(&[], "End")?;
+    for _ in 0..5 {
+        h.press(&[], "BackSpace")?;
+    }
+    h.type_text("3 + 4")?;
+    app.wait_for("the chip follows line 2", T, |s| {
+        s["lines"][2]["shown"] == "39 / 7"
+    })?;
+
+    // The caret steps over a whole chip, and Backspace removes the whole reference.
+    h.press(&["ctrl"], "End")?;
+    app.wait_for("the end of the sheet", T, |s| {
+        s["cursor"]["line"] == 2 && s["cursor"]["col"] == 14
+    })?;
+    h.press(&[], "Left")?;
+    app.wait_for("the start of the second reference", T, |s| {
+        s["cursor"]["col"] == 8
+    })?;
+    h.press(&[], "Right")?;
+    app.wait_for("past the second reference", T, |s| s["cursor"]["col"] == 14)?;
+    h.press(&[], "BackSpace")?;
+    let s = app.wait_for("the whole reference gone", T, |s| {
+        s["lines"][2]["text"] == "line1 / "
+    })?;
+    ensure!(
+        s["cursor"]["col"] == 8,
+        "caret after Backspace: {}",
+        s["cursor"]
+    );
+
+    // A click on a chip lands at one of its ends, never inside the reference.
+    h.type_text("line 2")?;
+    let s = app.wait_for("both chips again", T, |s| {
+        s["lines"][2]["shown"] == "39 / 7"
+    })?;
+    let chip = s["lines"][2]["spans"][0].clone();
+    ensure!(chip["class"] == "lineref", "first span {chip}");
+    let (cx0, cx1) = (f(&chip["x0"])?, f(&chip["x1"])?);
+    let (y, rh) = (f(&s["lines"][2]["y"])?, f(&s["lines"][2]["row_h"])?);
+    h.click(&app, (cx0 + cx1) / 2. - 3., y + rh / 2., "left", 1)?;
+    let s = app.wait_for("the caret next to the chip", T, |s| {
+        s["cursor"]["line"] == 2 && s["cursor"]["col"] != 14
+    })?;
+    ensure!(
+        [0u64, 5].contains(&s["cursor"]["col"].as_u64().unwrap_or(99)),
+        "a click on the first chip lands at its start or end: {}",
+        s["cursor"]
+    );
+    app.finish()
+}
+
+/// A long line wraps onto more rows instead of running under the answers: the rows stack, the answers and line
+/// numbers stay on the first row, a click on a lower row puts the caret there, Up and Down move between the rows,
+/// and a wider window needs fewer rows.
+fn wrapping(h: &mut Harness) -> anyhow::Result<()> {
+    let mut app = h.launch("wrapping", None, &[])?;
+    let long = "the quick brown fox jumps over the lazy dog ".repeat(7);
+    h.type_line(long.trim_end())?;
+    h.type_text("7 + 8")?;
+    let s = app.wait_for("a wrapped line and the one after it", T, |s| {
+        s["lines"][0]["rows"].as_u64().is_some_and(|r| r >= 2) && answer(s, 1) == Some("15")
+    })?;
+    let rows = s["lines"][0]["rows"].as_u64().unwrap_or(1);
+    let (y0, y1, rh) = (
+        f(&s["lines"][0]["y"])?,
+        f(&s["lines"][1]["y"])?,
+        f(&s["lines"][0]["row_h"])?,
+    );
+    ensure!(
+        (y1 - y0 - rows as f32 * rh).abs() < 0.5,
+        "line 2 starts {} below line 1, which has {rows} rows of {rh}",
+        y1 - y0
+    );
+    ensure!(
+        s["total_rows"].as_u64() == Some(rows + 1),
+        "total rows {} against {rows} and one",
+        s["total_rows"]
+    );
+    let starts: Vec<u64> = s["lines"][0]["row_starts"]
+        .as_array()
+        .context("row starts")?
+        .iter()
+        .filter_map(Value::as_u64)
+        .collect();
+    ensure!(
+        starts.len() as u64 == rows && starts[0] == 0,
+        "row starts {starts:?}"
+    );
+
+    // Nothing is painted between the text column and the answers, and the second row has text on it.
+    let shot = h.shot()?;
+    let scr = Screen::of(h, &app, &s)?;
+    let (text_x, text_w, answer_x) = (f(&s["text_x"])?, f(&s["text_w"])?, f(&s["answer_x"])?);
+    for k in 0..rows as usize {
+        let row_y = y0 + k as f32 * rh;
+        let text = scr
+            .brightest(&shot, text_x, row_y + 4., text_x + text_w, row_y + rh - 4.)
+            .unwrap_or([0, 0, 0]);
+        ensure!(
+            luminance(text) > 150.,
+            "no text on row {k} of the wrapped line"
+        );
+        let gap = scr
+            .brightest(
+                &shot,
+                text_x + text_w + 10.,
+                row_y + 4.,
+                answer_x - 4.,
+                row_y + rh - 4.,
+            )
+            .unwrap_or([0, 0, 0]);
+        ensure!(
+            luminance(gap) < 120.,
+            "text runs past the wrap width on row {k}: {gap:?}"
+        );
+    }
+
+    // A click on the second row puts the caret in the second row of the text.
+    h.click(&app, text_x + 90., y0 + rh * 1.5, "left", 1)?;
+    let s = app.wait_for("the caret on the second row", T, |s| {
+        s["cursor"]["line"] == 0 && s["cursor"]["col"].as_u64().is_some_and(|c| c >= starts[1])
+    })?;
+    if starts.len() > 2 {
+        ensure!(
+            s["cursor"]["col"].as_u64().is_some_and(|c| c < starts[2]),
+            "the caret is past the second row: {}",
+            s["cursor"]
+        );
+    }
+    // Up goes to the first row of the same line, Down comes back, and Down from the last row leaves the line.
+    h.press(&[], "Up")?;
+    app.wait_for("the caret on the first row", T, |s| {
+        s["cursor"]["line"] == 0 && s["cursor"]["col"].as_u64().is_some_and(|c| c < starts[1])
+    })?;
+    h.press(&[], "Down")?;
+    app.wait_for("the caret back on the second row", T, |s| {
+        s["cursor"]["line"] == 0 && s["cursor"]["col"].as_u64().is_some_and(|c| c >= starts[1])
+    })?;
+    for _ in 1..rows {
+        h.press(&[], "Down")?;
+    }
+    app.wait_for("the caret on the next line", T, |s| {
+        s["cursor"]["line"] == 1
+    })?;
+    // End of the wrapped line, then typing there scrolls and re-wraps without losing text.
+    h.press(&["ctrl"], "Home")?;
+    h.press(&[], "End")?;
+    app.wait_for("the end of the first row's line", T, |s| {
+        s["cursor"]["line"] == 0
+            && s["cursor"]["col"]
+                .as_u64()
+                .is_some_and(|c| c as usize >= long.trim_end().len())
+    })?;
+
+    // A narrower window takes more rows than a wider one. The app reports the size it last painted.
+    let w0 = f(&s["window"]["w"])? + f(&s["window"]["x"])?;
+    let mut seen = Vec::new();
+    for w in [1000u32, 2400] {
+        h.resize(&app, w, 700)?;
+        let mut rows_now = 0;
+        for _ in 0..40 {
+            let s = app.state()?;
+            let right =
+                s["window"]["x"].as_f64().unwrap_or(0.) + s["window"]["w"].as_f64().unwrap_or(0.);
+            rows_now = s["lines"][0]["rows"].as_u64().unwrap_or(0);
+            if (right - f64::from(w)).abs() <= 2. {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(250));
+        }
+        settle();
+        rows_now = app.state()?["lines"][0]["rows"]
+            .as_u64()
+            .unwrap_or(rows_now);
+        seen.push((w, rows_now));
+    }
+    ensure!(
+        seen[0].1 > seen[1].1 && seen[1].1 >= 1,
+        "rows by width: {seen:?}, {rows} at the start width {w0}"
+    );
     app.finish()
 }
 

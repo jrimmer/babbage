@@ -636,8 +636,16 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
     let mut warnings = Vec::new();
     let outcome = (|| {
         let masked = opts.natural.then(|| mask_dotted_numbers(text));
-        let (toks, ends) = lex_with_ends(masked.as_deref().unwrap_or(text))?;
+        if let Some((_, runs)) = &masked {
+            ignored.extend(runs.iter().map(|(a, b)| Ignored {
+                text: text[*a..*b].to_string(),
+                at: *a,
+            }));
+        }
+        let (toks, ends) = lex_with_ends(masked.as_ref().map_or(text, |(t, _)| t.as_str()))?;
         let toks = substitute(text, toks, &ends, index, st)?;
+        // A name that stands for a value can be squared too (`side squared`).
+        let toks = crate::lexer::power_words(toks);
         let is_word_form = crate::words::parse_words(&toks).is_some();
         let toks = if opts.natural && !is_word_form {
             drop_unknown(text, toks, &mut ignored, &mut warnings)?
@@ -654,10 +662,12 @@ fn evaluate_expression(text: &str, index: usize, st: &State, opts: &SheetOptions
 }
 
 /// `01.05.2005` is not a date and not a number: The reference app gives `1 day` for `01.05.2005 + 1 day`, as if
-/// the dotted run were not there. This blanks each run of digits joined by two or more dots, keeping the offsets.
-fn mask_dotted_numbers(text: &str) -> String {
+/// the dotted run were not there. This blanks each run of digits joined by two or more dots, keeping the offsets,
+/// and returns the runs so the line can show them as skipped.
+fn mask_dotted_numbers(text: &str) -> (String, Vec<(usize, usize)>) {
     let bytes = text.as_bytes();
     let mut masked = bytes.to_vec();
+    let mut runs = Vec::new();
     let digit = |i: usize| bytes.get(i).is_some_and(u8::is_ascii_digit);
     let mut i = 0;
     while i < bytes.len() {
@@ -682,10 +692,12 @@ fn mask_dotted_numbers(text: &str) -> String {
         }
         if dots >= 2 {
             masked[i..end].fill(b' ');
+            runs.push((i, end));
         }
         i = end;
     }
-    String::from_utf8(masked).expect("only ASCII digits and dots were replaced")
+    let masked = String::from_utf8(masked).expect("only ASCII digits and dots were replaced");
+    (masked, runs)
 }
 
 fn is_operand_start(t: &Tok) -> bool {

@@ -12,10 +12,12 @@ mod control;
 mod editor_model;
 mod element;
 mod prefs;
+mod shown;
 mod syntax;
 mod theme;
 mod timefmt;
 mod view;
+mod wrap;
 
 use std::path::PathBuf;
 use std::sync::Arc;

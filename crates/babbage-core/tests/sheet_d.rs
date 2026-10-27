@@ -190,3 +190,65 @@ fn money_per_month_over_a_length_of_time_takes_that_time_as_its_period() {
         ("$500 / 30 days", "$16.67/day"),
     ]);
 }
+
+#[test]
+fn squared_and_cubed_are_powers_after_anything_that_ends_an_operand() {
+    all(&[
+        ("5 squared", "25"),
+        ("2 cubed", "8"),
+        ("(1 + 2) squared", "9"),
+        ("5 m squared", "25 m²"),
+        ("3 squared + 1", "10"),
+        ("2 × 3 squared", "18"),
+        ("-3 squared", "-9"),
+        // With nothing before it the word is prose.
+        ("squared 5", "5"),
+    ]);
+    assert_eq!(
+        sheet(&["side = 4", "side squared"]),
+        ["4", "16"],
+        "a name that stands for a value can be squared"
+    );
+}
+
+fn sheet(lines: &[&str]) -> Vec<String> {
+    let s = Settings {
+        local_zone: Zone::named("America/Los_Angeles"),
+        ..Settings::at(NOW)
+    };
+    let opts = SheetOptions {
+        settings: s.clone(),
+        ..SheetOptions::default()
+    };
+    scoped(&s, || {
+        evaluate_sheet(lines, &opts)
+            .iter()
+            .map(|r| match &r.kind {
+                LineKind::Value(v) => {
+                    format_value(v, &r.display_options(&FormatOptions::default())).text
+                }
+                other => format!("{other:?}"),
+            })
+            .collect()
+    })
+}
+
+#[test]
+fn a_skipped_dotted_run_is_shown_as_ignored_not_dropped_silently() {
+    let s = Settings {
+        local_zone: Zone::named("America/Los_Angeles"),
+        ..Settings::at(NOW)
+    };
+    let opts = SheetOptions {
+        settings: s.clone(),
+        ..SheetOptions::default()
+    };
+    scoped(&s, || {
+        let r = &evaluate_sheet(&["01.05.2005 + 1 day"], &opts)[0];
+        let skipped: Vec<(String, usize)> =
+            r.ignored.iter().map(|i| (i.text.clone(), i.at)).collect();
+        assert_eq!(skipped, [("01.05.2005".to_string(), 0)]);
+        let plain = &evaluate_sheet(&["1.5 + 1"], &opts)[0];
+        assert!(plain.ignored.is_empty());
+    });
+}

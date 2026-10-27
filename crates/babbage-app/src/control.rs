@@ -111,13 +111,15 @@ pub fn report(v: &SheetView) -> Value {
             let result = v.computed.results.get(i);
             let ans = v.computed.answers.get(i);
             let shaped = layout.and_then(|l| l.shaped.get(i)).and_then(Option::as_ref);
-            let sp: Vec<Value> = spans(text, result)
+            let typed = spans(text, result);
+            let sh = v.shown_line(i);
+            let sp: Vec<Value> = typed
                 .into_iter()
                 .map(|s| {
                     let (x0, x1) = match (layout, shaped) {
-                        (Some(l), Some(sh)) => (
-                            Some(f32::from(l.text_x + sh.x_for_index(s.range.start))),
-                            Some(f32::from(l.text_x + sh.x_for_index(s.range.end))),
+                        (Some(l), Some(line)) => (
+                            Some(f32::from(l.text_x + line.x_for_index(sh.to_shown(s.range.start)))),
+                            Some(f32::from(l.text_x + line.x_for_index(sh.to_shown(s.range.end)))),
                         ),
                         _ => (None, None),
                     };
@@ -132,14 +134,18 @@ pub fn report(v: &SheetView) -> Value {
                 .collect();
             json!({
                 "text": text,
+                "shown": sh.text,
                 "kind": result.map_or("blank", |r| kind_name(&r.kind)),
                 "answer": ans.and_then(|a| a.text.clone()),
                 "exact": ans.is_none_or(|a| a.exact),
                 "error": ans.and_then(|a| a.error.clone()),
                 "ignored": result.map(|r| r.ignored.iter().map(|x| x.text.clone()).collect::<Vec<_>>()).unwrap_or_default(),
                 "warnings": result.map(|r| r.warnings.iter().map(|x| x.text.clone()).collect::<Vec<_>>()).unwrap_or_default(),
-                "y": layout.map(|l| f32::from(l.top + px(i as f32 * ROW_H))),
-                "h": ROW_H,
+                "y": layout.map(|l| f32::from(l.top + px(v.wrap.top_row(i) as f32 * ROW_H))),
+                "h": v.wrap.rows_of(i) as f32 * ROW_H,
+                "rows": v.wrap.rows_of(i),
+                "row_h": ROW_H,
+                "row_starts": (0..v.wrap.rows_of(i)).map(|k| v.wrap.row_span(i, k, sh.text.len()).0).collect::<Vec<_>>(),
                 "spans": sp,
             })
         })
@@ -177,6 +183,8 @@ pub fn report(v: &SheetView) -> Value {
         "total": v.computed.total.as_ref().map(|t| json!({"text": t.text, "exact": t.exact, "error": t.error})),
         "tzdb": babbage_core::settings::scoped(crate::prefs::current(), babbage_core::zones::current_release),
         "scroll": v.scroll(),
+        "total_rows": v.wrap.total_rows(v.ed.len()),
+        "text_w": layout.map(|l| f32::from(l.text_w)),
         "sidebar_open": v.sidebar_open,
         "answer_focus": v.answer_focus,
         "rename": v.rename.as_ref().map(|r| r.text.clone()),

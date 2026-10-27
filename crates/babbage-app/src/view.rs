@@ -14,9 +14,11 @@ use gpui::{
 
 use crate::computed::{Answer, Computed, compute};
 use crate::editor_model::{Editor, History, Kind, Marked, Pos};
+use crate::shown::{Shown, shown_for};
 use crate::syntax::{Class, Span};
 use crate::theme::Colors;
 use crate::timefmt::describe_time;
+use crate::wrap::Wrap;
 
 pub const ROW_H: f32 = 36.;
 pub const FONT_PX: f32 = 21.;
@@ -42,6 +44,8 @@ pub struct Layout {
     pub top: Pixels,
     pub shaped: Vec<Option<ShapedLine>>,
     pub scale: f32,
+    /// How wide a row of text may be before it wraps.
+    pub text_w: Pixels,
 }
 
 /// What the window opens with, read before the window exists so a broken book is reported on the
@@ -95,6 +99,10 @@ pub struct SheetView {
     scroll: f32,
     focus: FocusHandle,
     pub layout: Option<Layout>,
+    /// Where each line breaks into rows, as of the last paint.
+    pub wrap: Wrap,
+    /// A change moved the caret: the next paint scrolls it into view.
+    reveal: bool,
     selecting: bool,
 }
 
@@ -137,6 +145,8 @@ impl SheetView {
             scroll: 0.,
             focus,
             layout: None,
+            wrap: Wrap::default(),
+            reveal: false,
             selecting: false,
         };
         // The sidebar's times and counts come from the files, so they are read again once saves land.
@@ -367,11 +377,13 @@ impl SheetView {
         self.answer_focus = None;
         self.recompute();
         self.saver.submit(&self.current, self.ed.lines().to_vec());
+        self.reveal = true;
         self.scroll_to_caret();
         cx.notify();
     }
 
     fn moved(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reveal = true;
         self.scroll_to_caret();
         window.invalidate_character_coordinates();
         cx.notify();
@@ -383,9 +395,26 @@ impl SheetView {
             .map_or(600., |l| f32::from(l.bounds.size.height))
     }
 
+    /// What line `i` shows: its text with references drawn as the answers they point at.
+    pub fn shown_line(&self, i: usize) -> Shown {
+        shown_for(
+            self.ed.line(i),
+            self.computed.results.get(i),
+            i,
+            &self.computed.answers,
+        )
+    }
+
+    /// The row of the sheet the caret is on.
+    fn caret_row(&self) -> usize {
+        let head = self.ed.head();
+        let col = self.shown_line(head.line).to_shown(head.col);
+        self.wrap.top_row(head.line) + self.wrap.row_containing(head.line, col)
+    }
+
     fn scroll_to_caret(&mut self) {
         let view = self.viewport_h();
-        let y = self.ed.head().line as f32 * ROW_H;
+        let y = self.caret_row() as f32 * ROW_H;
         let top = self.scroll;
         if y < top {
             self.scroll = y;
@@ -395,8 +424,8 @@ impl SheetView {
         self.clamp_scroll();
     }
 
-    fn clamp_scroll(&mut self) {
-        let content = self.ed.len() as f32 * ROW_H + TOP_PAD * 2.;
+    pub fn clamp_scroll(&mut self) {
+        let content = self.wrap.total_rows(self.ed.len()) as f32 * ROW_H + TOP_PAD * 2.;
         let max = (content - self.viewport_h()).max(0.);
         self.scroll = self.scroll.clamp(0., max);
     }
@@ -565,8 +594,18 @@ impl SheetView {
             return true;
         }
         match key {
-            "left" => self.ed.left(shift, false),
-            "right" => self.ed.right(shift, false),
+            "left" => {
+                self.ed.left(shift, false);
+                self.snap_off_chip(false, shift);
+            }
+            "right" => {
+                self.ed.right(shift, false);
+                self.snap_off_chip(true, shift);
+            }
+            "backspace" if self.delete_chip(false) => {}
+            "delete" if self.delete_chip(true) => {}
+            "up" if self.vertical_in_line(-1, shift) => {}
+            "down" if self.vertical_in_line(1, shift) => {}
             "up" => self.ed.up(shift),
             "down" => self.ed.down(shift),
             "home" => self.ed.home(shift),
@@ -590,6 +629,73 @@ impl SheetView {
             "tab" | "escape" => {}
             _ => return false,
         }
+        true
+    }
+
+    /// A reference drawn as a chip is one thing to the caret: after a step into it, the caret goes to the far side.
+    fn snap_off_chip(&mut self, forward: bool, extend: bool) {
+        let head = self.ed.head();
+        if let Some(r) = self.shown_line(head.line).chip_at_src(head.col) {
+            let col = if forward { r.end } else { r.start };
+            self.ed.set_caret(Pos::new(head.line, col), extend);
+        }
+    }
+
+    /// Backspace after a chip (or Delete before one) removes the whole reference. False when there is no chip there.
+    fn delete_chip(&mut self, forward: bool) -> bool {
+        if self.ed.has_selection() {
+            return false;
+        }
+        let head = self.ed.head();
+        let sh = self.shown_line(head.line);
+        let chip = if forward {
+            sh.chip_starting_at(head.col)
+        } else {
+            sh.chip_ending_at(head.col)
+        };
+        let Some(r) = chip else { return false };
+        self.ed.set_caret(Pos::new(head.line, r.start), false);
+        self.ed.set_caret(Pos::new(head.line, r.end), true);
+        self.ed.backspace(false);
+        true
+    }
+
+    /// Up and Down inside a line that wraps move between its rows, keeping the caret's x. Returns false when the
+    /// caret is already on the first (or last) row, so the move goes to the neighbouring line.
+    fn vertical_in_line(&mut self, delta: isize, extend: bool) -> bool {
+        let head = self.ed.head();
+        let rows = self.wrap.rows_of(head.line);
+        let k = self
+            .wrap
+            .row_containing(head.line, self.shown_line(head.line).to_shown(head.col));
+        let to = k as isize + delta;
+        if rows < 2 || to < 0 || to >= rows as isize {
+            return false;
+        }
+        let Some(shaped) = self
+            .layout
+            .as_ref()
+            .and_then(|l| l.shaped.get(head.line))
+            .and_then(Option::as_ref)
+        else {
+            return false;
+        };
+        let sh = self.shown_line(head.line);
+        let text = sh.text.as_str();
+        let (from, _) = self.wrap.row_span(head.line, k, text.len());
+        let (start, end) = self.wrap.row_span(head.line, to as usize, text.len());
+        let here = sh.to_shown(head.col);
+        let x = shaped.x_for_index(here) - shaped.x_for_index(from) + shaped.x_for_index(start);
+        let mut col = shaped.closest_index_for_x(x).clamp(start, end);
+        if end < text.len() && col == end {
+            col = text[..end]
+                .char_indices()
+                .last()
+                .map_or(start, |(i, _)| i)
+                .max(start);
+        }
+        self.ed
+            .set_caret(Pos::new(head.line, sh.to_src(col)), extend);
         true
     }
 
@@ -620,15 +726,30 @@ impl SheetView {
         let l = self.layout.as_ref()?;
         let y = f32::from(p.y - l.top);
         let row = (y / ROW_H).floor().max(0.) as usize;
-        let line = row.min(self.ed.len() - 1);
+        let (line, k) = self.wrap.locate(row, self.ed.len());
         let in_answers = p.x >= l.answer_x;
+        let sh = self.shown_line(line);
+        let text = sh.text.as_str();
+        let (start, end) = self.wrap.row_span(line, k, text.len());
         let col = match l.shaped.get(line).and_then(Option::as_ref) {
-            Some(s) if !self.ed.line(line).is_empty() => s
-                .closest_index_for_x(p.x - l.text_x)
-                .min(self.ed.line(line).len()),
-            _ => 0,
+            Some(s) if !text.is_empty() => {
+                let x0 = s.x_for_index(start);
+                let col = s.closest_index_for_x(p.x - l.text_x + x0).clamp(start, end);
+                // A click at the end of a row that wraps lands before its last character, not at the start of
+                // the next row.
+                if end < text.len() && col == end {
+                    text[..end]
+                        .char_indices()
+                        .last()
+                        .map_or(start, |(i, _)| i)
+                        .max(start)
+                } else {
+                    col
+                }
+            }
+            _ => start,
         };
-        Some((Pos::new(line, col), in_answers))
+        Some((Pos::new(line, sh.to_src(col)), in_answers))
     }
 
     fn on_mouse_down(&mut self, ev: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
@@ -1033,13 +1154,23 @@ impl EntityInputHandler for SheetView {
     ) -> Option<Bounds<Pixels>> {
         let l = self.layout.as_ref()?;
         let (a, b) = self.ed.range_of_utf16(&range);
+        let shown = |p: Pos| {
+            let sh = self.shown_line(p.line);
+            let col = sh.to_shown(p.col);
+            (col, sh.text.len())
+        };
+        let row_of = |p: Pos| self.wrap.row_containing(p.line, shown(p).0);
         let x_of = |p: Pos| match l.shaped.get(p.line).and_then(Option::as_ref) {
-            Some(s) if p.col > 0 => s.x_for_index(p.col),
+            Some(s) if p.col > 0 => {
+                let (col, len) = shown(p);
+                let start = self.wrap.row_span(p.line, row_of(p), len).0;
+                s.x_for_index(col) - s.x_for_index(start)
+            }
             _ => px(0.),
         };
-        let y = l.top + px(a.line as f32 * ROW_H);
+        let y = l.top + px((self.wrap.top_row(a.line) + row_of(a)) as f32 * ROW_H);
         let x0 = l.text_x + x_of(a);
-        let x1 = if a.line == b.line {
+        let x1 = if a.line == b.line && row_of(a) == row_of(b) {
             l.text_x + x_of(b)
         } else {
             x0
@@ -1154,6 +1285,15 @@ pub fn answer_min_w() -> f32 {
 impl SheetView {
     pub fn answer_for(&self, line: usize) -> Option<&Answer> {
         self.computed.answers.get(line)
+    }
+
+    /// Called by the paint once the rows are known: reveals the caret if a change asked for it, and keeps the
+    /// scroll inside the sheet.
+    pub fn settle_scroll(&mut self) {
+        if std::mem::take(&mut self.reveal) {
+            self.scroll_to_caret();
+        }
+        self.clamp_scroll();
     }
 
     pub fn scroll(&self) -> f32 {

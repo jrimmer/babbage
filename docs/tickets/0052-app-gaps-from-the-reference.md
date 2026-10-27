@@ -1,6 +1,6 @@
 # 0052 Gaps between the app and the target screenshot
 
-Status: open (only the owner's call on looks and the reference's chips, folder pill, wrapping and fonts)
+Status: open (building: toolbar, sidebar polish and folder pill, the answer menu, variable colours and tooltips; the target screenshot and the target screenshots are the spec)
 Milestone: v1
 Area: app
 
@@ -11,3 +11,9 @@ Done: rename and delete by mouse. A right click on a sidebar card opens the shee
 Also done: undo and redo are kept per sheet (restored only when the sheet still reads as it was left). The `undo-per-sheet` acceptance check switches sheets in the real app and undoes in each.
 
 Also done (acceptance checks `scrolling`, `mouse-editing`, `comment-toggle`, `clipboard-lines`, all driven with a real virtual keyboard and mouse in the nested Hyprland): the window scrolls to keep the caret in view with Ctrl+Home and Ctrl+End and the Page keys; a click puts the caret on the line and column it lands on; a double click selects a word and a triple click a line; Ctrl+/ comments the selected lines in and out as one undo step; copy, cut and paste of several lines work between sheets with the answers worked out again where they land. Also exercised since (the virtual pointer learned `drag` and `scroll`): `drag-select` (forward and backward) and `wheel-scroll`. Also exercised since: `resize` (the nested window is floated and resized to three sizes with `hl.dsp.window.float` and `hl.dsp.window.resize`; each time the app's editor pane follows, the answer column stays inside the window and still shows its text). Also exercised since: `ime-composition`. `tools/ime.py` is a scripted input method that speaks `zwp_input_method_v2` to the nested compositor, so the app's own text-input path runs: a composition shows in the line and is marked, a longer one replaces it, clearing it restores the text, a commit makes it text with the caret after it, and keyboard typing carries on. What is still open in this ticket is only what the owner judges or has not asked for: the reference's line-reference chips, folder pill, wrapped long lines and tuned fonts and spacing.
+
+Settled by the owner (2026-10-26): the UI is part of the build and the target screenshot and the target screenshots are its spec, so these gaps are mine to close, not a call to wait on.
+
+Done, unit 1: long lines wrap (`wrapping`: rows stack, the answer and line number stay on the first row, a click on a lower row puts the caret there, Up and Down move between the rows, a narrow window takes more rows than a wide one, nothing is painted past the wrap width, checked on screen pixels) and a reference to another line is a chip holding that line's answer, as in the reference (`line-chips`: the chip follows the line, the caret steps over it whole, Backspace removes the whole reference, a click lands at one end). Pure logic is in `wrap.rs` and `shown.rs` with unit tests.
+
+Still to build, from the screenshots: a toolbar (settings, help, sidebar toggle), the sidebar's roomier cards and New Sheet icon, a folder pill, the answer's menu (Copy Answer, decimal places, the `,` `M` `$` toggles, Reset, Make Subtotal Line, Delete Line), variable names in green with a hover tooltip of the value and Esc autocomplete, the subtotal's rule and bold, and number scrubbing.

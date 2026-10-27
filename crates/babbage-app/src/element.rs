@@ -7,6 +7,7 @@ use gpui::{
     Window, fill, point, px, quad, relative, size,
 };
 
+use crate::shown::{Shown, shown_for};
 use crate::syntax::{Class, spans};
 use crate::theme::Colors;
 use crate::view::{FONT_PX, GUTTER_W, Layout, ROW_H, SheetView, TOP_PAD, answer_min_w, runs_for};
@@ -123,6 +124,24 @@ impl SheetElement {
         let answer_w = px(answer_min_w().max(f32::from(bounds.size.width) * 0.3));
         let answer_x = bounds.right() - answer_w;
         let text_x = bounds.left() + px(GUTTER_W);
+        let text_w = (answer_x - text_x - px(28.)).max(px(crate::wrap::MIN_WIDTH));
+
+        // Where each line breaks into rows at this width, then the scroll that fits the new height.
+        {
+            let (ed, computed, wrap) = (&view.ed, &view.computed, &mut view.wrap);
+            wrap.refresh(
+                ed.len(),
+                f32::from(text_w),
+                |i| shown_for(ed.line(i), computed.results.get(i), i, &computed.answers).text,
+                |i, text, width| {
+                    let sp = spans(text, computed.results.get(i));
+                    let runs = runs_for(text, &sp, None, &font, &c);
+                    let l = shape(window, text, font_px, &runs);
+                    crate::wrap::breaks(text, |b| f32::from(l.x_for_index(b)), width)
+                },
+            );
+        }
+        view.settle_scroll();
         let top = bounds.top() + px(TOP_PAD) - px(view.scroll());
 
         window.paint_quad(fill(
@@ -148,16 +167,20 @@ impl SheetElement {
         let head = view.ed.head();
         let marked = view.ed.marked;
 
-        let first = ((bounds.top() - top).max(px(0.)) / row_h).floor() as usize;
-        let last = (((bounds.bottom() - top) / row_h).ceil().max(0.) as usize).min(n);
+        let first_row = ((bounds.top() - top).max(px(0.)) / row_h).floor() as usize;
+        let first = view.wrap.locate(first_row, n).0;
 
         window.with_content_mask(Some(gpui::ContentMask { bounds }), |window| {
-            for i in first..last {
-                let y = top + row_h * i as f32;
+            for i in first..n {
+                let y = top + row_h * view.wrap.top_row(i) as f32;
+                if y > bounds.bottom() {
+                    break;
+                }
                 let line = view.ed.line(i);
                 let result = view.computed.results.get(i);
+                let rows = view.wrap.rows_of(i);
 
-                // Line number.
+                // Line number, on the first row.
                 let num = (i + 1).to_string();
                 let num_run = TextRun {
                     len: num.len(),
@@ -168,81 +191,117 @@ impl SheetElement {
                     strikethrough: None,
                 };
                 let num_line = shape(window, &num, small, &[num_run]);
-                let ny = y;
                 let _ = num_line.paint(
-                    point(bounds.left() + px(GUTTER_W - 16.) - num_line.width, ny),
+                    point(bounds.left() + px(GUTTER_W - 16.) - num_line.width, y),
                     row_h,
                     window,
                     cx,
                 );
 
-                // Text.
-                let sp = spans(line, result);
-                let line_marked = marked.filter(|m| m.line == i).map(|m| (m.start, m.end));
-                let text_line = if line.is_empty() {
+                // Text, as shown: a reference to another line is that line's answer in a chip.
+                let typed_spans = spans(line, result);
+                let sh: Shown = Shown::build(line, &typed_spans, i, &view.computed.answers);
+                let sp = sh.spans(&typed_spans);
+                let shown_text = sh.text.as_str();
+                let line_marked = marked
+                    .filter(|m| m.line == i)
+                    .map(|m| (sh.to_shown(m.start), sh.to_shown(m.end)));
+                let text_line = if shown_text.is_empty() {
                     None
                 } else {
-                    let runs = runs_for(line, &sp, line_marked, &font, &c);
-                    Some(shape(window, line, font_px, &runs))
+                    let runs = runs_for(shown_text, &sp, line_marked, &font, &c);
+                    Some(shape(window, shown_text, font_px, &runs))
                 };
+                // `x_of` takes a column of the shown text.
                 let x_of = |col: usize| match &text_line {
-                    Some(l) if col > 0 => l.x_for_index(col.min(line.len())),
+                    Some(l) if col > 0 => l.x_for_index(col.min(shown_text.len())),
                     _ => px(0.),
                 };
+                let (sel_from, sel_to) = (sh.to_shown(sel_a.col), sh.to_shown(sel_b.col));
+                let caret_col = sh.to_shown(head.col);
 
-                // Selection.
-                if has_sel && i >= sel_a.line && i <= sel_b.line {
-                    let from = if i == sel_a.line {
-                        x_of(sel_a.col)
-                    } else {
-                        px(0.)
-                    };
-                    let to = if i == sel_b.line {
-                        x_of(sel_b.col)
-                    } else {
-                        x_of(line.len()) + px(7.)
-                    };
-                    if to > from {
+                for k in 0..rows {
+                    let row_y = y + row_h * k as f32;
+                    let (start, end) = view.wrap.row_span(i, k, shown_text.len());
+                    let x0 = x_of(start);
+                    let last_row = k + 1 == rows;
+
+                    // Selection.
+                    if has_sel && i >= sel_a.line && i <= sel_b.line {
+                        let from_col = if i == sel_a.line { sel_from } else { 0 };
+                        let to_col = if i == sel_b.line {
+                            sel_to
+                        } else {
+                            shown_text.len()
+                        };
+                        let (a, b) = (from_col.max(start), to_col.min(end));
+                        let carries_on = last_row && i < sel_b.line;
+                        let from = if a >= b && !carries_on {
+                            px(0.)
+                        } else {
+                            x_of(a) - x0
+                        };
+                        let to = x_of(b.max(a)) - x0 + if carries_on { px(7.) } else { px(0.) };
+                        if to > from {
+                            window.paint_quad(fill(
+                                Bounds::new(point(text_x + from, row_y), size(to - from, row_h)),
+                                c.selection,
+                            ));
+                        }
+                    }
+
+                    // Line references are drawn as chips behind their text.
+                    if let Some(l) = &text_line {
+                        for s in sp.iter().filter(|s| s.class == Class::LineRef) {
+                            let (a, b) = (s.range.start.max(start), s.range.end.min(end));
+                            if a >= b {
+                                continue;
+                            }
+                            let (xa, xb) = (l.x_for_index(a) - x0, l.x_for_index(b) - x0);
+                            window.paint_quad(quad(
+                                Bounds::new(
+                                    point(text_x + xa - px(4.), row_y + px(3.)),
+                                    size(xb - xa + px(8.), row_h - px(6.)),
+                                ),
+                                px(6.),
+                                c.chip_bg,
+                                0.,
+                                c.chip_bg,
+                                gpui::BorderStyle::default(),
+                            ));
+                        }
+                        // The whole styled line is painted once per row, clipped to that row.
+                        let clip = Bounds::new(
+                            point(text_x - px(6.), row_y),
+                            size(text_w + px(12.), row_h),
+                        );
+                        window.with_content_mask(
+                            Some(gpui::ContentMask { bounds: clip }),
+                            |window| {
+                                let _ = l.paint(point(text_x - x0, row_y), row_h, window, cx);
+                            },
+                        );
+                    }
+
+                    // Caret: on the row that holds it, and at the end of the line on the last row.
+                    let holds_caret = head.line == i
+                        && (if last_row {
+                            caret_col >= start
+                        } else {
+                            caret_col >= start && caret_col < end
+                        });
+                    if focused && holds_caret {
                         window.paint_quad(fill(
-                            Bounds::new(point(text_x + from, y), size(to - from, row_h)),
-                            c.selection,
-                        ));
-                    }
-                }
-
-                // Line references are drawn as chips behind their text.
-                if let Some(l) = &text_line {
-                    for s in sp.iter().filter(|s| s.class == Class::LineRef) {
-                        let (x0, x1) = (l.x_for_index(s.range.start), l.x_for_index(s.range.end));
-                        window.paint_quad(quad(
                             Bounds::new(
-                                point(text_x + x0 - px(4.), y + px(3.)),
-                                size(x1 - x0 + px(8.), row_h - px(6.)),
+                                point(text_x + x_of(caret_col) - x0 - px(1.), row_y + px(4.)),
+                                size(px(2.), row_h - px(8.)),
                             ),
-                            px(6.),
-                            c.chip_bg,
-                            0.,
-                            c.chip_bg,
-                            gpui::BorderStyle::default(),
+                            c.caret,
                         ));
                     }
-                    let lh = row_h;
-                    let ty = y;
-                    let _ = l.paint(point(text_x, ty), lh, window, cx);
                 }
 
-                // Caret.
-                if focused && head.line == i {
-                    window.paint_quad(fill(
-                        Bounds::new(
-                            point(text_x + x_of(head.col) - px(1.), y + px(4.)),
-                            size(px(2.), row_h - px(8.)),
-                        ),
-                        c.caret,
-                    ));
-                }
-
-                // Answer.
+                // Answer, on the first row.
                 if let Some(a) = view.answer_for(i) {
                     let ax = answer_x + px(30.);
                     let max = bounds.right() - ax - px(16.);
@@ -311,6 +370,7 @@ impl SheetElement {
             top,
             shaped,
             scale,
+            text_w,
         });
     }
 }
