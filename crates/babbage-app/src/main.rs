@@ -20,7 +20,9 @@ mod editor_model;
 mod element;
 mod grouping;
 mod linefmt;
+mod omarchy_setup;
 mod prefs;
+mod quick;
 mod rename;
 mod scrub;
 mod settings_ui;
@@ -43,7 +45,10 @@ use gpui::{AppContext, Bounds, TitlebarOptions, WindowBounds, WindowOptions, px,
 
 use view::{Init, SAVE_DELAY_MS, SheetView};
 
-const USAGE: &str = "usage: babbage [--control <socket>]\n       babbage calc [options] EXPRESSION... (see babbage calc --help)";
+const USAGE: &str = "usage: babbage [--quick] [--control <socket>]\n       babbage calc [options] EXPRESSION... (see babbage calc --help)\n       babbage setup omarchy [--remove] [--key KEY]\n       babbage --print-icon\n\n  --quick       a small window for one calculation; brings the open window forward on Hyprland\n  setup omarchy add a quick-calculation key and a menu entry to Omarchy (--remove undoes it)\n  --print-icon  print the app icon (SVG)";
+
+/// The app icon, which the installer saves for the launcher.
+const ICON: &str = include_str!("../../../packaging/babbage.svg");
 
 fn main() -> anyhow::Result<()> {
     let argv: Vec<std::ffi::OsString> = std::env::args_os().collect();
@@ -54,7 +59,15 @@ fn main() -> anyhow::Result<()> {
             .collect();
         std::process::exit(cli::run(&rest));
     }
+    if argv.get(1).and_then(|a| a.to_str()) == Some("setup") {
+        let rest: Vec<String> = argv[2..]
+            .iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        std::process::exit(omarchy_setup::main(&rest));
+    }
     let mut control = None;
+    let mut quick_window = false;
     let mut args = argv.into_iter().skip(1);
     while let Some(arg) = args.next() {
         match arg.to_str() {
@@ -62,6 +75,11 @@ fn main() -> anyhow::Result<()> {
                 control = Some(PathBuf::from(
                     args.next().context("--control needs a path")?,
                 ));
+            }
+            Some("--quick") => quick_window = true,
+            Some("--print-icon") => {
+                print!("{ICON}");
+                return Ok(());
             }
             Some("-h" | "--help") => {
                 println!("{USAGE}");
@@ -75,6 +93,9 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    if quick_window && quick::focus_running("babbage") {
+        return Ok(());
+    }
     let book = SheetBook::open_default().context("open the sheetbook")?;
     let init = Init::load(&book).context("read the sheets")?;
     let saver = Arc::new(Autosaver::start(
@@ -91,20 +112,27 @@ fn main() -> anyhow::Result<()> {
             }
         })
         .detach();
+        let (title, width, height) = if quick_window {
+            (quick::TITLE, quick::WIDTH, quick::HEIGHT)
+        } else {
+            ("Babbage", 1200., 800.)
+        };
         let options = WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
                 None,
-                size(px(1200.), px(800.)),
+                size(px(width), px(height)),
                 cx,
             ))),
             titlebar: Some(TitlebarOptions {
-                title: Some("Babbage".into()),
+                title: Some(title.into()),
                 ..Default::default()
             }),
             app_id: Some("babbage".into()),
             ..Default::default()
         };
         let opened = cx.open_window(options, |window, cx| {
+            // The titlebar option is not sent to a Wayland compositor, and a window rule matches on the title.
+            window.set_window_title(title);
             cx.new(|cx| SheetView::new(init, book, saver, window, cx))
         });
         match opened {

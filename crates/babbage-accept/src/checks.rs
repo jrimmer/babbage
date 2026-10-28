@@ -24,6 +24,8 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("cli-repeating", cli_repeating),
     ("cli-bbg-name", cli_bbg_name),
     ("cli-completions", cli_completions),
+    ("omarchy-setup", omarchy_setup),
+    ("quick-window", quick_window),
     ("install-script", install_script),
     ("sum", sum_shows_39),
     ("sheet-overview", sheet_overview),
@@ -4280,6 +4282,328 @@ fn cli_completions(h: &mut Harness) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// `babbage setup omarchy` against a scratch home that looks like Omarchy's, with `omarchy` and `hyprctl` replaced by
+/// scripts that answer from files: it writes its own file, one marked line and a marked menu block, with backups;
+/// a second run changes nothing; a key that is bound is refused; a config error the change causes puts everything
+/// back; `--remove` leaves the home as it was; and a home that is not Omarchy's is refused.
+fn omarchy_setup(h: &mut Harness) -> anyhow::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let cli = Cli::new(h, "omarchy-setup")?;
+    let stubs = cli.home.join("stubs");
+    std::fs::create_dir_all(&stubs)?;
+    let script = |name: &str, body: &str| -> anyhow::Result<()> {
+        let path = stubs.join(name);
+        std::fs::write(&path, format!("#!/bin/bash\n{body}\n"))?;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))?;
+        Ok(())
+    };
+    // `omarchy menu keybindings --print` prints $STUB_KEYS; `hyprctl binds -j` prints $STUB_BINDS; and `hyprctl
+    // configerrors` complains only while Babbage's own file is in place.
+    script(
+        "omarchy",
+        "[ \"$1 $2 $3\" = 'menu keybindings --print' ] && cat \"$STUB_KEYS\"",
+    )?;
+    script(
+        "hyprctl",
+        "case \"$1\" in binds) cat \"$STUB_BINDS\" ;; reload) ;; configerrors) [ -f \"$HOME/.config/hypr/babbage.lua\" ] && [ -f \"$STUB_BREAK\" ] && echo 'babbage.lua:3: boom'; true ;; esac",
+    )?;
+    let keys = cli.home.join("keys.txt");
+    let binds = cli.home.join("binds.json");
+    let brk = cli.home.join("break");
+    std::fs::write(
+        &keys,
+        "SUPER + K → Keybindings\nSUPER SHIFT + RETURN → Browser\n",
+    )?;
+    std::fs::write(&binds, "[]")?;
+    let path = format!(
+        "{}:{}",
+        stubs.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let (keys_s, binds_s, brk_s) = (
+        keys.to_string_lossy().into_owned(),
+        binds.to_string_lossy().into_owned(),
+        brk.to_string_lossy().into_owned(),
+    );
+    let env = [
+        ("PATH", path.as_str()),
+        ("HYPRLAND_INSTANCE_SIGNATURE", "stub"),
+        ("STUB_KEYS", keys_s.as_str()),
+        ("STUB_BINDS", binds_s.as_str()),
+        ("STUB_BREAK", brk_s.as_str()),
+    ];
+    let run = |args: &[&str]| -> anyhow::Result<Ran> {
+        let mut all = vec!["setup"];
+        all.extend_from_slice(args);
+        cli.exec(&cli.program, &all, None, &env)
+    };
+    let hypr = cli.home.join(".config/hypr");
+    let menu = cli
+        .home
+        .join(".config/omarchy/extensions/omarchy-menu.jsonc");
+    let read = |p: &Path| std::fs::read_to_string(p).unwrap_or_default();
+
+    // Not Omarchy: refused, and nothing is created.
+    let r = run(&["omarchy"])?;
+    ensure!(
+        r.code == 1 && r.err.contains("doesn't look like Omarchy"),
+        "not Omarchy: {} {:?}",
+        r.code,
+        r.err
+    );
+    ensure!(
+        !cli.home.join(".config").exists(),
+        "a refused setup made a folder"
+    );
+    let r = run(&["gnome"])?;
+    ensure!(
+        r.code == 2 && r.err.contains("usage:"),
+        "bad usage: {} {:?}",
+        r.code,
+        r.err
+    );
+
+    // Omarchy: a hyprland.lua of its own and a menu file with an entry of someone else's.
+    std::fs::create_dir_all(&hypr)?;
+    std::fs::create_dir_all(menu.parent().context("a folder")?)?;
+    let main_before = "-- Omarchy\nrequire(\"hypr.bindings\")\nrequire(\"hypr.precrime\") -- precrime: added by `precrime setup omarchy`\n";
+    let menu_before = "{\n  // precrime: begin (added by `precrime setup omarchy`)\n  \"precrime\": {\"label\":\"Precrime\"}\n  // precrime: end\n}\n";
+    std::fs::write(hypr.join("hyprland.lua"), main_before)?;
+    std::fs::write(&menu, menu_before)?;
+
+    // A key that is bound, by the listing and by Hyprland's own list.
+    std::fs::write(&keys, "SUPER ALT + C → Something of mine\n")?;
+    let r = run(&["omarchy"])?;
+    ensure!(
+        r.code == 1 && r.err.contains("already bound") && r.err.contains("Something of mine"),
+        "a key in the listing: {} {:?}",
+        r.code,
+        r.err
+    );
+    std::fs::write(&keys, "")?;
+    std::fs::write(
+        &binds,
+        r#"[{"modmask":72,"key":"C","description":"Calculator I bound","submap":""}]"#,
+    )?;
+    let r = run(&["omarchy"])?;
+    ensure!(
+        r.code == 1 && r.err.contains("Calculator I bound"),
+        "a key in Hyprland's list: {} {:?}",
+        r.code,
+        r.err
+    );
+    ensure!(
+        !hypr.join("babbage.lua").exists()
+            && read(&hypr.join("hyprland.lua")) == main_before
+            && read(&menu) == menu_before,
+        "a refused key still changed files"
+    );
+    let r = run(&["omarchy", "--key", "SUPER + ALT + B\"); os.execute(\"x"])?;
+    ensure!(
+        r.code == 1 && r.err.contains("is not a key"),
+        "an unsafe key: {} {:?}",
+        r.code,
+        r.err
+    );
+    std::fs::write(&binds, "[]")?;
+
+    // A change that makes Hyprland complain is undone, and said so.
+    std::fs::write(&brk, "")?;
+    let r = run(&["omarchy"])?;
+    ensure!(
+        r.code == 1 && r.err.contains("boom") && r.err.contains("put back"),
+        "a config error: {} {:?}",
+        r.code,
+        r.err
+    );
+    ensure!(
+        !hypr.join("babbage.lua").exists()
+            && read(&hypr.join("hyprland.lua")) == main_before
+            && read(&menu) == menu_before,
+        "a config error left files changed"
+    );
+    std::fs::remove_file(&brk)?;
+
+    // The good run.
+    let r = run(&["omarchy"])?;
+    ensure!(
+        r.code == 0 && r.out.contains("SUPER + ALT + C"),
+        "setup: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    let module = read(&hypr.join("babbage.lua"));
+    for want in [
+        "-- Babbage, added by `babbage setup omarchy`.",
+        "o.bind(\"SUPER + ALT + C\", \"Babbage quick calculation\", \"babbage --quick\")",
+        "o.window({ class = \"^babbage$\", title = \"^Babbage Quick$\" }",
+    ] {
+        ensure!(
+            module.contains(want),
+            "the module lacks {want:?}:\n{module}"
+        );
+    }
+    let main = read(&hypr.join("hyprland.lua"));
+    ensure!(
+        main.starts_with(main_before) && main.matches("require(\"hypr.babbage\")").count() == 1,
+        "hyprland.lua: {main:?}"
+    );
+    let menu_after = read(&menu);
+    ensure!(
+        menu_after.contains("// babbage: begin")
+            && menu_after.contains("\"babbage.quick\"")
+            && menu_after.contains("// precrime: end")
+            && menu_after.contains("\"precrime\": {\"label\":\"Precrime\"},"),
+        "the menu: {menu_after:?}"
+    );
+    let backups = |dir: &Path, prefix: &str| -> usize {
+        std::fs::read_dir(dir)
+            .map(|d| {
+                d.flatten()
+                    .filter(|e| e.file_name().to_string_lossy().starts_with(prefix))
+                    .count()
+            })
+            .unwrap_or(0)
+    };
+    ensure!(
+        backups(&hypr, "hyprland.lua.bak.") == 1
+            && backups(
+                menu.parent().context("a folder")?,
+                "omarchy-menu.jsonc.bak."
+            ) == 1,
+        "the backups of hyprland.lua and the menu"
+    );
+
+    // Again: nothing changes, and the one line stays one line.
+    let r = run(&["omarchy"])?;
+    ensure!(r.code == 0, "second setup: {} {:?}", r.code, r.err);
+    ensure!(
+        read(&hypr.join("hyprland.lua")) == main
+            && read(&menu) == menu_after
+            && read(&hypr.join("babbage.lua")) == module,
+        "a second setup changed files"
+    );
+
+    // Take it all out again: the home is as it was.
+    let r = run(&["omarchy", "--remove"])?;
+    ensure!(
+        r.code == 0 && r.out.contains("no longer wired"),
+        "remove: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    ensure!(
+        !hypr.join("babbage.lua").exists()
+            && read(&hypr.join("hyprland.lua")) == main_before
+            && read(&menu) == menu_before,
+        "--remove did not give back the files"
+    );
+
+    // Another key, and a key bound only by Babbage's own entry, are fine.
+    std::fs::write(&keys, "SUPER ALT + B → Babbage quick calculation\n")?;
+    let r = run(&["omarchy", "--key", "SUPER + ALT + B"])?;
+    ensure!(r.code == 0, "another key: {} {:?}", r.code, r.err);
+    ensure!(
+        read(&hypr.join("babbage.lua")).contains("\"SUPER + ALT + B\""),
+        "the other key is not in the file"
+    );
+    let r = run(&["omarchy", "--remove"])?;
+    ensure!(r.code == 0, "second remove: {} {:?}", r.code, r.err);
+    Ok(())
+}
+
+/// Polls `ok` until it is true, and says what the nested compositor's windows were if it never is.
+fn wait_for(
+    h: &Harness,
+    what: &str,
+    mut ok: Box<dyn FnMut() -> anyhow::Result<bool> + '_>,
+) -> anyhow::Result<()> {
+    let start = Instant::now();
+    while !ok()? {
+        ensure!(
+            start.elapsed() < T,
+            "timed out waiting for {what}; the windows were {}",
+            h.nested_clients()
+                .map(|c| c.to_string())
+                .unwrap_or_default()
+        );
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    Ok(())
+}
+
+/// `babbage --quick` in the nested Hyprland. With no Babbage window open it opens a small one titled "Babbage Quick".
+/// With Babbage windows open it opens no new one and brings an existing one forward, even from behind another.
+fn quick_window(h: &mut Harness) -> anyhow::Result<()> {
+    let babbage_windows = |h: &Harness| -> anyhow::Result<Vec<Value>> {
+        Ok(h.nested_clients()?
+            .as_array()
+            .map(|c| {
+                c.iter()
+                    .filter(|c| c["class"] == "babbage")
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default())
+    };
+
+    // Nothing open: the quick window appears.
+    let pid = h.start_plain("quick-alone", &["--quick"])?;
+    wait_for(
+        h,
+        "the quick window",
+        Box::new(|| {
+            Ok(babbage_windows(h)?.iter().any(|c| {
+                c["pid"].as_u64() == Some(u64::from(pid)) && c["title"] == "Babbage Quick"
+            }))
+        }),
+    )?;
+    let status = std::process::Command::new("kill")
+        .arg(pid.to_string())
+        .status()?;
+    ensure!(status.success(), "could not stop the quick window");
+    wait_for(
+        h,
+        "the quick window to close",
+        Box::new(|| Ok(!h.is_running(pid))),
+    )?;
+    wait_for(
+        h,
+        "no Babbage window",
+        Box::new(|| Ok(babbage_windows(h)?.is_empty())),
+    )?;
+
+    // Two windows open, the second in front: --quick opens nothing and brings the first forward.
+    let first = h.launch("quick-first", None, &[])?;
+    let second = h.launch("quick-second", None, &[])?;
+    ensure!(babbage_windows(h)?.len() == 2, "two windows expected");
+    let active = h.nested_active()?;
+    ensure!(
+        active["pid"].as_u64() == Some(u64::from(second.pid())),
+        "the second window should be in front: {active}"
+    );
+    let quick = h.start_plain("quick-again", &["--quick"])?;
+    wait_for(
+        h,
+        "--quick to finish",
+        Box::new(|| Ok(!h.is_running(quick))),
+    )?;
+    wait_for(
+        h,
+        "the first window in front",
+        Box::new(|| Ok(h.nested_active()?["pid"].as_u64() == Some(u64::from(first.pid())))),
+    )?;
+    ensure!(
+        babbage_windows(h)?.len() == 2,
+        "--quick opened a window although one was open"
+    );
+    first.finish()?;
+    second.finish()?;
+    Ok(())
+}
+
 /// The sha256 line `sha256sum` writes for `file`, named by its file name, as a .sha256 file holds it.
 fn sha256_file(file: &Path) -> anyhow::Result<String> {
     let dir = file.parent().context("a folder for the file")?;
@@ -4416,6 +4740,32 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         !cli.home.join(".config").exists(),
         "the installer made a fish folder for someone who does not use fish"
     );
+    // The launcher entry and the icon, so Babbage shows up in an app launcher.
+    let desktop_file = cli.home.join(".local/share/applications/babbage.desktop");
+    let icon_file = cli
+        .home
+        .join(".local/share/icons/hicolor/scalable/apps/babbage.svg");
+    let entry = std::fs::read_to_string(&desktop_file).context("the launcher entry")?;
+    for want in [
+        "# Written by the Babbage installer".to_owned(),
+        "[Desktop Entry]".to_owned(),
+        "Name=Babbage".to_owned(),
+        format!("Exec=\"{}\"\n", bin.join("babbage").display()),
+        format!("Exec=\"{}\" --quick\n", bin.join("babbage").display()),
+        "StartupWMClass=babbage".to_owned(),
+        "Categories=Utility;Calculator;".to_owned(),
+    ] {
+        ensure!(
+            entry.contains(&want),
+            "the launcher entry lacks {want:?}:\n{entry}"
+        );
+    }
+    let svg = std::fs::read_to_string(&icon_file).context("the icon")?;
+    ensure!(
+        svg.starts_with("<!-- # Written by the Babbage installer") && svg.contains("<svg"),
+        "the icon: {:?}",
+        &svg[..svg.len().min(120)]
+    );
     let r = cli.exec(&bin.join("bbg"), &["20%", "of", "85"], None, &[])?;
     ensure!(
         r.code == 0 && r.out == "17\n",
@@ -4457,6 +4807,14 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
     );
     std::fs::remove_file(bin.join("keep-me"))?;
     ensure!(!bash_file.exists(), "uninstall left the completion file");
+    ensure!(
+        !desktop_file.exists() && !icon_file.exists(),
+        "uninstall left the launcher entry or the icon"
+    );
+
+    // A launcher entry of the user's own is never overwritten or removed.
+    std::fs::create_dir_all(desktop_file.parent().context("a folder")?)?;
+    std::fs::write(&desktop_file, "[Desktop Entry]\nName=Mine\n")?;
 
     // A fish user's own file of the same name is never overwritten or removed.
     std::fs::create_dir_all(fish_file.parent().context("a folder")?)?;
@@ -4498,6 +4856,11 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         "the installer changed a fish completion file that was not its own"
     );
     ensure!(!bash_file.exists(), "uninstall left the completion file");
+    ensure!(
+        std::fs::read_to_string(&desktop_file)? == "[Desktop Entry]\nName=Mine\n",
+        "the installer changed a launcher entry that was not its own"
+    );
+    std::fs::remove_file(&desktop_file)?;
 
     // With fish set up and no file of the name, the installer adds one, and uninstall takes it away again.
     std::fs::remove_file(&fish_file)?;
@@ -4520,7 +4883,7 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         &env,
     )?;
     ensure!(
-        r.code == 0 && !fish_file.exists() && !bash_file.exists(),
+        r.code == 0 && !fish_file.exists() && !bash_file.exists() && !desktop_file.exists(),
         "uninstall for a fish user: {} {:?}",
         r.code,
         r.err

@@ -20,6 +20,13 @@ prints `17`, `bbg budget.bbg` answers a sheet file, and `babbage calc` does the 
 the options. The one-line installer and the guide's Getting started chapter are the way to get it. Tab completion for
 bash, zsh and fish: `bbg --completions bash` (or `zsh`, `fish`) prints the script; the installer sets up bash and fish.
 
+## From anywhere
+
+`babbage --quick` opens a small window for one calculation, or brings the open window forward on Hyprland. On
+Omarchy, `babbage setup omarchy` binds a key to it and adds a menu entry, in files of its own with backups and a
+check of Hyprland's configuration; `babbage setup omarchy --remove` undoes it. The installer adds a launcher entry
+and an icon.
+
 ## Building and testing
 
 ```sh

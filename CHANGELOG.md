@@ -15,6 +15,10 @@ appears beside each line.
 - **Words that were not understood** are underlined, and a word one letter from a unit shows what it may mean.
 - **The command line.** `bbg 20% of 85` answers from a terminal, reads sheets from a file or a pipe, and prints
   JSON. It is the same program as the window, so the answers always agree.
+- **From anywhere.** `babbage --quick` opens a small window for one calculation, or brings the open window forward
+  on Hyprland. `babbage setup omarchy` adds a key and a menu entry in files of its own, with backups, a check of
+  Hyprland's configuration (undone if the change causes an error) and `--remove`; it refuses a key that is already
+  bound. The installer adds a launcher entry and an icon.
 - **Tab completion** for `bbg` in bash, zsh and fish: options, decimal places and the names of your saved sheets.
   The installer adds it for bash, and for fish when you use fish, and never replaces a file it did not write.
 - **Light themes.** Babbage follows an Omarchy theme light or dark, keeps text readable on whatever colors the theme

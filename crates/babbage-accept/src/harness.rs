@@ -493,6 +493,74 @@ impl Harness {
         Ok(app)
     }
 
+    /// Starts the app in the nested compositor the way a key press would, with `args` and no control socket, and returns
+    /// its process id. Its sheets go to a folder of their own, and it is not waited for.
+    pub fn start_plain(&mut self, name: &str, args: &[&str]) -> anyhow::Result<u32> {
+        self.launches += 1;
+        let n = self.launches;
+        let dir = self.work.path().join(format!("app{n}"));
+        let home = dir.join("home");
+        std::fs::create_dir_all(&home)?;
+        let pid_file = dir.join("app.pid");
+        let q = |p: &Path| shell_quote(&p.to_string_lossy());
+        let args = args
+            .iter()
+            .map(|a| shell_quote(a))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let script = format!(
+            "#!/bin/bash\necho $$ > {pid}\nexport HOME={home}\nexport BABBAGE_DATA_DIR={data}\nexport BABBAGE_THEME_FILE={theme}\nexport XDG_STATE_HOME={home}/state\nexport XDG_CONFIG_HOME={home}/config\nexport XDG_DATA_HOME={home}/data\nexport DBUS_SESSION_BUS_ADDRESS={bus}\nexport BABBAGE_UPDATES=off\nexport BABBAGE_APPEARANCE=dark\nexport LC_ALL=C\nexec {bin} {args} > {out} 2> {err}\n",
+            pid = q(&pid_file),
+            home = q(&home),
+            data = q(&dir.join("sheets")),
+            theme = q(&dir.join("no-theme.toml")),
+            bus = shell_quote(&format!("unix:path={}", dir.join("no-bus").display())),
+            bin = q(&self.bin),
+            out = q(&self.logs.join(format!("{name}-{n}.out"))),
+            err = q(&self.logs.join(format!("{name}-{n}.err"))),
+        );
+        let wrapper = dir.join("app.sh");
+        std::fs::write(&wrapper, script)?;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755))?;
+        let status = Process::new(&self.nested.script)
+            .arg("exec")
+            .arg(&self.nested.dir)
+            .arg(&wrapper)
+            .status()?;
+        ensure!(
+            status.success(),
+            "could not exec the app in the nested compositor"
+        );
+        let start = Instant::now();
+        loop {
+            if let Ok(text) = std::fs::read_to_string(&pid_file)
+                && let Ok(pid) = text.trim().parse()
+            {
+                return Ok(pid);
+            }
+            ensure!(
+                start.elapsed() < Duration::from_secs(20),
+                "the app did not start"
+            );
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
+
+    /// The nested compositor's windows, as `hyprctl -j clients` lists them.
+    pub fn nested_clients(&self) -> anyhow::Result<Value> {
+        self.nested_json("clients")
+    }
+
+    /// The nested compositor's focused window, as `hyprctl -j activewindow` gives it.
+    pub fn nested_active(&self) -> anyhow::Result<Value> {
+        self.nested_json("activewindow")
+    }
+
+    /// Whether process `pid` is still running.
+    pub fn is_running(&self, pid: u32) -> bool {
+        alive(pid)
+    }
+
     fn window_of(&self, pid: u32) -> anyhow::Result<Value> {
         let clients = self.nested_json("clients")?;
         clients

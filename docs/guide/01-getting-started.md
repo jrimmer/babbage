@@ -20,6 +20,8 @@ which opens the window, and `bbg`, which answers from the command line (see
 [The command line](14-command-line.html)). Each file it downloads is checked against its published `.sha256` file
 before anything is installed. Run the same line again to update to the newest release.
 
+The installer also adds Babbage to your app launcher (a launcher entry and an icon, one file each, under `~/.local/share`) and sets up tab completion for `bbg` in bash, and in fish when you use fish. It never replaces a file of those names that it did not write.
+
 To take the tarball rather than the AppImage, add `--tarball` after `bash -s --`. To remove Babbage, run the line
 with `--uninstall` in the same place. Only the files the installer made are removed.
 
@@ -86,6 +88,26 @@ plain text files in `~/.local/share/babbage/sheets`. Your settings live in `~/.c
 [Sheets and files](10-sheets-and-files.html) for the details.
 
 Babbage follows your desktop theme when it runs on Omarchy, light or dark, and otherwise follows your system's light or dark setting. See [Settings](12-settings.html#colors-and-themes).
+
+## Quick calculations from anywhere
+
+`babbage --quick` opens a small window for one calculation. If a Babbage window is already open on Hyprland, it brings that window forward instead of opening a second, so you can bind it to a key and press it as often as you like. The launcher entry has the same thing as an action: **Quick calculation**.
+
+On Omarchy, one command sets the key up:
+
+```
+babbage setup omarchy
+```
+
+It binds `SUPER + ALT + C` to `babbage --quick`, makes the quick window float in the middle of the screen, and adds a **Babbage** section to the Omarchy menu (Super+Space) with **Quick Calculation** and **Open Babbage**. Choose another key with `--key "SUPER + SHIFT + K"`. If the key is already bound to something, the command says what and stops; it never takes a key from you.
+
+Everything it adds is in files of its own: `~/.config/hypr/babbage.lua`, one marked line in `~/.config/hypr/hyprland.lua` that loads it, and a marked block in `~/.config/omarchy/extensions/omarchy-menu.jsonc`. Each file is backed up first (as `.bak` with a timestamp), and Hyprland's configuration is checked afterwards with `hyprctl configerrors`. If the check finds an error that the change caused, every file is put back as it was. To undo it all:
+
+```
+babbage setup omarchy --remove
+```
+
+On any other desktop, bind a key to `babbage --quick` in your desktop's keyboard settings.
 
 ## The window
 

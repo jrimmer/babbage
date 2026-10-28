@@ -13,6 +13,8 @@
 # ~/.local/bin gets two commands, `babbage` (the window, or `babbage calc`) and `bbg` (the command-line calculator).
 # Tab completion for bbg is a file of its own in bash's user completions folder, and in fish's when you use fish; a
 # file of that name that this script did not write is left alone. For zsh: source <(bbg --completions zsh).
+# Babbage also gets a launcher entry and an icon (one file each, under ~/.local/share), so it shows up in an app
+# launcher. For Omarchy: babbage setup omarchy adds a quick-calculation key and a menu entry; --remove undoes it.
 # Files come from $BABBAGE_RELEASE_URL (the GitHub "latest/download" URL by default). Each one is checked against
 # its .sha256 before anything is installed, so a bad download leaves nothing behind.
 
@@ -40,6 +42,8 @@ Everything goes under ~/.local and no root is ever used: the program is kept in 
 ~/.local/bin gets two commands, `babbage` (the window, or `babbage calc`) and `bbg` (the command-line calculator).
 Tab completion for bbg is a file of its own in bash's user completions folder, and in fish's when you use fish; a
 file of that name that this script did not write is left alone. For zsh: source <(bbg --completions zsh).
+Babbage also gets a launcher entry and an icon (one file each, under ~/.local/share), so it shows up in an app
+launcher. For Omarchy: babbage setup omarchy adds a quick-calculation key and a menu entry; --remove undoes it.
 Files come from $BABBAGE_RELEASE_URL (the GitHub "latest/download" URL by default). Each one is checked against
 its .sha256 before anything is installed, so a bad download leaves nothing behind.
 USAGE
@@ -68,6 +72,10 @@ is_ours() {
 # Where bbg's tab completion goes: bash-completion's user folder, and fish's, which is used only when fish is set up.
 bash_completion="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/bbg"
 fish_completion="${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/bbg.fish"
+# The launcher entry and its icon.
+data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+desktop_entry="$data_home/applications/babbage.desktop"
+icon_file="$data_home/icons/hicolor/scalable/apps/babbage.svg"
 
 # --- uninstall ------------------------------------------------------------
 
@@ -81,7 +89,7 @@ if $uninstall; then
             rm -f "$bindir/$name"
         fi
     done
-    for file in "$bash_completion" "$fish_completion"; do
+    for file in "$bash_completion" "$fish_completion" "$desktop_entry" "$icon_file"; do
         if is_ours "$file"; then
             rm -f "$file"
         fi
@@ -202,6 +210,41 @@ write_completion() {
     mkdir -p "$(dirname "$file")"
     printf '%s\n%s\n' "$marker" "$text" >"$file"
 }
+# The launcher entry and the icon, which the program prints itself. A file of the name that is not ours stays.
+write_launcher_entry() {
+    local icon
+    if [ ! -e "$icon_file" ] || is_ours "$icon_file"; then
+        if icon=$("$bindir/babbage" --print-icon 2>/dev/null) && [ -n "$icon" ]; then
+            mkdir -p "$(dirname "$icon_file")"
+            printf '<!-- %s -->\n%s\n' "$marker" "$icon" >"$icon_file"
+        fi
+    fi
+    if [ -e "$desktop_entry" ] && ! is_ours "$desktop_entry"; then
+        return 0
+    fi
+    mkdir -p "$(dirname "$desktop_entry")"
+    cat >"$desktop_entry" <<ENTRY
+$marker
+[Desktop Entry]
+Type=Application
+Name=Babbage
+GenericName=Calculator
+Comment=A notepad calculator
+Exec="$bindir/babbage"
+TryExec=$bindir/babbage
+Icon=babbage
+Terminal=false
+Categories=Utility;Calculator;
+Keywords=calculator;math;notepad;
+StartupWMClass=babbage
+Actions=Quick;
+
+[Desktop Action Quick]
+Name=Quick calculation
+Exec="$bindir/babbage" --quick
+ENTRY
+}
+write_launcher_entry
 write_completion bash "$bash_completion"
 if [ -d "$(dirname "$(dirname "$fish_completion")")" ]; then
     write_completion fish "$fish_completion"
