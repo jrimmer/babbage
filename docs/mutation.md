@@ -86,3 +86,14 @@ Full tests, the whole of the four files: 726 mutants, 492 caught, 74 unviable, 6
 | `UnitExpr::reduce` | `e > 0` becomes `>= 0` | an exponent is never zero in a unit expression |
 
 Noticed while probing: `5 m to cm at 2` answered `1,000 cm`, because a conversion at a rate on units that are not money was accepted and the rate multiplied the result. It is now refused (decided 2026-10-27, see `docs/decisions.md`).
+
+## App code added 2026-10-28 (`theme.rs`, `completions.rs`), run with `cargo mutants -p babbage-app`
+
+74 mutants: 64 caught, 3 unviable, 7 missed. Two functions (`luminance`, `ensure_contrast`) had four real survivors; tests now pin the stepping and the dark-channel curve, and a rerun of both caught all 27. The rest are equivalent:
+
+| Function | Mutant | Why it changes nothing |
+|---|---|---|
+| `mix` | each `\|` becomes `^` | the three channels sit in separate byte ranges, so their bits never overlap and OR equals XOR |
+| `parse_palette` | `luminance(b) > 0.5` becomes `>= 0.5` | no 8-bit color has a relative luminance of exactly 0.5 |
+
+Not mutated: `install`, `reload`, `load` and `system_light`, which need a running window; the `light-theme` acceptance check covers them.

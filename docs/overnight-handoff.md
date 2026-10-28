@@ -4,7 +4,7 @@
 
 **Found on the way.** `bbg --help` never listed the long forms `--file` and `--sheet`; now it does, and a test keeps the table, the parser and the help in step.
 
-**Verified.** `bin/check` passed (700 tests) and `bin/accept` passed 60 of 60 on this tree. Not verified in a real shell: the zsh and fish scripts (neither is installed on buildhost); they are checked for their options and quoting, and `zsh -n` and `fish --no-execute` run when those shells are present.
+**Verified.** `bin/check` passed (702 tests) and `bin/accept` passed 60 of 60 (accept ran before two more unit tests were added; `bin/check` ran again after). Mutation testing of `theme.rs` and `completions.rs`: 74 mutants, 4 real survivors fixed and rerun (27 of 27 caught), 3 equivalent in `docs/mutation.md`. Not verified in a real shell: the zsh and fish scripts (neither is installed on buildhost); they are checked for their options and quoting, and `zsh -n` and `fish --no-execute` run when those shells are present.
 
 **Changed behavior to know about.** A machine that states no light or dark preference now gets the light built-in theme off Omarchy (gpui reads no preference as light). The acceptance harness pins `dark`, so pictures do not depend on the session. `docs/shots/guide/theme-light.png` shows a clock time in its sidebar and will change on every run like the other nine.
 

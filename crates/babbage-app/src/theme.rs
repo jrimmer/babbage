@@ -516,6 +516,19 @@ mod tests {
     }
 
     #[test]
+    fn the_first_color_on_the_way_that_reads_is_the_one_returned() {
+        // Pale yellow on white darkens in twentieths and stops at the first that reaches 4.5 (the tenth, 4.53).
+        assert_eq!(ensure_contrast(0xffee88, 0xffffff, 0, READABLE), 0x807744);
+    }
+
+    #[test]
+    fn dark_channels_use_the_linear_part_of_the_curve() {
+        assert!((luminance(0x080808) - 0.0024282).abs() < 1e-6);
+        assert!((contrast(0x000000, 0x080808) - 1.04856).abs() < 1e-4);
+        assert!((contrast(0x090909, 0x000000) - 1.05463).abs() < 1e-4);
+    }
+
+    #[test]
     fn contrast_is_the_standard_ratio() {
         assert!((contrast(0x000000, 0xffffff) - 21.0).abs() < 0.01);
         assert!((contrast(0xffffff, 0xffffff) - 1.0).abs() < 1e-6);
