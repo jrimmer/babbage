@@ -142,6 +142,14 @@ Fuel economy is distance per volume (`mpg`, US gallons) or volume per distance (
 | `30 mpg in L/100km` | `7.8404861111 L/100km` |
 | `8 L/100km in mpg` | `29.4018229167 MPG` |
 
+Multiply or divide fuel economy by what it measures and the units cancel:
+
+| You type | Answer |
+|---|---|
+| `10 mpg * 3 gallons` | `30 mi` |
+| `300 mi / 30 mpg` | `10 gal` |
+| `8 L/100km * 250 km` | `20 L` |
+
 ## Temperatures
 
 Convert with `C`, `F` and `K` (or `°C`, `°F`, `celsius`, `fahrenheit`, `kelvin`):

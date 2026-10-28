@@ -21,8 +21,8 @@ Nothing here has been done. Every step that reaches outside this machine needs t
 - Version: every crate says 0.0.1; set 1.0.0 in the app and core `Cargo.toml` files, tag `v1.0.0`; the core crate is
   tagged `core-v1.0.0`.
 - `bin/package` builds `dist/babbage-1.0.0-x86_64.tar.gz` and its `.sha256`, `babbage-version.txt` and its
-  `.sha256`, and the AppImage when `appimagetool` is on PATH. The AppImage also needs an icon
-  (`packaging/babbage.svg`) and a desktop entry; neither exists yet.
+  `.sha256`, and the AppImage when `appimagetool` is on PATH. The icon is `packaging/babbage.svg` and the desktop entry is written
+  by the script. The AppImage was built and run on buildhost (`bbg` mode, checksum verified) on 2026-10-27.
 - Upload `install.sh` (with its `.sha256`) beside them: the one-line install is
   `curl -fsSL https://github.com/jrimmer/babbage/releases/latest/download/install.sh | bash`.
 - Release notes: the 1.0.0 entry of `CHANGELOG.md`, then the short network statement from `docs/updates.md`.

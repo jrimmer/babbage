@@ -11,3 +11,4 @@ babbage-store.workspace = true
 anyhow.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
+png = "0.17"

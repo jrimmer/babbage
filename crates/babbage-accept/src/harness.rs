@@ -221,6 +221,54 @@ pub struct Shot {
     data: Vec<u8>,
 }
 
+/// A channel that moves by more than this (30% of full scale) is a visible change, not anti-aliasing.
+const VISIBLE_STEP: u8 = 77;
+/// How many pixels must move that far before a re-taken picture replaces the one in the repository.
+const VISIBLE_PIXELS: usize = 8;
+
+/// The compositor's anti-aliasing moves a few edge pixels from run to run, and committing those would leave every
+/// acceptance run with dozens of modified pictures. A re-taken picture replaces the kept one only when it differs
+/// visibly (another size, or enough pixels that moved far); otherwise the kept file stays as it is.
+fn keep_unless_changed(fresh: &Path, out: &Path) -> anyhow::Result<()> {
+    if out.exists() && !visibly_different(fresh, out)? {
+        std::fs::remove_file(fresh)?;
+        return Ok(());
+    }
+    std::fs::rename(fresh, out)?;
+    Ok(())
+}
+
+fn decode_png(path: &Path) -> anyhow::Result<(png::OutputInfo, Vec<u8>)> {
+    let mut decoder = png::Decoder::new(std::fs::File::open(path)?);
+    decoder.set_transformations(png::Transformations::EXPAND);
+    let mut reader = decoder.read_info()?;
+    let mut buf = vec![0; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut buf)?;
+    buf.truncate(info.buffer_size());
+    Ok((info, buf))
+}
+
+fn visibly_different(fresh: &Path, kept: &Path) -> anyhow::Result<bool> {
+    let ((a, pa), (b, pb)) = (decode_png(fresh)?, decode_png(kept)?);
+    if (a.width, a.height, a.color_type, a.bit_depth)
+        != (b.width, b.height, b.color_type, b.bit_depth)
+        || a.bit_depth != png::BitDepth::Eight
+    {
+        return Ok(true);
+    }
+    let samples = a.color_type.samples();
+    let moved = pa
+        .chunks(samples)
+        .zip(pb.chunks(samples))
+        .filter(|(x, y)| {
+            x.iter()
+                .zip(y.iter())
+                .any(|(p, q)| p.abs_diff(*q) > VISIBLE_STEP)
+        })
+        .count();
+    Ok(moved >= VISIBLE_PIXELS)
+}
+
 impl Shot {
     fn parse(bytes: &[u8]) -> anyhow::Result<Shot> {
         let mut fields = Vec::new();
@@ -601,8 +649,9 @@ impl Harness {
         if let Some(d) = out.parent() {
             std::fs::create_dir_all(d)?;
         }
-        self.grim(&["-o", "HEADLESS-2", &out.to_string_lossy()])?;
-        Ok(())
+        let fresh = out.with_extension("fresh.png");
+        self.grim(&["-o", "HEADLESS-2", &fresh.to_string_lossy()])?;
+        keep_unless_changed(&fresh, out)
     }
 
     /// Saves a PNG of `app`'s window alone, as the compositor lays it out (its size in points; the picture has
@@ -621,8 +670,9 @@ impl Harness {
             n(&w["size"][0]),
             n(&w["size"][1])
         );
-        self.grim(&["-g", &region, &out.to_string_lossy()])?;
-        Ok(())
+        let fresh = out.with_extension("fresh.png");
+        self.grim(&["-g", &region, &fresh.to_string_lossy()])?;
+        keep_unless_changed(&fresh, out)
     }
 
     /// Clicks at (`x`, `y`), in points from the window's top-left corner, with the left or right button,
@@ -899,5 +949,70 @@ impl Drop for App {
         if !self.finished && alive(self.pid) {
             let _ = Process::new("kill").arg(self.pid.to_string()).status();
         }
+    }
+}
+
+#[cfg(test)]
+mod picture_tests {
+    use super::*;
+
+    fn write(path: &Path, w: u32, h: u32, pixels: &[(usize, [u8; 4])]) {
+        let mut data = vec![255u8; (w * h * 4) as usize];
+        for (i, rgba) in pixels {
+            data[i * 4..i * 4 + 4].copy_from_slice(rgba);
+        }
+        let mut enc = png::Encoder::new(std::fs::File::create(path).unwrap(), w, h);
+        enc.set_color(png::ColorType::Rgba);
+        enc.set_depth(png::BitDepth::Eight);
+        enc.write_header().unwrap().write_image_data(&data).unwrap();
+    }
+
+    #[test]
+    fn a_retaken_picture_replaces_the_kept_one_only_when_it_differs_visibly() {
+        let dir = tempfile::tempdir().unwrap();
+        let (kept, fresh) = (dir.path().join("kept.png"), dir.path().join("fresh.png"));
+        write(&kept, 20, 20, &[]);
+        let faint: Vec<_> = (0..40).map(|i| (i, [240, 240, 240, 255])).collect();
+        let few: Vec<_> = (0..VISIBLE_PIXELS - 1)
+            .map(|i| (i, [0, 0, 0, 255]))
+            .collect();
+        let enough: Vec<_> = (0..VISIBLE_PIXELS).map(|i| (i, [0, 0, 0, 255])).collect();
+        write(&fresh, 20, 20, &faint);
+        assert!(
+            !visibly_different(&fresh, &kept).unwrap(),
+            "faint edge pixels"
+        );
+        write(&fresh, 20, 20, &few);
+        assert!(
+            !visibly_different(&fresh, &kept).unwrap(),
+            "a few strong pixels"
+        );
+        write(&fresh, 20, 20, &enough);
+        assert!(
+            visibly_different(&fresh, &kept).unwrap(),
+            "enough strong pixels"
+        );
+        write(&fresh, 21, 20, &[]);
+        assert!(visibly_different(&fresh, &kept).unwrap(), "another size");
+    }
+
+    #[test]
+    fn the_kept_file_is_left_alone_and_the_fresh_one_removed_when_nothing_changed() {
+        let dir = tempfile::tempdir().unwrap();
+        let (kept, fresh) = (dir.path().join("a.png"), dir.path().join("a.fresh.png"));
+        write(&kept, 10, 10, &[]);
+        let before = std::fs::read(&kept).unwrap();
+        write(&fresh, 10, 10, &[(0, [250, 250, 250, 255])]);
+        keep_unless_changed(&fresh, &kept).unwrap();
+        assert!(!fresh.exists());
+        assert_eq!(std::fs::read(&kept).unwrap(), before);
+        write(&fresh, 12, 10, &[]);
+        keep_unless_changed(&fresh, &kept).unwrap();
+        assert!(!fresh.exists());
+        assert_ne!(std::fs::read(&kept).unwrap(), before);
+        let none = dir.path().join("new.png");
+        write(&fresh, 5, 5, &[]);
+        keep_unless_changed(&fresh, &none).unwrap();
+        assert!(none.exists());
     }
 }

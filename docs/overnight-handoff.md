@@ -1,3 +1,13 @@
+# Open items worked through (2026-10-27, later)
+
+**Done.** The merged helper worktree and its branch are removed. A conversion at a rate on units that convert without one is refused (`5 m to cm at 2`, `3 hours to minutes at 60`, `1 cm in px at 326`); the two older pins for the px forms now pin the refusal. Fuel economy cancels against what it measures (`10 mpg * 3 gallons` is `30 mi`, `300 mi / 30 mpg` is `10 gal`, `8 L/100km * 250 km` is `20 L`). The AppImage builds and runs (`packaging/babbage.svg`, `appimagetool` from the AppImage releases, checksum verified, kept outside the repo). A retaken screenshot replaces the kept one only when it differs visibly (`keep_unless_changed`, two tests): 34 of the 42 noisy pictures stay put.
+
+**Not done, by decision.** `5% * 2` stays `0.1`: showing `10%` would turn the pinned `25% × 200` (50) into `5000%`.
+
+**Still open.** Pictures that show a clock time (the sheet list in `sidebar`, `sheet-menu`, `sheet-rename`, `window-parts`, `export-notice`, `sidebar-menu`, `settings-updates`) change every run and are restored by hand. Real sheets for the skipped-words report (ticket 0025). The public repository.
+
+**Verified.** `bin/check` passed (682 tests, 59 suites) and `bin/accept` passed 58 of 58 on the tree before this commit.
+
 # Overnight handoff (2026-10-27)
 
 **Done.** Mutation testing of the lines changed today (117 mutants, then 68: two survivors, one equivalent, one fixed by `unit_targets.rs`). Then a full pass over `units`, `parser`, `phrase` and `functions` (726 mutants, 99 missed) with two reruns of the touched functions (335, then 209 mutants): 23 remain, all accepted as equivalent with reasons in `docs/mutation.md`. New tests: `function_near_misses.rs` (primes, pitch, degrees-minutes-seconds, screen density, combinations, roots, standard deviation, the seeded random sequence, refusal messages) and `phrase_unit_near_misses.rs` (`in lb oz`, conversions in brackets, rate merging, unit cancelling, plain numbers shown as rates, conversions at a rate, the written form of a parsed line). One redundant arm in `Func::arity` was removed. `CHANGELOG.md` (1.0.0 draft) and `docs/release-plan.md` are written.

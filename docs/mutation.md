@@ -85,4 +85,4 @@ Full tests, the whole of the four files: 726 mutants, 492 caught, 74 unviable, 6
 | `Spelling::partial_cmp` | becomes `None` | spellings never take part in an ordering; equality ignores them |
 | `UnitExpr::reduce` | `e > 0` becomes `>= 0` | an exponent is never zero in a unit expression |
 
-Noticed while probing, left as a ticket: `5 m to cm at 2` answers `1,000 cm`. A conversion at a rate on units that are not money is accepted and the rate multiplies the result.
+Noticed while probing: `5 m to cm at 2` answered `1,000 cm`, because a conversion at a rate on units that are not money was accepted and the rate multiplied the result. It is now refused (decided 2026-10-27, see `docs/decisions.md`).

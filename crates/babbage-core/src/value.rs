@@ -497,6 +497,11 @@ impl Value {
 
     /// Converts with a rate the user wrote: `50 EUR in USD at 1.05 USD/EUR`.
     pub fn convert_at(self, rate: &Value, target: &UnitExpr) -> Result<Value, Error> {
+        if self.unit.dim() == target.dim() && !rate.unit.dim().has_money() {
+            return Err(Error::UnsupportedOperation(
+                "a rate has no use here: these units convert without one",
+            ));
+        }
         Value::binary(BinOp::Mul, &self, rate)?.convert(target)
     }
 
@@ -1326,6 +1331,9 @@ fn length_powers_in_left_unit(l: &Value, r: &Value) -> Result<Option<(UnitExpr, 
 
 /// Two quantities of one kind in different units multiply in the left one's unit.
 fn product(l: &Value, r: &Value) -> Result<Value, Error> {
+    if let Some(v) = fuel_economy(BinOp::Mul, l, r)? {
+        return Ok(v);
+    }
     // `$30 x 4 days`: a price times a count of something is that price per thing.
     for (price, other) in [(l, r), (r, l)] {
         if price.unit.single_currency().is_some()
@@ -1355,6 +1363,60 @@ fn product(l: &Value, r: &Value) -> Result<Value, Error> {
     Value::quantity(l.number.mul(&right)?, unit)
 }
 
+/// Fuel economy cancels against what it measures: `10 mpg x 3 gallons` is `30 mi` and `300 mi / 30 mpg` is
+/// `10 gal`; `8 L/100km x 250 km` is `20 L` and `20 L / 8 L/100km` is `250 km`. Any other mix keeps both units.
+fn fuel_economy(op: BinOp, l: &Value, r: &Value) -> Result<Option<Value>, Error> {
+    use crate::units::lookup;
+    let (Some(mpg), Some(per_100km)) = (lookup("MPG"), lookup("L/100km")) else {
+        return Ok(None);
+    };
+    let (Some(mile), Some(gallon), Some(litre), Some(km)) =
+        (lookup("mi"), lookup("gal"), lookup("L"), lookup("km"))
+    else {
+        return Ok(None);
+    };
+    let plain = |v: &Value| v.kind == Kind::Plain;
+    if !plain(l) || !plain(r) {
+        return Ok(None);
+    }
+    let amount = |v: &Value, unit: &UnitExpr| -> Result<Option<Number>, Error> {
+        if v.unit.dim() != unit.dim() {
+            return Ok(None);
+        }
+        v.number
+            .mul(&v.unit.factor_against(unit)?)?
+            .div(&unit.factor_against(&v.unit)?)
+            .map(Some)
+    };
+    let hundred = Number::from_i64(100);
+    let (economy, other) = match (op, &l.unit, &r.unit) {
+        (BinOp::Mul, a, _) if *a == mpg || *a == per_100km => (l, r),
+        (BinOp::Mul, _, b) if *b == mpg || *b == per_100km => (r, l),
+        (BinOp::Div, _, b) if *b == mpg || *b == per_100km => (r, l),
+        _ => return Ok(None),
+    };
+    let by_mpg = economy.unit == mpg;
+    let answer = match (op, by_mpg) {
+        (BinOp::Mul, true) => amount(other, &gallon)?
+            .map(|g| economy.number.mul(&g))
+            .transpose()?
+            .map(|n| (n, mile)),
+        (BinOp::Mul, false) => amount(other, &km)?
+            .map(|d| economy.number.mul(&d)?.div(&hundred))
+            .transpose()?
+            .map(|n| (n, litre)),
+        (_, true) => amount(other, &mile)?
+            .map(|d| d.div(&economy.number))
+            .transpose()?
+            .map(|n| (n, gallon)),
+        (_, false) => amount(other, &litre)?
+            .map(|v| v.div(&economy.number)?.mul(&hundred))
+            .transpose()?
+            .map(|n| (n, km)),
+    };
+    answer.map(|(n, unit)| Value::quantity(n, unit)).transpose()
+}
+
 fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
     let right = if l.unit == r.unit {
         r.number.clone()
@@ -1369,6 +1431,9 @@ fn modulo(l: &Value, r: &Value) -> Result<Value, Error> {
 }
 
 fn quotient(l: &Value, r: &Value) -> Result<Value, Error> {
+    if let Some(v) = fuel_economy(BinOp::Div, l, r)? {
+        return Ok(v);
+    }
     // `$500/month / 30 days` is `$16.67/day`: a monthly money rate spread over a number of
     // days. That is the one form kept; any other rate over a length of time keeps both units (`$100/day / 2 hours`
     // is not `$50/hour`).

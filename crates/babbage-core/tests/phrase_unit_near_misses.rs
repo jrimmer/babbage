@@ -121,7 +121,14 @@ fn a_conversion_at_a_rate_needs_a_target_and_a_rate() {
         let e = shown(line).unwrap_err();
         assert!(e.starts_with("unexpected word"), "{line}: {e}");
     }
-    assert_eq!(ok("5 m to cm at 2"), "1,000 cm");
+    for line in [
+        "5 m to cm at 2",
+        "5 m to cm at 2 cm/m",
+        "3 hours to minutes at 60",
+    ] {
+        let e = shown(line).unwrap_err();
+        assert!(e.contains("convert without one"), "{line}: {e}");
+    }
     assert_eq!(ok("$500 at $20/hour"), "25 hours");
     assert!(
         shown("30 hours at $30")
@@ -161,4 +168,26 @@ fn a_plain_number_shown_in_a_unit_of_another_kind_is_refused() {
     }
     assert_eq!(ok("5 as m/km"), "5,000 m/km");
     assert_eq!(ok("5 as %"), "500%");
+}
+
+#[test]
+fn fuel_economy_cancels_against_what_it_measures() {
+    assert_eq!(ok("10 mpg * 3 gallons"), "30 mi");
+    assert_eq!(ok("3 gallons * 10 mpg"), "30 mi");
+    assert_eq!(ok("300 mi / 30 mpg"), "10 gal");
+    assert_eq!(ok("8 L/100km * 250 km"), "20 L");
+    assert_eq!(ok("250 km * 8 L/100km"), "20 L");
+    assert_eq!(ok("20 L / 8 L/100km"), "250 km");
+    // Another unit of the same kind is converted first, and a mismatched kind keeps both units.
+    assert_eq!(ok("30 mpg * 3.785411784 L"), "30 mi");
+    assert_eq!(ok("300 miles / 30 mpg in gallons"), "10 gal");
+    assert_eq!(ok("10 mpg * 3 m"), "30 MPG m");
+    assert_eq!(ok("10 mpg * 2"), "20 MPG");
+}
+
+#[test]
+fn a_percentage_times_a_plain_number_is_the_share_not_a_percentage() {
+    assert_eq!(ok("5% * 2"), "0.1");
+    assert_eq!(ok("25% * 200"), "50");
+    assert_eq!(ok("2 * 5%"), "0.1");
 }
