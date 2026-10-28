@@ -97,3 +97,15 @@ Noticed while probing: `5 m to cm at 2` answered `1,000 cm`, because a conversio
 | `parse_palette` | `luminance(b) > 0.5` becomes `>= 0.5` | no 8-bit color has a relative luminance of exactly 0.5 |
 
 Not mutated: `install`, `reload`, `load` and `system_light`, which need a running window; the `light-theme` acceptance check covers them.
+
+## App code added 2026-10-28, later (`omarchy_setup.rs`, `quick.rs`)
+
+138 mutants: 116 caught, 6 unviable, 16 missed. Tests now pin the comment, escape and brace handling of the menu editor (`awkward_menu_files_are_read_as_code_not_as_text`), and a rerun of `code_chars`, `remove_menu` and `add_menu` caught everything except the one equivalent below. The rest are equivalent or covered elsewhere:
+
+| Function | Mutant | Why it changes nothing |
+|---|---|---|
+| `taken` | each `\|` becomes `^` | the modifier bits (caps lock 2, numpad 16, 32) do not overlap |
+| `code_chars` | the `/*` guard `peek == '*'` becomes `true` | a lone `/` never appears in code in a valid JSONC file; it only occurs inside strings and comments |
+| `main` | returns 0, 1 or -1 | not run by unit tests; the `omarchy-setup` acceptance check asserts exit codes 0, 1 and 2 against the real binary |
+
+Not mutated: `Real`, `focus_running`, `focus_address`, `in_hyprland` and `output_of`, which call `hyprctl` and `omarchy`; the `quick-window` and `omarchy-setup` acceptance checks cover them (the first against a nested Hyprland).

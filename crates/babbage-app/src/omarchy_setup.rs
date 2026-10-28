@@ -840,6 +840,45 @@ mod tests {
     }
 
     #[test]
+    fn awkward_menu_files_are_read_as_code_not_as_text() {
+        let samples = [
+            // A brace in a comment after the real one.
+            "{\n  \"a\": {\"label\":\"A\"}\n}\n/* } */\n",
+            // A star and a slash inside a block comment that holds a brace.
+            "{\n  \"a\": {\"label\":\"A\"}\n}\n/* x * y / z } */\n",
+            // An escaped quote just before the closing brace.
+            "{\n  \"a\": {\"label\":\"say \\\"hi\\\"\"}\n}\n",
+            // One escaped quote in the last string: if the escape were not skipped, the next quote would open a string.
+            "{\n  \"a\": {\"label\":\"A \\\" b\"}\n}\n",
+            // The closing brace right after the last entry.
+            "{\"a\":{\"label\":\"A\"}}\n",
+        ];
+        for text in samples {
+            let added = add_menu(text).unwrap_or_else(|e| panic!("{e}: {text}"));
+            let v = menu_value(&added);
+            assert_eq!(v["babbage.quick"]["action"], "babbage --quick", "{added}");
+            assert!(
+                v["a"]["label"].as_str().unwrap().starts_with('A')
+                    || v["a"]["label"].as_str().unwrap().starts_with("say")
+            );
+            assert_eq!(add_menu(&added).unwrap(), added, "{text}");
+            assert_eq!(menu_value(&remove_menu(&added).unwrap())["a"], v["a"]);
+            assert!(
+                menu_value(&remove_menu(&added).unwrap())
+                    .get("babbage")
+                    .is_none()
+            );
+        }
+        // A block with nothing before it keeps the brace after it, and a lone brace takes the block.
+        assert_eq!(
+            remove_menu("// babbage: begin\n// babbage: end\n}\n").unwrap(),
+            "}\n"
+        );
+        let lone = add_menu("}\n").unwrap();
+        assert!(lone.contains("babbage.quick") && lone.ends_with("}\n"));
+    }
+
+    #[test]
     fn a_half_marked_or_braceless_menu_is_refused_not_mangled() {
         let half = format!("{{\n  {BEGIN}\n  \"x\": 1\n}}\n");
         assert!(

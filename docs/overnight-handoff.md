@@ -4,7 +4,7 @@
 
 **Found on the way.** gpui does not send the titlebar option to a Wayland compositor, so every Babbage window had an empty title; a window rule that matches the title could never have fired. The title is now set with `set_window_title`. Fairfax's `fairfax-omarchy-setup` checks a key with `grep "^SUPER + SHIFT + T"` but `omarchy menu keybindings --print` writes `SUPER SHIFT + T`, so its conflict check never matches a key with two modifiers (checked on this machine with `SUPER SHIFT + RETURN`).
 
-**Verified.** `bin/check` passed (723 tests) and `bin/accept` passed 62 of 62. Never run against the real Omarchy config (the rules forbid it): the setup is tested on a fake home with stubbed commands, and `hyprctl reload`, `configerrors` and `binds -j` were checked for their output format in the nested compositor.
+**Verified.** `bin/check` passed (724 tests, run again after the last test was added) and `bin/accept` passed 62 of 62. Mutation testing of `omarchy_setup.rs` and `quick.rs`: 138 mutants, every real survivor now caught, the equivalents in `docs/mutation.md`. Never run against the real Omarchy config (the rules forbid it): the setup is tested on a fake home with stubbed commands, and `hyprctl reload`, `configerrors` and `binds -j` were checked for their output format in the nested compositor.
 
 # Light theme, weekly updates, completions (2026-10-28)
 
