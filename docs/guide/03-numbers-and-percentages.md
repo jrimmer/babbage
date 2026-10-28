@@ -277,9 +277,9 @@ Give the part and the percentage and ask for the whole:
 | `50 is 20% of what` | `250` |
 | `20 is 25% on what` | `16` |
 | `20 is 25% off what` | `26.6666666667` |
-| `25% of what is 20` | `5` |
+| `25% of what is 20` | `80` |
 
-Read `20 is 25% on what` as: 20 is what you get after adding 25% to something, and the something is `16`. `off` works the other way round. Note that `25% of what is 20` is read as 25% of 20, which is `5`; use the `is ... of what` order to find the whole.
+Read `20 is 25% on what` as: 20 is what you get after adding 25% to something, and the something is `16`. `off` works the other way round. `25% of what is 20` asks the same question as `20 is 25% of what`, and `on` and `off` work in both orders.
 
 ### Percentages with each other
 

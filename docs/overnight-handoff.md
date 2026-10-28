@@ -4,9 +4,9 @@
 
 **Not done, by decision.** `5% * 2` stays `0.1`: showing `10%` would turn the pinned `25% × 200` (50) into `5000%`.
 
-**Still open.** Pictures that show a clock time (the sheet list in `sidebar`, `sheet-menu`, `sheet-rename`, `window-parts`, `export-notice`, `sidebar-menu`, `settings-updates`) change every run and are restored by hand. Real sheets for the skipped-words report (ticket 0025). The public repository.
+**Still open.** Pictures that show a clock time (the sheet list in `sidebar`, `sheet-menu`, `sheet-rename`, `window-parts`, `export-notice`, `sidebar-menu`, `settings-updates`) change every run and are restored by hand. The public repository. (Ticket 0025 is closed: prose with keywords is specified in `prose_with_keywords.rs`, and `20% of what is $30` now answers `$150.00`.)
 
-**Verified.** `bin/check` passed (682 tests, 59 suites) and `bin/accept` passed 58 of 58 on the tree before this commit.
+**Verified.** `bin/check` passed (687 tests, 60 suites) and `bin/accept` passed 58 of 58 on the tree before the commit that closed ticket 0025.
 
 # Overnight handoff (2026-10-27)
 

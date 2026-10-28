@@ -9,6 +9,8 @@ struct Form {
     /// One char per run of tokens around the keywords: 'E' must hold an expression, '.' must be empty.
     shape: &'static str,
     phrase: Phrase,
+    /// The expressions are written in the opposite order to the phrase's arguments (`20% of what is $30`).
+    reversed: bool,
 }
 
 const fn form(keywords: &'static [&'static str], shape: &'static str, phrase: Phrase) -> Form {
@@ -16,6 +18,14 @@ const fn form(keywords: &'static [&'static str], shape: &'static str, phrase: Ph
         keywords,
         shape,
         phrase,
+        reversed: false,
+    }
+}
+
+const fn reversed(keywords: &'static [&'static str], shape: &'static str, phrase: Phrase) -> Form {
+    Form {
+        reversed: true,
+        ..form(keywords, shape, phrase)
     }
 }
 
@@ -23,6 +33,10 @@ const FORMS: &[Form] = &[
     form(&["is", "of", "what"], "EE..", Phrase::IsPercentOfWhat),
     form(&["is", "on", "what"], "EE..", Phrase::IsPercentOnWhat),
     form(&["is", "off", "what"], "EE..", Phrase::IsPercentOffWhat),
+    // `20% of what is $30` is the same question as `$30 is 20% of what`.
+    reversed(&["of", "what", "is"], "E..E", Phrase::IsPercentOfWhat),
+    reversed(&["on", "what", "is"], "E..E", Phrase::IsPercentOnWhat),
+    reversed(&["off", "what", "is"], "E..E", Phrase::IsPercentOffWhat),
     form(&["is", "what", "%", "of"], "E...E", Phrase::WhatPercentOf),
     form(&["is", "what", "%", "on"], "E...E", Phrase::WhatPercentOn),
     form(&["is", "what", "%", "off"], "E...E", Phrase::WhatPercentOff),
@@ -337,7 +351,11 @@ pub fn parse_line(toks: &[Token]) -> Result<Expr, Error> {
     }
 
     let mut rpn: Vec<Node> = Vec::new();
-    for run in runs.iter().filter(|r| !r.is_empty()) {
+    let mut written: Vec<&&[Token]> = runs.iter().filter(|r| !r.is_empty()).collect();
+    if form.reversed {
+        written.reverse();
+    }
+    for run in written {
         rpn.extend(parse(run)?.nodes().iter().cloned());
     }
     rpn.push(Node::Phrase(form.phrase));
