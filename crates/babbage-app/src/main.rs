@@ -13,6 +13,7 @@ mod appprefs;
 mod autocomplete;
 mod chrome;
 mod cli;
+mod completions;
 mod computed;
 mod control;
 mod editor_model;

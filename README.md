@@ -17,7 +17,8 @@ written down in [docs/updates.md](docs/updates.md).
 
 `bbg` is the same program as the window, run as a calculator, so its answers are the window's. `bbg 20% of 85`
 prints `17`, `bbg budget.bbg` answers a sheet file, and `babbage calc` does the same as `bbg`. `bbg --help` lists
-the options. The one-line installer and the guide's Getting started chapter are the way to get it.
+the options. The one-line installer and the guide's Getting started chapter are the way to get it. Tab completion for
+bash, zsh and fish: `bbg --completions bash` (or `zsh`, `fish`) prints the script; the installer sets up bash and fish.
 
 ## Building and testing
 

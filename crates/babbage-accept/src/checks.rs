@@ -23,6 +23,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("cli-saved", cli_saved),
     ("cli-repeating", cli_repeating),
     ("cli-bbg-name", cli_bbg_name),
+    ("cli-completions", cli_completions),
     ("install-script", install_script),
     ("sum", sum_shows_39),
     ("sheet-overview", sheet_overview),
@@ -71,6 +72,7 @@ pub const CHECKS: &[(&str, Check)] = &[
     ("variables", variables),
     ("subtotal-style", subtotal_style),
     ("number-scrub", number_scrub),
+    ("light-theme", light_theme),
     ("no-real-desktop", no_real_desktop),
 ];
 
@@ -3788,6 +3790,77 @@ fn quit_saves(h: &mut Harness) -> anyhow::Result<()> {
     Ok(())
 }
 
+const LATTE: &str = "mode = \"light\"\naccent = \"#1e66f5\"\nbackground = \"#eff1f5\"\nforeground = \"#4c4f69\"\nyellow = \"#df8e1d\"\ngreen = \"#40a02b\"\ncyan = \"#179299\"\nblue = \"#1e66f5\"\nmagenta = \"#ea76cb\"\n";
+const LIFTOFF: &str = "mode = \"dark\"\naccent = \"#F3B77B\"\nbackground = \"#151E26\"\nforeground = \"#ECE5D8\"\nyellow = \"#EAD093\"\ngreen = \"#A9C59A\"\ncyan = \"#8BC8D0\"\nblue = \"#7BBCE0\"\nmagenta = \"#C3ABCC\"\n";
+
+/// How bright the page is: the brightest pixel of an empty strip of the editor, below the typed lines.
+fn page_brightness(h: &Harness, app: &mut App) -> anyhow::Result<f32> {
+    let s = app.state()?;
+    let scr = Screen::of(h, app, &s)?;
+    let (w, hh) = (f(&s["window"]["w"])?, f(&s["window"]["h"])?);
+    let shot = h.shot()?;
+    let p = scr
+        .brightest(&shot, w * 0.4, hh - 90., w * 0.5, hh - 50.)
+        .context("the strip is off screen")?;
+    Ok(luminance(p))
+}
+
+/// A light Omarchy theme paints a light page and a switch to a dark one is followed without a restart. With no theme
+/// file the built-in theme follows `BABBAGE_APPEARANCE`.
+fn light_theme(h: &mut Harness) -> anyhow::Result<()> {
+    let dir = h.logs.join("light-theme");
+    std::fs::create_dir_all(&dir)?;
+    let theme = dir.join("colors.toml");
+    std::fs::write(&theme, LATTE)?;
+    let theme = theme.to_string_lossy().into_owned();
+    let mut app = h.launch("light-theme", None, &[("BABBAGE_THEME_FILE", &theme)])?;
+    h.resize(&app, 900, 520)?;
+    for line in ["# Trip", "hotel = $180", "3 * hotel + 25%"] {
+        h.type_line(line)?;
+    }
+    app.wait_for("the answer", T, |s| answer(s, 2) == Some("$675.00"))?;
+    settle();
+    let light = page_brightness(h, &mut app)?;
+    ensure!(
+        light > 200.,
+        "a light theme drew a page of brightness {light}"
+    );
+    guide_picture(h, &app, "theme-light", 900, 520)?;
+
+    std::fs::write(&theme, LIFTOFF)?;
+    let start = std::time::Instant::now();
+    loop {
+        let dark = page_brightness(h, &mut app)?;
+        if dark < 80. {
+            break;
+        }
+        ensure!(
+            start.elapsed() < T,
+            "the page stayed bright ({dark}) after the theme file became dark"
+        );
+        std::thread::sleep(Duration::from_millis(500));
+    }
+    app.finish()?;
+
+    for (appearance, bright) in [("light", true), ("dark", false)] {
+        let mut app = h.launch(
+            &format!("appearance-{appearance}"),
+            None,
+            &[("BABBAGE_APPEARANCE", appearance)],
+        )?;
+        h.type_line("1 + 1")?;
+        app.wait_for("the answer", T, |s| answer(s, 0) == Some("2"))?;
+        settle();
+        let b = page_brightness(h, &mut app)?;
+        ensure!(
+            (b > 200.) == bright && (bright || b < 80.),
+            "BABBAGE_APPEARANCE={appearance} drew a page of brightness {b}"
+        );
+        app.finish()?;
+    }
+    Ok(())
+}
+
 fn no_real_desktop(h: &mut Harness) -> anyhow::Result<()> {
     let before = h.host_windows_of("babbage")?;
     let app = h.launch("desktop", None, &[])?;
@@ -4138,6 +4211,75 @@ fn cli_bbg_name(h: &mut Harness) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// `bbg --completions SHELL` prints a script for bash, zsh and fish and refuses any other shell, and `--list-sheets`
+/// names the saved sheets while leaving the folder as it found it (tab completion runs while the window may be saving).
+fn cli_completions(h: &mut Harness) -> anyhow::Result<()> {
+    let cli = Cli::new(h, "cli-completions")?;
+    let bbg = [("BABBAGE_AS", "bbg")];
+    for (shell, first, needle) in [
+        ("bash", "# bash completion for bbg", "complete -F _bbg bbg"),
+        ("zsh", "#compdef bbg", "_arguments"),
+        ("fish", "# fish completion for bbg", "complete -c bbg"),
+    ] {
+        let r = cli.exec(&cli.program, &["--completions", shell], None, &bbg)?;
+        ensure!(
+            r.code == 0
+                && r.out.starts_with(first)
+                && r.out.contains(needle)
+                && r.out.contains("places"),
+            "--completions {shell}: {} {:?} {:?}",
+            r.code,
+            r.out,
+            r.err
+        );
+    }
+    let r = cli.exec(&cli.program, &["--completions", "powershell"], None, &bbg)?;
+    ensure!(
+        r.code == 2 && r.out.is_empty() && r.err.contains("use bash, zsh or fish"),
+        "--completions powershell: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    let r = cli.exec(&cli.program, &["--completions"], None, &bbg)?;
+    ensure!(
+        r.code == 2,
+        "--completions with no shell: {} {:?}",
+        r.code,
+        r.err
+    );
+
+    // The names of the saved sheets, from a folder that has other files in it. A half-written temporary file stays.
+    let sheets = cli.home.join("sheets");
+    std::fs::write(sheets.join("Budget.bbg"), "1 + 1\n")?;
+    std::fs::write(sheets.join("Trip to Rome.bbg"), "2 + 2\n")?;
+    std::fs::write(sheets.join("notes.txt"), "x")?;
+    let temp = sheets.join("Budget.bbg.tmp");
+    std::fs::write(&temp, "half")?;
+    let r = cli.exec(&cli.program, &["--list-sheets"], None, &bbg)?;
+    ensure!(
+        r.code == 0 && r.out == "Budget\nTrip to Rome\n",
+        "--list-sheets: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    ensure!(temp.exists(), "--list-sheets cleared a temporary file");
+
+    // No sheet folder yet: nothing is listed and nothing is created.
+    std::fs::remove_dir_all(&sheets)?;
+    let r = cli.exec(&cli.program, &["--list-sheets"], None, &bbg)?;
+    ensure!(
+        r.code == 0 && r.out.is_empty() && r.err.is_empty(),
+        "--list-sheets without a folder: {} {:?} {:?}",
+        r.code,
+        r.out,
+        r.err
+    );
+    ensure!(!sheets.exists(), "--list-sheets created the sheet folder");
+    Ok(())
+}
+
 /// The sha256 line `sha256sum` writes for `file`, named by its file name, as a .sha256 file holds it.
 fn sha256_file(file: &Path) -> anyhow::Result<String> {
     let dir = file.parent().context("a folder for the file")?;
@@ -4258,6 +4400,22 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         let mode = std::fs::metadata(bin.join(name))?.permissions().mode();
         ensure!(mode & 0o111 != 0, "{name} is not executable");
     }
+    // Tab completion for bash is a file of its own, written by the installed program; fish is not set up here, so
+    // there is no fish file.
+    let bash_file = cli
+        .home
+        .join(".local/share/bash-completion/completions/bbg");
+    let fish_file = cli.home.join(".config/fish/completions/bbg.fish");
+    let text = std::fs::read_to_string(&bash_file).context("the bash completion file")?;
+    ensure!(
+        text.starts_with("# Written by the Babbage installer")
+            && text.contains("complete -F _bbg bbg"),
+        "the bash completion file: {text:?}"
+    );
+    ensure!(
+        !cli.home.join(".config").exists(),
+        "the installer made a fish folder for someone who does not use fish"
+    );
     let r = cli.exec(&bin.join("bbg"), &["20%", "of", "85"], None, &[])?;
     ensure!(
         r.code == 0 && r.out == "17\n",
@@ -4298,6 +4456,11 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         "uninstall removed a file it did not install"
     );
     std::fs::remove_file(bin.join("keep-me"))?;
+    ensure!(!bash_file.exists(), "uninstall left the completion file");
+
+    // A fish user's own file of the same name is never overwritten or removed.
+    std::fs::create_dir_all(fish_file.parent().context("a folder")?)?;
+    std::fs::write(&fish_file, "# mine\n")?;
 
     // The tarball: the program itself, not the AppImage, and the commands still answer.
     let r = cli.exec(
@@ -4327,6 +4490,38 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
     ensure!(
         r.code == 0 && !share.exists(),
         "uninstall after the tarball: {} {:?}",
+        r.code,
+        r.err
+    );
+    ensure!(
+        std::fs::read_to_string(&fish_file)? == "# mine\n",
+        "the installer changed a fish completion file that was not its own"
+    );
+    ensure!(!bash_file.exists(), "uninstall left the completion file");
+
+    // With fish set up and no file of the name, the installer adds one, and uninstall takes it away again.
+    std::fs::remove_file(&fish_file)?;
+    let r = cli.exec(Path::new("/bin/bash"), &[installer.as_str()], None, &env)?;
+    ensure!(
+        r.code == 0,
+        "install for a fish user: {} {:?}",
+        r.code,
+        r.err
+    );
+    let text = std::fs::read_to_string(&fish_file).context("the fish completion file")?;
+    ensure!(
+        text.starts_with("# Written by the Babbage installer") && text.contains("complete -c bbg"),
+        "the fish completion file: {text:?}"
+    );
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str(), "--uninstall"],
+        None,
+        &env,
+    )?;
+    ensure!(
+        r.code == 0 && !fish_file.exists() && !bash_file.exists(),
+        "uninstall for a fish user: {} {:?}",
         r.code,
         r.err
     );

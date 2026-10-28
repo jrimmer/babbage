@@ -85,7 +85,7 @@ Your sheets are saved for you as you type, about 0.4 seconds after you pause. Th
 plain text files in `~/.local/share/babbage/sheets`. Your settings live in `~/.config/babbage/settings`. See
 [Sheets and files](10-sheets-and-files.html) for the details.
 
-Babbage follows your desktop theme when it runs on Omarchy, and otherwise uses its own dark theme.
+Babbage follows your desktop theme when it runs on Omarchy, light or dark, and otherwise follows your system's light or dark setting. See [Settings](12-settings.html#colors-and-themes).
 
 ## The window
 

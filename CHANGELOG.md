@@ -15,6 +15,10 @@ appears beside each line.
 - **Words that were not understood** are underlined, and a word one letter from a unit shows what it may mean.
 - **The command line.** `bbg 20% of 85` answers from a terminal, reads sheets from a file or a pipe, and prints
   JSON. It is the same program as the window, so the answers always agree.
+- **Tab completion** for `bbg` in bash, zsh and fish: options, decimal places and the names of your saved sheets.
+  The installer adds it for bash, and for fish when you use fish, and never replaces a file it did not write.
+- **Light themes.** Babbage follows an Omarchy theme light or dark, keeps text readable on whatever colors the theme
+  gives, and off Omarchy follows the system's light or dark setting (`BABBAGE_APPEARANCE` overrides it).
 - **Install.** One line installs the program under `~/.local`, checking every file against its published SHA-256.
 - **Updates.** Babbage can look for a newer release once a week and says exactly what it asks; one setting or one
   environment variable turns it off.

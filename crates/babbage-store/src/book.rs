@@ -139,6 +139,23 @@ impl SheetBook {
         &self.dir
     }
 
+    /// The names of the sheets in `dir`, alphabetical. Unlike `open` this changes nothing: a folder that does not
+    /// exist has no sheets, and no temporary file is cleared, so it is safe to call while the app is saving (tab
+    /// completion does).
+    pub fn names_in(dir: &Path) -> Vec<String> {
+        let Ok(rd) = fs::read_dir(dir) else {
+            return Vec::new();
+        };
+        let mut names: Vec<String> = rd
+            .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+            .filter_map(|e| Self::id_of(&e.path()))
+            .map(|id| id.0)
+            .collect();
+        names.sort();
+        names
+    }
+
     pub fn trash_dir(&self) -> PathBuf {
         self.dir.join(TRASH)
     }
@@ -370,6 +387,24 @@ mod tests {
             fs::read_to_string(b.path_of(&id)).unwrap(),
             "12 + 12\n\n// note\n"
         );
+    }
+
+    #[test]
+    fn names_are_listed_without_touching_the_folder() {
+        let (d, b) = book();
+        let dir = b.dir().to_path_buf();
+        b.create_named("Budget", &["1"]).unwrap();
+        b.create_named("Trip", &["2"]).unwrap();
+        std::fs::write(dir.join("notes.txt"), "x").unwrap();
+        std::fs::write(dir.join(".hidden.bbg"), "x").unwrap();
+        std::fs::create_dir(dir.join("Folder.bbg")).unwrap();
+        let tmp = dir.join("Budget.bbg.tmp");
+        std::fs::write(&tmp, "half").unwrap();
+        assert_eq!(SheetBook::names_in(&dir), ["Budget", "Trip"]);
+        assert!(tmp.exists(), "a temporary file was cleared");
+        let missing = d.path().join("nowhere");
+        assert!(SheetBook::names_in(&missing).is_empty());
+        assert!(!missing.exists(), "listing created the folder");
     }
 
     #[test]

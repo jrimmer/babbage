@@ -16,10 +16,68 @@ use babbage_core::settings::Settings;
 use babbage_store::{SheetBook, SheetId, decode};
 use serde_json::json;
 
+use crate::completions::Shell;
 use crate::computed::{Answer, Computed, compute_in};
 use crate::linefmt::{self, LineFormat};
 
+/// What an option takes after it, for the shell completions.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Takes {
+    Nothing,
+    Places,
+    File,
+    Sheet,
+    Shell,
+}
+
+/// Every option of command mode: its short and long names, what it takes and what it does. The shell completions are
+/// written from this table, so they cannot name an option the parser does not know.
+pub const OPTIONS: &[(Option<char>, &str, Takes, &str)] = &[
+    (
+        Some('a'),
+        "answers",
+        Takes::Nothing,
+        "print only the answers",
+    ),
+    (
+        Some('t'),
+        "total",
+        Takes::Nothing,
+        "also print the total of a sheet",
+    ),
+    (
+        Some('p'),
+        "places",
+        Takes::Places,
+        "decimal places, 0 to 10",
+    ),
+    (
+        Some('r'),
+        "repeating",
+        Takes::Nothing,
+        "show repeating decimals as 0.(3)",
+    ),
+    (None, "json", Takes::Nothing, "one JSON object per line"),
+    (Some('f'), "file", Takes::File, "a sheet file"),
+    (Some('s'), "sheet", Takes::Sheet, "a saved sheet"),
+    (
+        None,
+        "completions",
+        Takes::Shell,
+        "print the completion script for a shell",
+    ),
+    (None, "list-sheets", Takes::Nothing, "list the saved sheets"),
+    (Some('h'), "help", Takes::Nothing, "show help"),
+    (Some('V'), "version", Takes::Nothing, "show the version"),
+];
+
 pub const USAGE: &str = "usage: bbg [options] EXPRESSION...\n       bbg [options] FILE\n       bbg [options] -f FILE | -s NAME | -";
+
+/// The text of `bbg --help`.
+#[cfg(test)]
+pub fn help_text() -> &'static str {
+    HELP
+}
 
 const HELP: &str = "\
 usage: bbg [options] EXPRESSION...
@@ -31,8 +89,10 @@ run as `babbage calc`.
 
   EXPRESSION...     the words are joined into one line
   FILE              a sheet file, when the only argument is an existing file
-  -f FILE, -        a sheet file, or standard input
-  -s NAME           a saved sheet from the sheet folder
+  -f FILE, --file FILE, -
+                    a sheet file, or standard input
+  -s NAME, --sheet NAME
+                    a saved sheet from the sheet folder
   (no arguments)    reads a sheet from standard input when it is not a terminal
   -a, --answers     print only the answers, one per line
   -t, --total       also print the sheet's total (sheets only)
@@ -41,6 +101,8 @@ run as `babbage calc`.
       --json        one JSON object per line: text, answer, exact, error
   -h, --help        show this help
   -V, --version     show the version
+      --completions SHELL  print the tab-completion script for bash, zsh or fish
+      --list-sheets        list the saved sheets, one per line
 
 Exit status: 0 when no line is an error, 1 when one is, 2 for bad usage.
 ";
@@ -71,6 +133,10 @@ pub struct Options {
 pub enum Command {
     Help,
     Version,
+    /// The tab-completion script for a shell.
+    Completions(Shell),
+    /// The names of the saved sheets, for the completion scripts.
+    ListSheets,
     Run(Source, Options),
 }
 
@@ -148,6 +214,13 @@ pub fn parse(
         match name {
             "-h" | "--help" => return Ok(Command::Help),
             "-V" | "--version" => return Ok(Command::Version),
+            "--list-sheets" => return Ok(Command::ListSheets),
+            "--completions" => {
+                let shell = value()?;
+                return Shell::parse(&shell)
+                    .map(Command::Completions)
+                    .ok_or_else(|| format!("no completions for {shell:?}: use bash, zsh or fish"));
+            }
             "-a" | "--answers" => opts.answers = true,
             "-t" | "--total" => opts.total = true,
             "-r" | "--repeating" => opts.repeating = true,
@@ -355,6 +428,20 @@ pub fn run(args: &[String]) -> i32 {
         }
         Command::Version => {
             println!("babbage {}", env!("CARGO_PKG_VERSION"));
+            return 0;
+        }
+        Command::Completions(shell) => {
+            print!("{}", crate::completions::script(shell));
+            return 0;
+        }
+        Command::ListSheets => {
+            // Read only: tab completion must not create the folder or clear files the window is saving.
+            for name in babbage_store::data_dir()
+                .map(|dir| SheetBook::names_in(&dir))
+                .unwrap_or_default()
+            {
+                println!("{name}");
+            }
             return 0;
         }
         Command::Run(source, opts) => (source, opts),

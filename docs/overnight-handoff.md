@@ -1,3 +1,15 @@
+# Light theme, weekly updates, completions (2026-10-28)
+
+**Done.** (1) Light themes: `theme.rs` reads `mode = "light"` from Omarchy's `colors.toml` (a light background decides when there is no mode line) and moves every text color until it reads on the page and on the answers column (contrast 4.5, or 3 for dim text and 2.5 for line numbers); the selection is thinned the same way. Off Omarchy the built-in theme follows the system's light or dark setting, and `BABBAGE_APPEARANCE=light|dark` overrides it. The dark colors are unchanged and a test pins them. Tests: six in `theme.rs` (three real light themes, a dark one and both built-ins keep every text pair readable) and the acceptance check `light-theme` (a light theme paints a light page, a switch to a dark file is followed within 15 s, the two `BABBAGE_APPEARANCE` values). (2) The weekly update check was already the default and a test pins it; nothing changed. (3) `bbg --completions bash|zsh|fish` and `bbg --list-sheets`, written from one option table in `cli.rs`; the installer adds the bash file, and the fish file when `~/.config/fish` exists, under its own marker and never over a file it did not write; `--uninstall` removes only its own. Tests: eight in `completions.rs` (a real bash completes options, places, shells, saved sheets with spaces and files), one in the store (`names_in` changes nothing), and the acceptance checks `cli-completions` and the extended `install-script`.
+
+**Found on the way.** `bbg --help` never listed the long forms `--file` and `--sheet`; now it does, and a test keeps the table, the parser and the help in step.
+
+**Verified.** `bin/check` passed (700 tests) and `bin/accept` passed 60 of 60 on this tree. Not verified in a real shell: the zsh and fish scripts (neither is installed on buildhost); they are checked for their options and quoting, and `zsh -n` and `fish --no-execute` run when those shells are present.
+
+**Changed behavior to know about.** A machine that states no light or dark preference now gets the light built-in theme off Omarchy (gpui reads no preference as light). The acceptance harness pins `dark`, so pictures do not depend on the session. `docs/shots/guide/theme-light.png` shows a clock time in its sidebar and will change on every run like the other nine.
+
+**Still open.** The public repository. Pictures that show a clock time. A plugin or tray icon (asked, not built).
+
 # Open items worked through (2026-10-27, later)
 
 **Done.** The merged helper worktree and its branch are removed. A conversion at a rate on units that convert without one is refused (`5 m to cm at 2`, `3 hours to minutes at 60`, `1 cm in px at 326`); the two older pins for the px forms now pin the refusal. Fuel economy cancels against what it measures (`10 mpg * 3 gallons` is `30 mi`, `300 mi / 30 mpg` is `10 gal`, `8 L/100km * 250 km` is `20 L`). The AppImage builds and runs (`packaging/babbage.svg`, `appimagetool` from the AppImage releases, checksum verified, kept outside the repo). A retaken screenshot replaces the kept one only when it differs visibly (`keep_unless_changed`, two tests): 34 of the 42 noisy pictures stay put.

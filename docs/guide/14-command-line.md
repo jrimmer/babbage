@@ -128,6 +128,20 @@ unexpected end of expression
 | `1` | At least one line is an error, or a file or saved sheet could not be read. |
 | `2` | Bad usage: an unknown option, a decimal place count out of range, or nothing to answer. |
 
+## Tab completion
+
+Press Tab after `bbg -` for the options, after `-p` for the decimal places, and after `-s` for the names of your saved sheets. The one-line installer sets this up for bash, and for fish when you use fish, with one file of its own for each (`~/.local/share/bash-completion/completions/bbg` and `~/.config/fish/completions/bbg.fish`). It never replaces a file of that name that it did not write, and `--uninstall` removes only its own.
+
+To set it up yourself, or for zsh, ask `bbg` for the script:
+
+| Shell | Load it with |
+|---|---|
+| bash | `source <(bbg --completions bash)` in `~/.bashrc` |
+| zsh | `source <(bbg --completions zsh)` in `~/.zshrc`, after `compinit` |
+| fish | `bbg --completions fish \| source` in `~/.config/fish/config.fish` |
+
+`bbg --list-sheets` prints the saved sheet names, one per line, for your own scripts. It only reads the sheet folder: it creates nothing and cleans nothing up, so it is safe to run at any time.
+
 ## Where it gets its settings
 
 `bbg` reads the same settings file as the window (`~/.config/babbage/settings`, or the file named by

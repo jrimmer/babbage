@@ -98,7 +98,15 @@ See [Variables and totals](06-variables-and-totals.html) for how variables and d
 | Heading size | 100% to 160%, in steps of 10 | 100% | How large a heading reads against ordinary text |
 | Digits all the same width | On, Off | Off | Every digit takes the same width, so columns of numbers line up |
 
-The rest of the colors (background, sidebar, text and so on) are not settings. On a desktop that has an Omarchy theme, Babbage takes its main colors from the current theme and follows it when you switch themes, without restarting. Otherwise it uses its built-in dark colors.
+The rest of the colors (background, sidebar, text and so on) are not settings. They come from your desktop, as described next.
+
+### Colors and themes
+
+On Omarchy, Babbage takes its main colors from the current theme (`~/.local/state/omarchy/current/theme/colors.toml`) and follows it when you switch themes, without restarting. A theme that says `mode = "light"` gives a light page, and any other a dark one. Whatever the theme's colors are, Babbage keeps text readable: a color that would be hard to read on the page is darkened or lightened until it is not.
+
+![Babbage on a light theme](img/theme-light.webp)
+
+Without an Omarchy theme, Babbage draws its own dark or light colors to match the light or dark setting of your desktop, and follows it when you change it. To choose for yourself, start Babbage with `BABBAGE_APPEARANCE=light` or `BABBAGE_APPEARANCE=dark`.
 
 ## Dates & Times
 

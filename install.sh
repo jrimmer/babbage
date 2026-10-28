@@ -11,6 +11,8 @@
 #
 # Everything goes under ~/.local and no root is ever used: the program is kept in ~/.local/share/babbage, and
 # ~/.local/bin gets two commands, `babbage` (the window, or `babbage calc`) and `bbg` (the command-line calculator).
+# Tab completion for bbg is a file of its own in bash's user completions folder, and in fish's when you use fish; a
+# file of that name that this script did not write is left alone. For zsh: source <(bbg --completions zsh).
 # Files come from $BABBAGE_RELEASE_URL (the GitHub "latest/download" URL by default). Each one is checked against
 # its .sha256 before anything is installed, so a bad download leaves nothing behind.
 
@@ -36,6 +38,8 @@ Flags (pass them through bash -s --):
 
 Everything goes under ~/.local and no root is ever used: the program is kept in ~/.local/share/babbage, and
 ~/.local/bin gets two commands, `babbage` (the window, or `babbage calc`) and `bbg` (the command-line calculator).
+Tab completion for bbg is a file of its own in bash's user completions folder, and in fish's when you use fish; a
+file of that name that this script did not write is left alone. For zsh: source <(bbg --completions zsh).
 Files come from $BABBAGE_RELEASE_URL (the GitHub "latest/download" URL by default). Each one is checked against
 its .sha256 before anything is installed, so a bad download leaves nothing behind.
 USAGE
@@ -61,6 +65,10 @@ is_ours() {
     [ -f "$1" ] && grep -qF "$marker" "$1"
 }
 
+# Where bbg's tab completion goes: bash-completion's user folder, and fish's, which is used only when fish is set up.
+bash_completion="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/bbg"
+fish_completion="${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/bbg.fish"
+
 # --- uninstall ------------------------------------------------------------
 
 if $uninstall; then
@@ -71,6 +79,11 @@ if $uninstall; then
     for name in babbage bbg; do
         if is_ours "$bindir/$name"; then
             rm -f "$bindir/$name"
+        fi
+    done
+    for file in "$bash_completion" "$fish_completion"; do
+        if is_ours "$file"; then
+            rm -f "$file"
         fi
     done
     rm -f "$share/babbage.AppImage" "$share/babbage" "$share/LICENSE" "$share/README.md" "$share/installed-version"
@@ -176,6 +189,23 @@ write_command() {
 }
 write_command babbage ""
 write_command bbg bbg
+
+# Tab completion, written by the program itself so it always matches the options of this version. A file that is not
+# ours, or a program that cannot print one, is skipped without a word: completion is a convenience.
+write_completion() {
+    local shell="$1" file="$2" text
+    if [ -e "$file" ] && ! is_ours "$file"; then
+        return 0
+    fi
+    text=$("$bindir/bbg" --completions "$shell" 2>/dev/null) || return 0
+    [ -n "$text" ] || return 0
+    mkdir -p "$(dirname "$file")"
+    printf '%s\n%s\n' "$marker" "$text" >"$file"
+}
+write_completion bash "$bash_completion"
+if [ -d "$(dirname "$(dirname "$fish_completion")")" ]; then
+    write_completion fish "$fish_completion"
+fi
 
 printf '%s\n' "$version" >"$share/installed-version"
 
