@@ -34,6 +34,18 @@ struct Nested {
     stopped: bool,
 }
 
+/// The wayland socket, the instance signature and, for a standalone compositor, the runtime folder, from what
+/// `tools/nested-hyprland.sh start` printed.
+fn parse_nested_env(text: &str) -> anyhow::Result<(String, String, Option<String>)> {
+    let get = |k: &str| {
+        text.lines()
+            .find_map(|l| l.strip_prefix(k))
+            .map(str::to_owned)
+    };
+    let need = |k: &str| get(k).with_context(|| format!("no {k} from nested-hyprland.sh"));
+    Ok((need("wayland=")?, need("sig=")?, get("runtime=")))
+}
+
 impl Nested {
     fn start(script: PathBuf, dir: PathBuf) -> anyhow::Result<Nested> {
         let out = Process::new(&script).arg("start").arg(&dir).output()?;
@@ -43,21 +55,18 @@ impl Nested {
             String::from_utf8_lossy(&out.stderr)
         );
         let env = String::from_utf8_lossy(&out.stdout).into_owned();
-        let get = |k: &str| {
-            env.lines()
-                .find_map(|l| l.strip_prefix(k))
-                .map(str::to_owned)
-                .with_context(|| format!("no {k} from nested-hyprland.sh"))
-        };
-        ensure!(
-            get("runtime=").is_err(),
-            "standalone compositors are not supported by these checks"
-        );
+        let (wayland, sig, runtime) = parse_nested_env(&env)?;
+        // A standalone compositor (a machine with no desktop) is reached only through its own runtime folder, and
+        // every program the checks start, hyprctl, wtype, grim and the helpers, finds it through this variable.
+        if let Some(runtime) = runtime {
+            // Safety: this runs at the start of the run, before any thread of ours exists.
+            unsafe { std::env::set_var("XDG_RUNTIME_DIR", runtime) };
+        }
         Ok(Nested {
             script,
             dir,
-            wayland: get("wayland=")?,
-            sig: get("sig=")?,
+            wayland,
+            sig,
             stopped: false,
         })
     }
@@ -1023,6 +1032,37 @@ impl Drop for App {
 #[cfg(test)]
 mod picture_tests {
     use super::*;
+
+    #[test]
+    fn the_compositor_prints_its_socket_signature_and_for_a_standalone_one_its_runtime_folder() {
+        let nested = "sig=abc_1_2\nwayland=wayland-2\npid=42\n";
+        assert_eq!(
+            parse_nested_env(nested).unwrap(),
+            ("wayland-2".to_owned(), "abc_1_2".to_owned(), None)
+        );
+        let standalone = "sig=abc_1_2\nwayland=wayland-1\npid=42\nruntime=/tmp/w/nested/runtime\n";
+        assert_eq!(
+            parse_nested_env(standalone).unwrap(),
+            (
+                "wayland-1".to_owned(),
+                "abc_1_2".to_owned(),
+                Some("/tmp/w/nested/runtime".to_owned())
+            )
+        );
+        assert!(
+            parse_nested_env("sig=x\n")
+                .unwrap_err()
+                .to_string()
+                .contains("wayland=")
+        );
+        assert!(
+            parse_nested_env("wayland=w\n")
+                .unwrap_err()
+                .to_string()
+                .contains("sig=")
+        );
+        assert!(parse_nested_env("").is_err());
+    }
 
     fn write(path: &Path, w: u32, h: u32, pixels: &[(usize, [u8; 4])]) {
         let mut data = vec![255u8; (w * h * 4) as usize];
