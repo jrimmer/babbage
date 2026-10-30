@@ -27,6 +27,9 @@ const END: &str = "// babbage: end";
 pub struct Args {
     pub remove: bool,
     pub key: String,
+    /// How the key and the menu start Babbage: `babbage` when that name is on the PATH, else the full path of this
+    /// program (see `program_to_run`).
+    pub program: String,
 }
 
 /// The arguments after `setup`.
@@ -38,6 +41,7 @@ pub fn parse(args: &[String]) -> Result<Args, String> {
     let mut parsed = Args {
         remove: false,
         key: DEFAULT_KEY.into(),
+        program: "babbage".into(),
     };
     while let Some(arg) = rest.next() {
         match arg.as_str() {
@@ -183,13 +187,13 @@ pub fn taken(key: &Key, listing: Option<&str>, binds_json: Option<&str>) -> Opti
 }
 
 /// The Hyprland file Babbage writes.
-pub fn module_text(key: &str) -> String {
+pub fn module_text(key: &str, program: &str) -> String {
     format!(
         "{HEADER} Remove with
 -- `babbage setup omarchy --remove`, or edit freely.
 
 -- Quick calculation from anywhere: press it again to bring the window back.
-o.bind(\"{key}\", \"Babbage quick calculation\", \"babbage --quick\")
+o.bind(\"{key}\", \"Babbage quick calculation\", \"{program} --quick\")
 
 -- The quick window floats, centered, and keeps its size.
 o.window({{ class = \"^babbage$\", title = \"^Babbage Quick$\" }}, {{ float = true, center = true, size = {{ 760, 480 }} }})
@@ -222,12 +226,16 @@ pub fn without_require(main: &str) -> String {
 /// exactly that comma back out and never one the file had of its own.
 const COMMA_NOTE: &str = "with a comma before it";
 
-const MENU_BLOCK: &str = "  // babbage: begin (added by `babbage setup omarchy`)
-  \"babbage\": {\"icon\":\"\u{f00ec}\",\"label\":\"Babbage\",\"description\":\"Notepad calculator: quick calculation, open\"},
-  \"babbage.quick\": {\"icon\":\"\u{f0415}\",\"label\":\"Quick Calculation\",\"action\":\"babbage --quick\",\"description\":\"A small floating window\"},
-  \"babbage.open\": {\"icon\":\"\u{f00ec}\",\"label\":\"Open Babbage\",\"action\":\"babbage\"}
+fn menu_block(program: &str) -> String {
+    format!(
+        "  // babbage: begin (added by `babbage setup omarchy`)
+  \"babbage\": {{\"icon\":\"\u{f00ec}\",\"label\":\"Babbage\",\"description\":\"Notepad calculator: quick calculation, open\"}},
+  \"babbage.quick\": {{\"icon\":\"\u{f0415}\",\"label\":\"Quick Calculation\",\"action\":\"{program} --quick\",\"description\":\"A small floating window\"}},
+  \"babbage.open\": {{\"icon\":\"\u{f00ec}\",\"label\":\"Open Babbage\",\"action\":\"{program}\"}}
   // babbage: end
-";
+"
+    )
+}
 
 /// The characters of JSONC outside strings and comments, with their byte positions.
 fn code_chars(text: &str) -> Vec<(usize, char)> {
@@ -293,7 +301,7 @@ pub fn remove_menu(text: &str) -> Result<String, String> {
 
 /// The menu file with Babbage's block added before the closing brace, with a comma after the entry before it when
 /// there is one.
-pub fn add_menu(text: &str) -> Result<String, String> {
+pub fn add_menu(text: &str, program: &str) -> Result<String, String> {
     let mut text = remove_menu(text)?;
     let code = code_chars(&text);
     let close = code
@@ -308,13 +316,13 @@ pub fn add_menu(text: &str) -> Result<String, String> {
     let close_at = close_at + usize::from(needs_comma);
     let head = text[..close_at].trim_end();
     let block = if needs_comma {
-        MENU_BLOCK.replacen(
+        menu_block(program).replacen(
             "`babbage setup omarchy`)",
             &format!("`babbage setup omarchy`, {COMMA_NOTE})"),
             1,
         )
     } else {
-        MENU_BLOCK.to_owned()
+        menu_block(program)
     };
     Ok(format!("{head}\n{block}}}\n"))
 }
@@ -487,14 +495,14 @@ pub fn run(
                 said.push("Removed Babbage from the launcher menu".into());
             }
         } else {
-            changes.write(&module, &module_text(&args.key))?;
+            changes.write(&module, &module_text(&args.key, &args.program))?;
             said.push(format!("Wrote {}", module.display()));
             if !main_text.contains(REQUIRE) {
                 changes.write(&main, &with_require(&main_text))?;
                 said.push(format!("Loaded it from {}", main.display()));
             }
             let menu_text = std::fs::read_to_string(&menu).unwrap_or_else(|_| "{\n}\n".into());
-            changes.write(&menu, &add_menu(&menu_text)?)?;
+            changes.write(&menu, &add_menu(&menu_text, &args.program)?)?;
             said.push(format!(
                 "Added a Babbage section to the Omarchy menu ({})",
                 menu.display()
@@ -537,6 +545,40 @@ pub fn run(
     Ok(said)
 }
 
+/// Whether a program path can sit inside a Lua string, a JSON string and a shell command unquoted.
+fn plain_path(path: &str) -> bool {
+    !path.is_empty()
+        && path
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '.' | '_' | '-' | '+'))
+}
+
+/// What the key and the menu should run: the plain name `babbage` when the PATH finds a program of that name (for
+/// the usual install in `~/.local/bin` the key and menu see the same PATH), otherwise the full path of this program:
+/// the AppImage file when it is one (its path inside the mount is gone when it quits), else the running executable.
+pub fn program_to_run(
+    path_var: &str,
+    appimage: Option<&str>,
+    exe: Option<&str>,
+) -> Result<String, String> {
+    let on_path = path_var
+        .split(':')
+        .filter(|d| !d.is_empty())
+        .any(|d| std::path::Path::new(d).join("babbage").is_file());
+    if on_path {
+        return Ok("babbage".into());
+    }
+    let full = appimage.filter(|a| !a.is_empty()).or(exe).ok_or(
+        "cannot tell where this program is: put `babbage` on your PATH and run setup again",
+    )?;
+    if !plain_path(full) {
+        return Err(format!(
+            "{full} has characters that cannot go into the key and menu files safely: put `babbage` on your PATH (a link in ~/.local/bin) and run setup again"
+        ));
+    }
+    Ok(full.to_owned())
+}
+
 /// `babbage setup ARGS`: the exit status.
 pub fn main(args: &[String]) -> i32 {
     let parsed = match parse(args) {
@@ -550,6 +592,21 @@ pub fn main(args: &[String]) -> i32 {
         eprintln!("babbage setup: HOME is not set");
         return 1;
     };
+    let mut parsed = parsed;
+    if !parsed.remove {
+        let exe = std::env::current_exe().ok();
+        match program_to_run(
+            &std::env::var("PATH").unwrap_or_default(),
+            std::env::var("APPIMAGE").ok().as_deref(),
+            exe.as_deref().and_then(|e| e.to_str()),
+        ) {
+            Ok(p) => parsed.program = p,
+            Err(e) => {
+                eprintln!("babbage setup: {e}");
+                return 1;
+            }
+        }
+    }
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
@@ -630,6 +687,7 @@ mod tests {
         Args {
             remove,
             key: key.into(),
+            program: "babbage".into(),
         }
     }
 
@@ -776,8 +834,55 @@ mod tests {
     }
 
     #[test]
+    fn the_key_and_menu_run_the_name_on_the_path_or_else_the_full_path() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("babbage"), "").unwrap();
+        let on = format!("/nope:{}", dir.path().display());
+        assert_eq!(
+            program_to_run(&on, None, Some("/x/y/babbage")).unwrap(),
+            "babbage"
+        );
+        assert_eq!(
+            program_to_run("/nope::", None, Some("/home/me/b/target/release/babbage")).unwrap(),
+            "/home/me/b/target/release/babbage"
+        );
+        // An AppImage is run by its own file, not by the path inside its mount.
+        assert_eq!(
+            program_to_run(
+                "/nope",
+                Some("/home/me/Apps/babbage.AppImage"),
+                Some("/tmp/.mount_x/usr/bin/babbage")
+            )
+            .unwrap(),
+            "/home/me/Apps/babbage.AppImage"
+        );
+        assert_eq!(
+            program_to_run("/nope", Some(""), Some("/a/babbage")).unwrap(),
+            "/a/babbage"
+        );
+        assert!(
+            program_to_run("/nope", None, None)
+                .unwrap_err()
+                .contains("PATH")
+        );
+        for bad in ["/a b/babbage", "/a\"b/babbage", "/a$b/babbage", "rel path"] {
+            assert!(program_to_run("/nope", None, Some(bad)).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_full_path_goes_into_the_key_and_both_menu_actions() {
+        let t = module_text("SUPER + ALT + C", "/home/me/b/babbage");
+        assert!(t.contains("\"/home/me/b/babbage --quick\")"));
+        let menu = add_menu("{\n}\n", "/home/me/b/babbage").unwrap();
+        let v = menu_value(&menu);
+        assert_eq!(v["babbage.quick"]["action"], "/home/me/b/babbage --quick");
+        assert_eq!(v["babbage.open"]["action"], "/home/me/b/babbage");
+    }
+
+    #[test]
     fn the_hyprland_file_binds_the_key_floats_the_quick_window_and_starts_with_the_header() {
-        let t = module_text("SUPER + ALT + C");
+        let t = module_text("SUPER + ALT + C", "babbage");
         assert!(t.starts_with(HEADER));
         assert!(t.contains(
             "o.bind(\"SUPER + ALT + C\", \"Babbage quick calculation\", \"babbage --quick\")"
@@ -816,14 +921,14 @@ mod tests {
     #[test]
     fn the_menu_block_is_added_once_stays_valid_and_leaves_the_rest_alone() {
         for text in MENUS {
-            let added = add_menu(text).unwrap();
+            let added = add_menu(text, "babbage").unwrap();
             let v = menu_value(&added);
             assert_eq!(v["babbage.quick"]["action"], "babbage --quick", "{added}");
             assert_eq!(v["babbage.open"]["action"], "babbage");
             assert_eq!(v["babbage"]["label"], "Babbage");
             assert_eq!(added.matches(BEGIN).count(), 1);
             assert_eq!(
-                add_menu(&added).unwrap(),
+                add_menu(&added, "babbage").unwrap(),
                 added,
                 "adding twice changed the file\n{text}"
             );
@@ -840,7 +945,7 @@ mod tests {
     #[test]
     fn taking_the_block_out_gives_back_the_file_that_was_there() {
         for text in MENUS {
-            let back = remove_menu(&add_menu(text).unwrap()).unwrap();
+            let back = remove_menu(&add_menu(text, "babbage").unwrap()).unwrap();
             assert_eq!(back, text, "round trip of {text:?}");
         }
         assert_eq!(remove_menu("{\n}\n").unwrap(), "{\n}\n");
@@ -861,14 +966,14 @@ mod tests {
             "{\"a\":{\"label\":\"A\"}}\n",
         ];
         for text in samples {
-            let added = add_menu(text).unwrap_or_else(|e| panic!("{e}: {text}"));
+            let added = add_menu(text, "babbage").unwrap_or_else(|e| panic!("{e}: {text}"));
             let v = menu_value(&added);
             assert_eq!(v["babbage.quick"]["action"], "babbage --quick", "{added}");
             assert!(
                 v["a"]["label"].as_str().unwrap().starts_with('A')
                     || v["a"]["label"].as_str().unwrap().starts_with("say")
             );
-            assert_eq!(add_menu(&added).unwrap(), added, "{text}");
+            assert_eq!(add_menu(&added, "babbage").unwrap(), added, "{text}");
             assert_eq!(menu_value(&remove_menu(&added).unwrap())["a"], v["a"]);
             assert!(
                 menu_value(&remove_menu(&added).unwrap())
@@ -881,7 +986,7 @@ mod tests {
             remove_menu("// babbage: begin\n// babbage: end\n}\n").unwrap(),
             "}\n"
         );
-        let lone = add_menu("}\n").unwrap();
+        let lone = add_menu("}\n", "babbage").unwrap();
         assert!(lone.contains("babbage.quick") && lone.ends_with("}\n"));
     }
 
@@ -893,13 +998,13 @@ mod tests {
                 .unwrap_err()
                 .contains("remove it by hand")
         );
-        assert!(add_menu(&half).is_err());
+        assert!(add_menu(&half, "babbage").is_err());
         assert!(
-            add_menu("no braces here")
+            add_menu("no braces here", "babbage")
                 .unwrap_err()
                 .contains("no closing brace")
         );
-        assert!(add_menu("").is_err());
+        assert!(add_menu("", "babbage").is_err());
     }
 
     #[test]

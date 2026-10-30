@@ -4438,7 +4438,11 @@ fn omarchy_setup(h: &mut Harness) -> anyhow::Result<()> {
     let module = read(&hypr.join("babbage.lua"));
     for want in [
         "-- Babbage, added by `babbage setup omarchy`.",
-        "o.bind(\"SUPER + ALT + C\", \"Babbage quick calculation\", \"babbage --quick\")",
+        // `babbage` is not on this PATH, so the key runs the program by its full path.
+        &format!(
+            "o.bind(\"SUPER + ALT + C\", \"Babbage quick calculation\", \"{} --quick\")",
+            cli.program.display()
+        ),
         "o.window({ class = \"^babbage$\", title = \"^Babbage Quick$\" }",
     ] {
         ensure!(
@@ -4454,7 +4458,7 @@ fn omarchy_setup(h: &mut Harness) -> anyhow::Result<()> {
     let menu_after = read(&menu);
     ensure!(
         menu_after.contains("// babbage: begin")
-            && menu_after.contains("\"babbage.quick\"")
+            && menu_after.contains(&format!("\"action\":\"{} --quick\"", cli.program.display()))
             && menu_after.contains("// precrime: end")
             && menu_after.contains("\"precrime\": {\"label\":\"Precrime\"},"),
         "the menu: {menu_after:?}"
@@ -4501,6 +4505,42 @@ fn omarchy_setup(h: &mut Harness) -> anyhow::Result<()> {
             && read(&hypr.join("hyprland.lua")) == main_before
             && read(&menu) == menu_before,
         "--remove did not give back the files"
+    );
+
+    // With a program called babbage on the PATH, the key and the menu use that name.
+    let bindir = cli.home.join("bin-on-path");
+    std::fs::create_dir_all(&bindir)?;
+    std::os::unix::fs::symlink(&cli.program, bindir.join("babbage"))?;
+    let path_with = format!("{}:{path}", bindir.display());
+    let named = cli.exec(
+        &cli.program,
+        &["setup", "omarchy"],
+        None,
+        &[
+            ("PATH", path_with.as_str()),
+            ("HYPRLAND_INSTANCE_SIGNATURE", "stub"),
+            ("STUB_KEYS", keys_s.as_str()),
+            ("STUB_BINDS", binds_s.as_str()),
+            ("STUB_BREAK", brk_s.as_str()),
+        ],
+    )?;
+    ensure!(
+        named.code == 0,
+        "setup with babbage on the PATH: {} {:?}",
+        named.code,
+        named.err
+    );
+    ensure!(
+        read(&hypr.join("babbage.lua")).contains("\"babbage --quick\")")
+            && read(&menu).contains("\"action\":\"babbage --quick\""),
+        "babbage on the PATH was not used by name"
+    );
+    let r = run(&["omarchy", "--remove"])?;
+    ensure!(
+        r.code == 0,
+        "remove after the named setup: {} {:?}",
+        r.code,
+        r.err
     );
 
     // Another key, and a key bound only by Babbage's own entry, are fine.
