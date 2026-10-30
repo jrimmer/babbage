@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A virtual mouse for a Wayland compositor, with no dependencies.
 
-    tools/pointer.py <wayland-socket> <extent-w> <extent-h>
+    tools/pointer.py <wayland-socket> <extent-w> <extent-h> [<origin-x> <origin-y>]
 
 Reads one command per line on stdin and answers "ok" after each; it exits when stdin closes:
 
@@ -11,7 +11,10 @@ Reads one command per line on stdin and answers "ok" after each; it exits when s
     scroll X Y NOTCHES      wheel notches at the point (positive scrolls down)
 
 X and Y are layout points. The extents are the size of the compositor's whole layout (every output
-together), which the protocol needs to turn a point into an absolute position. It speaks the
+together), which the protocol needs to turn a point into an absolute position, and the origin is the
+layout's top-left corner (0 0 when omitted): the compositor maps the extent onto the box the outputs span,
+so a layout whose leftmost output is not at x=0 (a standalone compositor with no output there) must say
+where it starts, or every point lands off by that much. It speaks the
 zwlr_virtual_pointer_v1 protocol, which the nested Hyprland offers, so the real pointer path (focus,
 hit testing, click counts) is what the app sees. The process has to stay alive for the whole session:
 a seat with no pointer device tells its clients it has no pointer, and an app that started without one
@@ -62,9 +65,10 @@ class Wire:
 
 
 def main(argv):
-    if len(argv) != 3:
+    if len(argv) not in (3, 5):
         raise SystemExit(__doc__)
     wayland, ext_w, ext_h = argv[0], int(argv[1]), int(argv[2])
+    org_x, org_y = (int(argv[3]), int(argv[4])) if len(argv) == 5 else (0, 0)
     wire = Wire(wayland)
     registry = wire.new_id()
     wire.send(1, 1, struct.pack("<I", registry))
@@ -97,7 +101,7 @@ def main(argv):
                 return
 
     def motion(x, y):
-        wire.send(pointer, 1, struct.pack("<IIIII", now(), x, y, ext_w, ext_h))
+        wire.send(pointer, 1, struct.pack("<IIIII", now(), max(0, x - org_x), max(0, y - org_y), ext_w, ext_h))
         wire.send(pointer, 4)
 
     def button(which, state):

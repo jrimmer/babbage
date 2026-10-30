@@ -3718,7 +3718,8 @@ fn export_sheet(h: &mut Harness) -> anyhow::Result<()> {
     let check = std::process::Command::new("qpdf")
         .arg("--check")
         .arg(&pdf)
-        .output()?;
+        .output()
+        .context("qpdf is not installed: the export check reads the PDF back with qpdf and pdftotext (poppler)")?;
     ensure!(
         check.status.success(),
         "qpdf --check failed: {}",
@@ -3728,7 +3729,8 @@ fn export_sheet(h: &mut Harness) -> anyhow::Result<()> {
         .args(["-layout"])
         .arg(&pdf)
         .arg("-")
-        .output()?;
+        .output()
+        .context("pdftotext is not installed: the export check reads the PDF back with qpdf and pdftotext (poppler)")?;
     ensure!(layout.status.success(), "pdftotext failed");
     let words = String::from_utf8_lossy(&layout.stdout).into_owned();
     ensure!(

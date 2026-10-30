@@ -34,6 +34,26 @@ struct Nested {
     stopped: bool,
 }
 
+/// The box the compositor's outputs span, as (left, top, right, bottom) in layout points. The compositor maps a
+/// virtual pointer's absolute position onto this box, so the pointer helper is told where it starts: a standalone
+/// compositor's outputs need not include one at 0,0.
+fn pointer_layout(monitors: &[Value]) -> (f64, f64, f64, f64) {
+    let (mut left, mut top) = (f64::MAX, f64::MAX);
+    let (mut right, mut bottom) = (f64::MIN, f64::MIN);
+    for m in monitors {
+        let scale = m["scale"].as_f64().unwrap_or(1.);
+        let (x, y) = (m["x"].as_f64().unwrap_or(0.), m["y"].as_f64().unwrap_or(0.));
+        left = left.min(x);
+        top = top.min(y);
+        right = right.max(x + m["width"].as_f64().unwrap_or(0.) / scale);
+        bottom = bottom.max(y + m["height"].as_f64().unwrap_or(0.) / scale);
+    }
+    if left > right {
+        return (0., 0., 0., 0.);
+    }
+    (left, top, right, bottom)
+}
+
 /// The wayland socket, the instance signature and, for a standalone compositor, the runtime folder, from what
 /// `tools/nested-hyprland.sh start` printed.
 fn parse_nested_env(text: &str) -> anyhow::Result<(String, String, Option<String>)> {
@@ -357,22 +377,17 @@ impl Harness {
         let pointer = {
             let monitors: Value =
                 serde_json::from_slice(&hyprctl_on(&nested.sig, &["-j", "monitors"])?)?;
-            let (mut right, mut bottom) = (0f64, 0f64);
-            for m in monitors.as_array().context("no monitors")? {
-                let scale = m["scale"].as_f64().unwrap_or(1.);
-                right = right
-                    .max(m["x"].as_f64().unwrap_or(0.) + m["width"].as_f64().unwrap_or(0.) / scale);
-                bottom = bottom.max(
-                    m["y"].as_f64().unwrap_or(0.) + m["height"].as_f64().unwrap_or(0.) / scale,
-                );
-            }
+            let boxes = pointer_layout(monitors.as_array().context("no monitors")?);
+            let (left, top, right, bottom) = boxes;
             Helper::start(
                 "pointer.py",
                 &repo.join("tools/pointer.py"),
                 &[
                     nested.wayland.clone(),
-                    (right.ceil() as u32).to_string(),
-                    (bottom.ceil() as u32).to_string(),
+                    ((right - left).ceil() as u32).to_string(),
+                    ((bottom - top).ceil() as u32).to_string(),
+                    (left.floor() as i32).to_string(),
+                    (top.floor() as i32).to_string(),
                 ],
             )?
         };
@@ -1032,6 +1047,28 @@ impl Drop for App {
 #[cfg(test)]
 mod picture_tests {
     use super::*;
+
+    #[test]
+    fn the_pointer_box_starts_at_the_leftmost_output_not_at_zero() {
+        let nested = serde_json::json!([
+            {"x": 0, "y": 0, "width": 3000, "height": 1500, "scale": 1.0},
+            {"x": 3000, "y": 0, "width": 2560, "height": 1440, "scale": 1.25}
+        ]);
+        assert_eq!(
+            pointer_layout(nested.as_array().unwrap()),
+            (0., 0., 5048., 1500.)
+        );
+        // A standalone compositor with no output at 0,0: the box starts where the first output does.
+        let standalone = serde_json::json!([
+            {"x": 3000, "y": 0, "width": 2560, "height": 1440, "scale": 1.25},
+            {"x": 5048, "y": 0, "width": 1024, "height": 768, "scale": 1.0}
+        ]);
+        assert_eq!(
+            pointer_layout(standalone.as_array().unwrap()),
+            (3000., 0., 6072., 1152.)
+        );
+        assert_eq!(pointer_layout(&[]), (0., 0., 0., 0.));
+    }
 
     #[test]
     fn the_compositor_prints_its_socket_signature_and_for_a_standalone_one_its_runtime_folder() {
