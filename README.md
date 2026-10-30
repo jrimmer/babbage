@@ -26,8 +26,8 @@ One line: it downloads the latest release, checks every file against its publish
 `~/.local`. No root is needed. Then:
 
 - `babbage` opens the window, and Babbage is in your app launcher.
-- `bbg 20% of 85` answers from a terminal (`17`), `bbg budget.bbg` answers a sheet file, and tab completion works in
-  bash and fish (zsh: `source <(bbg --completions zsh)`).
+- `bbg 20% of 85` answers from a terminal (`17`), and `bbg budget.bbg` answers a sheet file. The installer sets up
+  tab completion for bash; `bbg --completions fish` and `bbg --completions zsh` print scripts for those shells.
 
 Run the same line again to update. Pass flags through `bash -s --`: `--tarball` installs the tarball instead of the
 AppImage, and `--uninstall` removes only the files the installer wrote. Read the script first if you like; it is
@@ -42,15 +42,17 @@ sha256sum -c babbage-1.0.0-x86_64.AppImage.sha256
 chmod +x babbage-1.0.0-x86_64.AppImage && ./babbage-1.0.0-x86_64.AppImage
 ```
 
-`BABBAGE_RELEASE_URL` points the installer at a mirror. Babbage needs a Wayland session; ARM builds are not published,
-so build from source there.
+`BABBAGE_RELEASE_URL` points the installer at a mirror. Babbage is built and tested on Wayland (Omarchy and
+Hyprland); ARM builds are not published, so build from source there.
 
 ### From source
 
 ```sh
-cargo build --release     # or bin/build, which also keeps the build quiet on a shared machine
+cargo build --release     # or bin/build: the same at low priority, and it builds the check runner too
 target/release/babbage
 ```
+
+The code uses Rust's edition 2024 and let chains, so it needs Rust 1.88 or later.
 
 ## On Omarchy
 

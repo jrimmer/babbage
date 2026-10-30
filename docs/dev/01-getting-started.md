@@ -8,7 +8,7 @@
 cargo add babbage-core
 ```
 
-The crate uses Rust edition 2024, so it needs Rust 1.85 or later. It is MIT licensed.
+The crate uses Rust edition 2024 and let chains, so it needs Rust 1.88 or later. It is MIT licensed.
 
 ## Your first answer
 
