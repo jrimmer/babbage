@@ -14,7 +14,7 @@ June 3 + 3 weeks               →  June 24
 ```
 
 It follows the Omarchy theme live, light or dark, and works offline. The calculation engine is also a Rust crate,
-[`babbage-core`](https://crates.io/crates/babbage-core), for use in your own programs.
+[`babbage-core`](#as-a-rust-crate), for use in your own programs.
 
 ## Install
 
@@ -72,11 +72,30 @@ configuration error after the change, every file is put back. `babbage setup oma
 Each sheet is one plain `.bbg` file in `~/.local/share/babbage`, saved as you type. Open it in any editor, keep it in
 version control, or move it with `mv`. Export a sheet as text, CSV, HTML or PDF with Ctrl+Shift+E.
 
+## As a Rust crate
+
+The calculation engine is a separate crate, [`babbage-core`](https://crates.io/crates/babbage-core), with no interface
+of its own. Hand it a line and it hands back an exact value:
+
+```sh
+cargo add babbage-core
+```
+
+```rust
+use babbage_core::{FormatOptions, evaluate, format_value};
+
+let value = evaluate("20% of 85")?;
+let shown = format_value(&value, &FormatOptions::default());
+assert_eq!(shown.text, "17");
+```
+
+Sheets, settings, number formats and what 1.x promises are in the
+[developer guide](https://jasonrimmer.com/babbage/dev/).
+
 ## Documentation
 
 The [user guide](https://jasonrimmer.com/babbage/guide/) covers every feature, chapter by chapter, with pictures.
-Using the engine in your own program? The [developer guide](https://jasonrimmer.com/babbage/dev/) covers the
-`babbage-core` crate, and its sources are in [docs/dev](docs/dev).
+The guide's sources for developers are in [docs/dev](docs/dev).
 `bbg --help` lists the command-line options, and the decisions behind the behavior are in
 [docs/decisions.md](docs/decisions.md).
 
