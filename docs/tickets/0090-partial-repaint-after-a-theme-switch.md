@@ -1,6 +1,6 @@
 # 0090 Window repaints only part of itself after an Omarchy theme switch
 
-Status: open
+Status: closed (not Babbage; left alone for 1.0)
 Milestone: v1
 Area: app
 
@@ -11,3 +11,5 @@ Not reproduced in the nested Hyprland (`tools/nested-hyprland.sh`): five swaps o
 What the app does on a switch: a task polls the theme file's modified time once a second and, when the colors differ, sets the global and calls `refresh_windows`. Nothing else repaints.
 
 To find out: does it also happen with the plain binary (not the AppImage), with `BABBAGE_THEME_FILE` pointing at a file that is rewritten by hand (no Omarchy switch), and with Hyprland's animations off (`hyprctl keyword animations:enabled 0`)? The answer separates a Babbage drawing bug from an effect of the switch itself.
+
+Decision, 2026-10-30: left alone. Foot, the terminal Omarchy recommends, repaints only part of itself after the same switch, a window move or similar repaints it, and theme switches are rare. The cause is taken to be Omarchy's switch, not Babbage's drawing. This was not proven: the three tests above (plain binary, a hand-rewritten theme file, animations off) were never run on the real desktop. Reopen if a report shows it without an Omarchy switch.

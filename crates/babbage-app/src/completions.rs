@@ -80,7 +80,8 @@ _bbg() {{
     compopt -o filenames 2>/dev/null
     COMPREPLY=($(compgen -f -- "$cur"))
 }}
-complete -F _bbg bbg
+# nosort (bash 5.1 and later) keeps 0 to 10 in number order; older bash sorts them as text.
+complete -o nosort -F _bbg bbg 2>/dev/null || complete -F _bbg bbg
 "#,
         options = spellings().join(" ")
     )
@@ -297,6 +298,13 @@ mod tests {
         }
         assert_eq!(bash_replies(&["--pl"], ""), ["--places"]);
         assert_eq!(bash_replies(&["-p", "1"], ""), ["1", "10"]);
+        assert_eq!(
+            bash_replies(&["-p", ""], ""),
+            ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+        );
+        // Bash sorts what Tab shows as text (0 1 10 2) unless told not to; the places are numbers. `compopt` inside
+        // the function does not stop that, `complete -o nosort` does.
+        assert!(script(Shell::Bash).contains("complete -o nosort -F _bbg bbg"));
         assert_eq!(bash_replies(&["--completions", "z"], ""), ["zsh"]);
         assert_eq!(
             bash_replies(&["-s", "T"], "Budget\nTrip\nTax return"),

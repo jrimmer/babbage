@@ -1,6 +1,6 @@
 [package]
 name = "babbage-core"
-version = "0.0.1"
+version = "1.0.0"
 edition.workspace = true
 license.workspace = true
 description = "An exact-arithmetic calculation engine for plain-language lines: percentages, units, money, dates and time zones"

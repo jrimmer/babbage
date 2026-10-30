@@ -1,6 +1,9 @@
 # Release plan for 1.0
 
-Nothing here has been done. Every step that reaches outside this machine needs the maintainer's yes.
+Prepared on 2026-10-30: the crates say 1.0.0, `dist/` holds the 1.0.0 files, the changelog is dated, the guide and the
+project page are rebuilt in `../jrimmer.github.io` (not pushed). Everything below that reaches outside this machine is
+still to do and needs the maintainer's yes, in this order: the public repository, the tag and release files, the crate,
+then the site push (the site's links 404 until the first three exist).
 
 ## 1. Before a repository goes public
 
@@ -18,8 +21,7 @@ Nothing here has been done. Every step that reaches outside this machine needs t
 
 ## 2. The release files
 
-- Version: every crate says 0.0.1; set 1.0.0 in the app and core `Cargo.toml` files, tag `v1.0.0`; the core crate is
-  tagged `core-v1.0.0`.
+- Version: every crate says 1.0.0; tag `v1.0.0`; the core crate is tagged `core-v1.0.0`.
 - `bin/package` builds `dist/babbage-1.0.0-x86_64.tar.gz` and its `.sha256`, `babbage-version.txt` and its
   `.sha256`, and the AppImage when `appimagetool` is on PATH. The icon is `packaging/babbage.svg` and the desktop entry is written
   by the script. The AppImage was built and run on buildhost (`bbg` mode, checksum verified) on 2026-10-27.

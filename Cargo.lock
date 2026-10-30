@@ -506,7 +506,7 @@ dependencies = [
 
 [[package]]
 name = "babbage-accept"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "babbage-store",
@@ -517,7 +517,7 @@ dependencies = [
 
 [[package]]
 name = "babbage-app"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "babbage-core",
@@ -533,7 +533,7 @@ dependencies = [
 
 [[package]]
 name = "babbage-core"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "astro-float",
  "chrono",
@@ -549,7 +549,7 @@ dependencies = [
 
 [[package]]
 name = "babbage-store"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "proptest",
  "tempfile",

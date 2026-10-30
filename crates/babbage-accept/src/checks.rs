@@ -4317,11 +4317,15 @@ fn omarchy_setup(h: &mut Harness) -> anyhow::Result<()> {
         "SUPER + K → Keybindings\nSUPER SHIFT + RETURN → Browser\n",
     )?;
     std::fs::write(&binds, "[]")?;
-    let path = format!(
-        "{}:{}",
-        stubs.display(),
-        std::env::var("PATH").unwrap_or_default()
-    );
+    // The check expects `babbage` to be missing from the PATH, so folders of the inherited PATH that hold one (an
+    // installed copy in ~/.local/bin) are left out; the tools the stubs need live elsewhere.
+    let inherited: Vec<String> = std::env::var("PATH")
+        .unwrap_or_default()
+        .split(':')
+        .filter(|d| !d.is_empty() && !std::path::Path::new(d).join("babbage").exists())
+        .map(str::to_string)
+        .collect();
+    let path = format!("{}:{}", stubs.display(), inherited.join(":"));
     let (keys_s, binds_s, brk_s) = (
         keys.to_string_lossy().into_owned(),
         binds.to_string_lossy().into_owned(),

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (draft, not released)
+## 1.0.0 (2026-10-30)
 
 Babbage is a notepad calculator for Linux. You write lines of plain language and numbers in a sheet and the answer
 appears beside each line.
