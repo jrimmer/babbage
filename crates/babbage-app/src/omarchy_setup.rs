@@ -218,6 +218,10 @@ pub fn without_require(main: &str) -> String {
         .collect()
 }
 
+/// What the block's first line says when `add_menu` also put a comma after the entry before it, so `remove_menu` takes
+/// exactly that comma back out and never one the file had of its own.
+const COMMA_NOTE: &str = "with a comma before it";
+
 const MENU_BLOCK: &str = "  // babbage: begin (added by `babbage setup omarchy`)
   \"babbage\": {\"icon\":\"\u{f00ec}\",\"label\":\"Babbage\",\"description\":\"Notepad calculator: quick calculation, open\"},
   \"babbage.quick\": {\"icon\":\"\u{f0415}\",\"label\":\"Quick Calculation\",\"action\":\"babbage --quick\",\"description\":\"A small floating window\"},
@@ -277,15 +281,12 @@ pub fn remove_menu(text: &str) -> Result<String, String> {
     let end = text[end_at..]
         .find('\n')
         .map_or(text.len(), |n| end_at + n + 1);
+    let added_comma =
+        text[start..begin + text[begin..].find('\n').unwrap_or(0)].contains(COMMA_NOTE);
     let mut out = format!("{}{}", &text[..start], &text[end..]);
-    let code = code_chars(&out);
-    let next = code.iter().position(|(i, _)| *i >= start);
-    if let Some(n) = next
-        && code[n].1 == '}'
-        && n > 0
-        && code[n - 1].1 == ','
+    if added_comma && let Some((at, ',')) = code_chars(&out).into_iter().rfind(|(i, _)| *i < start)
     {
-        out.remove(code[n - 1].0);
+        out.remove(at);
     }
     Ok(out)
 }
@@ -300,12 +301,22 @@ pub fn add_menu(text: &str) -> Result<String, String> {
         .rposition(|(_, c)| *c == '}')
         .ok_or("the menu file has no closing brace")?;
     let close_at = code[close].0;
-    if close > 0 && !matches!(code[close - 1].1, '{' | ',') {
+    let needs_comma = close > 0 && !matches!(code[close - 1].1, '{' | ',');
+    if needs_comma {
         text.insert(code[close - 1].0 + 1, ',');
     }
-    let close_at = close_at + usize::from(close > 0 && !matches!(code[close - 1].1, '{' | ','));
+    let close_at = close_at + usize::from(needs_comma);
     let head = text[..close_at].trim_end();
-    Ok(format!("{head}\n{MENU_BLOCK}}}\n"))
+    let block = if needs_comma {
+        MENU_BLOCK.replacen(
+            "`babbage setup omarchy`)",
+            &format!("`babbage setup omarchy`, {COMMA_NOTE})"),
+            1,
+        )
+    } else {
+        MENU_BLOCK.to_owned()
+    };
+    Ok(format!("{head}\n{block}}}\n"))
 }
 
 /// What the run asks of the desktop. `Real` runs `omarchy` and `hyprctl`; tests use a fake.
@@ -791,7 +802,9 @@ mod tests {
         assert_eq!(with_require("").as_str(), format!("{REQUIRE_LINE}\n"));
     }
 
-    const MENUS: [&str; 6] = [
+    const MENUS: [&str; 7] = [
+        // A neighbour's block that ends in its own trailing comma, as another app's setup leaves it.
+        "{\n  // other: begin\n  \"o\": {\"label\":\"O\"},\n  \"o.s\": {\"label\":\"S\"},\n  // other: end\n}\n",
         "{\n}\n",
         "{\n  // comments only\n}\n",
         "{\n  \"a\": {\"label\":\"A\"}\n}\n",
@@ -828,13 +841,7 @@ mod tests {
     fn taking_the_block_out_gives_back_the_file_that_was_there() {
         for text in MENUS {
             let back = remove_menu(&add_menu(text).unwrap()).unwrap();
-            // A file that ended in a comma of its own keeps it, except that the comma is dropped with the block.
-            let want = if text.contains("},\n}") {
-                text.replace("},\n}", "}\n}")
-            } else {
-                text.to_owned()
-            };
-            assert_eq!(back, want, "round trip of {text:?}");
+            assert_eq!(back, text, "round trip of {text:?}");
         }
         assert_eq!(remove_menu("{\n}\n").unwrap(), "{\n}\n");
     }

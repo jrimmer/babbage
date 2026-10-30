@@ -50,7 +50,7 @@ The **Check now** button asks right away, whatever the interval. The notice at t
 
 ## When there is an update
 
-If a newer version exists, an **Update 1.2.3** button (with the real version number) appears in the toolbar beside the gear. Click it to open a panel that says which version is available and which one you have, followed by the release notes of every version newer than yours, newest first. It has three buttons:
+If a newer version exists, an **Update 1.2.3** button (with the real version number) appears in the toolbar beside the settings button. Click it to open a panel that says which version is available and which one you have, followed by the release notes of every version newer than yours, newest first. It has three buttons:
 
 | Button | What it does |
 |---|---|

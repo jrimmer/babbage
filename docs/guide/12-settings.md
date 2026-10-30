@@ -2,7 +2,7 @@
 
 Every setting lives in one window, in eight panes. Each control takes effect the moment you change it and is written to a small settings file, so there is no Save button and nothing to restart.
 
-Open the window with the gear button at the right end of the toolbar above the sheet (next to the help button and the sidebar button). Click the gear again, or press **Escape** when no text box is being edited, to close it. The panes are listed down the left; click one to see its settings.
+Open the window with the settings button at the right end of the toolbar above the sheet (the first of three: two small sliders, then the help button, an open book, and the sidebar button). Click it again, or press **Escape** when no text box is being edited, to close it. The panes are listed down the left; click one to see its settings.
 
 ![The Settings window on the General pane](img/settings-general.webp)
 
