@@ -1,0 +1,19 @@
+@size 1300 745
+# Road trip to Wally World
+// The whole family. No stopping. Dad says.
+distance = 2,450 miles
+speed = 62 mph
+drive = distance / speed
+wagon = 14 mpg
+fuel = distance / wagon
+gas = fuel × $3.89/gallon
+motels = 4 × $89
+food = 5 × $45 × 7
+snacks = 18% of food
+tickets = 5 × $87
+total = gas + motels + food + snacks + tickets
+total / 5
+// are we there yet? 47 times, 3 minutes each
+47 × 3 minutes in hours
+June 18, 2027 + 4 days
+
