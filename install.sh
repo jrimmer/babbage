@@ -80,7 +80,8 @@ icon_file="$data_home/icons/hicolor/scalable/apps/babbage.svg"
 # --- uninstall ------------------------------------------------------------
 
 if $uninstall; then
-    if [ ! -f "$share/installed-version" ] && ! is_ours "$bindir/babbage" && ! is_ours "$bindir/bbg"; then
+    if [ ! -f "$share/installed-version" ] && ! is_ours "$bindir/babbage" && ! is_ours "$bindir/bbg" \
+        && ! is_ours "$desktop_entry" && ! is_ours "$icon_file" && ! is_ours "$bash_completion" && ! is_ours "$fish_completion"; then
         echo "Babbage is not installed."
         exit 0
     fi

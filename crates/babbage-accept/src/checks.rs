@@ -4814,6 +4814,26 @@ fn install_script(h: &mut Harness) -> anyhow::Result<()> {
         "uninstall left the launcher entry or the icon"
     );
 
+    // Files of ours left on their own (an install into another HOME with XDG_DATA_HOME pointing here) are still removed.
+    std::fs::create_dir_all(desktop_file.parent().context("a folder")?)?;
+    std::fs::write(
+        &desktop_file,
+        "# Written by the Babbage installer (install.sh).\n[Desktop Entry]\nName=Babbage\n",
+    )?;
+    let r = cli.exec(
+        Path::new("/bin/bash"),
+        &[installer.as_str(), "--uninstall"],
+        None,
+        &env,
+    )?;
+    ensure!(
+        r.code == 0 && !desktop_file.exists() && r.out.contains("uninstalled"),
+        "uninstall with only a launcher entry left: {} {:?} {}",
+        r.code,
+        r.out,
+        desktop_file.exists()
+    );
+
     // A launcher entry of the user's own is never overwritten or removed.
     std::fs::create_dir_all(desktop_file.parent().context("a folder")?)?;
     std::fs::write(&desktop_file, "[Desktop Entry]\nName=Mine\n")?;
