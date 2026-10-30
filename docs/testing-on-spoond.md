@@ -22,7 +22,7 @@ POOL_PROJECT=<your project> sb-run --root --image rust-gpui-accept \
 | No keyboard focus, hover and scroll land wrong | a standalone compositor has no input devices | `tools/ci-input.py` adds an idle keyboard and mouse through uinput |
 | Hyprland has no seat | no logind | `seatd -u <user>`, with `LIBSEAT_BACKEND=seatd` (set by `tools/nested-hyprland.sh`) |
 | Every click and hover is off | the VM's own 1024x768 output lands at x=5048, so no output is at 0,0 and the layout box starts at x=3000; Hyprland maps an absolute pointer move onto that box | `tools/pointer.py` takes the box's origin, and the harness measures it (`pointer_layout`) |
-| `export` fails | the image has no `qpdf` or `pdftotext` | requested for the image (the recipe is casabon2's); the check now says which tool is missing |
+| `export` failed | the image had no `qpdf` or `pdftotext` | added to the image on 2026-10-30; the check says which tool is missing if one goes again |
 
 `/dev/dri/card0` (a virtual KMS display) is present on the image; without it `tools/nested-hyprland.sh` refuses to start a standalone compositor.
 
@@ -30,12 +30,12 @@ POOL_PROJECT=<your project> sb-run --root --image rust-gpui-accept \
 
 | Phase | Time |
 |---|---|
-| Cold release build | 500 s |
-| `bin/check`, cold (compiles the test and clippy profiles) | 703 s |
+| Cold release build | 509 s |
+| `bin/check`, cold (compiles the test and clippy profiles) | 695 s |
 | `bin/check`, warm | 23 s for 725 tests |
-| `bin/accept`, 61 of 62 checks passing (only `export` fails, for the missing tools) | 241 s |
+| `bin/accept`, all 62 checks passing | 248 s |
 
-The three phases are one run of `tools/ci-gate` through `sb-run` (the warm `bin/check` time is from an earlier run of the same tree). A cold run is about 24 minutes end to end.
+The three phases are one run of `tools/ci-gate` through `sb-run` (the warm `bin/check` time is from an earlier run of the same tree), on image build a91a936c. The final run of commit e88ac43 ended `gate: pass`: 509 s, 695 s and 248 s, 62 of 62 checks. A cold run is about 24 minutes end to end.
 
 For comparison, on the maintainer's workstation `bin/check` takes about 28 s warm and `bin/accept` about 167 s of check time.
 
