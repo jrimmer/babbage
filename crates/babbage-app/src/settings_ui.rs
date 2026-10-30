@@ -16,7 +16,11 @@ pub const WINDOW_H: f32 = 660.;
 const TAB_X: f32 = 12.;
 const TAB_W: f32 = 150.;
 const ROW_TOP: f32 = 64.;
-const ROW_H: f32 = 52.;
+/// How tall a row is. A setting's hint can wrap onto two or three lines in the narrow label column, so a pane with
+/// few settings gives each room for three; the Styling pane, with ten short ones, gets room for two.
+fn row_h(items: usize) -> f32 {
+    if items <= 7 { 76. } else { 58. }
+}
 const CONTROL_X: f32 = 396.;
 
 /// What a control sets.
@@ -439,7 +443,7 @@ pub fn item_rects(pane: usize) -> Vec<(String, Rect)> {
         return out;
     };
     for (row, item) in pane.items.iter().enumerate() {
-        let y = ROW_TOP + ROW_H * row as f32 + 10.;
+        let y = ROW_TOP + row_h(pane.items.len()) * row as f32 + 10.;
         match &item.control {
             Control::Toggle { .. } => {
                 out.push((item.key.to_string(), r(WINDOW_W - 100., y, 52., 28.)))
@@ -718,7 +722,7 @@ impl SheetView {
                 .child(pane.title),
         );
         for (row, item) in pane.items.iter().enumerate() {
-            let y = ROW_TOP + ROW_H * row as f32;
+            let y = ROW_TOP + row_h(pane.items.len()) * row as f32;
             win = win.child(
                 div()
                     .absolute()
@@ -890,7 +894,9 @@ impl SheetView {
                 div()
                     .absolute()
                     .left(px(TAB_X + TAB_W + 30.))
-                    .top(px(ROW_TOP + ROW_H * pane.items.len() as f32 + 8.))
+                    .top(px(ROW_TOP
+                        + row_h(pane.items.len()) * pane.items.len() as f32
+                        + 8.))
                     .w(px(WINDOW_W - (TAB_X + TAB_W + 30.) - 30.))
                     .text_size(px(12.))
                     .text_color(c.muted)
