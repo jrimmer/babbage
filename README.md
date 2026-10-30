@@ -3,7 +3,7 @@
 A notepad calculator for Linux. Write sums in plain language and the answer appears beside each line, exact until it
 can't be. Percentages, units, money, dates and time zones all work, and every sheet is a plain text file you own.
 
-![A Babbage sheet: variables, a percentage and a total, then conversions, a date and a time span, with the answers in a column on the right](docs/shots/showcase.png)
+![A Babbage sheet titled Road trip to Wally World: a distance and a speed give the drive time, a mileage gives the gallons and the gas bill, then motels, food, snacks and tickets add up to a total and a share for each of five; the answers sit in a column on the right](docs/shots/guide/wally-world.png)
 
 ```
 hotel = 3 × $138               →  $414.00
