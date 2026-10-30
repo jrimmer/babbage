@@ -3,7 +3,9 @@
 //! Every clickable thing has a fixed place (`toolbar_buttons`, and `settings_ui::item_rects`) so the acceptance checks can aim
 //! at it with a real pointer.
 
-use gpui::{AnyElement, Context, FontWeight, MouseButton, Window, div, prelude::*, px, relative};
+use gpui::{
+    AnyElement, Context, FontWeight, MouseButton, Window, div, prelude::*, px, relative, svg,
+};
 
 use crate::theme::Colors;
 use crate::view::{SheetView, answer_min_w};
@@ -136,30 +138,12 @@ fn icon_help(c: &Colors) -> AnyElement {
         .into_any_element()
 }
 
+/// The settings button's gear (`assets/gear.svg`, tinted with the muted text color).
 fn icon_settings(c: &Colors) -> AnyElement {
-    div()
-        .flex()
-        .flex_col()
-        .gap(px(3.))
-        .children((0..2).map(|i| {
-            div()
-                .relative()
-                .w(px(20.))
-                .h(px(8.))
-                .rounded(px(4.))
-                .border_2()
-                .border_color(c.muted)
-                .child(
-                    div()
-                        .absolute()
-                        .top(px(1.))
-                        .left(px(if i == 0 { 2. } else { 9. }))
-                        .w(px(4.))
-                        .h(px(4.))
-                        .rounded(px(2.))
-                        .bg(c.muted),
-                )
-        }))
+    svg()
+        .path("gear.svg")
+        .size(px(22.))
+        .text_color(c.muted)
         .into_any_element()
 }
 

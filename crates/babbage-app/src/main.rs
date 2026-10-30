@@ -45,6 +45,22 @@ use gpui::{AppContext, Bounds, TitlebarOptions, WindowBounds, WindowOptions, px,
 
 use view::{Init, SAVE_DELAY_MS, SheetView};
 
+/// The app's own pictures, built into the program.
+struct Assets;
+
+impl gpui::AssetSource for Assets {
+    fn load(&self, path: &str) -> anyhow::Result<Option<std::borrow::Cow<'static, [u8]>>> {
+        Ok(match path {
+            "gear.svg" => Some(include_bytes!("../assets/gear.svg").as_slice().into()),
+            _ => None,
+        })
+    }
+
+    fn list(&self, _path: &str) -> anyhow::Result<Vec<gpui::SharedString>> {
+        Ok(vec!["gear.svg".into()])
+    }
+}
+
 const USAGE: &str = "usage: babbage [--quick] [--control <socket>]\n       babbage calc [options] EXPRESSION... (see babbage calc --help)\n       babbage setup omarchy [--remove] [--key KEY]\n       babbage --print-icon\n\n  --quick       a small window for one calculation; brings the open window forward on Hyprland\n  setup omarchy add a quick-calculation key and a menu entry to Omarchy (--remove undoes it)\n  --print-icon  print the app icon (SVG)";
 
 /// The app icon, which the installer saves for the launcher.
@@ -104,7 +120,7 @@ fn main() -> anyhow::Result<()> {
     ));
     let flush = saver.clone();
 
-    gpui::Application::new().run(move |cx| {
+    gpui::Application::new().with_assets(Assets).run(move |cx| {
         theme::install(cx);
         cx.on_window_closed(|cx| {
             if cx.windows().is_empty() {
