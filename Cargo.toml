@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/babbage-core", "crates/babbage-store", "crates/babbage-app", "crates/babbage-accept"]
+members = ["crates/babbage-core", "crates/babbage-store", "crates/babbage-app", "crates/babbage-accept", "crates/babbage-docs"]
 resolver = "3"
 
 [workspace.package]

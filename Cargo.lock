@@ -548,6 +548,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "babbage-docs"
+version = "1.0.0"
+dependencies = [
+ "babbage-core",
+]
+
+[[package]]
 name = "babbage-store"
 version = "1.0.0"
 dependencies = [

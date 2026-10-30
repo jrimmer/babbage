@@ -156,6 +156,9 @@ def render(md):
                 code.append(lines[i])
                 i += 1
             i += 1
+            if lang == "rust":
+                # rustdoc's hidden lines ("# " and a lone "#") are compiled by the doctests but not shown.
+                code = [c for c in code if c != "#" and not c.startswith("# ")]
             cls = ' class="language-%s"' % lang if lang else ""
             out.append(
                 '<pre class="code"><code%s>%s\n</code></pre>' % (cls, html.escape("\n".join(code), quote=False))
@@ -312,6 +315,7 @@ def main():
     if len(sys.argv) > 3:
         convert_pictures(Path(sys.argv[3]), dst)
     contents = json.loads((src / "contents.json").read_text())
+    guide = contents.get("name", "User guide")
     chapters = [c for g in contents["groups"] for c in g["chapters"]]
     chapters.sort(key=lambda c: c["file"])
     dst.mkdir(parents=True, exist_ok=True)
@@ -333,10 +337,10 @@ def main():
         # The first paragraphs, up to the first heading, are the lede.
         (dst / (name + ".html")).write_text(
             page(
-                "%s · Babbage guide" % c["title"],
+                "%s · Babbage %s" % (c["title"], guide.lower()),
                 c["title"],
                 sections,
-                '<a href="../">Babbage</a> · <a href="index.html">User guide</a>',
+                '<a href="../">Babbage</a> · <a href="index.html">%s</a>' % html.escape(guide),
                 title or c["title"],
                 body,
                 pager,
@@ -352,11 +356,11 @@ def main():
         toc.append("<div><h2>%s</h2><ol>%s</ol></div>" % (html.escape(g["title"]), items))
     intro = "<p>%s</p>" % html.escape(contents["intro"])
     index = page(
-        "User guide · Babbage guide",
-        "User guide",
+        "%s · Babbage %s" % (guide, guide.lower()),
+        guide,
         [],
         '<a href="../">Babbage</a> · <a href="index.html">Contents</a>',
-        "User guide",
+        guide,
         intro + '\n      <nav class="toc" aria-label="Chapters">%s</nav>' % "".join(toc),
         '<nav class="pager"><span></span><a class="contents" href="index.html">Contents</a><a class="next" href="%s.html">%s →</a></nav>'
         % (chapters[0]["file"], html.escape(chapters[0]["title"])),

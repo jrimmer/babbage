@@ -1,0 +1,28 @@
+{
+ "name": "Developer guide",
+ "intro": "Use Babbage's calculation engine in your own Rust program. It is the crate babbage-core: give it a line of plain language and it hands back an exact value. Every code sample in this guide is compiled and run by the project's tests.",
+ "groups": [
+  {
+   "title": "Start here",
+   "chapters": [
+    {"file": "01-getting-started", "title": "Getting started", "description": "Add the crate, evaluate a line, show the answer."},
+    {"file": "02-evaluating-lines", "title": "Evaluating lines", "description": "Values, kinds, units, and what a line can be."}
+   ]
+  },
+  {
+   "title": "Using it",
+   "chapters": [
+    {"file": "03-showing-answers", "title": "Showing answers", "description": "Decimal places, number formats, repeating decimals and the exact flag."},
+    {"file": "04-sheets", "title": "Sheets", "description": "Lines that use the lines above them: names, references, tags and totals."},
+    {"file": "05-settings-and-time", "title": "Settings and time", "description": "Clocks, time zones, tax, regional dollars and holidays."}
+   ]
+  },
+  {
+   "title": "Depending on it",
+   "chapters": [
+    {"file": "06-errors-and-guarantees", "title": "Errors and guarantees", "description": "What can fail, what stays exact, and what 1.x promises."},
+    {"file": "07-recipes", "title": "Recipes", "description": "A command-line calculator, a one-call helper and inline answers in text."}
+   ]
+  }
+ ]
+}

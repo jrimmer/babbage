@@ -75,6 +75,8 @@ version control, or move it with `mv`. Export a sheet as text, CSV, HTML or PDF 
 ## Documentation
 
 The [user guide](https://jasonrimmer.com/babbage/guide/) covers every feature, chapter by chapter, with pictures.
+Using the engine in your own program? The [developer guide](https://jasonrimmer.com/babbage/dev/) covers the
+`babbage-core` crate, and its sources are in [docs/dev](docs/dev).
 `bbg --help` lists the command-line options, and the decisions behind the behavior are in
 [docs/decisions.md](docs/decisions.md).
 
