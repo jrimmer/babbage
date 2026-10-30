@@ -1,0 +1,55 @@
+#!/bin/bash
+# The whole gate on a machine with no desktop, such as a Spoond MicroVM of the rust-gpui-accept image: the release
+# build, bin/check, then bin/accept in a standalone Hyprland, each timed. Run it as root from the checkout:
+#
+#   POOL_PROJECT=<project> sb-run --root --image rust-gpui-accept \
+#     --allow index.crates.io,static.crates.io,crates.io REPO_DIR COMMIT -- sh tools/ci-gate
+#
+# Hyprland refuses root, so everything runs as a throwaway user on a copy of the checkout in that user's home (the
+# lease's /tmp is a small tmpfs). The image sets RUSTC_WRAPPER=sccache with a cache under /root, which a non-root user
+# cannot write, so it is unset. seatd gives the compositor its seat, and tools/ci-input.py gives that seat the keyboard
+# and mouse a desktop would lend a nested compositor. Prints one TIMING line per phase and a last line, `gate: pass`
+# or `gate: FAIL ...`; the exit status is 0 only when all three phases passed.
+set -u
+here=$(cd "$(dirname "$0")/.." && pwd)
+user=tester
+home=/home/$user
+now() { date +%s; }
+status=0
+failed=""
+
+id -u "$user" >/dev/null 2>&1 || useradd -m -G video "$user"
+mkdir -p "$home/tmp"
+rm -rf "$home/w"
+cp -a "$here" "$home/w"
+chown -R "$user:$user" "$home"
+as_user() {
+    runuser -u "$user" -- env -u RUSTC_WRAPPER HOME="$home" CARGO_HOME="$home/.cargo" PATH=/usr/local/bin:/usr/bin \
+        BABBAGE_LOWPRIO=1 TMPDIR="$home/tmp" "$@"
+}
+phase() {
+    local name=$1 start rc
+    shift
+    start=$(now)
+    "$@" >"$home/$name.log" 2>&1
+    rc=$?
+    echo "TIMING $name $(( $(now) - start ))s rc=$rc"
+    if [ "$rc" -ne 0 ]; then status=1; failed="$failed $name"; tail -n 40 "$home/$name.log"; fi
+    return 0
+}
+
+echo "dri: $(ls /dev/dri 2>&1 | tr '\n' ' ')"
+cd "$home/w" || exit 1
+phase build as_user bin/build
+phase check as_user bin/check
+seatd -u "$user" -g "$user" >"$home/seatd.log" 2>&1 &
+seatd_pid=$!
+python3 tools/ci-input.py >"$home/input.log" 2>&1 &
+input_pid=$!
+sleep 1
+phase accept as_user bin/accept
+kill "$input_pid" "$seatd_pid" 2>/dev/null
+echo "accept: $(grep -c '^PASS ' "$home/accept.log") PASS, $(grep -c '^FAIL ' "$home/accept.log") FAIL"
+grep -A2 '^FAIL ' "$home/accept.log" | cut -c1-300
+if [ "$status" -eq 0 ]; then echo "gate: pass"; else echo "gate: FAIL$failed"; fi
+exit "$status"
